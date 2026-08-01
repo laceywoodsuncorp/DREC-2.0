@@ -17,22 +17,24 @@
    sourcecountry filter exceeded that limit. Trimmed to the highest-traffic
    AU outlets and dropped the (redundant, since domains already scope this
    to Australian sources) sourcecountry clause to stay well under it. */
-const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
-  'sbs.com.au', '7news.com.au', 'theguardian.com', 'insurancenews.com.au'];
+/* All domains a visitor can select in the Sources dropdown -- see
+   index_updated_abc_emergency_map.html's ALL_SOURCES. The client passes its
+   selection via ?sources=, validated against this list here (never trust a
+   client-supplied domain list directly into an outbound URL). */
+const ALL_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
+  'sbs.com.au', '7news.com.au', 'theguardian.com', 'insurancenews.com.au', 'aljazeera.com'];
 
-const ALLOWED_HOURS = [24, 48, 72, 168];
-
-function buildGdeltUrl(hours) {
-  const domainClause = '(' + AU_DOMAINS.map((d) => 'domain:' + d).join(' OR ') + ')';
+function buildGdeltUrl(domains) {
+  const domainClause = '(' + domains.map((d) => 'domain:' + d).join(' OR ') + ')';
   const query = domainClause;
   return 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent(query) +
-    '&mode=artlist&maxrecords=250&timespan=' + hours + 'h&format=json&sort=datedesc';
+    '&mode=artlist&maxrecords=250&timespan=24h&format=json&sort=datedesc';
 }
 
 async function handleGdelt(request) {
-  const requested = Number(new URL(request.url).searchParams.get('hours'));
-  const hours = ALLOWED_HOURS.includes(requested) ? requested : 24;
-  const target = buildGdeltUrl(hours);
+  const requested = (new URL(request.url).searchParams.get('sources') || '').split(',').filter(Boolean);
+  const domains = requested.filter((d) => ALL_DOMAINS.includes(d));
+  const target = buildGdeltUrl(domains.length ? domains : ALL_DOMAINS);
   /* Previously this waited 5.2s and retried once on a 429 before responding,
      to absorb GDELT's rate limit transparently. In practice that pushed the
      total request time past the client's own timeout when GDELT was also
