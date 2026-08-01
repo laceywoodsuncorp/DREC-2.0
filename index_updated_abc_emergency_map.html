@@ -581,7 +581,7 @@ const layerControl=L.control.layers({'🛰️ Satellite (NASA)':trueColor,'🗺�
    from SharePoint. A local file:// origin may be blocked by the browser). */
 const FIRMS_SOURCES=['VIIRS_SNPP_NRT','VIIRS_NOAA20_NRT','VIIRS_NOAA21_NRT'];
 const FIRMS_AREA='110,-45,156,-9';      /* west,south,east,north — Australia */
-const FIRMS_DAYS=7;                       /* rolling window, matches 0–7 day colour scheme */
+const FIRMS_DAYS=5;                       /* rolling window; NASA's area API rejects anything outside 1-5 */
 const firmsStatusEl=document.getElementById('firmsStatus');
 let firmsLayer=null,firmsAdded=false;
 function fireColour(h){if(h<6)return'#f5010c';if(h<12)return'#fd8d19';if(h<24)return'#ffd819';return'#8b1a10';}
