@@ -345,7 +345,13 @@
    still requires the page to be served over http(s); a file:// origin blocks
    fetch() the same way it blocks the FIRMS/incident calls below. */
 (function(){
-  const CACHE_KEY='newsradar_news_cache_v1';
+  /* Cached per time-range (24/48/72/168h), not as one shared pool. GDELT's
+     250-record cap on a single query gets exhausted by these 8 outlets'
+     publishing volume well within 48h, so filtering a single 7-day fetch
+     client-side left nothing older in the pool for the wider ranges to
+     reveal -- 48h/3d/1wk all showed identical counts. Each range now runs
+     its own GDELT query scoped to that exact window instead. */
+  const CACHE_KEY_PREFIX='newsradar_news_cache_v2_';
   const CACHE_TTL_MS=15*60*1000; // treat cache as "fresh enough" for 15 minutes
   /* GDELT's DOC API rejects overly-long query strings ("Your query was too
      short or too long") -- the original 17-domain OR-clause plus a
@@ -386,8 +392,8 @@
     if(!s||s.length<15)return null;
     return Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(9,11),+s.slice(11,13),+s.slice(13,15));
   }
-  function readCache(){try{const raw=localStorage.getItem(CACHE_KEY);return raw?JSON.parse(raw):null;}catch(e){return null;}}
-  function writeCache(articles){try{localStorage.setItem(CACHE_KEY,JSON.stringify({fetchedAt:Date.now(),articles}));}catch(e){}}
+  function readCache(hours){try{const raw=localStorage.getItem(CACHE_KEY_PREFIX+hours);return raw?JSON.parse(raw):null;}catch(e){return null;}}
+  function writeCache(hours,articles){try{localStorage.setItem(CACHE_KEY_PREFIX+hours,JSON.stringify({fetchedAt:Date.now(),articles}));}catch(e){}}
   function agoText(ms){const h=(Date.now()-ms)/3600000;if(h<1)return Math.max(1,Math.round(h*60))+'m ago';if(h<24)return Math.round(h)+'h ago';return Math.round(h/24)+'d ago';}
 
   /* Routes tried in order until one returns data.
@@ -415,13 +421,13 @@
     }finally{clearTimeout(timer);}
   }
 
-  async function fetchGdelt(){
+  async function fetchGdelt(hours){
     const domainClause='('+AU_DOMAINS.map(d=>'domain:'+d).join(' OR ')+')';
     const query=domainClause;
     const gdeltUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(query)+
-      '&mode=artlist&maxrecords=250&timespan=7d&format=json&sort=datedesc';
+      '&mode=artlist&maxrecords=250&timespan='+hours+'h&format=json&sort=datedesc';
     const GDELT_ROUTES=[
-      ...SAME_ORIGIN_ROUTES,
+      ...SAME_ORIGIN_ROUTES.map(r=>r+'?hours='+hours),
       gdeltUrl,
       'https://api.allorigins.win/raw?url='+encodeURIComponent(gdeltUrl),
       'https://corsproxy.io/?url='+encodeURIComponent(gdeltUrl),
@@ -437,7 +443,7 @@
           const pubMs=parseGdeltDate(a.seendate);
           if(!pubMs)return;
           const ageHours=(Date.now()-pubMs)/3600000;
-          if(ageHours<0||ageHours>168)return;
+          if(ageHours<0||ageHours>hours)return;
           const cats=classify(a.title);
           /* Every article here comes from an Australian outlet, but that
              doesn't mean the story itself is about Australia -- a purely
@@ -459,15 +465,14 @@
       const cat=ch.dataset.cat;
       const base=(cat==='all')?'All':CAT_LABEL[cat];
       if(!currentArticles){ch.innerHTML=base;return;}
-      const n=currentArticles.filter(a=>(a.pubMs>=Date.now()-currentHours*3600000)&&(cat==='all'||a.cats.includes(cat))).length;
+      const n=currentArticles.filter(a=>cat==='all'||a.cats.includes(cat)).length;
       ch.innerHTML=base+' <span class="n">('+n+')</span>';
     });
   }
 
   function applyFilters(){
     if(!currentArticles)return;
-    const cutoff=Date.now()-currentHours*3600000;
-    const visible=currentArticles.filter(a=>a.pubMs>=cutoff&&(currentCat==='all'||a.cats.includes(currentCat)));
+    const visible=currentArticles.filter(a=>currentCat==='all'||a.cats.includes(currentCat));
     feed.querySelectorAll('.item').forEach(el=>el.remove());
     visible.forEach(a=>{
       const el=document.createElement('div');el.className='item';el.dataset.cat=a.cats.join(' ');
@@ -478,7 +483,7 @@
         '<div class="foot"><span class="src-pill">'+(a.domain||'source')+'</span><span>'+agoText(a.pubMs)+'</span></div></div>';
       feed.insertBefore(el,empty);
     });
-    shown.textContent=visible.length;total.textContent=currentArticles.filter(a=>a.pubMs>=cutoff).length;
+    shown.textContent=visible.length;total.textContent=currentArticles.length;
     empty.style.display=visible.length===0?'block':'none';
     feed.scrollTop=0;
     renderCatCounts();
@@ -486,8 +491,8 @@
 
   function setCacheNote(text,stale){cacheNote.textContent=text;cacheNote.classList.toggle('stale',!!stale);}
 
-  async function loadNews(force){
-    const cached=readCache();
+  async function loadNews(hours,force){
+    const cached=readCache(hours);
     if(!force&&cached&&(Date.now()-cached.fetchedAt<CACHE_TTL_MS)){
       currentArticles=cached.articles;
       setCacheNote('Showing cached results from '+agoText(cached.fetchedAt)+' · auto-refreshes every 15 min');
@@ -497,8 +502,8 @@
     refreshBtn.classList.add('loading');refreshBtn.textContent='⏳ Refreshing…';
     setCacheNote('Fetching the latest Australian headlines…');
     try{
-      const articles=await fetchGdelt();
-      writeCache(articles);
+      const articles=await fetchGdelt(hours);
+      writeCache(hours,articles);
       currentArticles=articles;
       setCacheNote('Live · '+articles.length+' articles pulled just now (updates cached ~15 min)');
       applyFilters();
@@ -520,10 +525,10 @@
   }
 
   catChips.forEach(ch=>ch.addEventListener('click',()=>{catChips.forEach(c=>c.classList.remove('active'));ch.classList.add('active');currentCat=ch.dataset.cat;applyFilters();}));
-  timeChips.forEach(ch=>ch.addEventListener('click',()=>{timeChips.forEach(c=>c.classList.remove('active'));ch.classList.add('active');currentHours=+ch.dataset.hours;applyFilters();}));
-  refreshBtn.addEventListener('click',()=>loadNews(true));
+  timeChips.forEach(ch=>ch.addEventListener('click',()=>{timeChips.forEach(c=>c.classList.remove('active'));ch.classList.add('active');currentHours=+ch.dataset.hours;loadNews(currentHours,false);}));
+  refreshBtn.addEventListener('click',()=>loadNews(currentHours,true));
 
-  loadNews(false);
+  loadNews(currentHours,false);
 })();
 
 /* ============ MAP ============ */
