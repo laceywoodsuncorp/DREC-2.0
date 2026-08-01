@@ -331,15 +331,19 @@
    GDELT's DOC API is built for server-to-server use and does not reliably send
    Access-Control-Allow-Origin headers back to browsers, so a bare fetch() to it
    can fail with a CORS/NetworkError from some networks/browsers even though the
-   API itself is up and the page is properly hosted over http(s). To make the feed
-   actually load in that situation we try a short list of routes in order — a
-   direct request first, then a same-origin serverless proxy slot (works once this
-   site has a matching function, 404s harmlessly otherwise), then a couple of
-   public CORS proxies — and use whichever one succeeds first. This mirrors the
-   resilience pattern already used for the RSS-based news engine elsewhere in this
-   project. NOTE: this still requires the page to be served over http(s); a
-   file:// origin blocks fetch() the same way it blocks the FIRMS/incident calls
-   below. */
+   API itself is up and the page is properly hosted over http(s). Public CORS
+   proxies (allorigins.win, corsproxy.io, codetabs.com) are also commonly
+   blocked outright by corporate firewalls as a "web proxy" category, which
+   causes the exact same NetworkError even though nothing is actually wrong
+   with GDELT. To make the feed load reliably in that situation we route
+   through a same-origin Netlify function (netlify/functions/gdelt.js) first —
+   the outbound call to GDELT happens from Netlify's servers, not the
+   visitor's network, so it isn't subject to that firewall category block —
+   then fall back to a direct request and finally the public proxies, using
+   whichever route succeeds first. This mirrors the resilience pattern already
+   used for the RSS-based news engine elsewhere in this project. NOTE: this
+   still requires the page to be served over http(s); a file:// origin blocks
+   fetch() the same way it blocks the FIRMS/incident calls below. */
 (function(){
   const CACHE_KEY='newsradar_news_cache_v1';
   const CACHE_TTL_MS=15*60*1000; // treat cache as "fresh enough" for 15 minutes
@@ -383,13 +387,17 @@
   function agoText(ms){const h=(Date.now()-ms)/3600000;if(h<1)return Math.max(1,Math.round(h*60))+'m ago';if(h<24)return Math.round(h)+'h ago';return Math.round(h/24)+'d ago';}
 
   /* Routes tried in order until one returns data.
-     1) Direct — works whenever GDELT does send permissive CORS headers.
-     2) Same-origin serverless proxy — used automatically once this page is
-        deployed with a matching Netlify function; 404s harmlessly otherwise.
-     3-4) Public CORS proxies — best-effort fallback for standalone/static hosting. */
+     1) Same-origin Netlify function (netlify/functions/gdelt.js) — the only
+        route that reliably works when a visitor is behind a corporate
+        firewall that blocks public CORS-proxy domains, since the outbound
+        call to GDELT happens from Netlify's servers, not the visitor's
+        network; from the browser's point of view this is same-origin.
+     2) Direct — works whenever GDELT does send permissive CORS headers.
+     3-4) Public CORS proxies — best-effort fallback for hosts without the
+        Netlify function (e.g. a plain static host). */
   const GDELT_ROUTES=[
-    url=>url,
     url=>'/.netlify/functions/gdelt?url='+encodeURIComponent(url),
+    url=>url,
     url=>'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
     url=>'https://corsproxy.io/?url='+encodeURIComponent(url),
     url=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(url)
