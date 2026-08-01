@@ -6,7 +6,14 @@
    same-origin call carrying "gdeltproject.org" in its own query string got
    blocked exactly like a direct cross-origin call would. This function
    fetches that URL server-side (Netlify's infrastructure, not the visitor's
-   network) and relays the response back. */
+   network) and relays the response back.
+
+   Unlike the Cloudflare Worker/Pages Function variants of this same proxy,
+   this one has no shared cache in front of GDELT (Netlify Functions have no
+   built-in equivalent to Cloudflare's edge Cache API -- doing this properly
+   here would mean provisioning Netlify Blobs, which isn't worth setting up
+   while this variant isn't the one actually deployed). Each request still
+   hits GDELT directly, bounded by the same 8s timeout below. */
 exports.handler = async function () {
   /* The Guardian AU was dropped -- it pulls a disproportionate amount of
      international coverage even after the client's AU-relevance filtering. */

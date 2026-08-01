@@ -26,7 +26,56 @@ function buildGdeltUrl() {
     '&mode=artlist&maxrecords=250&timespan=24h&format=json&sort=datedesc';
 }
 
+/* GDELT itself is unreliable under load: slow responses, frequent 429s.
+   Without a shared cache, every visitor's browser independently fights that
+   flakiness, so everyone feels it at once whenever GDELT is having a bad
+   moment. Cloudflare's edge Cache API lets this function keep one shared
+   copy of the last successful GDELT response: fresh requests (<10 min old)
+   are served straight from that cache with no GDELT round-trip at all, and
+   if a refresh is due but GDELT fails, the stale copy (up to 2h old) is
+   served instead of a hard failure. GDELT only needs to succeed once every
+   so often for every visitor to get a fast, working feed. */
+const CACHE_URL = 'https://newsradar-internal-cache.example/gdelt';
+const FRESH_SECONDS = 600; // matches the client's own 10-minute refresh cadence
+const STALE_MAX_SECONDS = 7200; // how long a stale copy stays usable as an emergency fallback
+
+async function readSharedCache() {
+  const cached = await caches.default.match(CACHE_URL);
+  if (!cached) return null;
+  const fetchedAt = Number(cached.headers.get('X-Fetched-At') || 0);
+  return { response: cached, ageSeconds: (Date.now() - fetchedAt) / 1000 };
+}
+
+async function writeSharedCache(bodyText, contentType) {
+  const stored = new Response(bodyText, {
+    status: 200,
+    headers: {
+      'Content-Type': contentType || 'application/json',
+      'Cache-Control': 'public, max-age=' + STALE_MAX_SECONDS,
+      'X-Fetched-At': String(Date.now())
+    }
+  });
+  await caches.default.put(CACHE_URL, stored.clone());
+  return stored;
+}
+
+function respondFromCache(cached) {
+  return new Response(cached.response.body, {
+    status: 200,
+    headers: {
+      'Content-Type': cached.response.headers.get('content-type') || 'application/json',
+      'Cache-Control': 'no-store',
+      'X-Cache-Age': String(Math.round(cached.ageSeconds))
+    }
+  });
+}
+
 export async function onRequestGet() {
+  const cached = await readSharedCache();
+  if (cached && cached.ageSeconds < FRESH_SECONDS) {
+    return respondFromCache(cached);
+  }
+
   const target = buildGdeltUrl();
   /* A bounded single attempt, not a wait-and-retry-on-429: stacking a 5.2s
      sleep on top of a sometimes-slow GDELT response risked exceeding the
@@ -37,15 +86,22 @@ export async function onRequestGet() {
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
     const upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' }, signal: ctrl.signal });
+    if (upstream.ok) {
+      const body = await upstream.text();
+      const stored = await writeSharedCache(body, upstream.headers.get('content-type'));
+      return new Response(stored.body, {
+        status: 200,
+        headers: { 'Content-Type': stored.headers.get('content-type'), 'Cache-Control': 'no-store' }
+      });
+    }
+    if (cached && cached.ageSeconds < STALE_MAX_SECONDS) return respondFromCache(cached);
     const body = await upstream.text();
     return new Response(body, {
       status: upstream.status,
-      headers: {
-        'Content-Type': upstream.headers.get('content-type') || 'application/json',
-        'Cache-Control': 'no-store'
-      }
+      headers: { 'Content-Type': upstream.headers.get('content-type') || 'application/json', 'Cache-Control': 'no-store' }
     });
   } catch (err) {
+    if (cached && cached.ageSeconds < STALE_MAX_SECONDS) return respondFromCache(cached);
     return new Response('Upstream fetch failed: ' + err.message, { status: 502 });
   } finally {
     clearTimeout(timer);
