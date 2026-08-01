@@ -368,6 +368,7 @@
   };
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
     politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World'};
+  const AU_RELEVANCE=/australia|australian|aussie/i;
 
   const feed=document.getElementById('feed'),empty=document.getElementById('empty'),
         shown=document.getElementById('shown'),total=document.getElementById('total'),
@@ -437,7 +438,15 @@
           if(!pubMs)return;
           const ageHours=(Date.now()-pubMs)/3600000;
           if(ageHours<0||ageHours>168)return;
-          out.push({title:a.title,url:a.url,domain:a.domain||'',pubMs,cats:classify(a.title)});
+          const cats=classify(a.title);
+          /* Every article here comes from an Australian outlet, but that
+             doesn't mean the story itself is about Australia -- a purely
+             international story (e.g. "US strikes Iran") only earns the
+             generic "world" tag with no Australian angle. Drop those unless
+             the headline actually mentions Australia or matches some other
+             (domestic) category too. */
+          if(cats.length===1&&cats[0]==='world'&&!AU_RELEVANCE.test(a.title))return;
+          out.push({title:a.title,url:a.url,domain:a.domain||'',pubMs,cats});
         });
         return out;
       }catch(err){lastErr=err;}
