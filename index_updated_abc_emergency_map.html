@@ -388,24 +388,20 @@
 
   /* Routes tried in order until one returns data.
      1-2) Same-origin serverless functions (functions/api/gdelt.js for
-        Cloudflare Pages, netlify/functions/gdelt.js for Netlify) — whichever
-        platform this is actually deployed on serves its own route and the
-        other 404s harmlessly. These are the only routes that reliably work
-        when a visitor is behind a corporate firewall that blocks public
-        CORS-proxy domains, since the outbound call to GDELT happens from the
-        host's servers, not the visitor's network; from the browser's point
-        of view this is same-origin.
+        Cloudflare Pages, src/worker.js's /api/gdelt for Cloudflare Workers,
+        netlify/functions/gdelt.js for Netlify) — whichever platform this is
+        actually deployed on serves its own route and the others 404
+        harmlessly. These take NO query parameter — the target GDELT URL is
+        built server-side, not passed in via ?url=, because some corporate
+        web filters block on URL substrings anywhere in the request (not just
+        the hostname being requested), and a same-origin call carrying
+        "gdeltproject.org" in its own query string got blocked exactly like a
+        direct cross-origin call would. Keeping GDELT's URL entirely off the
+        browser's own request line avoids that.
      3) Direct — works whenever GDELT does send permissive CORS headers.
-     4-5) Public CORS proxies — best-effort fallback for hosts without either
+     4-5) Public CORS proxies — best-effort fallback for hosts without any
         serverless function (e.g. a plain static host). */
-  const GDELT_ROUTES=[
-    url=>'/api/gdelt?url='+encodeURIComponent(url),
-    url=>'/.netlify/functions/gdelt?url='+encodeURIComponent(url),
-    url=>url,
-    url=>'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
-    url=>'https://corsproxy.io/?url='+encodeURIComponent(url),
-    url=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(url)
-  ];
+  const SAME_ORIGIN_ROUTES=['/api/gdelt','/.netlify/functions/gdelt'];
   async function fetchJsonWithTimeout(url,ms){
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),ms);
     try{
@@ -420,10 +416,17 @@
     const query=domainClause+' sourcecountry:Australia';
     const gdeltUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(query)+
       '&mode=artlist&maxrecords=250&timespan=7d&format=json&sort=datedesc';
+    const GDELT_ROUTES=[
+      ...SAME_ORIGIN_ROUTES,
+      gdeltUrl,
+      'https://api.allorigins.win/raw?url='+encodeURIComponent(gdeltUrl),
+      'https://corsproxy.io/?url='+encodeURIComponent(gdeltUrl),
+      'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(gdeltUrl)
+    ];
     let lastErr=null;
-    for(const buildRoute of GDELT_ROUTES){
+    for(const route of GDELT_ROUTES){
       try{
-        const j=await fetchJsonWithTimeout(buildRoute(gdeltUrl),15000);
+        const j=await fetchJsonWithTimeout(route,20000);
         const seen=new Set();const out=[];
         (j.articles||[]).forEach(a=>{
           if(!a.title||!a.url||seen.has(a.url))return;seen.add(a.url);
