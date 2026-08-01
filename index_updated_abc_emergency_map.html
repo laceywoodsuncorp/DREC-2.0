@@ -419,7 +419,7 @@
     let lastErr=null;
     for(const buildRoute of GDELT_ROUTES){
       try{
-        const j=await fetchJsonWithTimeout(buildRoute(gdeltUrl),10000);
+        const j=await fetchJsonWithTimeout(buildRoute(gdeltUrl),15000);
         const seen=new Set();const out=[];
         (j.articles||[]).forEach(a=>{
           if(!a.title||!a.url||seen.has(a.url))return;seen.add(a.url);
