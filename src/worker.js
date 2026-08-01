@@ -17,24 +17,21 @@
    sourcecountry filter exceeded that limit. Trimmed to the highest-traffic
    AU outlets and dropped the (redundant, since domains already scope this
    to Australian sources) sourcecountry clause to stay well under it. */
-/* All domains a visitor can select in the Sources dropdown -- see
-   index_updated_abc_emergency_map.html's ALL_SOURCES. The client passes its
-   selection via ?sources=, validated against this list here (never trust a
-   client-supplied domain list directly into an outbound URL). */
-const ALL_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
-  'sbs.com.au', '7news.com.au', 'theguardian.com', 'insurancenews.com.au', 'aljazeera.com'];
+/* The Guardian AU was dropped -- it pulls a disproportionate amount of
+   international coverage even after the client's AU-relevance filtering. */
+const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
+  'sbs.com.au', '7news.com.au', 'insurancenews.com.au'];
+const WORLD_DOMAIN = 'aljazeera.com';
 
-function buildGdeltUrl(domains) {
-  const domainClause = '(' + domains.map((d) => 'domain:' + d).join(' OR ') + ')';
+function buildGdeltUrl() {
+  const domainClause = '(' + [...AU_DOMAINS, WORLD_DOMAIN].map((d) => 'domain:' + d).join(' OR ') + ')';
   const query = domainClause;
   return 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent(query) +
     '&mode=artlist&maxrecords=250&timespan=24h&format=json&sort=datedesc';
 }
 
-async function handleGdelt(request) {
-  const requested = (new URL(request.url).searchParams.get('sources') || '').split(',').filter(Boolean);
-  const domains = requested.filter((d) => ALL_DOMAINS.includes(d));
-  const target = buildGdeltUrl(domains.length ? domains : ALL_DOMAINS);
+async function handleGdelt() {
+  const target = buildGdeltUrl();
   /* Previously this waited 5.2s and retried once on a 429 before responding,
      to absorb GDELT's rate limit transparently. In practice that pushed the
      total request time past the client's own timeout when GDELT was also
@@ -68,7 +65,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/gdelt') {
-      return handleGdelt(request);
+      return handleGdelt();
     }
 
     if (url.pathname === '/') {
