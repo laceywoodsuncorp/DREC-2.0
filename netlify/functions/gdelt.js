@@ -8,12 +8,15 @@
    fetches that URL server-side (Netlify's infrastructure, not the visitor's
    network) and relays the response back. */
 exports.handler = async function () {
-  const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au', 'theage.com.au',
-    'sbs.com.au', '7news.com.au', 'skynews.com.au', 'afr.com', 'theguardian.com', 'canberratimes.com.au',
-    'brisbanetimes.com.au', 'perthnow.com.au', 'couriermail.com.au', 'adelaidenow.com.au',
-    'insurancenews.com.au', 'insurancebusinessmag.com', 'nine.com.au'];
+  /* GDELT's DOC API rejects overly-long query strings ("Your query was too
+     short or too long") -- the original 17-domain OR-clause plus a
+     sourcecountry filter exceeded that limit. Trimmed to the highest-traffic
+     AU outlets and dropped the (redundant, since domains already scope this
+     to Australian sources) sourcecountry clause to stay well under it. */
+  const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
+    'sbs.com.au', '7news.com.au', 'theguardian.com', 'insurancenews.com.au'];
   const domainClause = '(' + AU_DOMAINS.map((d) => 'domain:' + d).join(' OR ') + ')';
-  const query = domainClause + ' sourcecountry:Australia';
+  const query = domainClause;
   const target = 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent(query) +
     '&mode=artlist&maxrecords=250&timespan=7d&format=json&sort=datedesc';
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
