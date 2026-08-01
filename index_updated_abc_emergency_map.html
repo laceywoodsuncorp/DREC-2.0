@@ -373,7 +373,7 @@
     world:['iran','ukraine','gaza','israel','china','white house','united nations','trump','war']
   };
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
-    politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World'};
+    politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
   const AU_RELEVANCE=/australia|australian|aussie/i;
 
   const feed=document.getElementById('feed'),empty=document.getElementById('empty'),
@@ -478,7 +478,11 @@
     feed.querySelectorAll('.item').forEach(el=>el.remove());
     visible.forEach(a=>{
       const el=document.createElement('div');el.className='item';el.dataset.cat=a.cats.join(' ');
-      const tagHtml=(a.cats.length?a.cats:['world']).slice(0,3).map(c=>'<span class="t'+(c==='insurance'?' ins':'')+'">'+(CAT_LABEL[c]||c)+'</span>').join('');
+      /* Articles that match none of CAT_KEYWORDS fall back to a "General"
+         display tag -- they used to default to "World", which visually
+         inflated the World tag on cards that had nothing to do with it and
+         didn't match the World chip's actual count. */
+      const tagHtml=(a.cats.length?a.cats:['general']).slice(0,3).map(c=>'<span class="t'+(c==='insurance'?' ins':'')+'">'+(CAT_LABEL[c]||c)+'</span>').join('');
       el.innerHTML='<div class="bar"></div><div class="body">'+
         '<div class="tags">'+tagHtml+'</div>'+
         '<h4><a class="headline-link" href="'+a.url+'" target="_blank" rel="noopener">'+a.title+'</a></h4>'+
