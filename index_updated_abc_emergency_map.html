@@ -360,12 +360,18 @@
      to Australian sources) sourcecountry clause to stay well under it. */
   const AU_DOMAINS=['abc.net.au','9news.com.au','news.com.au','smh.com.au',
     'sbs.com.au','7news.com.au','theguardian.com','insurancenews.com.au'];
+  /* Dedicated source for World-tagged coverage -- see the Al Jazeera handling
+     below in the article loop, which exempts this domain from the
+     AU-relevance gate applied to everyone else's world/uncategorised
+     stories, so genuine global news still has a reliable home here. */
+  const WORLD_DOMAINS=['aljazeera.com'];
   const CAT_KEYWORDS={
     insurance:['insur','claim','afca','premium','policyholder','underwrit','icaustralia','insurance council'],
     fire:['house fire','home fire','building fire','structure fire','fire kills','blaze kills','fireplace'],
     flood:['flood','storm','cyclone','deluge','rainfall warning','severe weather','hail'],
     bushfire:['bushfire','wildfire','grassfire','hazard reduction','fire ban','fire danger'],
-    politics:['politic','parliament','minister','senator',' mp ','election','federal government','prime minister','premier'],
+    politics:['politic','parliament','minister','senator',' mp ','election','federal government','prime minister','premier',
+      'strike','walkout','industrial action','protest','union','ferry','train delay','bus strike','commuter'],
     economy:['econom','inflation','rba','interest rate','fuel price','cost of living','super fund','budget','market'],
     crime:['polic','stabb','arrest','court','charged','shooting','crime','jail','sentenc'],
     health:['health','hospital','virus','flu','disease','medicine','vaccine','bird flu','pbs'],
@@ -374,7 +380,13 @@
   };
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
     politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
-  const AU_RELEVANCE=/australia|australian|aussie/i;
+  const AU_RELEVANCE=/australia|australian|aussie|sydney|melbourne|brisbane|perth|adelaide|canberra|hobart|darwin|queensland|tasmania|\bnsw\b|\bqld\b|\bnt\b/i;
+  /* Lifestyle/fluff content (recipes, celebrity gossip, horoscopes, TV
+     recaps) shows up because GDELT's domain scoping pulls every section of
+     these outlets, not just hard news. Dropped outright regardless of
+     category match -- there's no "Recipes" chip a user would want these
+     surfaced under. */
+  const EXCLUDE_KEYWORDS=/\brecipe|\bcook(ing|book)?\b|celebrity|horoscope|zodiac|star sign|tv recap|box office|red carpet|masterchef|married at first sight|\bmafs\b|reality tv|wordle|crossword/i;
 
   const feed=document.getElementById('feed'),empty=document.getElementById('empty'),
         shown=document.getElementById('shown'),total=document.getElementById('total'),
@@ -425,7 +437,7 @@
   }
 
   async function fetchGdelt(hours){
-    const domainClause='('+AU_DOMAINS.map(d=>'domain:'+d).join(' OR ')+')';
+    const domainClause='('+[...AU_DOMAINS,...WORLD_DOMAINS].map(d=>'domain:'+d).join(' OR ')+')';
     const query=domainClause;
     const gdeltUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(query)+
       '&mode=artlist&maxrecords=250&timespan='+hours+'h&format=json&sort=datedesc';
@@ -446,14 +458,24 @@
           if(!pubMs)return;
           const ageHours=(Date.now()-pubMs)/3600000;
           if(ageHours<0||ageHours>hours)return;
+          if(EXCLUDE_KEYWORDS.test(a.title))return; // recipes, celebrity gossip, horoscopes etc -- not news
           const cats=classify(a.title);
-          /* Every article here comes from an Australian outlet, but that
-             doesn't mean the story itself is about Australia -- a purely
-             international story (e.g. "US strikes Iran") only earns the
-             generic "world" tag with no Australian angle. Drop those unless
-             the headline actually mentions Australia or matches some other
-             (domestic) category too. */
-          if(cats.length===1&&cats[0]==='world'&&!AU_RELEVANCE.test(a.title))return;
+          const isWorldSource=WORLD_DOMAINS.some(d=>(a.domain||'').includes(d));
+          if(isWorldSource){
+            /* Al Jazeera is our dedicated World source -- always keep and
+               tag it World regardless of keyword matches, exempt from the
+               AU-relevance gate below (that's the whole point of it). */
+            if(!cats.includes('world'))cats.push('world');
+          }else{
+            /* Every other article comes from an Australian outlet, but that
+               doesn't mean the story itself is about Australia or anything
+               substantive -- a purely international story (e.g. "US strikes
+               Iran") only earns the generic "world" tag, and lots of filler
+               matches no category at all. Drop both unless the headline
+               actually mentions Australia (or a state/city) or matches some
+               other real category too. */
+            if((cats.length===0||(cats.length===1&&cats[0]==='world'))&&!AU_RELEVANCE.test(a.title))return;
+          }
           out.push({title:a.title,url:a.url,domain:a.domain||'',pubMs,cats});
         });
         return out;

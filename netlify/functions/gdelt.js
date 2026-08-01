@@ -15,10 +15,13 @@ exports.handler = async function (event) {
      to Australian sources) sourcecountry clause to stay well under it. */
   const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
     'sbs.com.au', '7news.com.au', 'theguardian.com', 'insurancenews.com.au'];
+  /* Dedicated World-news source -- see index_updated_abc_emergency_map.html's
+     WORLD_DOMAINS/isWorldSource handling for why. */
+  const WORLD_DOMAINS = ['aljazeera.com'];
   const ALLOWED_HOURS = [24, 48, 72, 168];
   const requested = Number((event.queryStringParameters || {}).hours);
   const hours = ALLOWED_HOURS.includes(requested) ? requested : 24;
-  const domainClause = '(' + AU_DOMAINS.map((d) => 'domain:' + d).join(' OR ') + ')';
+  const domainClause = '(' + [...AU_DOMAINS, ...WORLD_DOMAINS].map((d) => 'domain:' + d).join(' OR ') + ')';
   const query = domainClause;
   const target = 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent(query) +
     '&mode=artlist&maxrecords=250&timespan=' + hours + 'h&format=json&sort=datedesc';
