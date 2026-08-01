@@ -7,16 +7,13 @@
    blocked exactly like a direct cross-origin call would. This function
    fetches that URL server-side (Netlify's infrastructure, not the visitor's
    network) and relays the response back. */
-exports.handler = async function (event) {
-  /* All domains a visitor can select in the Sources dropdown -- see
-     index_updated_abc_emergency_map.html's ALL_SOURCES. The client passes its
-     selection via ?sources=, validated against this list here (never trust a
-     client-supplied domain list directly into an outbound URL). */
-  const ALL_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
-    'sbs.com.au', '7news.com.au', 'theguardian.com', 'insurancenews.com.au', 'aljazeera.com'];
-  const requested = ((event.queryStringParameters || {}).sources || '').split(',').filter(Boolean);
-  const domains = requested.filter((d) => ALL_DOMAINS.includes(d));
-  const domainClause = '(' + (domains.length ? domains : ALL_DOMAINS).map((d) => 'domain:' + d).join(' OR ') + ')';
+exports.handler = async function () {
+  /* The Guardian AU was dropped -- it pulls a disproportionate amount of
+     international coverage even after the client's AU-relevance filtering. */
+  const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
+    'sbs.com.au', '7news.com.au', 'insurancenews.com.au'];
+  const WORLD_DOMAIN = 'aljazeera.com';
+  const domainClause = '(' + [...AU_DOMAINS, WORLD_DOMAIN].map((d) => 'domain:' + d).join(' OR ') + ')';
   const query = domainClause;
   const target = 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent(query) +
     '&mode=artlist&maxrecords=250&timespan=24h&format=json&sort=datedesc';
