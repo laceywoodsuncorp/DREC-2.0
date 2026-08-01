@@ -1,23 +1,27 @@
 /* Same-origin proxy for the GDELT DOC 2.0 API.
-   The browser calls /.netlify/functions/gdelt?url=<encoded GDELT url>, this
-   function fetches that URL server-side (Netlify's infrastructure, not the
-   visitor's network) and relays the response back. This is the only route
-   that reliably works when a visitor is behind a corporate firewall that
-   blocks public CORS-proxy sites (allorigins.win, corsproxy.io, etc.) as a
-   "web proxy" category, since from the browser's point of view this is a
-   same-origin request, not a call to a third-party relay. */
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-exports.handler = async function (event) {
-  const target = event.queryStringParameters && event.queryStringParameters.url;
-  if (!target || !/^https:\/\/api\.gdeltproject\.org\//.test(target)) {
-    return { statusCode: 400, body: 'Missing or disallowed url parameter' };
-  }
+   The browser calls /.netlify/functions/gdelt with NO query parameter -- the
+   target GDELT URL is built here server-side rather than passed in via
+   ?url=, because some corporate web filters block on URL substrings
+   anywhere in the request (not just the hostname being requested), and a
+   same-origin call carrying "gdeltproject.org" in its own query string got
+   blocked exactly like a direct cross-origin call would. This function
+   fetches that URL server-side (Netlify's infrastructure, not the visitor's
+   network) and relays the response back. */
+exports.handler = async function () {
+  const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au', 'theage.com.au',
+    'sbs.com.au', '7news.com.au', 'skynews.com.au', 'afr.com', 'theguardian.com', 'canberratimes.com.au',
+    'brisbanetimes.com.au', 'perthnow.com.au', 'couriermail.com.au', 'adelaidenow.com.au',
+    'insurancenews.com.au', 'insurancebusinessmag.com', 'nine.com.au'];
+  const domainClause = '(' + AU_DOMAINS.map((d) => 'domain:' + d).join(' OR ') + ')';
+  const query = domainClause + ' sourcecountry:Australia';
+  const target = 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent(query) +
+    '&mode=artlist&maxrecords=250&timespan=7d&format=json&sort=datedesc';
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   try {
     let upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' } });
     /* GDELT enforces a strict "one request every 5 seconds" limit that's easy
-       to hit from Netlify's shared function IP pool even under light use from
-       this site alone. A single backoff-and-retry absorbs that transparently
+       to hit from a shared function IP pool even under light use from this
+       site alone. A single backoff-and-retry absorbs that transparently
        instead of surfacing a 429 to the browser. */
     if (upstream.status === 429) {
       await sleep(5200);

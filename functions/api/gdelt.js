@@ -1,20 +1,29 @@
 /* Same-origin proxy for the GDELT DOC 2.0 API, for Cloudflare Pages Functions.
    A file at functions/api/gdelt.js is auto-routed by Cloudflare Pages to
-   /api/gdelt, so the browser calls /api/gdelt?url=<encoded GDELT url>, this
-   function fetches that URL from Cloudflare's edge (not the visitor's
-   network) and relays the response back. This is the route that reliably
-   works when a visitor is behind a corporate firewall that blocks public
-   CORS-proxy sites (allorigins.win, corsproxy.io, etc.) as a "web proxy"
-   category, since from the browser's point of view this is a same-origin
-   request, not a call to a third-party relay. */
+   /api/gdelt. It takes NO query parameter -- the target GDELT URL is built
+   here server-side rather than passed in via ?url=, because some corporate
+   web filters block on URL substrings anywhere in the request (not just the
+   hostname being requested), and a same-origin call carrying
+   "gdeltproject.org" in its own query string got blocked exactly like a
+   direct cross-origin call would. This function fetches GDELT from
+   Cloudflare's edge (not the visitor's network) and relays the response
+   back. */
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function onRequestGet(context) {
-  const url = new URL(context.request.url);
-  const target = url.searchParams.get('url');
-  if (!target || !/^https:\/\/api\.gdeltproject\.org\//.test(target)) {
-    return new Response('Missing or disallowed url parameter', { status: 400 });
-  }
+const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au', 'theage.com.au',
+  'sbs.com.au', '7news.com.au', 'skynews.com.au', 'afr.com', 'theguardian.com', 'canberratimes.com.au',
+  'brisbanetimes.com.au', 'perthnow.com.au', 'couriermail.com.au', 'adelaidenow.com.au',
+  'insurancenews.com.au', 'insurancebusinessmag.com', 'nine.com.au'];
+
+function buildGdeltUrl() {
+  const domainClause = '(' + AU_DOMAINS.map((d) => 'domain:' + d).join(' OR ') + ')';
+  const query = domainClause + ' sourcecountry:Australia';
+  return 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent(query) +
+    '&mode=artlist&maxrecords=250&timespan=7d&format=json&sort=datedesc';
+}
+
+export async function onRequestGet() {
+  const target = buildGdeltUrl();
   try {
     let upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' } });
     /* GDELT enforces a strict "one request every 5 seconds" limit that's easy
