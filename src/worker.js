@@ -82,7 +82,12 @@ async function handleGdelt() {
 
   const target = buildGdeltUrl();
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
+  /* 15s, not 8s: GDELT has been observed taking 10-16s just to return an
+     error response during slow periods, so 8s was aborting before GDELT had
+     any real chance to succeed -- worth the extra wait since success here
+     seeds the shared cache for every other visitor too. Still safely under
+     the client's own 20s timeout. */
+  const timer = setTimeout(() => ctrl.abort(), 15000);
   try {
     const upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' }, signal: ctrl.signal });
     if (upstream.ok) {
