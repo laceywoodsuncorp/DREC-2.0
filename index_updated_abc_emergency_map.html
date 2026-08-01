@@ -46,13 +46,23 @@
   .count b{color:var(--neutral-green)}
 
   .filters{display:flex;flex-wrap:wrap;gap:8px;padding:14px 24px;background:var(--off-white);border-bottom:1px solid #e7e9e6}
-  .filters.time-filters{padding-top:0;padding-bottom:14px}
   .chip{border:none;cursor:pointer;font-size:.78rem;font-weight:600;padding:7px 13px;border-radius:999px;background:var(--true-white);color:var(--heritage-green);box-shadow:0 2px 6px rgba(0,67,70,.1);transition:.15s}
   .chip:hover{transform:translateY(-1px)}
   .chip.active{background:var(--neutral-green);color:var(--true-white)}
   .chip .n{opacity:.75;font-weight:700;margin-left:2px}
-  .chip.time-chip{background:var(--heritage-green);color:#fff;opacity:.55}
-  .chip.time-chip.active{opacity:1;background:var(--primary-yellow);color:var(--heritage-green)}
+  .source-filter{padding:14px 24px 0;background:var(--off-white)}
+  .source-filter details{position:relative}
+  .source-filter summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;padding:7px 13px;border-radius:999px;background:var(--true-white);color:var(--heritage-green);box-shadow:0 2px 6px rgba(0,67,70,.1);user-select:none}
+  .source-filter summary::-webkit-details-marker{display:none}
+  .source-filter summary .n{opacity:.75;font-weight:700}
+  .source-panel{position:absolute;z-index:5;margin-top:8px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,67,70,.18);padding:12px;width:280px}
+  .source-list{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto}
+  .source-list label{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--ink);cursor:pointer}
+  .source-list input{accent-color:var(--neutral-green);width:15px;height:15px}
+  .source-actions{display:flex;justify-content:space-between;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid #eef0ed}
+  .source-actions button{border:none;cursor:pointer;font-size:.76rem;font-weight:600;padding:7px 12px;border-radius:8px;background:var(--off-white);color:var(--heritage-green)}
+  .source-actions button.primary{background:var(--neutral-green);color:#fff}
+  .source-actions button.primary:hover{background:var(--heritage-green)}
   .news-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 24px 12px}
   .news-toolbar .cache-note{font-size:.72rem;color:#5a6a6a}
   .news-toolbar .cache-note.stale{color:#a06000}
@@ -188,11 +198,17 @@
         <div class="src">Web/news search of Australian sources — ABC, 7NEWS, Nine, SBS, insuranceNEWS.com.au &amp; others · last 24 hours.</div>
         <div class="count">Showing <b id="shown">18</b> of <b id="total">18</b> articles · scroll within the tile to see more</div>
       </div>
-      <div class="filters time-filters" id="timeFilters">
-        <button class="chip time-chip active" data-hours="24">Last 24 hours</button>
-        <button class="chip time-chip" data-hours="48">Last 48 hours</button>
-        <button class="chip time-chip" data-hours="72">Last 3 days</button>
-        <button class="chip time-chip" data-hours="168">Last week</button>
+      <div class="source-filter">
+        <details id="sourceDropdown">
+          <summary>📰 Sources <span class="n" id="sourceSummaryCount"></span></summary>
+          <div class="source-panel">
+            <div class="source-list" id="sourceList"></div>
+            <div class="source-actions">
+              <button type="button" id="sourceSelectAll">Select all</button>
+              <button type="button" class="primary" id="sourceApply">Apply</button>
+            </div>
+          </div>
+        </details>
       </div>
       <div class="filters" id="filters">
         <button class="chip active" data-cat="all">All</button>
@@ -320,13 +336,15 @@
 
 <script>
 /* ============ LIVE NEWS ENGINE (GDELT DOC 2.0 API, no key required) ============
-   On every load/refresh we pull up to a week of Australian-sourced coverage from
-   GDELT's free DOC API (updates every 15 min), tag each headline into the site's
-   categories by keyword, and cache the result in localStorage so a page refresh
-   doesn't re-hit the network every time. A visible "Refresh now" button lets the
-   user force a fresh pull. Time-range chips (24h/48h/3d/1wk) and category chips
-   both filter the same cached pool client-side — no extra network calls needed to
-   change either filter.
+   On every load/refresh we pull the last 24 hours of coverage from GDELT's
+   free DOC API, scoped to whichever sources the user has selected in the
+   Sources dropdown, tag each headline into the site's categories by keyword,
+   and cache the result in localStorage (keyed by the selected source set) so
+   a page refresh doesn't re-hit the network every time. A visible "Refresh
+   now" button forces a fresh pull, and the feed also auto-refreshes in the
+   background every 5 minutes. Category chips filter the cached pool
+   client-side; changing the Sources selection triggers a new GDELT query
+   scoped to just those sources.
 
    GDELT's DOC API is built for server-to-server use and does not reliably send
    Access-Control-Allow-Origin headers back to browsers, so a bare fetch() to it
@@ -345,27 +363,36 @@
    still requires the page to be served over http(s); a file:// origin blocks
    fetch() the same way it blocks the FIRMS/incident calls below. */
 (function(){
-  /* Cached per time-range (24/48/72/168h), not as one shared pool. GDELT's
-     250-record cap on a single query gets exhausted by these 8 outlets'
-     publishing volume well within 48h, so filtering a single 7-day fetch
-     client-side left nothing older in the pool for the wider ranges to
-     reveal -- 48h/3d/1wk all showed identical counts. Each range now runs
-     its own GDELT query scoped to that exact window instead. */
-  const CACHE_KEY_PREFIX='newsradar_news_cache_v2_';
-  const CACHE_TTL_MS=15*60*1000; // treat cache as "fresh enough" for 15 minutes
+  const CACHE_KEY_PREFIX='newsradar_news_cache_v3_';
+  const CACHE_TTL_MS=5*60*1000; // treat cache as "fresh enough" for 5 minutes; also the auto-refresh interval
   /* GDELT's DOC API rejects overly-long query strings ("Your query was too
-     short or too long") -- the original 17-domain OR-clause plus a
-     sourcecountry filter exceeded that limit. Trimmed to the highest-traffic
-     AU outlets and dropped the (redundant, since domains already scope this
-     to Australian sources) sourcecountry clause to stay well under it. */
-  const AU_DOMAINS=['abc.net.au','9news.com.au','news.com.au','smh.com.au',
-    'sbs.com.au','7news.com.au','theguardian.com','insurancenews.com.au'];
+     short or too long") -- an earlier 17-domain OR-clause plus a
+     sourcecountry filter exceeded that limit. Kept to the highest-traffic AU
+     outlets (plus Al Jazeera for World) to stay well under it, even with all
+     sources selected. */
+  const ALL_SOURCES=[
+    {domain:'abc.net.au',label:'ABC News'},
+    {domain:'9news.com.au',label:'9News'},
+    {domain:'news.com.au',label:'news.com.au'},
+    {domain:'smh.com.au',label:'Sydney Morning Herald'},
+    {domain:'sbs.com.au',label:'SBS News'},
+    {domain:'7news.com.au',label:'7NEWS'},
+    {domain:'theguardian.com',label:'The Guardian AU'},
+    {domain:'insurancenews.com.au',label:'insuranceNEWS'},
+    {domain:'aljazeera.com',label:'Al Jazeera (World)'}
+  ];
+  /* Dedicated source for World-tagged coverage -- see the Al Jazeera handling
+     below in the article loop, which exempts this domain from the
+     AU-relevance gate applied to everyone else's world/uncategorised
+     stories, so genuine global news still has a reliable home here. */
+  const WORLD_DOMAIN='aljazeera.com';
   const CAT_KEYWORDS={
     insurance:['insur','claim','afca','premium','policyholder','underwrit','icaustralia','insurance council'],
     fire:['house fire','home fire','building fire','structure fire','fire kills','blaze kills','fireplace'],
     flood:['flood','storm','cyclone','deluge','rainfall warning','severe weather','hail'],
     bushfire:['bushfire','wildfire','grassfire','hazard reduction','fire ban','fire danger'],
-    politics:['politic','parliament','minister','senator',' mp ','election','federal government','prime minister','premier'],
+    politics:['politic','parliament','minister','senator',' mp ','election','federal government','prime minister','premier',
+      'strike','walkout','industrial action','protest','union','ferry','train delay','bus strike','commuter'],
     economy:['econom','inflation','rba','interest rate','fuel price','cost of living','super fund','budget','market'],
     crime:['polic','stabb','arrest','court','charged','shooting','crime','jail','sentenc'],
     health:['health','hospital','virus','flu','disease','medicine','vaccine','bird flu','pbs'],
@@ -373,15 +400,60 @@
     world:['iran','ukraine','gaza','israel','china','white house','united nations','trump','war']
   };
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
-    politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World'};
-  const AU_RELEVANCE=/australia|australian|aussie/i;
+    politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
+  const AU_RELEVANCE=/australia|australian|aussie|sydney|melbourne|brisbane|perth|adelaide|canberra|hobart|darwin|queensland|tasmania|\bnsw\b|\bqld\b|\bnt\b/i;
+  /* Lifestyle/fluff content (recipes, celebrity gossip, horoscopes, TV
+     recaps) shows up because GDELT's domain scoping pulls every section of
+     these outlets, not just hard news. Dropped outright regardless of
+     category match -- there's no "Recipes" chip a user would want these
+     surfaced under. */
+  const EXCLUDE_KEYWORDS=/\brecipe|\bcook(ing|book)?\b|celebrity|horoscope|zodiac|star sign|tv recap|box office|red carpet|masterchef|married at first sight|\bmafs\b|reality tv|wordle|crossword/i;
 
   const feed=document.getElementById('feed'),empty=document.getElementById('empty'),
         shown=document.getElementById('shown'),total=document.getElementById('total'),
         cacheNote=document.getElementById('cacheNote'),refreshBtn=document.getElementById('newsRefresh'),
-        catChips=document.querySelectorAll('#filters .chip'),timeChips=document.querySelectorAll('#timeFilters .chip');
+        catChips=document.querySelectorAll('#filters .chip'),
+        sourceList=document.getElementById('sourceList'),sourceSummaryCount=document.getElementById('sourceSummaryCount'),
+        sourceDropdown=document.getElementById('sourceDropdown'),sourceSelectAllBtn=document.getElementById('sourceSelectAll'),
+        sourceApplyBtn=document.getElementById('sourceApply');
 
-  let currentCat='all',currentHours=24,currentArticles=null;
+  let currentCat='all',currentArticles=null;
+
+  const SOURCES_KEY='newsradar_sources_v1';
+  function loadSelectedSources(){
+    try{
+      const raw=localStorage.getItem(SOURCES_KEY);
+      if(!raw)return ALL_SOURCES.map(s=>s.domain);
+      const parsed=JSON.parse(raw);
+      const valid=parsed.filter(d=>ALL_SOURCES.some(s=>s.domain===d));
+      return valid.length?valid:ALL_SOURCES.map(s=>s.domain);
+    }catch(e){return ALL_SOURCES.map(s=>s.domain);}
+  }
+  function saveSelectedSources(list){try{localStorage.setItem(SOURCES_KEY,JSON.stringify(list));}catch(e){}}
+  let selectedSources=loadSelectedSources();
+
+  function renderSourceList(){
+    sourceList.innerHTML=ALL_SOURCES.map(s=>
+      '<label><input type="checkbox" value="'+s.domain+'"'+(selectedSources.includes(s.domain)?' checked':'')+'> '+s.label+'</label>'
+    ).join('');
+    sourceSummaryCount.textContent='('+selectedSources.length+'/'+ALL_SOURCES.length+')';
+  }
+  renderSourceList();
+  sourceSelectAllBtn.addEventListener('click',()=>{
+    sourceList.querySelectorAll('input[type="checkbox"]').forEach(cb=>{cb.checked=true;});
+  });
+  sourceApplyBtn.addEventListener('click',()=>{
+    const checked=[...sourceList.querySelectorAll('input[type="checkbox"]:checked')].map(cb=>cb.value);
+    if(!checked.length){alert('Select at least one source.');return;}
+    selectedSources=checked;
+    saveSelectedSources(selectedSources);
+    sourceSummaryCount.textContent='('+selectedSources.length+'/'+ALL_SOURCES.length+')';
+    sourceDropdown.removeAttribute('open');
+    loadNews(true);
+  });
+  document.addEventListener('click',(e)=>{
+    if(sourceDropdown.hasAttribute('open')&&!sourceDropdown.contains(e.target))sourceDropdown.removeAttribute('open');
+  });
 
   function classify(title){
     const t=title.toLowerCase();const cats=[];
@@ -392,8 +464,9 @@
     if(!s||s.length<15)return null;
     return Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(9,11),+s.slice(11,13),+s.slice(13,15));
   }
-  function readCache(hours){try{const raw=localStorage.getItem(CACHE_KEY_PREFIX+hours);return raw?JSON.parse(raw):null;}catch(e){return null;}}
-  function writeCache(hours,articles){try{localStorage.setItem(CACHE_KEY_PREFIX+hours,JSON.stringify({fetchedAt:Date.now(),articles}));}catch(e){}}
+  function cacheKey(){return CACHE_KEY_PREFIX+selectedSources.slice().sort().join('_');}
+  function readCache(){try{const raw=localStorage.getItem(cacheKey());return raw?JSON.parse(raw):null;}catch(e){return null;}}
+  function writeCache(articles){try{localStorage.setItem(cacheKey(),JSON.stringify({fetchedAt:Date.now(),articles}));}catch(e){}}
   function agoText(ms){const h=(Date.now()-ms)/3600000;if(h<1)return Math.max(1,Math.round(h*60))+'m ago';if(h<24)return Math.round(h)+'h ago';return Math.round(h/24)+'d ago';}
 
   /* Routes tried in order until one returns data.
@@ -424,13 +497,14 @@
     }finally{clearTimeout(timer);}
   }
 
-  async function fetchGdelt(hours){
-    const domainClause='('+AU_DOMAINS.map(d=>'domain:'+d).join(' OR ')+')';
+  async function fetchGdelt(){
+    const domainClause='('+selectedSources.map(d=>'domain:'+d).join(' OR ')+')';
     const query=domainClause;
     const gdeltUrl='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(query)+
-      '&mode=artlist&maxrecords=250&timespan='+hours+'h&format=json&sort=datedesc';
+      '&mode=artlist&maxrecords=250&timespan=24h&format=json&sort=datedesc';
+    const sourcesParam=encodeURIComponent(selectedSources.join(','));
     const GDELT_ROUTES=[
-      ...SAME_ORIGIN_ROUTES.map(r=>r+'?hours='+hours),
+      ...SAME_ORIGIN_ROUTES.map(r=>r+'?sources='+sourcesParam),
       gdeltUrl,
       'https://api.allorigins.win/raw?url='+encodeURIComponent(gdeltUrl),
       'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(gdeltUrl)
@@ -445,15 +519,25 @@
           const pubMs=parseGdeltDate(a.seendate);
           if(!pubMs)return;
           const ageHours=(Date.now()-pubMs)/3600000;
-          if(ageHours<0||ageHours>hours)return;
+          if(ageHours<0||ageHours>24)return;
+          if(EXCLUDE_KEYWORDS.test(a.title))return; // recipes, celebrity gossip, horoscopes etc -- not news
           const cats=classify(a.title);
-          /* Every article here comes from an Australian outlet, but that
-             doesn't mean the story itself is about Australia -- a purely
-             international story (e.g. "US strikes Iran") only earns the
-             generic "world" tag with no Australian angle. Drop those unless
-             the headline actually mentions Australia or matches some other
-             (domestic) category too. */
-          if(cats.length===1&&cats[0]==='world'&&!AU_RELEVANCE.test(a.title))return;
+          const isWorldSource=(a.domain||'').includes(WORLD_DOMAIN);
+          if(isWorldSource){
+            /* Al Jazeera is our dedicated World source -- always keep and
+               tag it World regardless of keyword matches, exempt from the
+               AU-relevance gate below (that's the whole point of it). */
+            if(!cats.includes('world'))cats.push('world');
+          }else{
+            /* Every other article comes from an Australian outlet, but that
+               doesn't mean the story itself is about Australia or anything
+               substantive -- a purely international story (e.g. "US strikes
+               Iran") only earns the generic "world" tag, and lots of filler
+               matches no category at all. Drop both unless the headline
+               actually mentions Australia (or a state/city) or matches some
+               other real category too. */
+            if((cats.length===0||(cats.length===1&&cats[0]==='world'))&&!AU_RELEVANCE.test(a.title))return;
+          }
           out.push({title:a.title,url:a.url,domain:a.domain||'',pubMs,cats});
         });
         return out;
@@ -478,7 +562,11 @@
     feed.querySelectorAll('.item').forEach(el=>el.remove());
     visible.forEach(a=>{
       const el=document.createElement('div');el.className='item';el.dataset.cat=a.cats.join(' ');
-      const tagHtml=(a.cats.length?a.cats:['world']).slice(0,3).map(c=>'<span class="t'+(c==='insurance'?' ins':'')+'">'+(CAT_LABEL[c]||c)+'</span>').join('');
+      /* Articles that match none of CAT_KEYWORDS fall back to a "General"
+         display tag -- they used to default to "World", which visually
+         inflated the World tag on cards that had nothing to do with it and
+         didn't match the World chip's actual count. */
+      const tagHtml=(a.cats.length?a.cats:['general']).slice(0,3).map(c=>'<span class="t'+(c==='insurance'?' ins':'')+'">'+(CAT_LABEL[c]||c)+'</span>').join('');
       el.innerHTML='<div class="bar"></div><div class="body">'+
         '<div class="tags">'+tagHtml+'</div>'+
         '<h4><a class="headline-link" href="'+a.url+'" target="_blank" rel="noopener">'+a.title+'</a></h4>'+
@@ -493,21 +581,21 @@
 
   function setCacheNote(text,stale){cacheNote.textContent=text;cacheNote.classList.toggle('stale',!!stale);}
 
-  async function loadNews(hours,force){
-    const cached=readCache(hours);
+  async function loadNews(force){
+    const cached=readCache();
     if(!force&&cached&&(Date.now()-cached.fetchedAt<CACHE_TTL_MS)){
       currentArticles=cached.articles;
-      setCacheNote('Showing cached results from '+agoText(cached.fetchedAt)+' · auto-refreshes every 15 min');
+      setCacheNote('Showing cached results from '+agoText(cached.fetchedAt)+' · auto-refreshes every 5 min');
       applyFilters();
       return;
     }
     refreshBtn.classList.add('loading');refreshBtn.textContent='⏳ Refreshing…';
     setCacheNote('Fetching the latest Australian headlines…');
     try{
-      const articles=await fetchGdelt(hours);
-      writeCache(hours,articles);
+      const articles=await fetchGdelt();
+      writeCache(articles);
       currentArticles=articles;
-      setCacheNote('Live · '+articles.length+' articles pulled just now (updates cached ~15 min)');
+      setCacheNote('Live · '+articles.length+' articles pulled just now (updates cached ~5 min)');
       applyFilters();
     }catch(err){
       console.warn('Live news fetch failed:',err);
@@ -527,10 +615,10 @@
   }
 
   catChips.forEach(ch=>ch.addEventListener('click',()=>{catChips.forEach(c=>c.classList.remove('active'));ch.classList.add('active');currentCat=ch.dataset.cat;applyFilters();}));
-  timeChips.forEach(ch=>ch.addEventListener('click',()=>{timeChips.forEach(c=>c.classList.remove('active'));ch.classList.add('active');currentHours=+ch.dataset.hours;loadNews(currentHours,false);}));
-  refreshBtn.addEventListener('click',()=>loadNews(currentHours,true));
+  refreshBtn.addEventListener('click',()=>loadNews(true));
 
-  loadNews(currentHours,false);
+  loadNews(false);
+  setInterval(()=>loadNews(true),CACHE_TTL_MS); // background auto-refresh every 5 min
 })();
 
 /* ============ MAP ============ */
