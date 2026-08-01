@@ -12,8 +12,6 @@
      passed through as ?url=. See index_updated_abc_emergency_map.html's
      GDELT_ROUTES for the client side of this.
    - Everything else falls through to the static assets binding. */
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 /* GDELT's DOC API rejects overly-long query strings ("Your query was too
    short or too long") -- the original 17-domain OR-clause plus a
    sourcecountry filter exceeded that limit. Trimmed to the highest-traffic
@@ -35,16 +33,19 @@ async function handleGdelt(request) {
   const requested = Number(new URL(request.url).searchParams.get('hours'));
   const hours = ALLOWED_HOURS.includes(requested) ? requested : 24;
   const target = buildGdeltUrl(hours);
+  /* Previously this waited 5.2s and retried once on a 429 before responding,
+     to absorb GDELT's rate limit transparently. In practice that pushed the
+     total request time past the client's own timeout when GDELT was also
+     slow to answer, and the browser aborted the request outright (a wasted,
+     silent failure that's worse than just returning the 429 quickly). A
+     single bounded-timeout attempt is more reliable: if GDELT is rate
+     limiting, the browser sees a fast 429 and the client's own route
+     fallback / manual refresh handles it, rather than the worker holding the
+     connection open and risking a client-side abort. */
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
-    let upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' } });
-    /* GDELT enforces a strict "one request every 5 seconds" limit that's easy
-       to hit from a shared edge IP pool even under light use from this site
-       alone. A single backoff-and-retry absorbs that transparently instead of
-       surfacing a 429 to the browser. */
-    if (upstream.status === 429) {
-      await sleep(5200);
-      upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' } });
-    }
+    const upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' }, signal: ctrl.signal });
     const body = await upstream.text();
     return new Response(body, {
       status: upstream.status,
@@ -55,6 +56,8 @@ async function handleGdelt(request) {
     });
   } catch (err) {
     return new Response('Upstream fetch failed: ' + err.message, { status: 502 });
+  } finally {
+    clearTimeout(timer);
   }
 }
 
