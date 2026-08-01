@@ -7,7 +7,7 @@
    blocked exactly like a direct cross-origin call would. This function
    fetches that URL server-side (Netlify's infrastructure, not the visitor's
    network) and relays the response back. */
-exports.handler = async function () {
+exports.handler = async function (event) {
   /* GDELT's DOC API rejects overly-long query strings ("Your query was too
      short or too long") -- the original 17-domain OR-clause plus a
      sourcecountry filter exceeded that limit. Trimmed to the highest-traffic
@@ -15,10 +15,13 @@ exports.handler = async function () {
      to Australian sources) sourcecountry clause to stay well under it. */
   const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
     'sbs.com.au', '7news.com.au', 'theguardian.com', 'insurancenews.com.au'];
+  const ALLOWED_HOURS = [24, 48, 72, 168];
+  const requested = Number((event.queryStringParameters || {}).hours);
+  const hours = ALLOWED_HOURS.includes(requested) ? requested : 24;
   const domainClause = '(' + AU_DOMAINS.map((d) => 'domain:' + d).join(' OR ') + ')';
   const query = domainClause;
   const target = 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent(query) +
-    '&mode=artlist&maxrecords=250&timespan=7d&format=json&sort=datedesc';
+    '&mode=artlist&maxrecords=250&timespan=' + hours + 'h&format=json&sort=datedesc';
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   try {
     let upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' } });

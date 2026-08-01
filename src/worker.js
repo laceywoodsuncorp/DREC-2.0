@@ -22,15 +22,19 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
   'sbs.com.au', '7news.com.au', 'theguardian.com', 'insurancenews.com.au'];
 
-function buildGdeltUrl() {
+const ALLOWED_HOURS = [24, 48, 72, 168];
+
+function buildGdeltUrl(hours) {
   const domainClause = '(' + AU_DOMAINS.map((d) => 'domain:' + d).join(' OR ') + ')';
   const query = domainClause;
   return 'https://api.gdeltproject.org/api/v2/doc/doc?query=' + encodeURIComponent(query) +
-    '&mode=artlist&maxrecords=250&timespan=7d&format=json&sort=datedesc';
+    '&mode=artlist&maxrecords=250&timespan=' + hours + 'h&format=json&sort=datedesc';
 }
 
-async function handleGdelt() {
-  const target = buildGdeltUrl();
+async function handleGdelt(request) {
+  const requested = Number(new URL(request.url).searchParams.get('hours'));
+  const hours = ALLOWED_HOURS.includes(requested) ? requested : 24;
+  const target = buildGdeltUrl(hours);
   try {
     let upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' } });
     /* GDELT enforces a strict "one request every 5 seconds" limit that's easy
@@ -59,7 +63,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/gdelt') {
-      return handleGdelt();
+      return handleGdelt(request);
     }
 
     if (url.pathname === '/') {
