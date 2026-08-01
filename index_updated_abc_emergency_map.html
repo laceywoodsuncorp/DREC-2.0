@@ -387,15 +387,19 @@
   function agoText(ms){const h=(Date.now()-ms)/3600000;if(h<1)return Math.max(1,Math.round(h*60))+'m ago';if(h<24)return Math.round(h)+'h ago';return Math.round(h/24)+'d ago';}
 
   /* Routes tried in order until one returns data.
-     1) Same-origin Netlify function (netlify/functions/gdelt.js) — the only
-        route that reliably works when a visitor is behind a corporate
-        firewall that blocks public CORS-proxy domains, since the outbound
-        call to GDELT happens from Netlify's servers, not the visitor's
-        network; from the browser's point of view this is same-origin.
-     2) Direct — works whenever GDELT does send permissive CORS headers.
-     3-4) Public CORS proxies — best-effort fallback for hosts without the
-        Netlify function (e.g. a plain static host). */
+     1-2) Same-origin serverless functions (functions/api/gdelt.js for
+        Cloudflare Pages, netlify/functions/gdelt.js for Netlify) — whichever
+        platform this is actually deployed on serves its own route and the
+        other 404s harmlessly. These are the only routes that reliably work
+        when a visitor is behind a corporate firewall that blocks public
+        CORS-proxy domains, since the outbound call to GDELT happens from the
+        host's servers, not the visitor's network; from the browser's point
+        of view this is same-origin.
+     3) Direct — works whenever GDELT does send permissive CORS headers.
+     4-5) Public CORS proxies — best-effort fallback for hosts without either
+        serverless function (e.g. a plain static host). */
   const GDELT_ROUTES=[
+    url=>'/api/gdelt?url='+encodeURIComponent(url),
     url=>'/.netlify/functions/gdelt?url='+encodeURIComponent(url),
     url=>url,
     url=>'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
