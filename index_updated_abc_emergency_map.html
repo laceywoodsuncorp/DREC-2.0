@@ -31,6 +31,10 @@
   header .meta{max-width:1280px;margin:6px auto 0;font-size:.82rem;opacity:.8}
 
   main{max-width:1280px;margin:0 auto;padding:26px 24px 60px}
+  .fact-tile{margin-bottom:24px}
+  .fact-body{padding:16px 24px 20px;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+  .fact-town{font-weight:800;color:var(--heritage-green);font-size:1.02rem;white-space:nowrap}
+  .fact-text{color:#3c4a4a;font-size:.9rem;line-height:1.55;flex:1 1 320px}
   .layout{display:grid;grid-template-columns:1.9fr 1fr;gap:24px;align-items:stretch}
   @media(max-width:940px){.layout{grid-template-columns:1fr}}
   .col-left{display:flex;flex-direction:column;gap:24px;min-width:0}
@@ -174,6 +178,17 @@
 </header>
 
 <main>
+
+<section class="tile fact-tile">
+  <div class="tile-head">
+    <h2>🏘️ Aussie Town Fact of the Day</h2>
+  </div>
+  <div class="fact-body">
+    <div class="fact-town" id="factTown"></div>
+    <div class="fact-text" id="factText"></div>
+  </div>
+</section>
+
 <div class="layout">
 
   <!-- ================= LEFT COLUMN ================= -->
@@ -562,6 +577,39 @@
   setInterval(()=>loadNews(true),CACHE_TTL_MS); // background auto-refresh every 10 min
 })();
 
+/* ============ AUSSIE TOWN FACT OF THE DAY ============
+   A small curated set of real, verified facts about Australian towns --
+   deliberately excluding the state/territory capitals, since "learn
+   something about a country town you've never heard of" is the point.
+   Picked deterministically from the date (day-of-year mod list length) so
+   it changes once a day with no server, no API, and nothing that can fail. */
+const TOWN_FACTS=[
+  {town:'Wycheproof, VIC',fact:'Its main street doubles as a level crossing — Wycheproof is the only town in Australia where a train still runs straight down the middle of the main street.'},
+  {town:'Coober Pedy, SA',fact:'The opal capital of the world, where many locals live underground in "dugout" homes — complete with churches and even a golf course — to escape 40°C+ desert heat.'},
+  {town:'Barcaldine, QLD',fact:'The "Tree of Knowledge", where striking shearers gathered in 1891, is regarded as the birthplace of the Australian Labor Party.'},
+  {town:'Tenterfield, NSW',fact:'Sir Henry Parkes delivered his famous 1889 "Tenterfield Oration" here — the speech that kick-started the push for Australian Federation.'},
+  {town:'Marree, SA',fact:'Once nicknamed "Little Asia", this outback junction town was the hub of Australia\'s 19th-century camel trade, run by Afghan cameleers who built some of the country\'s earliest mosques.'},
+  {town:'Broken Hill, NSW',fact:'Home of the School of the Air, which has broadcast lessons to children scattered across the outback since 1956.'},
+  {town:'Lightning Ridge, NSW',fact:'The only place on Earth where black opal — the rarest opal variety — is found in commercial quantities.'},
+  {town:'Silverton, NSW',fact:'A near-ghost town of under 50 people that\'s been the backdrop for dozens of films, including Mad Max 2.'},
+  {town:'Esperance, WA',fact:'In 1979, after NASA\'s Skylab space station broke up and rained debris across the shire, the local council issued NASA a $400 littering fine — finally paid, as a joke, by a US radio DJ 30 years later.'},
+  {town:'Queenstown, TAS',fact:'Home to the only senior football oval in Australia surfaced entirely in crushed gravel instead of grass — a legacy of mining-era pollution that made it impossible to grow turf.'},
+  {town:'Humpty Doo, NT',fact:'Greets visitors with a giant boxing-crocodile statue and sits amid working buffalo and crocodile farms.'},
+  {town:'Kingston SE, SA',fact:'Home to "Larry the Lobster", a giant fibreglass crayfish celebrating the town\'s rock-lobster industry.'},
+  {town:'Nimbin, NSW',fact:'Transformed into a hub of Australia\'s counterculture movement after the 1973 Aquarius Festival.'},
+  {town:'Beechworth, VIC',fact:'One of Australia\'s best-preserved gold-rush towns; bushranger Ned Kelly stood trial in its 1858 courthouse.'},
+  {town:'Longreach, QLD',fact:'Birthplace of Qantas, one of the world\'s oldest continuously operating airlines, founded here in 1920.'},
+  {town:'Birdsville, QLD',fact:'A town of about 100 people that swells to thousands each September for the famous Birdsville Races.'},
+  {town:'Yackandandah, VIC',fact:'A heritage-listed 1850s gold-rush town and home to one of Australia\'s first community-led pushes to run entirely on renewable energy.'},
+  {town:'Cabramurra, NSW',fact:'Australia\'s highest town at over 1,480m above sea level, built to house workers on the Snowy Mountains Hydro-Electric Scheme.'}
+];
+(function(){
+  const dayOfYear=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/86400000);
+  const pick=TOWN_FACTS[dayOfYear%TOWN_FACTS.length];
+  const townEl=document.getElementById('factTown'),textEl=document.getElementById('factText');
+  if(townEl&&textEl){townEl.textContent=pick.town;textEl.textContent=pick.fact;}
+})();
+
 /* ============ MAP ============ */
 /* The map only shows NASA FIRMS fire points now — no satellite/population/HBASE/
    borders overlays — on an OpenStreetMap base layer so town and street names are
@@ -589,10 +637,16 @@ const firmsStatusEl=document.getElementById('firmsStatus');
 let firmsLayer=null;
 /* Smooth red -> green gradient by hours-since-detection (0h = red, FIRMS_DAYS*24h = green),
    instead of the old 4-bucket colour scheme, so the map reads as a continuous timeline
-   rather than a handful of hard steps. */
+   rather than a handful of hard steps. A plain linear scale over 5 days compresses
+   almost the whole "just detected" -> "several hours old" range into a sliver near
+   hue 0, so a fire spotted 10 minutes ago and one from 6 hours ago both read as
+   near-identical deep red. Taking the square root of the elapsed-time fraction before
+   mapping it to hue front-loads much more of the red->green range onto the first day,
+   so early hours actually move the colour visibly, while it still reaches green by the
+   full 5-day window. */
 function fireColour(h){
   const t=Math.max(0,Math.min(1,h/(FIRMS_DAYS*24)));
-  const hue=t*120; // 0=red -> 120=green
+  const hue=Math.sqrt(t)*120; // 0=red -> 120=green, front-loaded onto the first day
   return 'hsl('+hue.toFixed(0)+',85%,45%)';
 }
 /* Fades older detections out (down to a floor so they're never invisible) so the most
