@@ -29,12 +29,9 @@
   header h1{font-size:1.9rem;font-weight:700;letter-spacing:-.4px}
   header p.tag{max-width:1280px;margin:8px auto 0;opacity:.92;font-size:1rem}
   header .meta{max-width:1280px;margin:6px auto 0;font-size:.82rem;opacity:.8}
+  header .meta b{opacity:1;font-weight:700}
 
   main{max-width:1280px;margin:0 auto;padding:26px 24px 60px}
-  .fact-tile{margin-bottom:24px}
-  .fact-body{padding:16px 24px 20px;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
-  .fact-town{font-weight:800;color:var(--heritage-green);font-size:1.02rem;white-space:nowrap}
-  .fact-text{color:#3c4a4a;font-size:.9rem;line-height:1.55;flex:1 1 320px}
   .layout{display:grid;grid-template-columns:1.9fr 1fr;gap:24px;align-items:stretch}
   @media(max-width:940px){.layout{grid-template-columns:1fr}}
   .col-left{display:flex;flex-direction:column;gap:24px;min-width:0}
@@ -175,19 +172,10 @@
   <div class="sun"></div>
   <div class="brand"><h1>News Radar</h1></div>
   <p class="tag">Australian news · active fire mapping · live incident feed · town census explorer</p>
+  <p class="meta">🏘️ <b id="factTown"></b> — <span id="factText"></span></p>
 </header>
 
 <main>
-
-<section class="tile fact-tile">
-  <div class="tile-head">
-    <h2>🏘️ Aussie Town Fact of the Day</h2>
-  </div>
-  <div class="fact-body">
-    <div class="fact-town" id="factTown"></div>
-    <div class="fact-text" id="factText"></div>
-  </div>
-</section>
 
 <div class="layout">
 
