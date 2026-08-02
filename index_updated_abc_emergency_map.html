@@ -32,13 +32,26 @@
   header .meta b{opacity:1;font-weight:700}
 
   main{max-width:1280px;margin:0 auto;padding:26px 24px 60px}
-  .layout{display:grid;grid-template-columns:1.9fr 1fr;gap:24px;align-items:stretch}
-  @media(max-width:940px){.layout{grid-template-columns:1fr}}
-  .col-left{display:flex;flex-direction:column;gap:24px;min-width:0}
-  .col-right{display:flex;flex-direction:column;gap:24px}
-  @media(max-width:940px){.col-right .tile{min-height:80vh}}
+  /* A real 2x2 grid (not two independently-stacked flex columns) so each tile
+     shares a row track with its counterpart in the other column and both
+     stretch to match -- News lines up with CensusAtlas, and the fire map
+     lines up with the incidents tile, instead of each column growing to
+     whatever height its own content happens to need. */
+  .layout{display:grid;grid-template-columns:1.9fr 1fr;grid-template-rows:auto auto;gap:24px;align-items:stretch}
+  .tile-news{grid-column:1;grid-row:1}
+  .tile-firemap{grid-column:1;grid-row:2}
+  .tile-census{grid-column:2;grid-row:1}
+  .tile-incidents{grid-column:2;grid-row:2}
+  @media(max-width:940px){
+    .layout{grid-template-columns:1fr}
+    .tile-news{grid-column:1;grid-row:1}
+    .tile-firemap{grid-column:1;grid-row:2}
+    .tile-census{grid-column:1;grid-row:3}
+    .tile-incidents{grid-column:1;grid-row:4}
+    .tile-census,.tile-incidents{min-height:80vh}
+  }
 
-  .tile{background:var(--true-white);border-radius:18px;box-shadow:var(--shadow);border-top:8px solid var(--primary-yellow);overflow:hidden}
+  .tile{background:var(--true-white);border-radius:18px;box-shadow:var(--shadow);border-top:8px solid var(--primary-yellow);overflow:hidden;display:flex;flex-direction:column}
   .tile-head{padding:20px 24px 14px;border-bottom:1px solid #e7e9e6}
   .tile-head h2{color:var(--heritage-green);font-size:1.2rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .tile-head .src{font-size:.78rem;color:var(--neutral-green);margin-top:4px}
@@ -59,7 +72,7 @@
   .item a.headline-link{color:inherit;text-decoration:none}
   .item a.headline-link:hover{text-decoration:underline}
 
-  .feed{max-height:520px;overflow-y:auto;padding:6px 24px 18px}
+  .feed{flex:1;min-height:0;max-height:640px;overflow-y:auto;padding:6px 24px 18px}
   .feed::-webkit-scrollbar,.incident-feed::-webkit-scrollbar{width:10px}
   .feed::-webkit-scrollbar-track,.incident-feed::-webkit-scrollbar-track{background:var(--off-white);border-radius:10px}
   .feed::-webkit-scrollbar-thumb,.incident-feed::-webkit-scrollbar-thumb{background:var(--light-green);border-radius:10px}
@@ -78,7 +91,7 @@
   .src-pill{background:var(--heritage-green);color:#fff;padding:2px 8px;border-radius:6px;font-size:.7rem}
   .empty{padding:36px 10px;text-align:center;color:#5a6a6a;font-size:.9rem;display:none}
 
-  #map{height:500px;width:100%}
+  #map{flex:1;min-height:400px;width:100%}
   .map-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 24px;background:var(--off-white);border-bottom:1px solid #e7e9e6}
   .map-tools input{flex:1 1 220px;min-width:180px;padding:9px 12px;border:1px solid #cdd6d4;border-radius:8px;font-size:.85rem}
   .map-tools button{border:none;cursor:pointer;background:var(--neutral-green);color:#fff;font-weight:600;font-size:.82rem;padding:9px 16px;border-radius:8px}
@@ -89,7 +102,7 @@
   .legend .grp{display:flex;align-items:center;gap:6px}
   .legend .sw{width:14px;height:14px;border-radius:3px;display:inline-block}
 
-  .incident-feed{max-height:520px;overflow-y:auto;padding:6px 24px 18px}
+  .incident-feed{flex:1;min-height:0;max-height:640px;overflow-y:auto;padding:6px 24px 18px}
   .inc-empty{padding:30px 20px;text-align:center;color:#5a6a6a;font-size:.86rem;line-height:1.55}
   .inc-empty a{color:var(--neutral-green);font-weight:600}
   .state-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:14px 24px;background:var(--off-white);border-bottom:1px solid #e7e9e6}
@@ -122,7 +135,6 @@
   .firms-launch .cta{position:relative;z-index:1;display:inline-flex;align-items:center;gap:9px;background:var(--primary-yellow);color:#3a0d06;font-weight:800;font-size:1rem;text-decoration:none;padding:13px 24px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:.15s}
   .firms-launch .cta:hover{transform:translateY(-2px);box-shadow:0 9px 24px rgba(0,0,0,.45)}
   .firms-launch .sub-note{font-size:.74rem;opacity:.72;position:relative;z-index:1}
-  .col-right .tile{display:flex;flex-direction:column}
   .ca-fallback{padding:10px 20px;font-size:.74rem;color:#5a6a6a;background:#fff}
   .ca-fallback a{color:var(--neutral-green);font-weight:600}
   .town-search{display:flex;gap:8px;padding:16px 20px 6px;background:#fff}
@@ -179,11 +191,8 @@
 
 <div class="layout">
 
-  <!-- ================= LEFT COLUMN ================= -->
-  <div class="col-left">
-
     <!-- ===== NEWS TILE ===== -->
-    <section class="tile">
+    <section class="tile tile-news">
       <div class="tile-head">
         <h2>📡 Live News Feed</h2>
         <div class="src">Web/news search of Australian sources — ABC, 7NEWS, Nine, SBS, insuranceNEWS.com.au &amp; others · last 24 hours.</div>
@@ -231,7 +240,7 @@
     </section>
 
     <!-- ===== SATELLITE FIRE MAP ===== -->
-    <section class="tile">
+    <section class="tile tile-firemap">
       <div class="tile-head">
         <h2>🛰️ Active Fire Map — Australia</h2>
         <div class="src">NASA FIRMS active fire detections and NASA SEDAC population density, plotted on an OpenStreetMap street basemap so town and road names stay visible. Colour scales from red (just detected) to green (up to 5 days old), and older detections fade so the most recent fires stand out.</div>
@@ -256,13 +265,8 @@
       </div>
     </section>
 
-  </div>
-
-  <!-- ================= RIGHT COLUMN ================= -->
-  <div class="col-right">
-
     <!-- ===== TOWN / CENSUSATLAS TILE ===== -->
-    <section class="tile">
+    <section class="tile tile-census">
       <div class="tile-head">
         <h2>🏘️ Learn About a Town <span class="ca-badge">CensusAtlas</span></h2>
         <div class="src">Powered by <a href="https://censusatlas.au/" target="_blank" rel="noopener" style="color:var(--neutral-green)">CensusAtlas</a> — every suburb, town, council &amp; region across the 2011, 2016 &amp; 2021 ABS Census (CC BY 4.0).</div>
@@ -279,7 +283,7 @@
     </section>
 
     <!-- ===== STATE FIRE DEPARTMENT INCIDENTS ===== -->
-    <section class="tile">
+    <section class="tile tile-incidents">
       <div class="tile-head">
         <h2>🚒 State Fire Department Incidents</h2>
         <div class="src">Live nationwide via a unified feed, with direct NSW/QLD/SA/ACT government feeds as backup; the Severe Alerts tab pulls together Emergency Warning / evacuate-level incidents from whichever states are up. Any state without live data links straight through to its official current-incidents page. Switch tabs below.</div>
@@ -299,8 +303,6 @@
       <div class="incident-feed" id="incidentFeed"></div>
       <div class="status-note" id="incStatus">Attempting to load live feeds…</div>
     </section>
-
-  </div>
 
 </div>
 </main>
@@ -1002,8 +1004,18 @@ async function loadLive(){
   await loadFallbackFeeds();
   renderIncidents();
   updateTabCounts();
+  /* The map and the incidents tile share a grid row and stretch to match each
+     other's height, but Leaflet sizes its canvas from the map container's
+     actual pixel height at the moment it's told to -- which can be stale
+     once the incidents tile's async-loaded content changes how tall that
+     shared row ends up being. */
+  map.invalidateSize();
 }
 loadLive();
+/* Covers the same row-height-settling issue for the initial page-load pass
+   (fonts, images etc. finishing) and for the user resizing the window. */
+window.addEventListener('load',()=>map.invalidateSize());
+window.addEventListener('resize',()=>map.invalidateSize());
 
 </script>
 
