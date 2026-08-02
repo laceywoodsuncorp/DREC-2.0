@@ -345,7 +345,7 @@
    still requires the page to be served over http(s); a file:// origin blocks
    fetch() the same way it blocks the FIRMS/incident calls below. */
 (function(){
-  const CACHE_KEY_PREFIX='newsradar_news_cache_v5'; // bumped so cached pre-fix articles/dupes don't linger
+  const CACHE_KEY_PREFIX='newsradar_news_cache_v6'; // bumped so cached pre-fix articles/dupes don't linger
   const CACHE_TTL_MS=10*60*1000; // treat cache as "fresh enough" for 10 minutes; also the auto-refresh interval
   /* GDELT's DOC API rejects overly-long query strings ("Your query was too
      short or too long") -- an earlier 17-domain OR-clause plus a
@@ -386,11 +386,15 @@
      surfaced under. */
   const EXCLUDE_KEYWORDS=/\brecipe|\bcook(ing|book)?\b|celebrity|horoscope|zodiac|star sign|tv recap|box office|red carpet|masterchef|married at first sight|\bmafs\b|reality tv|wordle|crossword/i;
   /* Real house-fire headlines are worded too many different ways for a fixed
-     phrase list to keep up ("fire destroys home", "family dies in blaze",
-     "duplex gutted overnight") -- this regex catches "fire"/"blaze" appearing
-     near a dwelling/structure word (or near a death/destruction verb) in
-     either order, as a fallback alongside the CAT_KEYWORDS.fire phrase list. */
-  const FIRE_REGEX=/\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure|garage|shed|caravan)s?\b[^.]{0,25}\bfires?\b|\bfires?\b[^.]{0,25}\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure)s?\b|\bblaze\b[^.]{0,25}\b(kill|destroy|gut|raz|home|house|famil)/i;
+     phrase list to keep up -- e.g. "Twins escape, mum and boy rescued from
+     Melbourne fire" mentions neither a dwelling word nor "blaze", only a
+     rescue verb next to "fire". This regex catches "fire"/"blaze" appearing
+     near either a dwelling/structure word OR a rescue/casualty/damage verb,
+     in either order, as a fallback alongside the CAT_KEYWORDS.fire phrase
+     list. It's checked after CAT_KEYWORDS.bushfire in classify() below so a
+     genuine bushfire/wildfire story (which often also mentions evacuations
+     or deaths) doesn't get double-tagged as a house fire too. */
+  const FIRE_REGEX=/\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure|garage|shed|caravan)s?\b[^.]{0,25}\bfires?\b|\bfires?\b[^.]{0,25}\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure)s?\b|\b(fire|blaze)\b[^.]{0,40}\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescue\w*|escape\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke)\b|\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescue\w*|escape\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke)\b[^.]{0,40}\b(fire|blaze)\b/i;
 
   const feed=document.getElementById('feed'),empty=document.getElementById('empty'),
         shown=document.getElementById('shown'),total=document.getElementById('total'),
@@ -402,7 +406,7 @@
   function classify(title){
     const t=title.toLowerCase();const cats=[];
     Object.keys(CAT_KEYWORDS).forEach(k=>{if(CAT_KEYWORDS[k].some(kw=>t.includes(kw)))cats.push(k);});
-    if(!cats.includes('fire')&&FIRE_REGEX.test(t))cats.push('fire');
+    if(!cats.includes('fire')&&!cats.includes('bushfire')&&FIRE_REGEX.test(t))cats.push('fire');
     return cats;
   }
   function parseGdeltDate(s){ // "20260730T120000Z"
