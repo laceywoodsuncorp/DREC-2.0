@@ -236,7 +236,7 @@
     <section class="tile">
       <div class="tile-head">
         <h2>🛰️ Active Fire Map — Australia</h2>
-        <div class="src">NASA FIRMS active fire detections plotted on an OpenStreetMap street basemap, so town and road names stay visible. Colour scales from red (just detected) to green (up to 5 days old), and older detections fade so the most recent fires stand out.</div>
+        <div class="src">NASA FIRMS active fire detections and NASA SEDAC population density, plotted on an OpenStreetMap street basemap so town and road names stay visible. Colour scales from red (just detected) to green (up to 5 days old), and older detections fade so the most recent fires stand out.</div>
       </div>
       <div class="map-tools">
         <input id="firmsKey" type="text" value="04cfe71e54d1492e72d2db48ad74f4d5" placeholder="Paste your free NASA FIRMS MAP_KEY to load live fire detections…">
@@ -246,7 +246,11 @@
       </div>
       <div id="map"></div>
       <div class="legend">
-        <div class="grp"><b>Fires (time since detection):</b></div>
+        <div class="grp"><b>Population density:</b></div>
+        <div class="grp"><span class="sw" style="background:#ffffcc"></span>Low</div>
+        <div class="grp"><span class="sw" style="background:#fd8d3c"></span>Medium</div>
+        <div class="grp"><span class="sw" style="background:#bd0026"></span>High</div>
+        <div class="grp" style="margin-left:14px"><b>Fires (time since detection):</b></div>
         <div class="grp"><span class="sw" style="background:#ff0000"></span>Just detected</div>
         <div class="grp"><span class="sw" style="background:linear-gradient(90deg,#ff0000,#ffff00,#00b300);width:70px"></span>fading to green over ~5 days</div>
         <div class="grp"><span class="sw" style="background:#00b300"></span>~5 days old</div>
@@ -288,10 +292,11 @@
     <section class="tile">
       <div class="tile-head">
         <h2>🚒 State Fire Department Incidents</h2>
-        <div class="src">Live for NSW &amp; QLD; other states/territories link straight through to their official current-incidents page. Switch states with the tabs below.</div>
+        <div class="src">Live for NSW &amp; QLD; the Severe Alerts tab pulls together Emergency Warning / evacuate-level incidents from those two. Other states/territories link straight through to their official current-incidents page. Switch tabs below.</div>
         <div class="count"><b id="incCount">…</b> current incidents</div>
       </div>
       <div class="state-tabs" id="stateTabs">
+        <button class="state-tab" data-state="NATIONAL">🚨 Severe Alerts</button>
         <button class="state-tab active" data-state="NSW">NSW</button>
         <button class="state-tab" data-state="QLD">QLD</button>
         <button class="state-tab" data-state="VIC">VIC</button>
@@ -340,7 +345,7 @@
    still requires the page to be served over http(s); a file:// origin blocks
    fetch() the same way it blocks the FIRMS/incident calls below. */
 (function(){
-  const CACHE_KEY_PREFIX='newsradar_news_cache_v4';
+  const CACHE_KEY_PREFIX='newsradar_news_cache_v5'; // bumped so cached pre-fix articles/dupes don't linger
   const CACHE_TTL_MS=10*60*1000; // treat cache as "fresh enough" for 10 minutes; also the auto-refresh interval
   /* GDELT's DOC API rejects overly-long query strings ("Your query was too
      short or too long") -- an earlier 17-domain OR-clause plus a
@@ -357,7 +362,10 @@
   const WORLD_DOMAIN='aljazeera.com';
   const CAT_KEYWORDS={
     insurance:['insur','claim','afca','premium','policyholder','underwrit','icaustralia','insurance council'],
-    fire:['house fire','home fire','building fire','structure fire','fire kills','blaze kills','fireplace'],
+    fire:['house fire','home fire','building fire','structure fire','fire kills','blaze kills','fireplace',
+      'property fire','residential fire','unit fire','townhouse fire','duplex fire','granny flat fire',
+      'garage fire','shed fire','caravan fire','fire destroys','fire guts','blaze destroys','blaze guts',
+      'razed by fire','gutted by fire','fire rips through','fire tears through','house blaze','home blaze'],
     flood:['flood','storm','cyclone','deluge','rainfall warning','severe weather','hail'],
     bushfire:['bushfire','wildfire','grassfire','hazard reduction','fire ban','fire danger'],
     politics:['politic','parliament','minister','senator',' mp ','election','federal government','prime minister','premier',
@@ -377,6 +385,12 @@
      category match -- there's no "Recipes" chip a user would want these
      surfaced under. */
   const EXCLUDE_KEYWORDS=/\brecipe|\bcook(ing|book)?\b|celebrity|horoscope|zodiac|star sign|tv recap|box office|red carpet|masterchef|married at first sight|\bmafs\b|reality tv|wordle|crossword/i;
+  /* Real house-fire headlines are worded too many different ways for a fixed
+     phrase list to keep up ("fire destroys home", "family dies in blaze",
+     "duplex gutted overnight") -- this regex catches "fire"/"blaze" appearing
+     near a dwelling/structure word (or near a death/destruction verb) in
+     either order, as a fallback alongside the CAT_KEYWORDS.fire phrase list. */
+  const FIRE_REGEX=/\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure|garage|shed|caravan)s?\b[^.]{0,25}\bfires?\b|\bfires?\b[^.]{0,25}\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure)s?\b|\bblaze\b[^.]{0,25}\b(kill|destroy|gut|raz|home|house|famil)/i;
 
   const feed=document.getElementById('feed'),empty=document.getElementById('empty'),
         shown=document.getElementById('shown'),total=document.getElementById('total'),
@@ -388,6 +402,7 @@
   function classify(title){
     const t=title.toLowerCase();const cats=[];
     Object.keys(CAT_KEYWORDS).forEach(k=>{if(CAT_KEYWORDS[k].some(kw=>t.includes(kw)))cats.push(k);});
+    if(!cats.includes('fire')&&FIRE_REGEX.test(t))cats.push('fire');
     return cats;
   }
   function parseGdeltDate(s){ // "20260730T120000Z"
@@ -441,9 +456,16 @@
     for(const route of GDELT_ROUTES){
       try{
         const j=await fetchJsonWithTimeout(route,20000);
-        const seen=new Set();const out=[];
+        const seen=new Set();const seenTitles=new Set();const out=[];
         (j.articles||[]).forEach(a=>{
           if(!a.title||!a.url||seen.has(a.url))return;seen.add(a.url);
+          /* GDELT often returns the same story multiple times -- syndicated
+             copies across outlets, or the same outlet's own AMP/mirror URL --
+             so URL-only dedup lets identical headlines through repeatedly.
+             Normalise (lowercase, strip punctuation/whitespace) and dedup on
+             that too. */
+          const normTitle=a.title.trim().toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ');
+          if(seenTitles.has(normTitle))return;seenTitles.add(normTitle);
           const pubMs=parseGdeltDate(a.seendate);
           if(!pubMs)return;
           const ageHours=(Date.now()-pubMs)/3600000;
@@ -558,6 +580,10 @@
 const map=L.map('map',{minZoom:3,maxZoom:12}).setView([-25.6,134.3],4);
 const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:12});
 osm.addTo(map);
+/* Population density (NASA SEDAC GPW v4) back on as a semi-transparent overlay --
+   opacity kept low enough that OSM's street/town labels still read through it. */
+const popDensity=L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GPW_Population_Density_2020/default/2020-01-01/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png',{maxNativeZoom:7,maxZoom:12,opacity:0.5,attribution:'Population © NASA SEDAC GPW v4'});
+popDensity.addTo(map);
 /* ============ FIRMS ACTIVE FIRES — real detection POINTS via the FIRMS API ============
    The WMS-Time raster approach never registered a transaction on NASA's side (browser
    never successfully fetched a tile). Instead we pull the actual hotspot points from the
@@ -692,7 +718,35 @@ const seedIncidents={
   ]
 };
 function statusToCat(s){s=(s||'').toLowerCase();if(s.includes('emergency'))return 'Emergency Warning';if(s.includes('watch'))return 'Watch and Act';return 'Advice';}
+/* Aggregates Emergency Warning / evacuate-level incidents across every state
+   that has a live feed wired up (currently NSW & QLD) into one national view,
+   rather than users having to click through each state tab to check for the
+   most severe alerts. */
+function renderNational(){
+  incidentFeedEl.innerHTML='';
+  const liveStates=Object.keys(STATE_META).filter(s=>STATE_META[s].live);
+  const severe=[];
+  liveStates.forEach(st=>{
+    const list=(liveOk[st]&&incidentsByState[st].length)?incidentsByState[st]:seedIncidents[st];
+    list.forEach(i=>{if(statusToCat(i.status)==='Emergency Warning')severe.push(Object.assign({state:st},i));});
+  });
+  const otherStates=Object.keys(STATE_META).filter(s=>!STATE_META[s].live);
+  if(!severe.length){
+    incidentFeedEl.innerHTML='<div class="inc-empty">No Emergency Warning / evacuate-level alerts currently active in '+liveStates.join(' or ')+' (the states with a live feed here).<br>Check other states/territories directly: '+
+      otherStates.map(s=>'<a href="'+STATE_META[s].officialUrl+'" target="_blank" rel="noopener">'+s+'</a>').join(' · ')+'</div>';
+  }else{
+    severe.forEach(i=>{
+      const el=document.createElement('div');el.className='inc';
+      el.innerHTML='<div class="dot" style="background:#c0392b"></div><div class="body"><h4>'+i.title+'</h4><p>'+(i.type||'')+' · Emergency Warning</p><div class="foot"><span class="state-pill" style="background:#0E7E74">'+i.state+'</span><span>'+(i.when||'')+'</span></div></div>';
+      incidentFeedEl.appendChild(el);
+    });
+  }
+  incCount.textContent=severe.length;
+  incStatus.style.display='block';
+  incStatus.textContent='⚠️ Aggregates Emergency Warning-level alerts from '+liveStates.join(' & ')+' only (the states with a live feed here) — other states/territories aren’t covered yet, check their tab for the official link.';
+}
 function renderIncidents(){
+  if(currentState==='NATIONAL'){renderNational();return;}
   const meta=STATE_META[currentState];
   incidentFeedEl.innerHTML='';
   if(!meta.live){
