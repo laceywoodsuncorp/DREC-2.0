@@ -38,28 +38,31 @@ function buildGdeltUrl() {
    served straight from that cache with no GDELT round-trip at all, and if a
    refresh is due but GDELT fails, the stale copy (up to 2h old) is served
    instead of a hard failure. GDELT only needs to succeed once every so often
-   for every visitor to get a fast, working feed. */
-const CACHE_URL = 'https://newsradar-internal-cache.example/gdelt';
-const FRESH_SECONDS = 600; // matches the client's own 10-minute refresh cadence
-const STALE_MAX_SECONDS = 7200; // how long a stale copy stays usable as an emergency fallback
+   for every visitor to get a fast, working feed.
+   Same shared-cache mechanism is reused below for /api/incidents, just
+   keyed on a different cache URL and TTLs -- parameterised rather than
+   duplicated. */
+const GDELT_CACHE_URL = 'https://newsradar-internal-cache.example/gdelt';
+const GDELT_FRESH_SECONDS = 600; // matches the client's own 10-minute refresh cadence
+const GDELT_STALE_MAX_SECONDS = 7200; // how long a stale copy stays usable as an emergency fallback
 
-async function readSharedCache() {
-  const cached = await caches.default.match(CACHE_URL);
+async function readSharedCache(cacheUrl) {
+  const cached = await caches.default.match(cacheUrl);
   if (!cached) return null;
   const fetchedAt = Number(cached.headers.get('X-Fetched-At') || 0);
   return { response: cached, ageSeconds: (Date.now() - fetchedAt) / 1000 };
 }
 
-async function writeSharedCache(bodyText, contentType) {
+async function writeSharedCache(cacheUrl, bodyText, contentType, staleMaxSeconds) {
   const stored = new Response(bodyText, {
     status: 200,
     headers: {
       'Content-Type': contentType || 'application/json',
-      'Cache-Control': 'public, max-age=' + STALE_MAX_SECONDS,
+      'Cache-Control': 'public, max-age=' + staleMaxSeconds,
       'X-Fetched-At': String(Date.now())
     }
   });
-  await caches.default.put(CACHE_URL, stored.clone());
+  await caches.default.put(cacheUrl, stored.clone());
   return stored;
 }
 
@@ -75,8 +78,8 @@ function respondFromCache(cached) {
 }
 
 async function handleGdelt() {
-  const cached = await readSharedCache();
-  if (cached && cached.ageSeconds < FRESH_SECONDS) {
+  const cached = await readSharedCache(GDELT_CACHE_URL);
+  if (cached && cached.ageSeconds < GDELT_FRESH_SECONDS) {
     return respondFromCache(cached);
   }
 
@@ -92,7 +95,7 @@ async function handleGdelt() {
     const upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' }, signal: ctrl.signal });
     if (upstream.ok) {
       const body = await upstream.text();
-      const stored = await writeSharedCache(body, upstream.headers.get('content-type'));
+      const stored = await writeSharedCache(GDELT_CACHE_URL, body, upstream.headers.get('content-type'), GDELT_STALE_MAX_SECONDS);
       return new Response(stored.body, {
         status: 200,
         headers: { 'Content-Type': stored.headers.get('content-type'), 'Cache-Control': 'no-store' }
@@ -100,14 +103,70 @@ async function handleGdelt() {
     }
     /* Non-OK (e.g. a 429) -- prefer serving a stale-but-usable cached copy
        over surfacing the failure, if one exists within the stale window. */
-    if (cached && cached.ageSeconds < STALE_MAX_SECONDS) return respondFromCache(cached);
+    if (cached && cached.ageSeconds < GDELT_STALE_MAX_SECONDS) return respondFromCache(cached);
     const body = await upstream.text();
     return new Response(body, {
       status: upstream.status,
       headers: { 'Content-Type': upstream.headers.get('content-type') || 'application/json', 'Cache-Control': 'no-store' }
     });
   } catch (err) {
-    if (cached && cached.ageSeconds < STALE_MAX_SECONDS) return respondFromCache(cached);
+    if (cached && cached.ageSeconds < GDELT_STALE_MAX_SECONDS) return respondFromCache(cached);
+    return new Response('Upstream fetch failed: ' + err.message, { status: 502 });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* /api/incidents proxies emergencyapi.com's unified incident feed (all 8
+   states/territories in one GeoJSON response). The API key is a Cloudflare
+   secret (env.EMERGENCY_API_KEY, set via `wrangler secret put`) -- it must
+   never reach the browser, since this static site has no other backend to
+   hide it in and anyone can view-source a public page. Cached for 3 minutes
+   (incidents change faster than news) with a 30-minute stale fallback, both
+   to keep the site fast and to go easy on the account's request quota since
+   every visitor would otherwise trigger its own upstream call. */
+const INCIDENTS_CACHE_URL = 'https://newsradar-internal-cache.example/incidents';
+const INCIDENTS_FRESH_SECONDS = 180;
+const INCIDENTS_STALE_MAX_SECONDS = 1800;
+const INCIDENTS_STATES = 'nsw,vic,qld,sa,wa,tas,nt,act';
+
+async function handleIncidents(env) {
+  if (!env.EMERGENCY_API_KEY) {
+    return new Response(JSON.stringify({ error: 'EMERGENCY_API_KEY secret not configured' }), {
+      status: 501,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+    });
+  }
+
+  const cached = await readSharedCache(INCIDENTS_CACHE_URL);
+  if (cached && cached.ageSeconds < INCIDENTS_FRESH_SECONDS) {
+    return respondFromCache(cached);
+  }
+
+  const target = 'https://emergencyapi.com/api/v1/incidents?state=' + INCIDENTS_STATES + '&limit=500';
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const upstream = await fetch(target, {
+      headers: { Authorization: 'Bearer ' + env.EMERGENCY_API_KEY },
+      signal: ctrl.signal
+    });
+    if (upstream.ok) {
+      const body = await upstream.text();
+      const stored = await writeSharedCache(INCIDENTS_CACHE_URL, body, upstream.headers.get('content-type'), INCIDENTS_STALE_MAX_SECONDS);
+      return new Response(stored.body, {
+        status: 200,
+        headers: { 'Content-Type': stored.headers.get('content-type'), 'Cache-Control': 'no-store' }
+      });
+    }
+    if (cached && cached.ageSeconds < INCIDENTS_STALE_MAX_SECONDS) return respondFromCache(cached);
+    const body = await upstream.text();
+    return new Response(body, {
+      status: upstream.status,
+      headers: { 'Content-Type': upstream.headers.get('content-type') || 'application/json', 'Cache-Control': 'no-store' }
+    });
+  } catch (err) {
+    if (cached && cached.ageSeconds < INCIDENTS_STALE_MAX_SECONDS) return respondFromCache(cached);
     return new Response('Upstream fetch failed: ' + err.message, { status: 502 });
   } finally {
     clearTimeout(timer);
@@ -120,6 +179,10 @@ export default {
 
     if (url.pathname === '/api/gdelt') {
       return handleGdelt();
+    }
+
+    if (url.pathname === '/api/incidents') {
+      return handleIncidents(env);
     }
 
     if (url.pathname === '/') {
