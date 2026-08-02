@@ -26,7 +26,6 @@
   header{background:linear-gradient(120deg,var(--light-green),var(--neutral-green) 60%,var(--heritage-green));color:var(--true-white);padding:34px 24px 30px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   header .sun{position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:var(--primary-yellow);opacity:.18}
   .brand{display:flex;align-items:center;gap:14px;max-width:1280px;margin:0 auto}
-  .brand-dot{width:44px;height:44px;border-radius:50%;background:var(--primary-yellow);box-shadow:0 0 0 6px rgba(255,205,5,.25);flex-shrink:0}
   header h1{font-size:1.9rem;font-weight:700;letter-spacing:-.4px}
   header p.tag{max-width:1280px;margin:8px auto 0;opacity:.92;font-size:1rem}
   header .meta{max-width:1280px;margin:6px auto 0;font-size:.82rem;opacity:.8}
@@ -96,6 +95,7 @@
   .state-tab{border:none;cursor:pointer;font-size:.78rem;font-weight:700;padding:7px 14px;border-radius:999px;background:var(--true-white);color:var(--heritage-green);box-shadow:0 2px 6px rgba(0,67,70,.1);transition:.15s}
   .state-tab:hover{transform:translateY(-1px)}
   .state-tab.active{background:var(--neutral-green);color:var(--true-white)}
+  .state-tab .n{opacity:.75;font-weight:700;margin-left:2px}
   .inc{display:flex;gap:12px;padding:13px 2px;border-bottom:1px solid #eef0ed;align-items:flex-start}
   .inc:last-child{border-bottom:none}
   .inc .dot{width:12px;height:12px;border-radius:50%;margin-top:5px;flex-shrink:0}
@@ -107,10 +107,6 @@
   .status-note{padding:10px 24px;font-size:.74rem;color:#7a5a00;background:#fff8e0;border-top:1px solid #f0e4b0}
 
   /* Town / CensusAtlas tile */
-  .ca-bar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;background:var(--off-white);border-bottom:1px solid #e7e9e6}
-  .ca-bar a{font-size:.75rem;font-weight:600;text-decoration:none;background:var(--neutral-green);color:#fff;padding:7px 12px;border-radius:8px}
-  .ca-bar a:hover{background:var(--heritage-green)}
-  .ca-bar a.alt{background:#fff;color:var(--heritage-green);box-shadow:0 2px 6px rgba(0,67,70,.1)}
   .ca-embed-wrap{position:relative;background:#eef2f1}
   .ca-embed-wrap{flex-grow:1;display:flex}
   .ca-embed-wrap iframe{width:100%;height:100%;min-height:640px;border:0;display:block}
@@ -173,9 +169,8 @@
 
 <header>
   <div class="sun"></div>
-  <div class="brand"><div class="brand-dot"></div><h1>News Radar</h1></div>
+  <div class="brand"><h1>News Radar</h1></div>
   <p class="tag">Australian news · active fire mapping · live incident feed · town census explorer</p>
-  <p class="meta">Compiled Thursday 30 July 2026, 2:57pm AEST · Brisbane, QLD</p>
 </header>
 
 <main>
@@ -268,14 +263,6 @@
       <div class="tile-head">
         <h2>🏘️ Learn About a Town <span class="ca-badge">CensusAtlas</span></h2>
         <div class="src">Powered by <a href="https://censusatlas.au/" target="_blank" rel="noopener" style="color:var(--neutral-green)">CensusAtlas</a> — every suburb, town, council &amp; region across the 2011, 2016 &amp; 2021 ABS Census (CC BY 4.0).</div>
-      </div>
-
-      <!-- CensusAtlas deep-link bar -->
-      <div class="ca-bar">
-        <a href="https://censusatlas.au/" target="_blank" rel="noopener">🗺️ Open CensusAtlas</a>
-        <a class="alt" href="https://censusatlas.au/topics" target="_blank" rel="noopener">📚 Browse topics</a>
-        <a class="alt" href="https://censusatlas.au/indicator/population" target="_blank" rel="noopener">👥 Population</a>
-        <a class="alt" href="https://censusatlas.au/census2026" target="_blank" rel="noopener">🗓️ 2026 Census</a>
       </div>
 
       <!-- Embedded CensusAtlas explorer (full height) -->
@@ -796,12 +783,35 @@ function renderIncidents(){
   incStatus.style.display=live?'none':'block';
   if(!live)incStatus.textContent='⚠️ Live feed unavailable right now — showing a recent snapshot of real '+meta.name+' incidents instead.';
 }
-stateTabsEl.querySelectorAll('.state-tab').forEach(tab=>tab.addEventListener('click',()=>{
-  stateTabsEl.querySelectorAll('.state-tab').forEach(t=>t.classList.remove('active'));
-  tab.classList.add('active');
-  currentState=tab.dataset.state;
-  renderIncidents();
-}));
+stateTabsEl.querySelectorAll('.state-tab').forEach(tab=>{
+  tab.dataset.label=tab.textContent.trim(); // captured once so counts can be rebuilt without stacking
+  tab.addEventListener('click',()=>{
+    stateTabsEl.querySelectorAll('.state-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentState=tab.dataset.state;
+    renderIncidents();
+  });
+});
+/* Shows each tab's current incident count (no badge at all if we genuinely
+   don't know -- e.g. a state with no live source and no seed data -- rather
+   than showing a misleading "0"). */
+function updateTabCounts(){
+  stateTabsEl.querySelectorAll('.state-tab').forEach(tab=>{
+    const st=tab.dataset.state;
+    let count=null;
+    if(st==='NATIONAL'){
+      count=0;
+      Object.keys(liveOk).filter(s=>liveOk[s]).forEach(s=>{
+        (incidentsByState[s]||[]).forEach(i=>{if(statusToCat(i.status)==='Emergency Warning')count++;});
+      });
+    }else{
+      const list=liveOk[st]?incidentsByState[st]:seedIncidents[st];
+      if(list)count=list.length;
+    }
+    tab.innerHTML=tab.dataset.label+(count!==null?' <span class="n">('+count+')</span>':'');
+  });
+}
+updateTabCounts();
 /* Primary source: emergencyapi.com's unified feed, proxied same-origin via
    /api/incidents (the Cloudflare Worker holds the API key as a secret --
    see src/worker.js -- since this static page has no other way to keep a
@@ -896,6 +906,7 @@ async function loadLive(){
   await loadUnifiedIncidents();
   await loadFallbackFeeds();
   renderIncidents();
+  updateTabCounts();
 }
 loadLive();
 
