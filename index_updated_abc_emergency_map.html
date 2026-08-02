@@ -26,10 +26,10 @@
   header{background:linear-gradient(120deg,var(--light-green),var(--neutral-green) 60%,var(--heritage-green));color:var(--true-white);padding:34px 24px 30px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   header .sun{position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:var(--primary-yellow);opacity:.18}
   .brand{display:flex;align-items:center;gap:14px;max-width:1280px;margin:0 auto}
-  .brand-dot{width:44px;height:44px;border-radius:50%;background:var(--primary-yellow);box-shadow:0 0 0 6px rgba(255,205,5,.25);flex-shrink:0}
   header h1{font-size:1.9rem;font-weight:700;letter-spacing:-.4px}
   header p.tag{max-width:1280px;margin:8px auto 0;opacity:.92;font-size:1rem}
   header .meta{max-width:1280px;margin:6px auto 0;font-size:.82rem;opacity:.8}
+  header .meta b{opacity:1;font-weight:700}
 
   main{max-width:1280px;margin:0 auto;padding:26px 24px 60px}
   .layout{display:grid;grid-template-columns:1.9fr 1fr;gap:24px;align-items:stretch}
@@ -96,6 +96,7 @@
   .state-tab{border:none;cursor:pointer;font-size:.78rem;font-weight:700;padding:7px 14px;border-radius:999px;background:var(--true-white);color:var(--heritage-green);box-shadow:0 2px 6px rgba(0,67,70,.1);transition:.15s}
   .state-tab:hover{transform:translateY(-1px)}
   .state-tab.active{background:var(--neutral-green);color:var(--true-white)}
+  .state-tab .n{opacity:.75;font-weight:700;margin-left:2px}
   .inc{display:flex;gap:12px;padding:13px 2px;border-bottom:1px solid #eef0ed;align-items:flex-start}
   .inc:last-child{border-bottom:none}
   .inc .dot{width:12px;height:12px;border-radius:50%;margin-top:5px;flex-shrink:0}
@@ -107,10 +108,6 @@
   .status-note{padding:10px 24px;font-size:.74rem;color:#7a5a00;background:#fff8e0;border-top:1px solid #f0e4b0}
 
   /* Town / CensusAtlas tile */
-  .ca-bar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;background:var(--off-white);border-bottom:1px solid #e7e9e6}
-  .ca-bar a{font-size:.75rem;font-weight:600;text-decoration:none;background:var(--neutral-green);color:#fff;padding:7px 12px;border-radius:8px}
-  .ca-bar a:hover{background:var(--heritage-green)}
-  .ca-bar a.alt{background:#fff;color:var(--heritage-green);box-shadow:0 2px 6px rgba(0,67,70,.1)}
   .ca-embed-wrap{position:relative;background:#eef2f1}
   .ca-embed-wrap{flex-grow:1;display:flex}
   .ca-embed-wrap iframe{width:100%;height:100%;min-height:640px;border:0;display:block}
@@ -173,12 +170,13 @@
 
 <header>
   <div class="sun"></div>
-  <div class="brand"><div class="brand-dot"></div><h1>News Radar</h1></div>
+  <div class="brand"><h1>News Radar</h1></div>
   <p class="tag">Australian news · active fire mapping · live incident feed · town census explorer</p>
-  <p class="meta">Compiled Thursday 30 July 2026, 2:57pm AEST · Brisbane, QLD</p>
+  <p class="meta">🏘️ <b id="factTown"></b> — <span id="factText"></span></p>
 </header>
 
 <main>
+
 <div class="layout">
 
   <!-- ================= LEFT COLUMN ================= -->
@@ -268,14 +266,6 @@
       <div class="tile-head">
         <h2>🏘️ Learn About a Town <span class="ca-badge">CensusAtlas</span></h2>
         <div class="src">Powered by <a href="https://censusatlas.au/" target="_blank" rel="noopener" style="color:var(--neutral-green)">CensusAtlas</a> — every suburb, town, council &amp; region across the 2011, 2016 &amp; 2021 ABS Census (CC BY 4.0).</div>
-      </div>
-
-      <!-- CensusAtlas deep-link bar -->
-      <div class="ca-bar">
-        <a href="https://censusatlas.au/" target="_blank" rel="noopener">🗺️ Open CensusAtlas</a>
-        <a class="alt" href="https://censusatlas.au/topics" target="_blank" rel="noopener">📚 Browse topics</a>
-        <a class="alt" href="https://censusatlas.au/indicator/population" target="_blank" rel="noopener">👥 Population</a>
-        <a class="alt" href="https://censusatlas.au/census2026" target="_blank" rel="noopener">🗓️ 2026 Census</a>
       </div>
 
       <!-- Embedded CensusAtlas explorer (full height) -->
@@ -575,6 +565,92 @@
   setInterval(()=>loadNews(true),CACHE_TTL_MS); // background auto-refresh every 10 min
 })();
 
+/* ============ AUSSIE TOWN FACT OF THE DAY ============
+   A small curated set of real, verified facts about Australian towns --
+   deliberately excluding the state/territory capitals, since "learn
+   something about a country town you've never heard of" is the point.
+   Picked deterministically from the date (day-of-year mod list length) so
+   it changes once a day with no server, no API, and nothing that can fail. */
+const TOWN_FACTS=[
+  {town:'Wycheproof, VIC',fact:'Its main street doubles as a level crossing — Wycheproof is the only town in Australia where a train still runs straight down the middle of the main street.'},
+  {town:'Coober Pedy, SA',fact:'The opal capital of the world, where many locals live underground in "dugout" homes — complete with churches and even a golf course — to escape 40°C+ desert heat.'},
+  {town:'Barcaldine, QLD',fact:'The "Tree of Knowledge", where striking shearers gathered in 1891, is regarded as the birthplace of the Australian Labor Party.'},
+  {town:'Tenterfield, NSW',fact:'Sir Henry Parkes delivered his famous 1889 "Tenterfield Oration" here — the speech that kick-started the push for Australian Federation.'},
+  {town:'Marree, SA',fact:'Once nicknamed "Little Asia", this outback junction town was the hub of Australia\'s 19th-century camel trade, run by Afghan cameleers who built some of the country\'s earliest mosques.'},
+  {town:'Broken Hill, NSW',fact:'Home of the School of the Air, which has broadcast lessons to children scattered across the outback since 1956.'},
+  {town:'Lightning Ridge, NSW',fact:'The only place on Earth where black opal — the rarest opal variety — is found in commercial quantities.'},
+  {town:'Silverton, NSW',fact:'A near-ghost town of under 50 people that\'s been the backdrop for dozens of films, including Mad Max 2.'},
+  {town:'Esperance, WA',fact:'In 1979, after NASA\'s Skylab space station broke up and rained debris across the shire, the local council issued NASA a $400 littering fine — finally paid, as a joke, by a US radio DJ 30 years later.'},
+  {town:'Queenstown, TAS',fact:'Home to the only senior football oval in Australia surfaced entirely in crushed gravel instead of grass — a legacy of mining-era pollution that made it impossible to grow turf.'},
+  {town:'Humpty Doo, NT',fact:'Greets visitors with a giant boxing-crocodile statue and sits amid working buffalo and crocodile farms.'},
+  {town:'Kingston SE, SA',fact:'Home to "Larry the Lobster", a giant fibreglass crayfish celebrating the town\'s rock-lobster industry.'},
+  {town:'Nimbin, NSW',fact:'Transformed into a hub of Australia\'s counterculture movement after the 1973 Aquarius Festival.'},
+  {town:'Beechworth, VIC',fact:'One of Australia\'s best-preserved gold-rush towns; bushranger Ned Kelly stood trial in its 1858 courthouse.'},
+  {town:'Longreach, QLD',fact:'Birthplace of Qantas, one of the world\'s oldest continuously operating airlines, founded here in 1920.'},
+  {town:'Birdsville, QLD',fact:'A town of about 100 people that swells to thousands each September for the famous Birdsville Races.'},
+  {town:'Yackandandah, VIC',fact:'A heritage-listed 1850s gold-rush town and home to one of Australia\'s first community-led pushes to run entirely on renewable energy.'},
+  {town:'Cabramurra, NSW',fact:'Australia\'s highest town at over 1,480m above sea level, built to house workers on the Snowy Mountains Hydro-Electric Scheme.'},
+  {town:'Parkes, NSW',fact:'Home to the world-famous Parkes Elvis Festival every January, which draws thousands of Elvis impersonators and has its own dedicated "Elvis Express" train from Sydney.'},
+  {town:'Gundagai, NSW',fact:'Immortalised by the "Dog on the Tuckerbox" monument just outside town, one of the most enduring pieces of Australian bush folklore.'},
+  {town:'Gulgong, NSW',fact:'A gold-rush town once home to writer and bush poet Henry Lawson; its heritage streetscape appeared on the old Australian $10 note.'},
+  {town:'Goulburn, NSW',fact:'Calls itself Australia\'s first inland city (proclaimed in 1863) and is home to the Big Merino, a 15-metre-tall concrete sheep celebrating the wool industry.'},
+  {town:'Coffs Harbour, NSW',fact:'Home to the Big Banana, built in 1964 and widely credited as the original inspiration for Australia\'s "Big Things" roadside-attraction craze.'},
+  {town:'Ballina, NSW',fact:'Home to the 9-metre-tall Big Prawn, built in 1989 to honour the town\'s prawning industry.'},
+  {town:'Robertson, NSW',fact:'Its rolling green dairy country was the filming location for the 1995 film Babe.'},
+  {town:'Glen Innes, NSW',fact:'Home to the Australian Standing Stones, a monument to Celtic heritage inspired by sites like Stonehenge.'},
+  {town:'Cooma, NSW',fact:'Served as the construction headquarters for the Snowy Mountains Hydro-Electric Scheme, one of the great engineering projects of 20th-century Australia.'},
+  {town:'Dubbo, NSW',fact:'Home to Taronga Western Plains Zoo, one of the few zoos in Australia where visitors can see giraffes and other African plains animals roaming open-range paddocks.'},
+  {town:'Winton, QLD',fact:'Home to the world\'s largest collection of Australian dinosaur fossils, and to Lark Quarry, the only confirmed dinosaur stampede site ever found.'},
+  {town:'Maryborough, QLD',fact:'Birthplace of P.L. Travers, author of Mary Poppins — a statue of the famous nanny stands in front of the old Story Bank building.'},
+  {town:'Bowen, QLD',fact:'Home to the "Big Mango", one of Australia\'s most iconic giant roadside sculptures, celebrating the town\'s mango industry.'},
+  {town:'Babinda, QLD',fact:'Regularly ranked among Australia\'s wettest towns, and known for its cream buns and the Babinda Boulders swimming holes.'},
+  {town:'1770, QLD',fact:'Named for the year Captain Cook first landed there, making it one of the few Australian towns named after a date.'},
+  {town:'Tambo, QLD',fact:'Founded in 1863 at the headwaters of five river systems, it\'s the oldest town in western Queensland.'},
+  {town:'Karumba, QLD',fact:'One of the only places in Queensland where you can watch the sun set over the sea via a fully sealed road, and long the hub of the Gulf of Carpentaria\'s fishing industry.'},
+  {town:'Charleville, QLD',fact:'Home to the Charleville Cosmos Centre, one of the best stargazing sites in the southern hemisphere thanks to its clear outback skies.'},
+  {town:'Cunnamulla, QLD',fact:'Its Cunnamulla Fella statue celebrates the outback stockman immortalised in a famous Slim Dusty song.'},
+  {town:'Charters Towers, QLD',fact:'Once nicknamed "The World" thanks to its gold-rush-era wealth, and had its own stock exchange in the 1890s.'},
+  {town:'Cassilis, VIC',fact:'Site of Victoria\'s first hydro-electric power scheme, built in 1908 to light a local gold mine.'},
+  {town:'Buchan, VIC',fact:'Once just a rural service town, now known nationally for the network of limestone caves beneath the surrounding hills.'},
+  {town:'Tatura, VIC',fact:'Home to a museum on the WWII prisoner-of-war and internment camps once located here.'},
+  {town:'Maldon, VIC',fact:'Australia\'s first "notable town", classified in its entirety by the National Trust in 1966 for its intact 1850s streetscape.'},
+  {town:'Heathcote, VIC',fact:'Its vineyards sit on ancient Cambrian-era volcanic soil more than 500 million years old, among the oldest wine-producing soil in the world.'},
+  {town:'Glenrowan, VIC',fact:'Site of the Kelly Gang\'s famous final 1880 shootout with police, which ended in the capture of bushranger Ned Kelly.'},
+  {town:'Dadswells Bridge, VIC',fact:'Home to the "Giant Koala", one of the largest koala statues in the world at over 14 metres tall.'},
+  {town:'Ballarat, VIC',fact:'Site of the 1854 Eureka Stockade rebellion, a defining moment in the history of Australian democracy.'},
+  {town:'Bendigo, VIC',fact:'Its ornate 19th-century architecture was funded by one of the richest gold rushes in Australian history.'},
+  {town:'Tumby Bay, SA',fact:'Known for its vividly painted street art and giant grain silos turned into public murals.'},
+  {town:'Robe, SA',fact:'One of South Australia\'s oldest towns, once a major 1850s entry port for Chinese miners heading to the Victorian goldfields.'},
+  {town:'Ceduna, SA',fact:'Gateway to the Nullarbor Plain crossing and home to a popular annual oyster festival.'},
+  {town:'Clare, SA',fact:'Anchors the Clare Valley wine region, one of Australia\'s oldest, with vines planted as early as the 1840s.'},
+  {town:'Loxton, SA',fact:'Sits on a bend of the Murray River and grew around one of Australia\'s most productive irrigation and citrus districts.'},
+  {town:'Innamincka, SA',fact:'One of the most remote towns in Australia, near where explorer Robert O\'Hara Burke died during the ill-fated Burke and Wills expedition of 1861.'},
+  {town:'Albany, WA',fact:'The oldest town in Western Australia (settled 1826), and the departure point for the ANZAC troop convoys of World War I in 1914.'},
+  {town:'York, WA',fact:'The oldest inland town in Western Australia, settled in 1830.'},
+  {town:'Kalgoorlie, WA',fact:'Home to the Super Pit, one of the largest open-cut gold mines in the world, on ground long called the richest square mile of earth on the planet.'},
+  {town:'Broome, WA',fact:'Built on a 19th-century pearling boom that drew Japanese, Chinese, Malay and Filipino divers, still visible in the town\'s food, architecture and culture today.'},
+  {town:'Denmark, WA',fact:'Nestled among towering karri forests on WA\'s south coast — among the tallest flowering trees in the world.'},
+  {town:'Hyden, WA',fact:'Home to Wave Rock, a naturally sculpted granite cliff resembling a giant breaking ocean wave, estimated at 2,700 million years old.'},
+  {town:'Norseman, WA',fact:'Marks the start of the Eyre Highway crossing of the Nullarbor Plain, one of the longest straight stretches of road in the world.'},
+  {town:'Evandale, TAS',fact:'Hosts the National Penny Farthing Championships each February, with riders racing 19th-century bicycles through the town\'s heritage streets.'},
+  {town:'Ross, TAS',fact:'Home to a beautifully carved 1836 convict-built sandstone bridge and the historic Female Factory, a former convict women\'s prison.'},
+  {town:'Oatlands, TAS',fact:'Its main street is lined with convict-built sandstone buildings dating to the early 1800s, one of the largest collections of Georgian architecture in Australia.'},
+  {town:'Richmond, TAS',fact:'Home to the oldest road bridge still in use in Australia, built by convicts in 1825.'},
+  {town:'Stanley, TAS',fact:'Sits beneath "The Nut", a flat-topped volcanic plug rising 152 metres straight out of the sea.'},
+  {town:'Strahan, TAS',fact:'Gateway to the Franklin River and the historic Sarah Island convict settlement, once considered one of the harshest penal stations in the British Empire.'},
+  {town:'Adelaide River, NT',fact:'Home to the grave of "Charlie", the water buffalo who starred alongside Paul Hogan in the original Crocodile Dundee film.'},
+  {town:'Batchelor, NT',fact:'Gateway to Litchfield National Park, once home to a uranium mine that helped supply the Atomic Age before closing in 1971.'},
+  {town:'Larrimah, NT',fact:'One of the Northern Territory\'s smallest towns, with a population that has at times numbered in the single digits.'},
+  {town:'Tennant Creek, NT',fact:'Grew out of Australia\'s last major gold rush in the 1930s.'},
+  {town:'Mataranka, NT',fact:'Known for its natural thermal springs and as the setting that inspired the classic Australian novel We of the Never Never.'}
+];
+(function(){
+  const dayOfYear=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/86400000);
+  const pick=TOWN_FACTS[dayOfYear%TOWN_FACTS.length];
+  const townEl=document.getElementById('factTown'),textEl=document.getElementById('factText');
+  if(townEl&&textEl){townEl.textContent=pick.town;textEl.textContent=pick.fact;}
+})();
+
 /* ============ MAP ============ */
 /* The map only shows NASA FIRMS fire points now — no satellite/population/HBASE/
    borders overlays — on an OpenStreetMap base layer so town and street names are
@@ -602,10 +678,16 @@ const firmsStatusEl=document.getElementById('firmsStatus');
 let firmsLayer=null;
 /* Smooth red -> green gradient by hours-since-detection (0h = red, FIRMS_DAYS*24h = green),
    instead of the old 4-bucket colour scheme, so the map reads as a continuous timeline
-   rather than a handful of hard steps. */
+   rather than a handful of hard steps. A plain linear scale over 5 days compresses
+   almost the whole "just detected" -> "several hours old" range into a sliver near
+   hue 0, so a fire spotted 10 minutes ago and one from 6 hours ago both read as
+   near-identical deep red. Taking the square root of the elapsed-time fraction before
+   mapping it to hue front-loads much more of the red->green range onto the first day,
+   so early hours actually move the colour visibly, while it still reaches green by the
+   full 5-day window. */
 function fireColour(h){
   const t=Math.max(0,Math.min(1,h/(FIRMS_DAYS*24)));
-  const hue=t*120; // 0=red -> 120=green
+  const hue=Math.sqrt(t)*120; // 0=red -> 120=green, front-loaded onto the first day
   return 'hsl('+hue.toFixed(0)+',85%,45%)';
 }
 /* Fades older detections out (down to a floor so they're never invisible) so the most
@@ -796,12 +878,35 @@ function renderIncidents(){
   incStatus.style.display=live?'none':'block';
   if(!live)incStatus.textContent='⚠️ Live feed unavailable right now — showing a recent snapshot of real '+meta.name+' incidents instead.';
 }
-stateTabsEl.querySelectorAll('.state-tab').forEach(tab=>tab.addEventListener('click',()=>{
-  stateTabsEl.querySelectorAll('.state-tab').forEach(t=>t.classList.remove('active'));
-  tab.classList.add('active');
-  currentState=tab.dataset.state;
-  renderIncidents();
-}));
+stateTabsEl.querySelectorAll('.state-tab').forEach(tab=>{
+  tab.dataset.label=tab.textContent.trim(); // captured once so counts can be rebuilt without stacking
+  tab.addEventListener('click',()=>{
+    stateTabsEl.querySelectorAll('.state-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentState=tab.dataset.state;
+    renderIncidents();
+  });
+});
+/* Shows each tab's current incident count (no badge at all if we genuinely
+   don't know -- e.g. a state with no live source and no seed data -- rather
+   than showing a misleading "0"). */
+function updateTabCounts(){
+  stateTabsEl.querySelectorAll('.state-tab').forEach(tab=>{
+    const st=tab.dataset.state;
+    let count=null;
+    if(st==='NATIONAL'){
+      count=0;
+      Object.keys(liveOk).filter(s=>liveOk[s]).forEach(s=>{
+        (incidentsByState[s]||[]).forEach(i=>{if(statusToCat(i.status)==='Emergency Warning')count++;});
+      });
+    }else{
+      const list=liveOk[st]?incidentsByState[st]:seedIncidents[st];
+      if(list)count=list.length;
+    }
+    tab.innerHTML=tab.dataset.label+(count!==null?' <span class="n">('+count+')</span>':'');
+  });
+}
+updateTabCounts();
 /* Primary source: emergencyapi.com's unified feed, proxied same-origin via
    /api/incidents (the Cloudflare Worker holds the API key as a secret --
    see src/worker.js -- since this static page has no other way to keep a
@@ -896,6 +1001,7 @@ async function loadLive(){
   await loadUnifiedIncidents();
   await loadFallbackFeeds();
   renderIncidents();
+  updateTabCounts();
 }
 loadLive();
 
