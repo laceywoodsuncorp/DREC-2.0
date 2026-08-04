@@ -122,7 +122,6 @@
 
   /* Power & Network Outages tile */
   .tile-outages{margin-top:24px}
-  #outagesMap{flex:1;min-height:420px;width:100%}
   .outage-links{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:18px 24px 22px}
   @media(max-width:940px){.outage-links{grid-template-columns:1fr}}
   .outage-col h3{font-size:.92rem;color:var(--heritage-green);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -325,12 +324,14 @@
 <section class="tile tile-outages">
   <div class="tile-head">
     <h2>⚡📶 Power &amp; Network Outages</h2>
-    <div class="src">Electricity outages are plotted live on the map wherever a distributor's feed has been verified; every other electricity network below links straight through to its own current-outage page. Mobile network status is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
+    <div class="src">Live electricity outage map embedded from <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener" style="color:var(--neutral-green)">isyourpowerout.com</a> (third-party, not Suncorp or an official network operator). Every electricity network below also links straight through to its own current-outage page. Mobile network status is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
   </div>
-  <div id="outagesMap"></div>
-  <div class="legend">
-    <div class="grp"><span class="sw" style="background:#e74c3c;border-radius:50%"></span>Live electricity outage</div>
-    <div class="grp" style="margin-left:14px"><b>No live electricity feed verified yet — see network links below.</b></div>
+  <div class="ca-embed-wrap">
+    <iframe id="powerOutageFrame" src="https://isyourpowerout.com/live-map" title="Is Your Power Out — live Australian electricity outage map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+  <div class="ca-fallback">
+    Live electricity outages aggregated across Australian network operators. If the map appears blank, it may block embedding — just
+    <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener">open it in a new tab ↗</a>.
   </div>
   <div class="outage-links">
     <div class="outage-col">
@@ -1067,20 +1068,18 @@ window.addEventListener('resize',()=>map.invalidateSize());
 /* ============ POWER & NETWORK OUTAGES ============
    Electricity distribution in Australia is split across ~16 separate
    network operators, each running its own outage-finder tool -- there is
-   no single national live feed. None of these have been verified against a
-   real, confirmed API response yet (unlike the fire incident feeds, which
-   were checked against actual captured data before being wired up), so
-   rather than guess at an endpoint for infrastructure-outage data, every
-   network links straight through to its own official current-outage page.
-   The map is ready to plot live points once a feed is verified -- it just
-   has nothing to plot yet.
+   no single national live feed of our own to plot. Rather than guess at an
+   endpoint for infrastructure-outage data or build 16 separate unverified
+   parsers, the live map itself is embedded from isyourpowerout.com (a
+   third-party aggregator), the same "embed + open-in-new-tab fallback"
+   pattern already used for the CensusAtlas tile -- if it refuses to load
+   in an iframe, the fallback link still gets a visitor to the same map.
+   Every electricity network below also keeps its own official link,
+   independent of whether the embed loads.
    Mobile network outages have no official public API from any Australian
    carrier at all -- only third-party crowdsourced trackers built from user
    reports exist, which is why that section is explicitly labelled as
    unofficial rather than presented as carrier-confirmed status. */
-const outagesMap=L.map('outagesMap',{minZoom:3,maxZoom:12}).setView([-25.6,134.3],4);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:12}).addTo(outagesMap);
-
 const ELECTRICITY_NETWORKS=[
   {name:'Ausgrid',region:'Sydney, Central Coast & Hunter (NSW)',url:'https://www.ausgrid.com.au/Outages/Current-Outages'},
   {name:'Essential Energy',region:'Regional & rural NSW',url:'https://www.essentialenergy.com.au'},
