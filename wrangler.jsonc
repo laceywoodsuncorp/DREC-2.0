@@ -5,6 +5,10 @@
   "assets": {
     "directory": "./",
     "binding": "ASSETS"
+  },
+  "triggers": {
+    // Runs the GDELT + incidents cache refresh independently of visitor
+    // traffic every 5 minutes, so a page load never waits on a live fetch.
+    "crons": ["*/5 * * * *"]
   }
 }
-
