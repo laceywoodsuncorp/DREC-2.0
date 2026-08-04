@@ -37,17 +37,9 @@
      stretch to match -- News lines up with CensusAtlas, and the fire map
      lines up with the incidents tile, instead of each column growing to
      whatever height its own content happens to need. */
-  .layout{display:grid;grid-template-columns:1.9fr 1fr;grid-template-rows:auto auto;gap:24px;align-items:stretch}
-  .tile-news{grid-column:1;grid-row:1}
-  .tile-firemap{grid-column:1;grid-row:2}
-  .tile-census{grid-column:2;grid-row:1}
-  .tile-incidents{grid-column:2;grid-row:2}
+  .layout{display:grid;grid-template-columns:1.9fr 1fr;gap:24px;align-items:stretch}
   @media(max-width:940px){
     .layout{grid-template-columns:1fr}
-    .tile-news{grid-column:1;grid-row:1}
-    .tile-census{grid-column:1;grid-row:2}
-    .tile-firemap{grid-column:1;grid-row:3}
-    .tile-incidents{grid-column:1;grid-row:4}
     .tile-census,.tile-incidents{min-height:80vh}
   }
 
@@ -121,24 +113,21 @@
   .status-note{padding:10px 24px;font-size:.74rem;color:#7a5a00;background:#fff8e0;border-top:1px solid #f0e4b0}
 
   /* Power & Network Outages tile */
-  .tile-outages{margin-top:24px}
+  .tile-outages{margin:24px 0}
+  .power-embed-wrap iframe{min-height:1280px!important}
   .crowd-badge{font-size:.64rem;font-weight:700;color:#a06000;background:#fff3d6;padding:3px 8px;border-radius:999px}
   .mobile-map-block{padding:4px 24px 22px}
   .mobile-map-block h3{font-size:.92rem;color:var(--heritage-green);margin:4px 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .mobile-map-tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-  /* Launch cards for third-party maps that block iframe embedding (both
-     isyourpowerout.com and StatusGator do) -- same pattern as the old
-     FIRMS launch card elsewhere in this file, just in the site's own
-     brand colours instead of the fire theme. */
-  .outage-launch{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--heritage-green) 0%,var(--neutral-green) 60%,var(--light-green) 100%);color:#fff;padding:20px 24px 24px;margin:0 24px 22px;border-radius:14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:180px;justify-content:center}
-  .mobile-map-block .outage-launch{margin:0}
-  .outage-launch h4{font-size:1.1rem;font-weight:700}
-  .outage-launch p{max-width:520px;font-size:.85rem;line-height:1.5;opacity:.92}
-  .outage-launch .cta{display:inline-flex;align-items:center;gap:9px;background:var(--primary-yellow);color:var(--heritage-green);font-weight:800;font-size:.92rem;text-decoration:none;padding:11px 20px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.25);transition:.15s}
-  .outage-launch .cta:hover{transform:translateY(-2px);box-shadow:0 9px 24px rgba(0,0,0,.35)}
-  .outage-launch .sub-note{font-size:.7rem;opacity:.75}
+  .mobile-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:768px){.mobile-map-grid{grid-template-columns:1fr}}
+  .mobile-map-col-title{font-size:.8rem;font-weight:700;color:var(--heritage-green);margin-bottom:6px}
   .mobile-map-embed-wrap{flex-grow:0!important;border-radius:10px;overflow:hidden}
-  .mobile-map-embed-wrap iframe{height:480px!important;min-height:0!important}
+  .mobile-map-embed-wrap iframe{height:640px!important;min-height:0!important}
+
+  /* Jump-to-section nav */
+  .section-nav{display:flex;flex-wrap:wrap;gap:10px;max-width:1280px;margin:0 auto 24px;padding:0 24px}
+  .section-nav a{border:none;cursor:pointer;text-decoration:none;font-size:.8rem;font-weight:700;padding:8px 16px;border-radius:999px;background:var(--true-white);color:var(--heritage-green);box-shadow:var(--shadow);transition:.15s}
+  .section-nav a:hover{transform:translateY(-1px);background:var(--neutral-green);color:var(--true-white)}
 
   /* Town / CensusAtlas tile */
   .ca-embed-wrap{position:relative;background:#eef2f1}
@@ -209,10 +198,18 @@
 
 <main>
 
+<div class="section-nav" id="sectionNav">
+  <a href="#section-news">📡 News</a>
+  <a href="#section-outages">⚡📶 Outages</a>
+  <a href="#section-firemap">🛰️ Fire Map</a>
+  <a href="#section-incidents">🚒 Incidents</a>
+  <a href="#section-census">🏘️ Town Explorer</a>
+</div>
+
 <div class="layout">
 
     <!-- ===== NEWS TILE ===== -->
-    <section class="tile tile-news">
+    <section class="tile tile-news" id="section-news">
       <div class="tile-head">
         <h2>📡 Live News Feed</h2>
         <div class="src">Web/news search of Australian sources — ABC, 7NEWS, Nine, SBS, insuranceNEWS.com.au &amp; others · last 24 hours.</div>
@@ -259,8 +256,68 @@
       </div>
     </section>
 
+    <!-- ===== TOWN / CENSUSATLAS TILE ===== -->
+    <section class="tile tile-census" id="section-census">
+      <div class="tile-head">
+        <h2>🏘️ Learn About a Town <span class="ca-badge">CensusAtlas</span></h2>
+        <div class="src">Powered by <a href="https://censusatlas.au/" target="_blank" rel="noopener" style="color:var(--neutral-green)">CensusAtlas</a> — every suburb, town, council &amp; region across the 2011, 2016 &amp; 2021 ABS Census (CC BY 4.0).</div>
+      </div>
+
+      <!-- Embedded CensusAtlas explorer (full height) -->
+      <div class="ca-embed-wrap">
+        <iframe id="caFrame" src="https://censusatlas.au/" title="CensusAtlas — explore Australia through the Census" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <div class="ca-fallback">
+        Search any Australian area above. If the page appears blank, CensusAtlas may block embedding — just
+        <a href="https://censusatlas.au/" target="_blank" rel="noopener">open it in a new tab ↗</a>.
+      </div>
+    </section>
+
+</div>
+
+<!-- ===== POWER & NETWORK OUTAGES ===== -->
+<section class="tile tile-outages" id="section-outages">
+  <div class="tile-head">
+    <h2>⚡📶 Power &amp; Network Outages</h2>
+    <div class="src">Live electricity outage map embedded from <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener" style="color:var(--neutral-green)">isyourpowerout.com</a> (third-party, not Suncorp or an official network operator). Mobile network status is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
+  </div>
+
+  <div class="ca-embed-wrap power-embed-wrap">
+    <iframe id="powerOutageFrame" src="https://isyourpowerout.com/live-map" title="Is Your Power Out — live Australian electricity outage map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+  <div class="ca-fallback">
+    Live electricity outages aggregated across Australian network operators. If the map appears blank, it may block embedding — just
+    <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener">open it in a new tab ↗</a>.
+  </div>
+
+  <div class="mobile-map-block">
+    <h3>📶 Mobile Network Outage Reports <span class="crowd-badge">Crowdsourced — not carrier-confirmed</span></h3>
+    <div class="mobile-map-grid">
+      <div class="mobile-map-col">
+        <div class="mobile-map-col-title">Telstra</div>
+        <div class="ca-embed-wrap mobile-map-embed-wrap">
+          <iframe src="https://outage.report/au/telstra" title="Telstra mobile network outage reports" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+      <div class="mobile-map-col">
+        <div class="mobile-map-col-title">Optus</div>
+        <div class="ca-embed-wrap mobile-map-embed-wrap">
+          <iframe src="https://outage.report/au/optus" title="Optus mobile network outage reports" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+    </div>
+    <div class="ca-fallback">
+      Outage reports sourced from <a href="https://outage.report/au/telstra" target="_blank" rel="noopener">Outage.Report</a> — crowdsourced, not confirmed by the carrier. If either map appears blank, it may block embedding — just open it directly:
+      <a href="https://outage.report/au/telstra" target="_blank" rel="noopener">Telstra ↗</a> ·
+      <a href="https://outage.report/au/optus" target="_blank" rel="noopener">Optus ↗</a>.
+    </div>
+  </div>
+</section>
+
+<div class="layout">
+
     <!-- ===== SATELLITE FIRE MAP ===== -->
-    <section class="tile tile-firemap">
+    <section class="tile tile-firemap" id="section-firemap">
       <div class="tile-head">
         <h2>🛰️ Active Fire Map — Australia</h2>
         <div class="src">NASA FIRMS active fire detections and NASA SEDAC population density, plotted on an OpenStreetMap street basemap so town and road names stay visible. Colour scales from red (just detected) to green (up to 5 days old), and older detections fade so the most recent fires stand out.</div>
@@ -285,25 +342,8 @@
       </div>
     </section>
 
-    <!-- ===== TOWN / CENSUSATLAS TILE ===== -->
-    <section class="tile tile-census">
-      <div class="tile-head">
-        <h2>🏘️ Learn About a Town <span class="ca-badge">CensusAtlas</span></h2>
-        <div class="src">Powered by <a href="https://censusatlas.au/" target="_blank" rel="noopener" style="color:var(--neutral-green)">CensusAtlas</a> — every suburb, town, council &amp; region across the 2011, 2016 &amp; 2021 ABS Census (CC BY 4.0).</div>
-      </div>
-
-      <!-- Embedded CensusAtlas explorer (full height) -->
-      <div class="ca-embed-wrap">
-        <iframe id="caFrame" src="https://censusatlas.au/" title="CensusAtlas — explore Australia through the Census" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-      </div>
-      <div class="ca-fallback">
-        Search any Australian area above. If the page appears blank, CensusAtlas may block embedding — just
-        <a href="https://censusatlas.au/" target="_blank" rel="noopener">open it in a new tab ↗</a>.
-      </div>
-    </section>
-
     <!-- ===== STATE FIRE DEPARTMENT INCIDENTS ===== -->
-    <section class="tile tile-incidents">
+    <section class="tile tile-incidents" id="section-incidents">
       <div class="tile-head">
         <h2>🚒 State Fire Department Incidents</h2>
         <div class="src">Live nationwide via a unified feed, with direct NSW/QLD/SA/ACT government feeds as backup; the Severe Alerts tab pulls together Emergency Warning / evacuate-level incidents from whichever states are up. Any state without live data links straight through to its official current-incidents page. Switch tabs below.</div>
@@ -325,37 +365,6 @@
     </section>
 
 </div>
-
-<!-- ===== POWER & NETWORK OUTAGES ===== -->
-<section class="tile tile-outages">
-  <div class="tile-head">
-    <h2>⚡📶 Power &amp; Network Outages</h2>
-    <div class="src">Live electricity outage map embedded from <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener" style="color:var(--neutral-green)">isyourpowerout.com</a> (third-party, not Suncorp or an official network operator). Mobile network status is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
-  </div>
-
-  <div class="ca-embed-wrap">
-    <iframe id="powerOutageFrame" src="https://isyourpowerout.com/live-map" title="Is Your Power Out — live Australian electricity outage map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-  </div>
-  <div class="ca-fallback">
-    Live electricity outages aggregated across Australian network operators. If the map appears blank, it may block embedding — just
-    <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener">open it in a new tab ↗</a>.
-  </div>
-
-  <div class="mobile-map-block">
-    <h3>📶 Mobile Network Outage Reports <span class="crowd-badge">Crowdsourced — not carrier-confirmed</span></h3>
-    <div class="mobile-map-tabs" id="mobileMapTabs">
-      <button class="state-tab active" data-carrier="telstra">Telstra</button>
-      <button class="state-tab" data-carrier="optus">Optus</button>
-    </div>
-    <div class="ca-embed-wrap mobile-map-embed-wrap">
-      <iframe id="mobileOutageFrame" src="https://outage.report/au/telstra" title="Mobile network outage reports" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-    </div>
-    <div class="ca-fallback">
-      Outage reports sourced from <a class="mobileMapFallbackLink" href="https://outage.report/au/telstra" target="_blank" rel="noopener">Outage.Report</a> — crowdsourced, not confirmed by the carrier. If the map appears blank, it may block embedding — just
-      <a class="mobileMapFallbackLink" href="https://outage.report/au/telstra" target="_blank" rel="noopener">open it in a new tab ↗</a>.
-    </div>
-  </div>
-</section>
 
 </main>
 
@@ -1080,20 +1089,9 @@ window.addEventListener('resize',()=>map.invalidateSize());
 /* ============ POWER & NETWORK OUTAGES ============
    isyourpowerout.com (electricity, above) embeds fine -- confirmed working
    in the browser. StatusGator and DownDetector Australia both blocked
-   embedding; Outage.Report is confirmed working instead. Same embed +
-   open-in-new-tab fallback pattern as everything else here regardless. */
-const MOBILE_MAP_URLS={
-  telstra:'https://outage.report/au/telstra',
-  optus:'https://outage.report/au/optus'
-};
-document.querySelectorAll('#mobileMapTabs .state-tab').forEach(tab=>tab.addEventListener('click',()=>{
-  document.querySelectorAll('#mobileMapTabs .state-tab').forEach(t=>t.classList.remove('active'));
-  tab.classList.add('active');
-  const url=MOBILE_MAP_URLS[tab.dataset.carrier];
-  document.getElementById('mobileOutageFrame').src=url;
-  document.querySelectorAll('.mobileMapFallbackLink').forEach(a=>a.href=url);
-}));
-
+   embedding; Outage.Report is confirmed working instead, and Telstra/Optus
+   are shown side by side with hardcoded iframe src attributes -- no
+   tab-switching needed since both render simultaneously. */
 </script>
 
 </body>
