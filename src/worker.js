@@ -1,16 +1,18 @@
 /* Cloudflare Worker entry point.
    - "/" is rewritten to the actual site file (there's no index.html in this
      repo, and the ASSETS binding otherwise 404s at the root).
-   - "/api/gdelt" is handled here directly: it builds the GDELT query itself
-     and fetches it from Cloudflare's edge (not the visitor's network), so a
-     visitor behind a corporate firewall that blocks public CORS-proxy sites
-     still gets a working same-origin route. The GDELT URL is built here
-     rather than passed in as a query param so the literal string
-     "gdeltproject.org" never appears in the browser's own request URL --
-     some corporate web filters block on URL substrings, not just hostname,
-     which broke this even as a same-origin call when the target URL was
-     passed through as ?url=. See index_updated_abc_emergency_map.html's
-     GDELT_ROUTES for the client side of this.
+   - "/api/gdelt" and "/api/incidents" are handled here directly -- see the
+     comments above handleGdelt()/handleIncidents() below.
+   - A scheduled Cron Trigger (see wrangler.jsonc's "triggers.crons", and
+     the scheduled() export at the bottom) independently refreshes both
+     caches every 5 minutes. That's the actual fix for visitors hitting
+     slow/rate-limited GDELT calls: a visitor's own page load NEVER
+     triggers a live upstream fetch anymore (as long as a cache entry
+     exists at all) -- it just reads whatever the last scheduled run
+     found, so the request is instant regardless of how GDELT or
+     emergencyapi.com happen to be behaving at that moment. The only time a
+     visitor's request still does a live fetch is a genuine cold start
+     (fresh deploy, before the first cron tick has ever run).
    - Everything else falls through to the static assets binding. */
 /* GDELT's DOC API rejects overly-long query strings ("Your query was too
    short or too long") -- the original 17-domain OR-clause plus a
@@ -30,21 +32,15 @@ function buildGdeltUrl() {
     '&mode=artlist&maxrecords=250&timespan=24h&format=json&sort=datedesc';
 }
 
-/* GDELT itself is unreliable under load: slow responses, frequent 429s.
-   Without a shared cache, every visitor's browser independently fights that
-   flakiness, so everyone feels it at once whenever GDELT is having a bad
-   moment. Cloudflare's edge Cache API lets this Worker keep one shared copy
-   of the last successful GDELT response: fresh requests (<10 min old) are
-   served straight from that cache with no GDELT round-trip at all, and if a
-   refresh is due but GDELT fails, the stale copy (up to 2h old) is served
-   instead of a hard failure. GDELT only needs to succeed once every so often
-   for every visitor to get a fast, working feed.
-   Same shared-cache mechanism is reused below for /api/incidents, just
-   keyed on a different cache URL and TTLs -- parameterised rather than
-   duplicated. */
-const GDELT_CACHE_URL = 'https://newsradar-internal-cache.example/gdelt';
-const GDELT_FRESH_SECONDS = 600; // matches the client's own 10-minute refresh cadence
-const GDELT_STALE_MAX_SECONDS = 7200; // how long a stale copy stays usable as an emergency fallback
+/* Shared cache helpers, reused for both GDELT and the incidents feed --
+   parameterised on cache URL rather than duplicated. CACHE_ENTRY_LIFETIME is
+   just the outer bound Cloudflare uses to eventually evict an entry (via
+   Cache-Control: max-age) if scheduled refreshes stop happening entirely
+   (e.g. the cron gets disabled) -- it's not a "freshness" gate any more.
+   Since the cron is what's responsible for keeping these current, an
+   on-demand request just serves whatever's cached, however old, rather than
+   comparing its age against a threshold. */
+const CACHE_ENTRY_LIFETIME_SECONDS = 7200; // 2h -- generous outer bound, not a freshness check
 
 async function readSharedCache(cacheUrl) {
   const cached = await caches.default.match(cacheUrl);
@@ -53,12 +49,12 @@ async function readSharedCache(cacheUrl) {
   return { response: cached, ageSeconds: (Date.now() - fetchedAt) / 1000 };
 }
 
-async function writeSharedCache(cacheUrl, bodyText, contentType, staleMaxSeconds) {
+async function writeSharedCache(cacheUrl, bodyText, contentType) {
   const stored = new Response(bodyText, {
     status: 200,
     headers: {
       'Content-Type': contentType || 'application/json',
-      'Cache-Control': 'public, max-age=' + staleMaxSeconds,
+      'Cache-Control': 'public, max-age=' + CACHE_ENTRY_LIFETIME_SECONDS,
       'X-Fetched-At': String(Date.now())
     }
   });
@@ -77,72 +73,67 @@ function respondFromCache(cached) {
   });
 }
 
-async function handleGdelt() {
-  const cached = await readSharedCache(GDELT_CACHE_URL);
-  if (cached && cached.ageSeconds < GDELT_FRESH_SECONDS) {
-    return respondFromCache(cached);
-  }
-
+/* Does the actual GDELT fetch and, on success, writes the shared cache.
+   Called from both the scheduled cron tick (the normal case) and
+   handleGdelt()'s cold-start bootstrap fetch. On failure it just leaves
+   whatever's already cached untouched -- a failed refresh means visitors
+   keep seeing the last known-good result instead of an error. */
+async function refreshGdeltCache() {
   const target = buildGdeltUrl();
   const ctrl = new AbortController();
   /* 15s, not 8s: GDELT has been observed taking 10-16s just to return an
      error response during slow periods, so 8s was aborting before GDELT had
-     any real chance to succeed -- worth the extra wait since success here
-     seeds the shared cache for every other visitor too. Still safely under
-     the client's own 20s timeout. */
+     any real chance to succeed. This only ever blocks the cron tick or a
+     cold-start request now, never a warm visitor request. */
   const timer = setTimeout(() => ctrl.abort(), 15000);
   try {
     const upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' }, signal: ctrl.signal });
-    if (upstream.ok) {
-      const body = await upstream.text();
-      const stored = await writeSharedCache(GDELT_CACHE_URL, body, upstream.headers.get('content-type'), GDELT_STALE_MAX_SECONDS);
-      return new Response(stored.body, {
-        status: 200,
-        headers: { 'Content-Type': stored.headers.get('content-type'), 'Cache-Control': 'no-store' }
-      });
-    }
-    /* Non-OK (e.g. a 429) -- prefer serving a stale-but-usable cached copy
-       over surfacing the failure, if one exists within the stale window. */
-    if (cached && cached.ageSeconds < GDELT_STALE_MAX_SECONDS) return respondFromCache(cached);
+    if (!upstream.ok) return { ok: false, status: upstream.status, body: await upstream.text() };
     const body = await upstream.text();
-    return new Response(body, {
-      status: upstream.status,
-      headers: { 'Content-Type': upstream.headers.get('content-type') || 'application/json', 'Cache-Control': 'no-store' }
-    });
+    const stored = await writeSharedCache(GDELT_CACHE_URL, body, upstream.headers.get('content-type'));
+    return { ok: true, stored };
   } catch (err) {
-    if (cached && cached.ageSeconds < GDELT_STALE_MAX_SECONDS) return respondFromCache(cached);
-    return new Response('Upstream fetch failed: ' + err.message, { status: 502 });
+    return { ok: false, error: err.message };
   } finally {
     clearTimeout(timer);
   }
+}
+const GDELT_CACHE_URL = 'https://newsradar-internal-cache.example/gdelt';
+
+async function handleGdelt() {
+  const cached = await readSharedCache(GDELT_CACHE_URL);
+  if (cached) return respondFromCache(cached);
+
+  /* No cache at all yet -- a fresh deploy before the first cron tick, or the
+     cron has been disabled. Bootstrap with one live fetch so the site isn't
+     broken while waiting; every subsequent request will hit the cache this
+     writes. */
+  const result = await refreshGdeltCache();
+  if (result.ok) {
+    return new Response(result.stored.body, {
+      status: 200,
+      headers: { 'Content-Type': result.stored.headers.get('content-type'), 'Cache-Control': 'no-store' }
+    });
+  }
+  if (result.error) return new Response('Upstream fetch failed: ' + result.error, { status: 502 });
+  return new Response(result.body, {
+    status: result.status,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+  });
 }
 
 /* /api/incidents proxies emergencyapi.com's unified incident feed (all 8
    states/territories in one GeoJSON response). The API key is a Cloudflare
    secret (env.EMERGENCY_API_KEY, set via `wrangler secret put`) -- it must
    never reach the browser, since this static site has no other backend to
-   hide it in and anyone can view-source a public page. Cached for 3 minutes
-   (incidents change faster than news) with a 30-minute stale fallback, both
-   to keep the site fast and to go easy on the account's request quota since
-   every visitor would otherwise trigger its own upstream call. */
+   hide it in and anyone can view-source a public page. Refreshed by the
+   same scheduled cron as GDELT, for the same reason: a visitor's request
+   should never be the thing that triggers a live upstream call. */
 const INCIDENTS_CACHE_URL = 'https://newsradar-internal-cache.example/incidents';
-const INCIDENTS_FRESH_SECONDS = 180;
-const INCIDENTS_STALE_MAX_SECONDS = 1800;
 const INCIDENTS_STATES = 'nsw,vic,qld,sa,wa,tas,nt,act';
 
-async function handleIncidents(env) {
-  if (!env.EMERGENCY_API_KEY) {
-    return new Response(JSON.stringify({ error: 'EMERGENCY_API_KEY secret not configured' }), {
-      status: 501,
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
-    });
-  }
-
-  const cached = await readSharedCache(INCIDENTS_CACHE_URL);
-  if (cached && cached.ageSeconds < INCIDENTS_FRESH_SECONDS) {
-    return respondFromCache(cached);
-  }
-
+async function refreshIncidentsCache(env) {
+  if (!env.EMERGENCY_API_KEY) return { ok: false, error: 'EMERGENCY_API_KEY secret not configured' };
   const target = 'https://emergencyapi.com/api/v1/incidents?state=' + INCIDENTS_STATES + '&limit=500';
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 15000);
@@ -151,26 +142,39 @@ async function handleIncidents(env) {
       headers: { Authorization: 'Bearer ' + env.EMERGENCY_API_KEY },
       signal: ctrl.signal
     });
-    if (upstream.ok) {
-      const body = await upstream.text();
-      const stored = await writeSharedCache(INCIDENTS_CACHE_URL, body, upstream.headers.get('content-type'), INCIDENTS_STALE_MAX_SECONDS);
-      return new Response(stored.body, {
-        status: 200,
-        headers: { 'Content-Type': stored.headers.get('content-type'), 'Cache-Control': 'no-store' }
-      });
-    }
-    if (cached && cached.ageSeconds < INCIDENTS_STALE_MAX_SECONDS) return respondFromCache(cached);
+    if (!upstream.ok) return { ok: false, status: upstream.status, body: await upstream.text() };
     const body = await upstream.text();
-    return new Response(body, {
-      status: upstream.status,
-      headers: { 'Content-Type': upstream.headers.get('content-type') || 'application/json', 'Cache-Control': 'no-store' }
-    });
+    const stored = await writeSharedCache(INCIDENTS_CACHE_URL, body, upstream.headers.get('content-type'));
+    return { ok: true, stored };
   } catch (err) {
-    if (cached && cached.ageSeconds < INCIDENTS_STALE_MAX_SECONDS) return respondFromCache(cached);
-    return new Response('Upstream fetch failed: ' + err.message, { status: 502 });
+    return { ok: false, error: err.message };
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function handleIncidents(env) {
+  const cached = await readSharedCache(INCIDENTS_CACHE_URL);
+  if (cached) return respondFromCache(cached);
+
+  const result = await refreshIncidentsCache(env);
+  if (result.ok) {
+    return new Response(result.stored.body, {
+      status: 200,
+      headers: { 'Content-Type': result.stored.headers.get('content-type'), 'Cache-Control': 'no-store' }
+    });
+  }
+  if (!env.EMERGENCY_API_KEY) {
+    return new Response(JSON.stringify({ error: result.error }), {
+      status: 501,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+    });
+  }
+  if (result.error) return new Response('Upstream fetch failed: ' + result.error, { status: 502 });
+  return new Response(result.body, {
+    status: result.status,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+  });
 }
 
 export default {
@@ -192,5 +196,14 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
+  },
+
+  /* Fires on the cron schedule in wrangler.jsonc (every 5 minutes). Runs
+     both refreshes independently via ctx.waitUntil so one failing doesn't
+     stop the other, and so the Worker instance isn't recycled before both
+     finish. */
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(refreshGdeltCache());
+    ctx.waitUntil(refreshIncidentsCache(env));
   }
 };
