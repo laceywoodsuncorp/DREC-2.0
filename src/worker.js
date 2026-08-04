@@ -73,30 +73,48 @@ function respondFromCache(cached) {
   });
 }
 
+function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
 /* Does the actual GDELT fetch and, on success, writes the shared cache.
    Called from both the scheduled cron tick (the normal case) and
    handleGdelt()'s cold-start bootstrap fetch. On failure it just leaves
    whatever's already cached untouched -- a failed refresh means visitors
-   keep seeing the last known-good result instead of an error. */
+   keep seeing the last known-good result instead of an error.
+   Retries up to 3 times, 5 seconds apart, specifically on a 429 -- GDELT's
+   429 body literally says "limit requests to one every 5 seconds", and in
+   practice it has been rejecting close to every single attempt from
+   Cloudflare's shared outbound IP range regardless of how infrequently we
+   ask, which meant the cache could go indefinitely without ever being
+   written even with the 5-minute cron in place. A 429 comes back fast (not
+   a timeout), so a few retries here only cost a few seconds -- and it's
+   time spent in the background (a cron tick, or rarely a cold start),
+   never on a warm visitor's request. */
 async function refreshGdeltCache() {
   const target = buildGdeltUrl();
-  const ctrl = new AbortController();
-  /* 15s, not 8s: GDELT has been observed taking 10-16s just to return an
-     error response during slow periods, so 8s was aborting before GDELT had
-     any real chance to succeed. This only ever blocks the cron tick or a
-     cold-start request now, never a warm visitor request. */
-  const timer = setTimeout(() => ctrl.abort(), 15000);
-  try {
-    const upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' }, signal: ctrl.signal });
-    if (!upstream.ok) return { ok: false, status: upstream.status, body: await upstream.text() };
-    const body = await upstream.text();
-    const stored = await writeSharedCache(GDELT_CACHE_URL, body, upstream.headers.get('content-type'));
-    return { ok: true, stored };
-  } catch (err) {
-    return { ok: false, error: err.message };
-  } finally {
-    clearTimeout(timer);
+  let lastFailure = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const ctrl = new AbortController();
+    /* 15s, not 8s: GDELT has been observed taking 10-16s just to return an
+       error response during slow periods, so 8s was aborting before GDELT
+       had any real chance to succeed. */
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const upstream = await fetch(target, { headers: { 'User-Agent': 'NewsRadar/1.0' }, signal: ctrl.signal });
+      if (upstream.ok) {
+        const body = await upstream.text();
+        const stored = await writeSharedCache(GDELT_CACHE_URL, body, upstream.headers.get('content-type'));
+        return { ok: true, stored };
+      }
+      lastFailure = { ok: false, status: upstream.status, body: await upstream.text() };
+      if (upstream.status !== 429 || attempt === 3) return lastFailure;
+    } catch (err) {
+      return { ok: false, error: err.message }; // don't retry network/timeout errors, only explicit 429s
+    } finally {
+      clearTimeout(timer);
+    }
+    await sleep(5000);
   }
+  return lastFailure;
 }
 const GDELT_CACHE_URL = 'https://newsradar-internal-cache.example/gdelt';
 
@@ -132,25 +150,36 @@ async function handleGdelt() {
 const INCIDENTS_CACHE_URL = 'https://newsradar-internal-cache.example/incidents';
 const INCIDENTS_STATES = 'nsw,vic,qld,sa,wa,tas,nt,act';
 
+/* Same 429-specific retry as refreshGdeltCache() above -- see its comment
+   for why. Not observed on emergencyapi.com yet, but cheap insurance
+   against the same shared-IP rate-limiting risk. */
 async function refreshIncidentsCache(env) {
   if (!env.EMERGENCY_API_KEY) return { ok: false, error: 'EMERGENCY_API_KEY secret not configured' };
   const target = 'https://emergencyapi.com/api/v1/incidents?state=' + INCIDENTS_STATES + '&limit=500';
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15000);
-  try {
-    const upstream = await fetch(target, {
-      headers: { Authorization: 'Bearer ' + env.EMERGENCY_API_KEY },
-      signal: ctrl.signal
-    });
-    if (!upstream.ok) return { ok: false, status: upstream.status, body: await upstream.text() };
-    const body = await upstream.text();
-    const stored = await writeSharedCache(INCIDENTS_CACHE_URL, body, upstream.headers.get('content-type'));
-    return { ok: true, stored };
-  } catch (err) {
-    return { ok: false, error: err.message };
-  } finally {
-    clearTimeout(timer);
+  let lastFailure = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const upstream = await fetch(target, {
+        headers: { Authorization: 'Bearer ' + env.EMERGENCY_API_KEY },
+        signal: ctrl.signal
+      });
+      if (upstream.ok) {
+        const body = await upstream.text();
+        const stored = await writeSharedCache(INCIDENTS_CACHE_URL, body, upstream.headers.get('content-type'));
+        return { ok: true, stored };
+      }
+      lastFailure = { ok: false, status: upstream.status, body: await upstream.text() };
+      if (upstream.status !== 429 || attempt === 3) return lastFailure;
+    } catch (err) {
+      return { ok: false, error: err.message };
+    } finally {
+      clearTimeout(timer);
+    }
+    await sleep(5000);
   }
+  return lastFailure;
 }
 
 async function handleIncidents(env) {
