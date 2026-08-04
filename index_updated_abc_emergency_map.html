@@ -120,6 +120,21 @@
   .state-pill{color:#fff;padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:700}
   .status-note{padding:10px 24px;font-size:.74rem;color:#7a5a00;background:#fff8e0;border-top:1px solid #f0e4b0}
 
+  /* Power & Network Outages tile */
+  .tile-outages{margin-top:24px}
+  #outagesMap{flex:1;min-height:420px;width:100%}
+  .outage-links{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:18px 24px 22px}
+  @media(max-width:940px){.outage-links{grid-template-columns:1fr}}
+  .outage-col h3{font-size:.92rem;color:var(--heritage-green);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .crowd-badge{font-size:.64rem;font-weight:700;color:#a06000;background:#fff3d6;padding:3px 8px;border-radius:999px}
+  .outage-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:start}
+  @media(max-width:640px){.outage-grid{grid-template-columns:1fr}}
+  .outage-card{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:10px;background:var(--off-white);text-decoration:none;color:var(--heritage-green);font-size:.82rem;font-weight:700;transition:.15s}
+  .outage-card:hover{background:#e6f4f1}
+  .outage-card span{font-size:.72rem;color:#5a6a6a;font-weight:400}
+  .outage-card.crowd{background:#fff8e0}
+  .outage-card.crowd:hover{background:#fff3d0}
+
   /* Town / CensusAtlas tile */
   .ca-embed-wrap{position:relative;background:#eef2f1}
   .ca-embed-wrap{flex-grow:1;display:flex}
@@ -305,6 +320,30 @@
     </section>
 
 </div>
+
+<!-- ===== POWER & NETWORK OUTAGES ===== -->
+<section class="tile tile-outages">
+  <div class="tile-head">
+    <h2>⚡📶 Power &amp; Network Outages</h2>
+    <div class="src">Electricity outages are plotted live on the map wherever a distributor's feed has been verified; every other electricity network below links straight through to its own current-outage page. Mobile network status is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
+  </div>
+  <div id="outagesMap"></div>
+  <div class="legend">
+    <div class="grp"><span class="sw" style="background:#e74c3c;border-radius:50%"></span>Live electricity outage</div>
+    <div class="grp" style="margin-left:14px"><b>No live electricity feed verified yet — see network links below.</b></div>
+  </div>
+  <div class="outage-links">
+    <div class="outage-col">
+      <h3>⚡ Electricity networks</h3>
+      <div class="outage-grid" id="elecLinks"></div>
+    </div>
+    <div class="outage-col">
+      <h3>📶 Mobile networks <span class="crowd-badge">Crowdsourced — not carrier-confirmed</span></h3>
+      <div class="outage-grid" id="mobileLinks"></div>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <footer>
@@ -1016,6 +1055,59 @@ loadLive();
    (fonts, images etc. finishing) and for the user resizing the window. */
 window.addEventListener('load',()=>map.invalidateSize());
 window.addEventListener('resize',()=>map.invalidateSize());
+
+/* ============ POWER & NETWORK OUTAGES ============
+   Electricity distribution in Australia is split across ~16 separate
+   network operators, each running its own outage-finder tool -- there is
+   no single national live feed. None of these have been verified against a
+   real, confirmed API response yet (unlike the fire incident feeds, which
+   were checked against actual captured data before being wired up), so
+   rather than guess at an endpoint for infrastructure-outage data, every
+   network links straight through to its own official current-outage page.
+   The map is ready to plot live points once a feed is verified -- it just
+   has nothing to plot yet.
+   Mobile network outages have no official public API from any Australian
+   carrier at all -- only third-party crowdsourced trackers built from user
+   reports exist, which is why that section is explicitly labelled as
+   unofficial rather than presented as carrier-confirmed status. */
+const outagesMap=L.map('outagesMap',{minZoom:3,maxZoom:12}).setView([-25.6,134.3],4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:12}).addTo(outagesMap);
+
+const ELECTRICITY_NETWORKS=[
+  {name:'Ausgrid',region:'Sydney, Central Coast & Hunter (NSW)',url:'https://www.ausgrid.com.au/Outages/Current-Outages'},
+  {name:'Essential Energy',region:'Regional & rural NSW',url:'https://www.essentialenergy.com.au'},
+  {name:'Endeavour Energy',region:'Greater Western Sydney & Illawarra (NSW)',url:'https://www.endeavourenergy.com.au'},
+  {name:'AusNet Services',region:'Eastern Victoria',url:'https://www.ausnetservices.com.au'},
+  {name:'Powercor',region:'Western Victoria',url:'https://www.powercor.com.au/power-outages-and-emergencies/full-outage-list/'},
+  {name:'CitiPower',region:'Melbourne CBD & inner suburbs',url:'https://www.citipower.com.au'},
+  {name:'United Energy',region:'South-east Melbourne',url:'https://www.unitedenergy.com.au'},
+  {name:'Jemena',region:'North-west Melbourne',url:'https://www.jemena.com.au'},
+  {name:'Energex',region:'South-east Queensland',url:'https://www.energex.com.au/outages/outage-finder/outage-finder-map'},
+  {name:'Ergon Energy',region:'Regional Queensland',url:'https://www.ergon.com.au'},
+  {name:'SA Power Networks',region:'South Australia',url:'https://www.sapowernetworks.com.au/outages/'},
+  {name:'Western Power',region:'Perth & South-West WA',url:'https://www.westernpower.com.au/outages/'},
+  {name:'Horizon Power',region:'Regional & remote WA',url:'https://www.horizonpower.com.au'},
+  {name:'TasNetworks',region:'Tasmania',url:'https://www.tasnetworks.com.au/outages'},
+  {name:'Evoenergy',region:'Australian Capital Territory',url:'https://www.evoenergy.com.au/Outages'},
+  {name:'Power and Water Corporation',region:'Northern Territory',url:'https://www.powerwater.com.au'}
+];
+const MOBILE_NETWORKS=[
+  {name:'Telstra',region:'Official site',url:'https://www.telstra.com.au/'},
+  {name:'Optus',region:'Official site',url:'https://www.optus.com.au/'},
+  {name:'TPG / Vodafone',region:'Official network status page',url:'https://www.tpg.com.au/network-status'}
+];
+const CROWDSOURCED_TRACKERS=[
+  {name:'GeoBlackout — mobile & internet reports',region:'Crowdsourced, Australia-wide',url:'https://geoblackout.com/au/report/internet'},
+  {name:'Outage.Report — Telstra',region:'Crowdsourced',url:'https://outage.report/au/telstra'},
+  {name:'Outage.Report — Optus',region:'Crowdsourced',url:'https://outage.report/au/optus'}
+];
+function outageCard(n,extraClass){
+  return '<a class="outage-card'+(extraClass?' '+extraClass:'')+'" href="'+n.url+'" target="_blank" rel="noopener"><b>'+n.name+'</b><span>'+n.region+'</span></a>';
+}
+document.getElementById('elecLinks').innerHTML=ELECTRICITY_NETWORKS.map(n=>outageCard(n)).join('');
+document.getElementById('mobileLinks').innerHTML=
+  MOBILE_NETWORKS.map(n=>outageCard(n)).join('')+
+  CROWDSOURCED_TRACKERS.map(n=>outageCard(n,'crowd')).join('');
 
 </script>
 
