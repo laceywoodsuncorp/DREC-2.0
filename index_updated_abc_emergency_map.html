@@ -348,11 +348,11 @@
       <button class="state-tab" data-carrier="optus">Optus</button>
     </div>
     <div class="ca-embed-wrap mobile-map-embed-wrap">
-      <iframe id="mobileOutageFrame" src="https://downdetector.com.au/status/telstra/" title="Mobile network outage reports" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <iframe id="mobileOutageFrame" src="https://geoblackout.com/au/report/internet/telstra" title="Mobile network outage reports" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
     <div class="ca-fallback">
-      Outage reports sourced from <a class="mobileMapFallbackLink" href="https://downdetector.com.au/status/telstra/" target="_blank" rel="noopener">DownDetector Australia</a> — crowdsourced, not confirmed by the carrier. If the map appears blank, it may block embedding — just
-      <a class="mobileMapFallbackLink" href="https://downdetector.com.au/status/telstra/" target="_blank" rel="noopener">open it in a new tab ↗</a>.
+      Outage reports sourced from <a class="mobileMapFallbackLink" href="https://geoblackout.com/au/report/internet/telstra" target="_blank" rel="noopener">GeoBlackout</a> — crowdsourced, not confirmed by the carrier. If the map appears blank, it may block embedding — just
+      <a class="mobileMapFallbackLink" href="https://geoblackout.com/au/report/internet/telstra" target="_blank" rel="noopener">open it in a new tab ↗</a>.
     </div>
   </div>
 </section>
@@ -1079,14 +1079,13 @@ window.addEventListener('resize',()=>map.invalidateSize());
 
 /* ============ POWER & NETWORK OUTAGES ============
    isyourpowerout.com (electricity, above) embeds fine -- confirmed working
-   in the browser. StatusGator explicitly blocked embedding (confirmed by
-   its own "Firefox Can't Open This Page ... to protect your security"
-   error, not just a guess), so trying DownDetector Australia instead --
-   same embed + open-in-new-tab fallback pattern as everything else here;
-   if this also turns out to be blocked, the fallback link still works. */
+   in the browser. StatusGator and DownDetector Australia have both been
+   tried and blocked embedding in turn, so now trying GeoBlackout -- same
+   embed + open-in-new-tab fallback pattern as everything else here; if
+   this also turns out to be blocked, the fallback link still works. */
 const MOBILE_MAP_URLS={
-  telstra:'https://downdetector.com.au/status/telstra/',
-  optus:'https://downdetector.com.au/status/optus/'
+  telstra:'https://geoblackout.com/au/report/internet/telstra',
+  optus:'https://geoblackout.com/au/report/internet/optus'
 };
 document.querySelectorAll('#mobileMapTabs .state-tab').forEach(tab=>tab.addEventListener('click',()=>{
   document.querySelectorAll('#mobileMapTabs .state-tab').forEach(t=>t.classList.remove('active'));
