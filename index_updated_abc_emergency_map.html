@@ -133,6 +133,13 @@
   .outage-card span{font-size:.72rem;color:#5a6a6a;font-weight:400}
   .outage-card.crowd{background:#fff8e0}
   .outage-card.crowd:hover{background:#fff3d0}
+  .mobile-map-block{padding:4px 24px 22px}
+  .mobile-map-block h3{font-size:.92rem;color:var(--heritage-green);margin:4px 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .mobile-map-tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+  .mobile-map-embed-wrap{position:relative;background:#eef2f1;border-radius:10px;overflow:hidden}
+  .mobile-map-embed-wrap iframe{width:100%;height:480px;border:0;display:block}
+  .mobile-map-fallback{font-size:.74rem;color:#5a6a6a;margin-top:8px}
+  .mobile-map-fallback a{color:var(--neutral-green);font-weight:600}
 
   /* Town / CensusAtlas tile */
   .ca-embed-wrap{position:relative;background:#eef2f1}
@@ -341,6 +348,21 @@
     <div class="outage-col">
       <h3>📶 Mobile networks <span class="crowd-badge">Crowdsourced — not carrier-confirmed</span></h3>
       <div class="outage-grid" id="mobileLinks"></div>
+    </div>
+  </div>
+
+  <div class="mobile-map-block">
+    <h3>📶 Mobile Network Outage Reports <span class="crowd-badge">Crowdsourced — not carrier-confirmed</span></h3>
+    <div class="mobile-map-tabs" id="mobileMapTabs">
+      <button class="state-tab active" data-carrier="telstra">Telstra</button>
+      <button class="state-tab" data-carrier="optus">Optus</button>
+    </div>
+    <div class="mobile-map-embed-wrap">
+      <iframe id="mobileOutageFrame" src="https://statusgator.com/services/telstra/map" title="Mobile network outage reports" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <div class="mobile-map-fallback">
+      Outage reports sourced from <a class="mobileMapFallbackLink" href="https://statusgator.com/services/telstra/map" target="_blank" rel="noopener">StatusGator</a> — crowdsourced, not confirmed by the carrier. If the map appears blank, it may block embedding — just
+      <a class="mobileMapFallbackLink" href="https://statusgator.com/services/telstra/map" target="_blank" rel="noopener">open it in a new tab ↗</a>.
     </div>
   </div>
 </section>
@@ -1115,6 +1137,19 @@ document.getElementById('elecLinks').innerHTML=ELECTRICITY_NETWORKS.map(n=>outag
 document.getElementById('mobileLinks').innerHTML=
   MOBILE_NETWORKS.map(n=>outageCard(n)).join('')+
   CROWDSOURCED_TRACKERS.map(n=>outageCard(n,'crowd')).join('');
+
+/* Tabbed StatusGator embed (crowdsourced outage reports, not carrier-
+   confirmed) -- swaps the iframe src and both fallback link hrefs together
+   so the "open in a new tab" links always point at whichever carrier's
+   map is currently selected. */
+const MOBILE_MAP_URLS={telstra:'https://statusgator.com/services/telstra/map',optus:'https://statusgator.com/services/optus/map'};
+document.querySelectorAll('#mobileMapTabs .state-tab').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('#mobileMapTabs .state-tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  const url=MOBILE_MAP_URLS[tab.dataset.carrier];
+  document.getElementById('mobileOutageFrame').src=url;
+  document.querySelectorAll('.mobileMapFallbackLink').forEach(a=>a.href=url);
+}));
 
 </script>
 
