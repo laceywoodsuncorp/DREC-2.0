@@ -583,13 +583,21 @@
       setCacheNote('Live · '+articles.length+' articles pulled just now (updates cached ~10 min)');
       applyFilters();
     }catch(err){
+      /* A failed refresh with a usable cached copy on hand is the normal,
+         expected fallback now (the shared server-side cache means this is
+         rare to begin with) -- not an error worth alarming a visitor over,
+         so this reads the same as a plain "here's how old this is" note,
+         no warning icon or colour. Only the no-cache-at-all case (nothing
+         real to show, just the static sample headlines) keeps a distinct
+         (but still calm) note, since that's a materially different,
+         more-degraded state. */
       console.warn('Live news fetch failed:',err);
       if(cached){
         currentArticles=cached.articles;
-        setCacheNote('⚠️ Live refresh failed — showing cached results from '+agoText(cached.fetchedAt)+'. If this page is opened as a local file (file://), host it over http/https instead.',true);
+        setCacheNote('Showing results from '+agoText(cached.fetchedAt)+'.');
         applyFilters();
       }else{
-        setCacheNote('⚠️ Could not reach the live news feed — showing the built-in sample headlines below. Live fetch needs the page hosted over http/https (not opened as a local file).',true);
+        setCacheNote('Showing sample headlines while we reconnect to the live feed.',true);
         // leave the static seed article markup already in #feed as the fallback
         const seedItems=feed.querySelectorAll('.item');
         shown.textContent=seedItems.length;total.textContent=seedItems.length;
