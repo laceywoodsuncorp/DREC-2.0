@@ -137,6 +137,8 @@
   .outage-launch .cta{display:inline-flex;align-items:center;gap:9px;background:var(--primary-yellow);color:var(--heritage-green);font-weight:800;font-size:.92rem;text-decoration:none;padding:11px 20px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.25);transition:.15s}
   .outage-launch .cta:hover{transform:translateY(-2px);box-shadow:0 9px 24px rgba(0,0,0,.35)}
   .outage-launch .sub-note{font-size:.7rem;opacity:.75}
+  .mobile-map-embed-wrap{flex-grow:0!important;border-radius:10px;overflow:hidden}
+  .mobile-map-embed-wrap iframe{height:480px!important;min-height:0!important}
 
   /* Town / CensusAtlas tile */
   .ca-embed-wrap{position:relative;background:#eef2f1}
@@ -328,14 +330,15 @@
 <section class="tile tile-outages">
   <div class="tile-head">
     <h2>⚡📶 Power &amp; Network Outages</h2>
-    <div class="src">Both maps below are third-party sites that block being embedded directly, so each opens in a new tab instead. Mobile network status is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
+    <div class="src">Live electricity outage map embedded from <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener" style="color:var(--neutral-green)">isyourpowerout.com</a> (third-party, not Suncorp or an official network operator). Mobile network status is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
   </div>
 
-  <div class="outage-launch">
-    <h4>⚡ Live Electricity Outage Map</h4>
-    <p>Real-time outage reports across every Australian electricity network in one map, aggregated by isyourpowerout.com.</p>
-    <a class="cta" href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener">🗺️ Open the live outage map ↗</a>
-    <div class="sub-note">Third-party aggregator — not Suncorp or an official network operator.</div>
+  <div class="ca-embed-wrap">
+    <iframe id="powerOutageFrame" src="https://isyourpowerout.com/live-map" title="Is Your Power Out — live Australian electricity outage map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+  <div class="ca-fallback">
+    Live electricity outages aggregated across Australian network operators. If the map appears blank, it may block embedding — just
+    <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener">open it in a new tab ↗</a>.
   </div>
 
   <div class="mobile-map-block">
@@ -344,11 +347,12 @@
       <button class="state-tab active" data-carrier="telstra">Telstra</button>
       <button class="state-tab" data-carrier="optus">Optus</button>
     </div>
-    <div class="outage-launch">
-      <h4 id="mobileMapTitle">📶 Telstra Outage Reports</h4>
-      <p>StatusGator blocks embedding, so view live crowdsourced outage reports directly on their site.</p>
-      <a class="cta" id="mobileMapCta" href="https://statusgator.com/services/telstra/map" target="_blank" rel="noopener">🗺️ Open Telstra outage map ↗</a>
-      <div class="sub-note">Crowdsourced via StatusGator — not confirmed by the carrier.</div>
+    <div class="ca-embed-wrap mobile-map-embed-wrap">
+      <iframe id="mobileOutageFrame" src="https://outage.report/au/telstra" title="Mobile network outage reports" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <div class="ca-fallback">
+      Outage reports sourced from <a class="mobileMapFallbackLink" href="https://outage.report/au/telstra" target="_blank" rel="noopener">Outage.Report</a> — crowdsourced, not confirmed by the carrier. If the map appears blank, it may block embedding — just
+      <a class="mobileMapFallbackLink" href="https://outage.report/au/telstra" target="_blank" rel="noopener">open it in a new tab ↗</a>.
     </div>
   </div>
 </section>
@@ -1074,25 +1078,20 @@ window.addEventListener('load',()=>map.invalidateSize());
 window.addEventListener('resize',()=>map.invalidateSize());
 
 /* ============ POWER & NETWORK OUTAGES ============
-   Both isyourpowerout.com (electricity) and StatusGator (mobile) actively
-   block being embedded in an iframe -- confirmed by StatusGator's own
-   "Firefox Can't Open This Page ... to protect your security" error, not
-   just a guess. So instead of an embed-with-fallback, each is a launch
-   card that deep-links out to the real site, matching the FIRMS launch
-   card pattern already used elsewhere in this file for the same reason
-   (NASA also blocks embedding its map). */
+   isyourpowerout.com (electricity, above) embeds fine -- confirmed working
+   in the browser. StatusGator and DownDetector Australia both blocked
+   embedding; Outage.Report is confirmed working instead. Same embed +
+   open-in-new-tab fallback pattern as everything else here regardless. */
 const MOBILE_MAP_URLS={
-  telstra:{label:'Telstra',url:'https://statusgator.com/services/telstra/map'},
-  optus:{label:'Optus',url:'https://statusgator.com/services/optus/map'}
+  telstra:'https://outage.report/au/telstra',
+  optus:'https://outage.report/au/optus'
 };
 document.querySelectorAll('#mobileMapTabs .state-tab').forEach(tab=>tab.addEventListener('click',()=>{
   document.querySelectorAll('#mobileMapTabs .state-tab').forEach(t=>t.classList.remove('active'));
   tab.classList.add('active');
-  const info=MOBILE_MAP_URLS[tab.dataset.carrier];
-  document.getElementById('mobileMapTitle').textContent='📶 '+info.label+' Outage Reports';
-  const cta=document.getElementById('mobileMapCta');
-  cta.href=info.url;
-  cta.textContent='🗺️ Open '+info.label+' outage map ↗';
+  const url=MOBILE_MAP_URLS[tab.dataset.carrier];
+  document.getElementById('mobileOutageFrame').src=url;
+  document.querySelectorAll('.mobileMapFallbackLink').forEach(a=>a.href=url);
 }));
 
 </script>
