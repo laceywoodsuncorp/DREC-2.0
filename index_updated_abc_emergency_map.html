@@ -137,6 +137,8 @@
   .outage-launch .cta{display:inline-flex;align-items:center;gap:9px;background:var(--primary-yellow);color:var(--heritage-green);font-weight:800;font-size:.92rem;text-decoration:none;padding:11px 20px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.25);transition:.15s}
   .outage-launch .cta:hover{transform:translateY(-2px);box-shadow:0 9px 24px rgba(0,0,0,.35)}
   .outage-launch .sub-note{font-size:.7rem;opacity:.75}
+  .mobile-map-embed-wrap{flex-grow:0!important;border-radius:10px;overflow:hidden}
+  .mobile-map-embed-wrap iframe{height:480px!important;min-height:0!important}
 
   /* Town / CensusAtlas tile */
   .ca-embed-wrap{position:relative;background:#eef2f1}
@@ -345,11 +347,12 @@
       <button class="state-tab active" data-carrier="telstra">Telstra</button>
       <button class="state-tab" data-carrier="optus">Optus</button>
     </div>
-    <div class="outage-launch">
-      <h4 id="mobileMapTitle">📶 Telstra Outage Reports</h4>
-      <p>StatusGator blocks embedding, so view live crowdsourced outage reports directly on their site.</p>
-      <a class="cta" id="mobileMapCta" href="https://statusgator.com/services/telstra/map" target="_blank" rel="noopener">🗺️ Open Telstra outage map ↗</a>
-      <div class="sub-note">Crowdsourced via StatusGator — not confirmed by the carrier.</div>
+    <div class="ca-embed-wrap mobile-map-embed-wrap">
+      <iframe id="mobileOutageFrame" src="https://downdetector.com.au/status/telstra/" title="Mobile network outage reports" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <div class="ca-fallback">
+      Outage reports sourced from <a class="mobileMapFallbackLink" href="https://downdetector.com.au/status/telstra/" target="_blank" rel="noopener">DownDetector Australia</a> — crowdsourced, not confirmed by the carrier. If the map appears blank, it may block embedding — just
+      <a class="mobileMapFallbackLink" href="https://downdetector.com.au/status/telstra/" target="_blank" rel="noopener">open it in a new tab ↗</a>.
     </div>
   </div>
 </section>
@@ -1076,24 +1079,21 @@ window.addEventListener('resize',()=>map.invalidateSize());
 
 /* ============ POWER & NETWORK OUTAGES ============
    isyourpowerout.com (electricity, above) embeds fine -- confirmed working
-   in the browser. StatusGator (mobile) actively blocks being embedded in
-   an iframe, confirmed by its own "Firefox Can't Open This Page ... to
-   protect your security" error, not just a guess. So the mobile section
-   is a launch card that deep-links out instead, matching the FIRMS launch
-   card pattern already used elsewhere in this file for the same reason
-   (NASA also blocks embedding its map). */
+   in the browser. StatusGator explicitly blocked embedding (confirmed by
+   its own "Firefox Can't Open This Page ... to protect your security"
+   error, not just a guess), so trying DownDetector Australia instead --
+   same embed + open-in-new-tab fallback pattern as everything else here;
+   if this also turns out to be blocked, the fallback link still works. */
 const MOBILE_MAP_URLS={
-  telstra:{label:'Telstra',url:'https://statusgator.com/services/telstra/map'},
-  optus:{label:'Optus',url:'https://statusgator.com/services/optus/map'}
+  telstra:'https://downdetector.com.au/status/telstra/',
+  optus:'https://downdetector.com.au/status/optus/'
 };
 document.querySelectorAll('#mobileMapTabs .state-tab').forEach(tab=>tab.addEventListener('click',()=>{
   document.querySelectorAll('#mobileMapTabs .state-tab').forEach(t=>t.classList.remove('active'));
   tab.classList.add('active');
-  const info=MOBILE_MAP_URLS[tab.dataset.carrier];
-  document.getElementById('mobileMapTitle').textContent='📶 '+info.label+' Outage Reports';
-  const cta=document.getElementById('mobileMapCta');
-  cta.href=info.url;
-  cta.textContent='🗺️ Open '+info.label+' outage map ↗';
+  const url=MOBILE_MAP_URLS[tab.dataset.carrier];
+  document.getElementById('mobileOutageFrame').src=url;
+  document.querySelectorAll('.mobileMapFallbackLink').forEach(a=>a.href=url);
 }));
 
 </script>
