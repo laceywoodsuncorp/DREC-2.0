@@ -346,7 +346,7 @@
     <section class="tile tile-incidents" id="section-incidents">
       <div class="tile-head">
         <h2>🚒 State Fire Department Incidents</h2>
-        <div class="src">Live nationwide via a unified feed, with direct NSW/QLD/SA/ACT government feeds as backup; the Severe Alerts tab pulls together Emergency Warning / evacuate-level incidents from whichever states are up. Any state without live data links straight through to its official current-incidents page. Switch tabs below.</div>
+        <div class="src">Live from each state's own official agency feed — NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES and ACT ESA — fetched server-side, so no state depends on any other. The Severe Alerts tab pulls together Emergency Warning / evacuate-level incidents nationally and names any feed it couldn't reach. Switch tabs below.</div>
         <div class="count"><b id="incCount">…</b> current incidents</div>
       </div>
       <div class="state-tabs" id="stateTabs">
@@ -369,7 +369,7 @@
 </main>
 
 <footer>
-  <p><strong>About this dashboard:</strong> News headlines were surfaced via a web search of Australian sources (last 24h, 29–30 Jul 2026 AEST). The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State fire department incident data is live for NSW (RFS) and QLD (QFES); other states/territories link through to their official current-incidents page, and a snapshot of recent real incidents is shown if a live feed is temporarily unreachable. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. Styling uses the Suncorp brand colour palette.</p>
+  <p><strong>About this dashboard:</strong> News headlines were surfaced via a web search of Australian sources (last 24h, 29–30 Jul 2026 AEST). The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State emergency incident data is live for all eight states and territories, each from its own official agency feed (NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES, ACT ESA), proxied server-side with no API key; if a feed is temporarily unreachable that state says so and links through to its official current-incidents page rather than showing older data. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. Styling uses the Suncorp brand colour palette.</p>
 </footer>
 
 <script>
@@ -838,23 +838,23 @@ document.getElementById('loadFirms').addEventListener('click',loadFirmsLayer);
 if(document.getElementById('firmsKey').value.trim()){loadFirmsLayer();}
 
 /* ============ STATE FIRE / EMERGENCY SERVICE INCIDENT FEEDS ============
-   Primary source: /api/incidents, a same-origin proxy (src/worker.js) to
-   emergencyapi.com's unified feed covering all 8 states/territories in one
-   call, with an API key held server-side as a Cloudflare secret so it never
-   appears in this page's source. Its warningLevel field maps directly onto
-   our Emergency Warning/Watch and Act/Advice categories.
-   Fallback: direct per-state government feeds for NSW (RFS "majorIncidents"
-   JSON), QLD (QFES ESCAD ArcGIS FeatureServer), SA (CFS current-incidents
-   JSON) and ACT (ESA CAP/EDXL XML) -- all four confirmed against real
-   captured responses, not guessed at -- used only for whichever of those
-   four the unified feed didn't cover this round (key not configured yet,
-   account/upstream issue, etc). VIC/WA/TAS/NT have no fallback of their own
-   (VicEmergency's direct feed requires registration, and nothing confirmed
-   was found for the others), so if the unified feed doesn't cover them
-   either, those tabs link straight through to each service's official
-   current-incidents page instead of guessing at an endpoint for
-   safety-relevant content. Whether a state actually shows live data is
-   tracked dynamically via liveOk (below), not a fixed flag. */
+   Every state now comes from its own official government feed, fetched
+   server-side by the Worker (see the INCIDENT FEEDS section in
+   src/worker.js) and returned already normalised at /api/incidents.
+
+   What changed and why: this used to depend on emergencyapi.com behind an
+   API key, with a handful of direct browser-side calls as backup. That gave
+   us one shared point of failure -- when it stopped covering a state, that
+   state quietly fell back to a hand-written snapshot of old incidents, so a
+   dead feed looked exactly like a quiet day. The browser-side backups had
+   their own problem: they were cross-origin calls that CORS or a corporate
+   firewall could block outright.
+
+   Now there is no API key anywhere, all eight states/territories have a real
+   live source (VIC, WA and NT are new -- they previously only linked out),
+   the browser only ever talks to its own origin, and a state that fails says
+   so explicitly with a link to the official page instead of showing stale
+   data. One state being down cannot affect the other seven. */
 const catColour={'Emergency Warning':'#c0392b','Watch and Act':'#e67e22','Advice':'#2e86c1','Not Applicable':'#7f8c8d'};
 const STATE_META={
   NSW:{name:'New South Wales',officialUrl:'https://www.rfs.nsw.gov.au/fire-information/fires-near-me',officialLabel:'NSW RFS — Fires Near Me'},
@@ -869,86 +869,147 @@ const STATE_META={
 const incidentFeedEl=document.getElementById('incidentFeed'),incStatus=document.getElementById('incStatus'),incCount=document.getElementById('incCount');
 const stateTabsEl=document.getElementById('stateTabs');
 let currentState='NSW';
-const incidentsByState={NSW:[],QLD:[],SA:[],ACT:[]};
-const liveOk={NSW:false,QLD:false,SA:false,ACT:false};
-const seedIncidents={
-  QLD:[
-    {title:'AVOID SMOKE — Horn Is, Thursday Is & Hammond Is',status:'Advice',type:'Vegetation fire',when:'30 Jul 1:03pm'},
-    {title:'AVOID SMOKE — Kelso (near Townsville)',status:'Advice',type:'Vegetation fire',when:'29 Jul 5:04pm'},
-    {title:'HRB — North Stradbroke, Russell & Macleay Is',status:'Advice',type:'Hazard reduction',when:'30 Jul 1:07pm'},
-    {title:'HRB — Cooroibah (Sunshine Coast)',status:'Advice',type:'Hazard reduction',when:'30 Jul 11:06am'},
-    {title:'HRB — Cardwell',status:'Advice',type:'Hazard reduction',when:'30 Jul 10:37am'},
-    {title:'HRB — Clagiraba, Gilston, Advancetown, Lwr Beechmont',status:'Advice',type:'Hazard reduction',when:'30 Jul 10:01am'}
-  ],
-  NSW:[
-    {title:'Koola Park, Koola Av, East Killara',status:'Advice',type:'Bush fire (under control)',when:'28 Jul 12:31am'},
-    {title:'Middle Creek Rd, Coutts Crossing',status:'Advice',type:'Bush fire',when:'27 Jul'}
-  ]
-};
-/* SA's CFS feed uses GOING/CONTROLLED/COMPLETE rather than an Emergency
-   Warning/Watch and Act/Advice scale -- "going" (still active) is treated as
-   the Watch and Act tier so it stands out from resolved incidents, since
-   there's no direct equivalent of "Emergency Warning" in that vocabulary. */
-function statusToCat(s){s=(s||'').toLowerCase();if(s.includes('emergency'))return 'Emergency Warning';if(s.includes('watch')||s.includes('going'))return 'Watch and Act';return 'Advice';}
+/* One entry per state, populated from /api/incidents. Shape mirrors the
+   Worker's per-state payload: {ok, incidents, count, error?, diagnostics?,
+   cacheAgeSeconds?}. Starts empty so the first render shows "loading"
+   rather than a misleading empty list. */
+const stateData={};
+let feedLoaded=false;
+
+/* The eight agencies don't share a warning vocabulary. NSW/VIC use
+   Emergency Warning / Watch and Act / Advice; SA CFS uses
+   GOING/CONTROLLED/COMPLETE; QLD and others use free text. "Going" (still
+   active) is treated as the Watch and Act tier so it stands out from
+   resolved incidents, since that vocabulary has no direct equivalent of
+   "Emergency Warning". */
+function statusToCat(s){
+  s=(s||'').toLowerCase();
+  if(s.includes('emergency')||s.includes('evacuat'))return 'Emergency Warning';
+  if(s.includes('watch')||s.includes('going')||s.includes('act now'))return 'Watch and Act';
+  return 'Advice';
+}
+function severityRank(s){return {'Emergency Warning':0,'Watch and Act':1,'Advice':2}[statusToCat(s)];}
+
+/* The Worker sends `when` (whatever the agency published) plus `whenIso`
+   whenever that value could actually be parsed into a real timestamp. Prefer
+   the ISO form so the time renders in the visitor's own timezone, and fall
+   back to the agency's raw string rather than showing nothing. */
+function formatWhen(inc){
+  if(inc.whenIso){
+    const d=new Date(inc.whenIso);
+    if(!isNaN(d))return d.toLocaleDateString('en-AU',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'});
+  }
+  return inc.when||'';
+}
+function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* Renders the reason a state has no data, with a link straight through to
+   the agency's own page. Deliberately specific -- "this feed is failing" and
+   "this feed is fine, nothing is burning" must not look the same. */
+function renderStateProblem(st,detail){
+  const meta=STATE_META[st];
+  incidentFeedEl.innerHTML='<div class="inc-empty">'+
+    '<b>'+escapeHtml(meta.name)+'</b> live feed is not responding right now.<br>'+
+    (detail?'<span style="font-size:.78rem;opacity:.85">'+escapeHtml(detail)+'</span><br><br>':'')+
+    '<a href="'+meta.officialUrl+'" target="_blank" rel="noopener">Open '+escapeHtml(meta.officialLabel)+' ↗</a> for current updates.'+
+    '</div>';
+  incCount.textContent='—';
+}
+
 /* Aggregates Emergency Warning / evacuate-level incidents across every state
-   that actually returned live data this session into one national view,
-   rather than users having to click through each state tab to check for the
-   most severe alerts. */
+   that actually returned live data, rather than users having to click each
+   state tab to check for the most severe alerts. Any state whose feed failed
+   is named explicitly, so this view never quietly under-reports. */
 function renderNational(){
   incidentFeedEl.innerHTML='';
-  const liveStates=Object.keys(liveOk).filter(s=>liveOk[s]);
+  const allStates=Object.keys(STATE_META);
+  const liveStates=allStates.filter(st=>stateData[st]&&stateData[st].ok);
+  const downStates=allStates.filter(st=>stateData[st]&&!stateData[st].ok);
   const severe=[];
   liveStates.forEach(st=>{
-    (incidentsByState[st]||[]).forEach(i=>{if(statusToCat(i.status)==='Emergency Warning')severe.push(Object.assign({state:st},i));});
+    (stateData[st].incidents||[]).forEach(i=>{if(statusToCat(i.status)==='Emergency Warning')severe.push(Object.assign({state:st},i));});
   });
-  const otherStates=Object.keys(STATE_META).filter(s=>!liveStates.includes(s));
+
+  if(!feedLoaded){
+    incidentFeedEl.innerHTML='<div class="inc-empty">Loading live incident feeds…</div>';
+    incCount.textContent='…';
+    incStatus.style.display='none';
+    return;
+  }
   if(!liveStates.length){
     incidentFeedEl.innerHTML='<div class="inc-empty">No live feeds are currently reachable to aggregate.<br>Check each state directly via its tab.</div>';
   }else if(!severe.length){
-    incidentFeedEl.innerHTML='<div class="inc-empty">No Emergency Warning / evacuate-level alerts currently active in '+liveStates.join(', ')+' (the states with a live feed right now).<br>Check other states/territories directly: '+
-      otherStates.map(s=>'<a href="'+STATE_META[s].officialUrl+'" target="_blank" rel="noopener">'+s+'</a>').join(' · ')+'</div>';
+    incidentFeedEl.innerHTML='<div class="inc-empty">No Emergency Warning / evacuate-level alerts currently active across '+liveStates.join(', ')+'.</div>';
   }else{
     severe.forEach(i=>{
       const el=document.createElement('div');el.className='inc';
-      el.innerHTML='<div class="dot" style="background:#c0392b"></div><div class="body"><h4>'+i.title+'</h4><p>'+(i.type||'')+' · Emergency Warning</p><div class="foot"><span class="state-pill" style="background:#0E7E74">'+i.state+'</span><span>'+(i.when||'')+'</span></div></div>';
+      el.innerHTML='<div class="dot" style="background:#c0392b"></div><div class="body"><h4>'+escapeHtml(i.title)+'</h4><p>'+escapeHtml(i.type||'')+' · Emergency Warning</p><div class="foot"><span class="state-pill" style="background:#0E7E74">'+i.state+'</span><span>'+escapeHtml(formatWhen(i))+'</span></div></div>';
       incidentFeedEl.appendChild(el);
     });
   }
   incCount.textContent=severe.length;
-  incStatus.style.display='block';
-  incStatus.textContent=liveStates.length?('⚠️ Aggregates Emergency Warning-level alerts from '+liveStates.join(', ')+' only (the states with a live feed right now) — other states/territories aren’t covered, check their tab for the official link.'):'⚠️ No live state feeds reachable right now.';
+  if(downStates.length){
+    incStatus.style.display='block';
+    incStatus.innerHTML='⚠️ Not included: '+downStates.map(s=>'<a href="'+STATE_META[s].officialUrl+'" target="_blank" rel="noopener">'+s+'</a>').join(' · ')+
+      ' — '+(downStates.length===1?'this feed is':'these feeds are')+' not responding, so severe alerts there would not show here. Check them directly.';
+  }else{
+    incStatus.style.display='none';
+  }
 }
+
 function renderIncidents(){
   if(currentState==='NATIONAL'){renderNational();return;}
   const meta=STATE_META[currentState];
+  const data=stateData[currentState];
   incidentFeedEl.innerHTML='';
-  const live=liveOk[currentState];
-  const seed=seedIncidents[currentState];
-  const list=(live?incidentsByState[currentState]:seed)||[];
-  if(!live&&!seed){
-    /* No live source succeeded and no curated fallback snapshot exists for
-       this state -- rather than show an empty list, point at the official
-       page directly (same treatment as a state we've never wired up). */
-    incidentFeedEl.innerHTML='<div class="inc-empty">No live incident feed is available for <b>'+meta.name+'</b> right now.<br><a href="'+meta.officialUrl+'" target="_blank" rel="noopener">Open '+meta.officialLabel+' ↗</a> for current updates.</div>';
-    incCount.textContent='—';
+
+  if(!feedLoaded&&!data){
+    incidentFeedEl.innerHTML='<div class="inc-empty">Loading live incidents for '+escapeHtml(meta.name)+'…</div>';
+    incCount.textContent='…';
     incStatus.style.display='none';
     return;
   }
-  const sorted=list.slice().sort((a,b)=>({'Emergency Warning':0,'Watch and Act':1,'Advice':2}[statusToCat(a.status)]||3)-({'Emergency Warning':0,'Watch and Act':1,'Advice':2}[statusToCat(b.status)]||3));
+  if(!data||!data.ok){
+    renderStateProblem(currentState,data&&data.error?data.error:'');
+    incStatus.style.display='none';
+    return;
+  }
+
+  const sorted=(data.incidents||[]).slice().sort((a,b)=>severityRank(a.status)-severityRank(b.status));
   if(!sorted.length){
-    incidentFeedEl.innerHTML='<div class="inc-empty">No current incidents reported for '+meta.name+'.</div>';
+    /* A genuinely quiet state. The Worker only attaches `diagnostics` when it
+       could see records but recognised no fields in them, so that case is
+       called out separately instead of being passed off as "all clear". */
+    if(data.diagnostics){
+      incidentFeedEl.innerHTML='<div class="inc-empty">'+escapeHtml(meta.name)+'’s feed responded, but its data format has changed and could not be read.<br>'+
+        '<a href="'+meta.officialUrl+'" target="_blank" rel="noopener">Open '+escapeHtml(meta.officialLabel)+' ↗</a> for current updates.</div>';
+      incCount.textContent='—';
+    }else{
+      incidentFeedEl.innerHTML='<div class="inc-empty">No current incidents reported for '+escapeHtml(meta.name)+'.</div>';
+      incCount.textContent='0';
+    }
   }else{
     sorted.forEach(i=>{
       const cat=statusToCat(i.status),col=catColour[cat]||'#2e86c1';
       const el=document.createElement('div');el.className='inc';
-      el.innerHTML='<div class="dot" style="background:'+col+'"></div><div class="body"><h4>'+i.title+'</h4><p>'+(i.type||'')+(i.status?' · '+i.status:'')+'</p><div class="foot"><span>'+(i.when||'')+'</span></div></div>';
+      const detail=[i.type||'',i.status||''].filter(Boolean).join(' · ');
+      el.innerHTML='<div class="dot" style="background:'+col+'"></div><div class="body"><h4>'+escapeHtml(i.title)+'</h4><p>'+escapeHtml(detail)+'</p><div class="foot"><span>'+escapeHtml(formatWhen(i))+'</span></div></div>';
       incidentFeedEl.appendChild(el);
     });
+    incCount.textContent=sorted.length;
   }
-  incCount.textContent=sorted.length;
-  incStatus.style.display=live?'none':'block';
-  if(!live)incStatus.textContent='⚠️ Live feed unavailable right now — showing a recent snapshot of real '+meta.name+' incidents instead.';
+
+  /* Data older than ~20 minutes means the Worker's 5-minute cron has not
+     managed a successful refresh for several cycles -- worth saying, since
+     the list still looks perfectly normal otherwise. */
+  if(data.cacheAgeSeconds>1200){
+    incStatus.style.display='block';
+    incStatus.textContent='⚠️ '+meta.name+' data is '+Math.round(data.cacheAgeSeconds/60)+' minutes old — the feed may be having trouble refreshing.';
+  }else{
+    incStatus.style.display='none';
+  }
 }
+
 stateTabsEl.querySelectorAll('.state-tab').forEach(tab=>{
   tab.dataset.label=tab.textContent.trim(); // captured once so counts can be rebuilt without stacking
   tab.addEventListener('click',()=>{
@@ -958,129 +1019,75 @@ stateTabsEl.querySelectorAll('.state-tab').forEach(tab=>{
     renderIncidents();
   });
 });
-/* Shows each tab's current incident count (no badge at all if we genuinely
-   don't know -- e.g. a state with no live source and no seed data -- rather
-   than showing a misleading "0"). */
+
+/* Shows each tab's current incident count. A state whose feed failed gets a
+   "!" instead of a number -- showing "0" there would read as "nothing
+   happening" when the truth is "we don't know". */
 function updateTabCounts(){
   stateTabsEl.querySelectorAll('.state-tab').forEach(tab=>{
     const st=tab.dataset.state;
-    let count=null;
+    let badge='';
     if(st==='NATIONAL'){
-      count=0;
-      Object.keys(liveOk).filter(s=>liveOk[s]).forEach(s=>{
-        (incidentsByState[s]||[]).forEach(i=>{if(statusToCat(i.status)==='Emergency Warning')count++;});
-      });
-    }else{
-      const list=liveOk[st]?incidentsByState[st]:seedIncidents[st];
-      if(list)count=list.length;
+      if(feedLoaded){
+        let count=0;
+        Object.keys(STATE_META).forEach(s=>{
+          if(stateData[s]&&stateData[s].ok){
+            (stateData[s].incidents||[]).forEach(i=>{if(statusToCat(i.status)==='Emergency Warning')count++;});
+          }
+        });
+        badge=' <span class="n">('+count+')</span>';
+      }
+    }else if(stateData[st]){
+      badge=stateData[st].ok?' <span class="n">('+stateData[st].count+')</span>':' <span class="n" title="Feed unavailable">(!)</span>';
     }
-    tab.innerHTML=tab.dataset.label+(count!==null?' <span class="n">('+count+')</span>':'');
+    tab.innerHTML=tab.dataset.label+badge;
   });
 }
 updateTabCounts();
-/* Primary source: emergencyapi.com's unified feed, proxied same-origin via
-   /api/incidents (the Cloudflare Worker holds the API key as a secret --
-   see src/worker.js -- since this static page has no other way to keep a
-   key out of view-source). Covers all 8 states/territories in one response,
-   with a warningLevel field that maps directly onto our Emergency
-   Warning/Watch and Act/Advice categories instead of us guessing per state. */
-function formatIsoWhen(iso){
-  if(!iso)return '';
-  const d=new Date(iso);
-  if(isNaN(d))return iso;
-  return d.toLocaleDateString('en-AU',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'});
-}
-async function loadUnifiedIncidents(){
+
+/* Single same-origin call returning all eight states already normalised.
+   One request rather than eight keeps this well inside the Workers free
+   plan's request budget, and the per-state ok/error detail still comes
+   through intact so failures stay visible per tab.
+   Per-state routes (/api/incidents/nsw, /vic, ...) exist too and return the
+   same payload shape for a single state -- handy for debugging one agency
+   in isolation without loading the whole page. */
+async function loadIncidents(){
   try{
     const r=await fetch('/api/incidents',{cache:'no-store'});
-    if(!r.ok)return false;
     const j=await r.json();
-    const byState={};
-    (j.features||[]).forEach(f=>{
-      const p=f.properties||{};
-      const st=((p.source&&p.source.state)||'').toUpperCase();
-      if(!STATE_META[st])return;
-      const loc=p.location||{};
-      const wl=(p.warningLevel||'').toLowerCase();
-      const status=wl==='emergency_warning'?'Emergency Warning':wl==='watch_and_act'?'Watch and Act':wl==='advice'?'Advice':(p.status||'');
-      const ts=p.timestamps||{};
-      (byState[st]=byState[st]||[]).push({
-        title:p.title||loc.address||loc.suburb||(st+' incident'),
-        status,
-        type:(p.eventType||'incident').replace(/_/g,' '),
-        when:formatIsoWhen(ts.updated||ts.reported||'')
-      });
+    (j.states||[]).forEach(s=>{
+      if(!s||!s.state||!STATE_META[s.state])return;
+      stateData[s.state]=s;
+      if(s.diagnostics)console.warn('Incident feed schema mismatch for '+s.state+':',s.diagnostics);
+      else if(!s.ok)console.warn('Incident feed unavailable for '+s.state+':',s.error);
     });
-    let any=false;
-    Object.keys(byState).forEach(st=>{incidentsByState[st]=byState[st];liveOk[st]=true;any=true;});
-    return any;
-  }catch(e){return false;}
-}
-/* Fallback: direct per-state government feeds, used only for the states
-   these are confirmed for (NSW/QLD/SA/ACT) and only if the unified feed
-   above didn't cover that state this round (e.g. EMERGENCY_API_KEY isn't
-   configured yet, or the account/upstream is temporarily unavailable). */
-async function loadFallbackFeeds(){
-  if(!liveOk.NSW){
-    try{const r=await fetch('https://www.rfs.nsw.gov.au/feeds/majorIncidents.json',{cache:'no-store'});
-      if(r.ok){const j=await r.json();const collected=[];(j.features||[]).forEach(f=>{const p=f.properties||{};const desc=p.description||'';
-        const m=s=>{const x=new RegExp(s+':\\s*([^<]+)').exec(desc);return x?x[1].trim():'';};
-        collected.push({title:p.title||m('LOCATION'),status:p.category||m('STATUS'),type:m('TYPE')||'Fire',when:p.pubDate||m('UPDATED')});});
-        incidentsByState.NSW=collected;liveOk.NSW=true;}
-    }catch(e){}
-  }
-  if(!liveOk.QLD){
-    try{const u='https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services/ESCAD_Current_Incidents_Public/FeatureServer/0/query?f=geojson&where=1%3D1&outFields=*';
-      const r=await fetch(u,{cache:'no-store'});
-      if(r.ok){const j=await r.json();const collected=[];(j.features||[]).forEach(f=>{const p=f.properties||{};
-        collected.push({title:(p.Location||p.Locality||'QLD incident'),status:p.CurrentStatus||'',type:p.GroupedType||p.VehicleTypeDescription||'Incident',when:p.LastUpdate||''});});
-        incidentsByState.QLD=collected;liveOk.QLD=true;}
-    }catch(e){}
-  }
-  /* SA CFS current-incidents JSON -- confirmed schema (IncidentNo, Date, Time,
-     Location_name, Type, Status, Location as "lat,lon"). */
-  if(!liveOk.SA){
-    try{const r=await fetch('https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json',{cache:'no-store'});
-      if(r.ok){const j=await r.json();const arr=Array.isArray(j)?j:Object.values(j||{});
-        const collected=arr.filter(inc=>inc&&typeof inc==='object').map(inc=>({
-          title:inc.Location_name||('SA incident '+(inc.IncidentNo||'')),
-          status:inc.Status||'',
-          type:inc.Type||'Incident',
-          when:((inc.Date||'')+' '+(inc.Time||'')).trim()
-        }));
-        incidentsByState.SA=collected;liveOk.SA=true;}
-    }catch(e){}
-  }
-  /* ACT ESA current-incidents feed -- CAP/EDXL XML, confirmed structure.
-     Parsed as text (not a full XML DOM parse) to match how the NSW GeoRSS
-     description block is already handled above. */
-  if(!liveOk.ACT){
-    try{const r=await fetch('https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml',{cache:'no-store'});
-      if(r.ok){const xml=await r.text();const collected=[];
-        const blocks=xml.match(/<alert[^>]*>[\s\S]*?<\/alert>/g)||[];
-        blocks.forEach(block=>{
-          const headline=(/<headline>([\s\S]*?)<\/headline>/.exec(block)||[])[1]||'';
-          const desc=(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/.exec(block)||[])[1]||'';
-          const m=s=>{const x=new RegExp(s+':\\s*([^\\r\\n]+)').exec(desc);return x?x[1].trim():'';};
-          collected.push({title:headline||m('Incident')||'ACT incident',status:m('Status'),type:m('Type')||'Incident',when:m('Updated')});
-        });
-        incidentsByState.ACT=collected;liveOk.ACT=true;}
-    }catch(e){}
+  }catch(e){
+    /* The aggregate call itself failed (offline, Worker down). Mark every
+       state as unavailable so each tab explains itself and links out,
+       rather than all eight sitting on a spinner forever. */
+    console.warn('Incident feed request failed:',e);
+    Object.keys(STATE_META).forEach(st=>{
+      if(!stateData[st])stateData[st]={state:st,ok:false,count:0,incidents:[],error:'Could not reach the incident service from this network.'};
+    });
+  }finally{
+    feedLoaded=true;
+    renderIncidents();
+    updateTabCounts();
+    /* The map and the incidents tile share a grid row and stretch to match
+       each other's height, but Leaflet sizes its canvas from the map
+       container's actual pixel height at the moment it's told to -- which can
+       be stale once the incidents tile's async-loaded content changes how
+       tall that shared row ends up being. */
+    map.invalidateSize();
   }
 }
-async function loadLive(){
-  await loadUnifiedIncidents();
-  await loadFallbackFeeds();
-  renderIncidents();
-  updateTabCounts();
-  /* The map and the incidents tile share a grid row and stretch to match each
-     other's height, but Leaflet sizes its canvas from the map container's
-     actual pixel height at the moment it's told to -- which can be stale
-     once the incidents tile's async-loaded content changes how tall that
-     shared row ends up being. */
-  map.invalidateSize();
-}
-loadLive();
+renderIncidents();
+loadIncidents();
+/* The Worker refreshes every feed on a 5-minute cron, so re-reading it on
+   roughly the same cadence keeps the page current without ever triggering an
+   upstream call of its own -- each poll is a cheap cache read. */
+setInterval(loadIncidents,5*60*1000);
 /* Covers the same row-height-settling issue for the initial page-load pass
    (fonts, images etc. finishing) and for the user resizing the window. */
 window.addEventListener('load',()=>map.invalidateSize());
