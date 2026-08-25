@@ -358,6 +358,36 @@ function bodyExcerpt(text) {
   return clean.length > 160 ? clean.slice(0, 160) + '…' : clean;
 }
 
+/* Agencies routinely pack the useful detail into one free-text description
+   ("Status: Under Control  Type: Bushfire  Updated: ...") instead of using
+   discrete elements. Splitting that reliably needs a known label vocabulary:
+   trying to infer where a label starts is genuinely ambiguous once newlines
+   have been collapsed to spaces -- in "Status: Under Control Type: Bushfire"
+   the text "Control Type:" looks exactly like a label, which silently
+   truncates the status to "Under".
+   Longer labels are listed before the shorter ones they contain, so
+   "Alert Level:" wins over "Level:" and "Incident Type:" over "Type:". */
+const FEED_LABELS = ['alert level', 'incident type', 'last updated', 'fire district',
+  'warning level', 'status', 'type', 'level', 'updated', 'location', 'region',
+  'size', 'agency', 'category', 'council', 'started'];
+
+function labelledFields(text) {
+  const alt = FEED_LABELS.map((l) => l.replace(/ /g, '\\s+')).join('|');
+  const re = new RegExp('\\b(' + alt + ')\\s*:\\s*', 'gi');
+  const marks = [];
+  let m;
+  while ((m = re.exec(text))) {
+    marks.push({ key: m[1].toLowerCase().replace(/\s+/g, ' '), start: m.index, end: re.lastIndex });
+  }
+  const out = {};
+  marks.forEach((mk, i) => {
+    const stop = i + 1 < marks.length ? marks[i + 1].start : text.length;
+    const value = text.slice(mk.end, stop).trim().replace(/[|,;·]+$/, '').trim();
+    if (value && out[mk.key] === undefined) out[mk.key] = value; // first occurrence wins
+  });
+  return out;
+}
+
 function stripTags(html) {
   return String(html)
     .replace(/<[^>]*>/g, ' ')
@@ -527,28 +557,72 @@ function parseGeoRss(xml) {
     /* GeoRSS carries position as "<georss:point>lat lon</georss:point>". */
     const pt = /<georss:point>\s*([-\d.]+)[\s,]+([-\d.]+)\s*<\/georss:point>/i.exec(item);
     const coords = pt ? { lat: Number(pt[1]), lon: Number(pt[2]) } : {};
-    /* Agencies commonly stuff "Status: x" / "Type: y" into the description
-       rather than using discrete elements, same as NSW and ACT do. Unlike
-       those two this text has already been through stripTags(), so the
-       newlines that separated the labels are now plain spaces -- the value
-       has to stop at the next "Label:" rather than at a line ending, or
-       "Status: Advice\nType: Bushfire" yields "Advice Type: Bushfire". */
-    const field = (label) => {
-      const m = new RegExp(label + ':\\s*(.+?)(?=\\s+[A-Z][A-Za-z]*(?:\\s[A-Za-z]+)*:|$)', 'i').exec(desc);
-      return m ? m[1].trim() : '';
-    };
+    /* This text has already been through stripTags(), so the newlines that
+       separated the labels are now spaces -- see labelledFields(). */
+    const f = labelledFields(desc);
     incidents.push(Object.assign(
       {
         title,
-        status: field('Status') || field('Alert Level') || field('Level') || tag('category') || '',
-        type: field('Type') || field('Incident Type') || 'Incident'
+        status: f.status || f['alert level'] || f['warning level'] || f.level || tag('category') || '',
+        type: f['incident type'] || f.type || 'Incident'
       },
-      normaliseWhen(tag('updated') || tag('pubDate') || tag('published') || field('Updated')),
+      normaliseWhen(tag('updated') || tag('pubDate') || tag('published') || f.updated || f['last updated']),
       coords
     ));
   });
   const result = { incidents };
   if (!incidents.length && !items.length) result.diagnostics = { envelope: 'rss', itemsSeen: 0 };
+  return result;
+}
+
+/* KML. Tasmania publishes its incidents this way (as does a fair bit of
+   Australian emergency data), and it carries richer per-incident detail than
+   the HTML page this replaces -- type, status, agency and coordinates are
+   discrete rather than needing to be scraped out of a layout.
+   Handles both conventions for the detail fields: a description blob with
+   "Status: x" style labels, and ExtendedData <Data name="STATUS"> elements. */
+function parseKml(xml) {
+  const incidents = [];
+  const marks = xml.match(/<Placemark[\s>][\s\S]*?<\/Placemark>/gi) || [];
+  marks.forEach((mark) => {
+    const tag = (name) => {
+      const m = new RegExp('<' + name + '(?:\\s[^>]*)?>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/' + name + '>', 'i').exec(mark);
+      return m ? stripTags(m[1]) : '';
+    };
+    const title = tag('name');
+    if (!title) return;
+
+    /* ExtendedData wins when present -- it's structured, where the
+       description is free text that varies between agencies. */
+    const ext = {};
+    const dataEls = mark.match(/<Data\s+name="[^"]*"[\s\S]*?<\/Data>/gi) || [];
+    dataEls.forEach((d) => {
+      const key = (/name="([^"]*)"/i.exec(d) || [])[1];
+      const val = (/<value>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/value>/i.exec(d) || [])[1];
+      if (key) ext[key.toLowerCase()] = stripTags(val || '');
+    });
+
+    const f = labelledFields(tag('description'));
+
+    /* KML coordinates are "lon,lat[,altitude]" -- the reverse of the lat/lon
+       order these feeds use in text, so getting this backwards would put
+       every Tasmanian incident in the wrong hemisphere. */
+    let coords = {};
+    const c = /<coordinates>\s*([-\d.]+)\s*,\s*([-\d.]+)/i.exec(mark);
+    if (c) coords = { lon: Number(c[1]), lat: Number(c[2]) };
+
+    incidents.push(Object.assign(
+      {
+        title,
+        status: pickField(ext, 'status') || f.status || f['alert level'] || f.level || '',
+        type: pickField(ext, 'type') || f['incident type'] || f.type || 'Incident'
+      },
+      normaliseWhen(pickField(ext, 'when') || f.updated || f['last updated'] || tag('TimeStamp')),
+      coords
+    ));
+  });
+  const result = { incidents };
+  if (!incidents.length && !marks.length) result.diagnostics = { envelope: 'kml', placemarksSeen: 0 };
   return result;
 }
 
@@ -599,9 +673,17 @@ const INCIDENT_FEEDS = {
       { url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json', format: 'json', parse: parseSa }
     ]
   },
+  /* Tasmania was originally pointed at a TFS web page and scraped, because
+     that was the URL to hand -- but TasALERT publishes the same incidents as
+     real data feeds, which is both more reliable and much less likely to
+     break on a site redesign. RSS first, then TasALERT's KML, then TFS's own
+     KML, with the old HTML scrape kept as a last resort. */
   tas: {
-    name: 'Tasmania', agency: 'Tasmania Fire Service',
+    name: 'Tasmania', agency: 'Tasmania Fire Service / TasALERT',
     sources: [
+      { url: 'https://alert.tas.gov.au/data/incidents-and-alerts.xml', format: 'text', parse: parseGeoRss },
+      { url: 'https://alert.tas.gov.au/data/incidents-and-messages.kml', format: 'text', parse: parseKml },
+      { url: 'https://www.fire.tas.gov.au/Show?pageId=bfKml', format: 'text', parse: parseKml },
       { url: 'https://www.fire.tas.gov.au/Show?pageId=colCurrentIncidents', format: 'text', parse: parseTas }
     ]
   },
