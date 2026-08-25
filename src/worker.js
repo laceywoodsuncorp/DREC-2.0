@@ -334,6 +334,60 @@ function normaliseRecords(json) {
   return result;
 }
 
+/* Several agencies sit behind a WAF that rejects requests which don't look
+   like a normal browser -- an unrecognised User-Agent, or a missing Accept
+   header, is enough to get a 403 from a cloud IP even though the data itself
+   is public and the same URL answers fine from a desktop or a plain script.
+   These are ordinary client headers, not an attempt to get at anything
+   non-public: every feed here is a published, documented public data source.
+   Sent to every upstream so no single agency needs a special case. */
+const FEED_REQUEST_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (compatible; NewsRadar/1.0; +https://drec-oncall-updates-site.lacey-wood.workers.dev)',
+  'Accept': 'application/json, application/geo+json, application/xml, text/xml, application/rss+xml, text/html;q=0.9, */*;q=0.8',
+  'Accept-Language': 'en-AU,en;q=0.9',
+  'Cache-Control': 'no-cache'
+};
+
+/* Short, readable excerpt of an unexpected response body. A WAF block page,
+   a maintenance notice and a genuine API error all arrive as "HTTP 403" or
+   "HTTP 503" otherwise, and they need completely different fixes -- so the
+   first line of what actually came back is worth carrying into the error. */
+function bodyExcerpt(text) {
+  const clean = String(text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!clean) return '';
+  return clean.length > 160 ? clean.slice(0, 160) + '…' : clean;
+}
+
+/* Agencies routinely pack the useful detail into one free-text description
+   ("Status: Under Control  Type: Bushfire  Updated: ...") instead of using
+   discrete elements. Splitting that reliably needs a known label vocabulary:
+   trying to infer where a label starts is genuinely ambiguous once newlines
+   have been collapsed to spaces -- in "Status: Under Control Type: Bushfire"
+   the text "Control Type:" looks exactly like a label, which silently
+   truncates the status to "Under".
+   Longer labels are listed before the shorter ones they contain, so
+   "Alert Level:" wins over "Level:" and "Incident Type:" over "Type:". */
+const FEED_LABELS = ['alert level', 'incident type', 'last updated', 'fire district',
+  'warning level', 'status', 'type', 'level', 'updated', 'location', 'region',
+  'size', 'agency', 'category', 'council', 'started'];
+
+function labelledFields(text) {
+  const alt = FEED_LABELS.map((l) => l.replace(/ /g, '\\s+')).join('|');
+  const re = new RegExp('\\b(' + alt + ')\\s*:\\s*', 'gi');
+  const marks = [];
+  let m;
+  while ((m = re.exec(text))) {
+    marks.push({ key: m[1].toLowerCase().replace(/\s+/g, ' '), start: m.index, end: re.lastIndex });
+  }
+  const out = {};
+  marks.forEach((mk, i) => {
+    const stop = i + 1 < marks.length ? marks[i + 1].start : text.length;
+    const value = text.slice(mk.end, stop).trim().replace(/[|,;·]+$/, '').trim();
+    if (value && out[mk.key] === undefined) out[mk.key] = value; // first occurrence wins
+  });
+  return out;
+}
+
 function stripTags(html) {
   return String(html)
     .replace(/<[^>]*>/g, ' ')
@@ -485,49 +539,165 @@ function parseTas(html) {
   return result;
 }
 
-/* The registry. `format` says how to read the body; `parse` turns it into
-   normalised incidents. Anything using normaliseRecords is going through the
-   shape-tolerant path described in the section header. */
+/* RSS / GeoRSS / Atom. Several agencies publish a syndication feed alongside
+   (or instead of) a JSON one, and those tend to live on a plainer host that
+   is less likely to be sitting behind the same WAF as the main site -- which
+   makes them a useful second source when the primary is being refused. */
+function parseGeoRss(xml) {
+  const incidents = [];
+  const items = xml.match(/<(?:item|entry)[\s>][\s\S]*?<\/(?:item|entry)>/gi) || [];
+  items.forEach((item) => {
+    const tag = (name) => {
+      const m = new RegExp('<' + name + '(?:\\s[^>]*)?>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/' + name + '>', 'i').exec(item);
+      return m ? stripTags(m[1]) : '';
+    };
+    const title = tag('title');
+    if (!title) return;
+    const desc = tag('description') || tag('summary') || tag('content');
+    /* GeoRSS carries position as "<georss:point>lat lon</georss:point>". */
+    const pt = /<georss:point>\s*([-\d.]+)[\s,]+([-\d.]+)\s*<\/georss:point>/i.exec(item);
+    const coords = pt ? { lat: Number(pt[1]), lon: Number(pt[2]) } : {};
+    /* This text has already been through stripTags(), so the newlines that
+       separated the labels are now spaces -- see labelledFields(). */
+    const f = labelledFields(desc);
+    incidents.push(Object.assign(
+      {
+        title,
+        status: f.status || f['alert level'] || f['warning level'] || f.level || tag('category') || '',
+        type: f['incident type'] || f.type || 'Incident'
+      },
+      normaliseWhen(tag('updated') || tag('pubDate') || tag('published') || f.updated || f['last updated']),
+      coords
+    ));
+  });
+  const result = { incidents };
+  if (!incidents.length && !items.length) result.diagnostics = { envelope: 'rss', itemsSeen: 0 };
+  return result;
+}
+
+/* KML. Tasmania publishes its incidents this way (as does a fair bit of
+   Australian emergency data), and it carries richer per-incident detail than
+   the HTML page this replaces -- type, status, agency and coordinates are
+   discrete rather than needing to be scraped out of a layout.
+   Handles both conventions for the detail fields: a description blob with
+   "Status: x" style labels, and ExtendedData <Data name="STATUS"> elements. */
+function parseKml(xml) {
+  const incidents = [];
+  const marks = xml.match(/<Placemark[\s>][\s\S]*?<\/Placemark>/gi) || [];
+  marks.forEach((mark) => {
+    const tag = (name) => {
+      const m = new RegExp('<' + name + '(?:\\s[^>]*)?>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/' + name + '>', 'i').exec(mark);
+      return m ? stripTags(m[1]) : '';
+    };
+    const title = tag('name');
+    if (!title) return;
+
+    /* ExtendedData wins when present -- it's structured, where the
+       description is free text that varies between agencies. */
+    const ext = {};
+    const dataEls = mark.match(/<Data\s+name="[^"]*"[\s\S]*?<\/Data>/gi) || [];
+    dataEls.forEach((d) => {
+      const key = (/name="([^"]*)"/i.exec(d) || [])[1];
+      const val = (/<value>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/value>/i.exec(d) || [])[1];
+      if (key) ext[key.toLowerCase()] = stripTags(val || '');
+    });
+
+    const f = labelledFields(tag('description'));
+
+    /* KML coordinates are "lon,lat[,altitude]" -- the reverse of the lat/lon
+       order these feeds use in text, so getting this backwards would put
+       every Tasmanian incident in the wrong hemisphere. */
+    let coords = {};
+    const c = /<coordinates>\s*([-\d.]+)\s*,\s*([-\d.]+)/i.exec(mark);
+    if (c) coords = { lon: Number(c[1]), lat: Number(c[2]) };
+
+    incidents.push(Object.assign(
+      {
+        title,
+        status: pickField(ext, 'status') || f.status || f['alert level'] || f.level || '',
+        type: pickField(ext, 'type') || f['incident type'] || f.type || 'Incident'
+      },
+      normaliseWhen(pickField(ext, 'when') || f.updated || f['last updated'] || tag('TimeStamp')),
+      coords
+    ));
+  });
+  const result = { incidents };
+  if (!incidents.length && !marks.length) result.diagnostics = { envelope: 'kml', placemarksSeen: 0 };
+  return result;
+}
+
+/* The registry. Each state lists one or more `sources`, tried in order until
+   one returns usable data -- so a primary that starts refusing cloud traffic
+   degrades to a secondary rather than to an empty tab. `format` says how to
+   read the body; `parse` turns it into normalised incidents. Anything using
+   normaliseRecords is going through the shape-tolerant path described in the
+   section header. */
 const INCIDENT_FEEDS = {
   nsw: {
     name: 'New South Wales', agency: 'NSW RFS',
-    url: 'https://www.rfs.nsw.gov.au/feeds/majorIncidents.json',
-    format: 'json', parse: parseNsw
+    sources: [
+      { url: 'https://www.rfs.nsw.gov.au/feeds/majorIncidents.json', format: 'json', parse: parseNsw },
+      { url: 'https://www.rfs.nsw.gov.au/feeds/majorIncidents.xml', format: 'text', parse: parseGeoRss }
+    ]
   },
   qld: {
     name: 'Queensland', agency: 'QFES ESCAD',
-    url: 'https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services/ESCAD_Current_Incidents_Public/FeatureServer/0/query?f=geojson&where=1%3D1&outFields=*',
-    format: 'json', parse: normaliseRecords
+    sources: [
+      { url: 'https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services/ESCAD_Current_Incidents_Public/FeatureServer/0/query?f=geojson&where=1%3D1&outFields=*', format: 'json', parse: normaliseRecords }
+    ]
   },
   vic: {
     name: 'Victoria', agency: 'VicEmergency',
-    url: 'https://emergency.vic.gov.au/public/events-geojson.json',
-    format: 'json', parse: normaliseRecords
+    sources: [
+      { url: 'https://emergency.vic.gov.au/public/events-geojson.json', format: 'json', parse: normaliseRecords },
+      { url: 'https://www.emergency.vic.gov.au/public/events-geojson.json', format: 'json', parse: normaliseRecords }
+    ]
   },
+  /* WA's primary JSON feed is the documented one and answers fine from an
+     ordinary client, but has been refusing this Worker. Falling back to
+     DFES's own api. host covers the case where it's the main site's WAF
+     doing the refusing. Note the fallback carries WARNINGS only, not every
+     incident, so it is a reduced view rather than an equivalent one -- which
+     is why it is second, and why the payload records which source answered. */
   wa: {
     name: 'Western Australia', agency: 'Emergency WA',
-    url: 'https://www.emergency.wa.gov.au/data/incident_FCAD.json',
-    format: 'json', parse: normaliseRecords
+    sources: [
+      { url: 'https://www.emergency.wa.gov.au/data/incident_FCAD.json', format: 'json', parse: normaliseRecords },
+      { url: 'https://api.emergency.wa.gov.au/v1/rss/warnings', format: 'text', parse: parseGeoRss, partial: 'warnings only' },
+      { url: 'https://www.emergency.wa.gov.au/data/message_FCAD.json', format: 'json', parse: normaliseRecords }
+    ]
   },
   sa: {
     name: 'South Australia', agency: 'SA CFS',
-    url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json',
-    format: 'json', parse: parseSa
+    sources: [
+      { url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json', format: 'json', parse: parseSa }
+    ]
   },
+  /* Tasmania was originally pointed at a TFS web page and scraped, because
+     that was the URL to hand -- but TasALERT publishes the same incidents as
+     real data feeds, which is both more reliable and much less likely to
+     break on a site redesign. RSS first, then TasALERT's KML, then TFS's own
+     KML, with the old HTML scrape kept as a last resort. */
   tas: {
-    name: 'Tasmania', agency: 'Tasmania Fire Service',
-    url: 'https://www.fire.tas.gov.au/Show?pageId=colCurrentIncidents',
-    format: 'text', parse: parseTas
+    name: 'Tasmania', agency: 'Tasmania Fire Service / TasALERT',
+    sources: [
+      { url: 'https://alert.tas.gov.au/data/incidents-and-alerts.xml', format: 'text', parse: parseGeoRss },
+      { url: 'https://alert.tas.gov.au/data/incidents-and-messages.kml', format: 'text', parse: parseKml },
+      { url: 'https://www.fire.tas.gov.au/Show?pageId=bfKml', format: 'text', parse: parseKml },
+      { url: 'https://www.fire.tas.gov.au/Show?pageId=colCurrentIncidents', format: 'text', parse: parseTas }
+    ]
   },
   nt: {
     name: 'Northern Territory', agency: 'NT PFES',
-    url: 'https://www.pfes.nt.gov.au/incidentmap/json/incidents.json',
-    format: 'json', parse: normaliseRecords
+    sources: [
+      { url: 'https://www.pfes.nt.gov.au/incidentmap/json/incidents.json', format: 'json', parse: normaliseRecords }
+    ]
   },
   act: {
     name: 'Australian Capital Territory', agency: 'ACT ESA',
-    url: 'https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml',
-    format: 'text', parse: parseAct
+    sources: [
+      { url: 'https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml', format: 'text', parse: parseAct }
+    ]
   }
 };
 
@@ -538,34 +708,65 @@ const INCIDENT_FEEDS = {
    gets a small CPU budget; the expensive work stays on the scheduled path.
    A failure leaves the previous cache entry alone, so a state that blips
    keeps serving its last known-good list rather than going blank. */
+/* Tries one source and reports precisely what happened. Never throws -- an
+   unreachable host is a result, not an exception, because the caller needs to
+   move on to the next source either way. */
+async function tryIncidentSource(source) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const upstream = await fetch(source.url, {
+      headers: FEED_REQUEST_HEADERS,
+      signal: ctrl.signal,
+      redirect: 'follow',
+      cf: { cacheTtl: 0 }
+    });
+    if (!upstream.ok) {
+      const excerpt = bodyExcerpt(await upstream.text().catch(() => ''));
+      return { ok: false, error: 'HTTP ' + upstream.status + (excerpt ? ' — ' + excerpt : '') };
+    }
+
+    const bodyText = await upstream.text();
+    if (source.format === 'text') return { ok: true, parsed: source.parse(bodyText) };
+
+    let json;
+    try {
+      json = JSON.parse(bodyText);
+    } catch (e) {
+      /* A JSON endpoint answering with HTML is the classic signature of a
+         WAF interstitial or a login/maintenance page, so say what it
+         actually sent rather than just "invalid JSON". */
+      return { ok: false, error: 'Expected JSON, got ' + (/^\s*</.test(bodyText) ? 'HTML' : 'unparseable data') +
+        (bodyExcerpt(bodyText) ? ' — ' + bodyExcerpt(bodyText) : '') };
+    }
+    return { ok: true, parsed: source.parse(json) };
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'Timed out after 15s' : err.message };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function refreshStateIncidents(state) {
   const feed = INCIDENT_FEEDS[state];
   if (!feed) return { ok: false, state, error: 'Unknown state' };
 
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15000);
-  try {
-    const upstream = await fetch(feed.url, {
-      headers: { 'User-Agent': 'NewsRadar/1.0 (+https://drec-oncall-updates-site.lacey-wood.workers.dev)' },
-      signal: ctrl.signal,
-      cf: { cacheTtl: 0 }
-    });
-    if (!upstream.ok) {
-      return { ok: false, state, error: 'Upstream returned HTTP ' + upstream.status };
-    }
+  const attempts = [];
+  let drifted = null; // a source that answered but whose shape wasn't recognised
 
-    const bodyText = await upstream.text();
-    let parsed;
-    if (feed.format === 'text') {
-      parsed = feed.parse(bodyText);
-    } else {
-      let json;
-      try {
-        json = JSON.parse(bodyText);
-      } catch (e) {
-        return { ok: false, state, error: 'Upstream did not return valid JSON' };
-      }
-      parsed = feed.parse(json);
+  for (const source of feed.sources) {
+    const result = await tryIncidentSource(source);
+    if (!result.ok) {
+      attempts.push({ url: source.url, error: result.error });
+      continue;
+    }
+    /* A recognised response wins immediately. One that parsed to nothing
+       *and* flagged drift is held back: a later source may still work, and
+       only if none does is the drift reported. */
+    if (result.parsed.diagnostics) {
+      attempts.push({ url: source.url, error: 'Responded, but no recognisable incident fields' });
+      if (!drifted) drifted = { source, parsed: result.parsed };
+      continue;
     }
 
     const payload = {
@@ -573,24 +774,46 @@ async function refreshStateIncidents(state) {
       name: feed.name,
       agency: feed.agency,
       ok: true,
-      count: parsed.incidents.length,
-      incidents: parsed.incidents,
+      count: result.parsed.incidents.length,
+      incidents: result.parsed.incidents,
+      sourceUrl: source.url,
       fetchedAt: Date.now()
     };
-    /* Zero incidents is a legitimate answer (a quiet day) AND the symptom of
-       a schema change. The diagnostics block only appears in the second case
-       -- when the parser could see records but recognised no fields -- so the
-       two are distinguishable instead of both looking like "no incidents". */
-    if (parsed.diagnostics) payload.diagnostics = parsed.diagnostics;
-
+    /* Flag when the answer came from a reduced fallback, so "0 incidents"
+       from a warnings-only source isn't read as "nothing is happening". */
+    if (source.partial) payload.partial = source.partial;
+    if (attempts.length) payload.attempts = attempts; // earlier sources that failed
     await writeSharedCache(incidentCacheUrl(state), JSON.stringify(payload), 'application/json');
     return { ok: true, state, payload };
-  } catch (err) {
-    const reason = err.name === 'AbortError' ? 'Upstream timed out after 15s' : err.message;
-    return { ok: false, state, error: reason };
-  } finally {
-    clearTimeout(timer);
   }
+
+  /* Every source answered but none was recognisable -- report it as a schema
+     problem (ok, with diagnostics) rather than an outage, since that's what
+     it is and it needs a parser fix, not a retry. */
+  if (drifted) {
+    const payload = {
+      state: state.toUpperCase(),
+      name: feed.name,
+      agency: feed.agency,
+      ok: true,
+      count: 0,
+      incidents: [],
+      sourceUrl: drifted.source.url,
+      diagnostics: drifted.parsed.diagnostics,
+      attempts,
+      fetchedAt: Date.now()
+    };
+    await writeSharedCache(incidentCacheUrl(state), JSON.stringify(payload), 'application/json');
+    return { ok: true, state, payload };
+  }
+
+  return {
+    ok: false,
+    state,
+    error: attempts.length === 1 ? attempts[0].error
+      : 'All ' + attempts.length + ' sources failed — ' + attempts.map((a) => a.error).join(' | '),
+    attempts
+  };
 }
 
 /* Reads a state's cached payload, or null if it has never been written. */
@@ -670,11 +893,14 @@ async function handleIncidentsState(state) {
     state: state.toUpperCase(),
     name: feed.name,
     agency: feed.agency,
-    officialUrl: feed.url,
     ok: false,
     count: 0,
     incidents: [],
-    error: result.error
+    error: result.error,
+    /* Every source tried and exactly why each one failed. Hitting
+       /api/incidents/<state> in a browser is the fastest way to tell a WAF
+       block apart from a timeout, a moved URL or a schema change. */
+    attempts: result.attempts || []
   }), {
     status: 502,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
