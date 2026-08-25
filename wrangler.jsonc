@@ -7,8 +7,26 @@
     "binding": "ASSETS"
   },
   "triggers": {
-    // Runs the GDELT + incidents cache refresh independently of visitor
-    // traffic every 5 minutes, so a page load never waits on a live fetch.
+    // Runs the GDELT + all-eight-state incident cache refreshes independently
+    // of visitor traffic every 5 minutes, so a page load never waits on a
+    // live fetch.
+    //
+    // Caching note: the cron tick fetches AND normalises each feed, then
+    // stores the finished JSON in the Cloudflare Cache API under
+    //   /gdelt, /incidents/<state> (x8), and /incidents-all
+    // Visitor requests are therefore pure cache reads with no upstream call
+    // and no JSON parsing -- which is what keeps per-request CPU inside the
+    // free plan's budget. Entries carry a 2h max-age purely as an outer
+    // bound in case the cron is ever disabled; freshness is the cron's job,
+    // not a per-request check. A failed refresh deliberately leaves the
+    // previous entry in place, so one flaky agency feed degrades to "slightly
+    // stale" rather than "blank tab".
+    //
+    // No secrets are required by this Worker. The incident feeds are all
+    // keyless public government sources (see the INCIDENT FEEDS section in
+    // src/worker.js); the previous EMERGENCY_API_KEY binding for
+    // emergencyapi.com has been retired along with that dependency, so there
+    // is no longer any credential here to expire, rotate or leak.
     "crons": ["*/5 * * * *"]
   }
 }
