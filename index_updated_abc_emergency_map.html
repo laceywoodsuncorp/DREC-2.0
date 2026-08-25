@@ -984,6 +984,13 @@ function renderIncidents(){
       incidentFeedEl.innerHTML='<div class="inc-empty">'+escapeHtml(meta.name)+'’s feed responded, but its data format has changed and could not be read.<br>'+
         '<a href="'+meta.officialUrl+'" target="_blank" rel="noopener">Open '+escapeHtml(meta.officialLabel)+' ↗</a> for current updates.</div>';
       incCount.textContent='—';
+    }else if(data.partial){
+      /* Nothing to show from a source that only ever carried part of the
+         picture. Saying "no current incidents" here would overstate what we
+         actually know, so the message is scoped to what was checked. */
+      incidentFeedEl.innerHTML='<div class="inc-empty">No '+escapeHtml(data.partial)+' currently listed for '+escapeHtml(meta.name)+'.<br>'+
+        'This does not rule out other incidents — <a href="'+meta.officialUrl+'" target="_blank" rel="noopener">check '+escapeHtml(meta.officialLabel)+' ↗</a>.</div>';
+      incCount.textContent='0';
     }else{
       incidentFeedEl.innerHTML='<div class="inc-empty">No current incidents reported for '+escapeHtml(meta.name)+'.</div>';
       incCount.textContent='0';
@@ -999,12 +1006,17 @@ function renderIncidents(){
     incCount.textContent=sorted.length;
   }
 
-  /* Data older than ~20 minutes means the Worker's 5-minute cron has not
-     managed a successful refresh for several cycles -- worth saying, since
-     the list still looks perfectly normal otherwise. */
-  if(data.cacheAgeSeconds>1200){
+  /* Two things worth saying even when the list itself looks fine:
+     - the answer came from a reduced fallback source (e.g. warnings only, not
+       every incident), so an empty or short list understates what's happening;
+     - the data is older than ~20 minutes, meaning the Worker's 5-minute cron
+       has failed to refresh for several cycles. */
+  const notes=[];
+  if(data.partial)notes.push('Showing '+data.partial+' — '+meta.name+'’s full incident feed is unavailable, so this list is not complete.');
+  if(data.cacheAgeSeconds>1200)notes.push(meta.name+' data is '+Math.round(data.cacheAgeSeconds/60)+' minutes old — the feed may be having trouble refreshing.');
+  if(notes.length){
     incStatus.style.display='block';
-    incStatus.textContent='⚠️ '+meta.name+' data is '+Math.round(data.cacheAgeSeconds/60)+' minutes old — the feed may be having trouble refreshing.';
+    incStatus.textContent='⚠️ '+notes.join(' ');
   }else{
     incStatus.style.display='none';
   }
