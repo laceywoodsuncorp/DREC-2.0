@@ -144,6 +144,173 @@ async function handleGdelt() {
 }
 
 /* ============================================================
+   NEWS -- straight from the outlets' own RSS feeds
+   ============================================================
+   GDELT (above) is kept as a fallback, but it can no longer be the primary
+   source. It rate-limits per client IP, and a Worker goes out through
+   Cloudflare's shared egress range, so we are competing for that budget with
+   every other Cloudflare customer calling GDELT. In practice it rejects
+   almost every attempt with 429 regardless of how infrequently we ask --
+   pre-warming on a cron and retrying on 429 both helped and neither fixed
+   it, because the limit isn't ours to stay under. When the cache eventually
+   expired with no successful refresh behind it, the page fell all the way
+   back to the hard-coded sample headlines, which is how a visitor ended up
+   reading month-old articles presented as today's news.
+
+   Reading each outlet's own RSS feed removes the middleman: no key, no
+   shared quota, no single point of failure. These are merged rather than
+   tried in sequence -- one outlet being down costs its share of the
+   coverage, not the whole feed -- and per-feed status travels with the
+   payload so a silently-dead source is visible rather than just meaning
+   fewer articles. */
+const NEWS_FEEDS = [
+  { name: 'ABC News', domain: 'abc.net.au', url: 'https://www.abc.net.au/news/feed/51120/rss.xml' },
+  { name: 'ABC News', domain: 'abc.net.au', url: 'https://www.abc.net.au/news/feed/10719986/rss.xml' },
+  { name: 'SBS News', domain: 'sbs.com.au', url: 'https://www.sbs.com.au/news/feed' },
+  { name: 'news.com.au', domain: 'news.com.au', url: 'https://www.news.com.au/content-feeds/latest-news-national/' },
+  { name: '9News', domain: '9news.com.au', url: 'https://www.9news.com.au/rss' },
+  { name: '7NEWS', domain: '7news.com.au', url: 'https://7news.com.au/feed' },
+  { name: 'Sydney Morning Herald', domain: 'smh.com.au', url: 'https://www.smh.com.au/rss/feed.xml' },
+  /* Trade press for the insurance category. UNVERIFIED URL: insuranceNEWS
+     publishes RSS but lists the real feed addresses on a page this build
+     environment can't reach (insurancenews.com.au/rss-channels), so this is
+     the conventional path rather than a confirmed one. If it 404s it simply
+     shows as a failed feed in the payload's `feeds` array and costs nothing
+     else -- swap in the correct URL from that page. */
+  { name: 'insuranceNEWS', domain: 'insurancenews.com.au', url: 'https://www.insurancenews.com.au/rss/all-news' },
+  /* Dedicated World source -- exempt from the client's AU-relevance filter,
+     same as it was under GDELT. */
+  { name: 'Al Jazeera', domain: 'aljazeera.com', url: 'https://www.aljazeera.com/xml/rss/all.xml', world: true }
+];
+
+const NEWS_CACHE_URL = 'https://newsradar-internal-cache.example/news';
+/* Deliberately much wider than the 24h the page prefers to display. The page
+   falls back to older headlines when nothing recent is available rather than
+   showing an empty feed, so this is the pool it draws that fallback from --
+   it needs enough depth to cover a quiet stretch or a spell where several
+   outlets are unreachable. Age is shown per article either way, so older
+   items are never mistaken for current ones. */
+const NEWS_WINDOW_MS = 7 * 24 * 3600 * 1000;
+
+function parseRssArticles(xml, feed) {
+  const out = [];
+  const items = xml.match(/<(?:item|entry)[\s>][\s\S]*?<\/(?:item|entry)>/gi) || [];
+  items.forEach((item) => {
+    const tag = (name) => {
+      const m = new RegExp('<' + name + '(?:\\s[^>]*)?>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/' + name + '>', 'i').exec(item);
+      return m ? stripTags(m[1]) : '';
+    };
+    const title = tag('title');
+    if (!title) return;
+    /* RSS puts the URL in <link>text</link>; Atom uses <link href="..."/>
+       with no closing tag, so the element parse returns nothing there. */
+    let link = tag('link');
+    if (!link) {
+      const m = /<link[^>]*href="([^"]+)"/i.exec(item);
+      link = m ? m[1].replace(/&amp;/g, '&') : '';
+    }
+    if (!link) return;
+
+    const when = tag('pubDate') || tag('published') || tag('updated') || tag('dc:date');
+    const pubMs = Date.parse(when);
+    /* An undated item can't be aged or ordered, and dating it "now" would
+       promote stale content to the top of the feed. Skipping it is visible
+       in the per-feed count rather than silently wrong. */
+    if (isNaN(pubMs)) return;
+
+    const summary = tag('description') || tag('summary') || tag('content');
+    out.push({
+      title,
+      url: link,
+      domain: feed.domain,
+      source: feed.name,
+      summary: summary && summary.length > 300 ? summary.slice(0, 300) + '…' : summary,
+      pubMs,
+      world: !!feed.world
+    });
+  });
+  return out;
+}
+
+async function fetchFeedText(url) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const r = await fetch(url, { headers: FEED_REQUEST_HEADERS, signal: ctrl.signal, redirect: 'follow', cf: { cacheTtl: 0 } });
+    if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
+    return { ok: true, text: await r.text() };
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'Timed out after 15s' : err.message };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function refreshNewsCache() {
+  const results = await Promise.all(NEWS_FEEDS.map(async (feed) => {
+    const res = await fetchFeedText(feed.url);
+    if (!res.ok) return { feed, ok: false, error: res.error, articles: [] };
+    try {
+      return { feed, ok: true, articles: parseRssArticles(res.text, feed) };
+    } catch (err) {
+      return { feed, ok: false, error: 'Parse failed: ' + err.message, articles: [] };
+    }
+  }));
+
+  const cutoff = Date.now() - NEWS_WINDOW_MS;
+  const seenUrl = new Set();
+  const seenTitle = new Set();
+  const articles = [];
+  results.forEach((r) => {
+    r.articles.forEach((a) => {
+      if (a.pubMs < cutoff || a.pubMs > Date.now() + 3600000) return; // ignore stale and implausibly-future items
+      if (seenUrl.has(a.url)) return;
+      /* The same story syndicated across outlets, or an outlet's own
+         duplicate/AMP entry, would otherwise appear several times. */
+      const key = a.title.trim().toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
+      if (seenTitle.has(key)) return;
+      seenUrl.add(a.url);
+      seenTitle.add(key);
+      articles.push(a);
+    });
+  });
+  articles.sort((a, b) => b.pubMs - a.pubMs);
+
+  const payload = {
+    articles: articles.slice(0, 300),
+    feeds: results.map((r) => ({
+      name: r.feed.name,
+      url: r.feed.url,
+      ok: r.ok,
+      count: r.articles.length,
+      error: r.error
+    })),
+    fetchedAt: Date.now(),
+    newestPubMs: articles.length ? articles[0].pubMs : null
+  };
+
+  /* Never overwrite a good cache with an empty one -- if every outlet is
+     unreachable this round, the previous articles are far better than none. */
+  if (!payload.articles.length) {
+    const existing = await readSharedCache(NEWS_CACHE_URL);
+    if (existing) return { ok: false, error: 'No articles retrieved; kept previous cache', payload };
+  }
+  await writeSharedCache(NEWS_CACHE_URL, JSON.stringify(payload), 'application/json');
+  return { ok: true, payload };
+}
+
+async function handleNews() {
+  const cached = await readSharedCache(NEWS_CACHE_URL);
+  if (cached) return respondFromCache(cached);
+
+  const result = await refreshNewsCache();
+  return new Response(JSON.stringify(result.payload), {
+    status: result.payload.articles.length ? 200 : 502,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+  });
+}
+
+/* ============================================================
    INCIDENT FEEDS -- eight official government sources, no API key
    ============================================================
    This replaces the old emergencyapi.com dependency entirely. That service
@@ -931,6 +1098,10 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (url.pathname === '/api/news') {
+      return handleNews();
+    }
+
     if (url.pathname === '/api/gdelt') {
       return handleGdelt();
     }
@@ -958,7 +1129,10 @@ export default {
      failing doesn't stop the other, and so the Worker instance isn't
      recycled before both finish. */
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(refreshGdeltCache());
+    ctx.waitUntil(refreshNewsCache());
     ctx.waitUntil(refreshAllIncidents());
+    /* GDELT stays on the cron only as a fallback for /api/gdelt; the page
+       reads /api/news first. Its refresh failing is expected and harmless. */
+    ctx.waitUntil(refreshGdeltCache().catch(() => {}));
   }
 };
