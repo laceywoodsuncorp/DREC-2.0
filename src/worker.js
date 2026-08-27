@@ -318,35 +318,117 @@ function newsFeedCacheUrl(feedUrl) {
     feedUrl.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 100);
 }
 
+/* Finds an outlet's real feed URL by reading its homepage, the same way a
+   feed reader does: publishers advertise their feeds with
+   <link rel="alternate" type="application/rss+xml" href="...">.
+
+   This exists because the configured URLs cannot be verified from the build
+   environment -- outbound access to these hosts is blocked here -- so several
+   were educated guesses at each publisher's usual pattern, and a guess that's
+   wrong fails silently for that outlet forever. Discovery removes the
+   guesswork: get it wrong and the site itself tells us the right answer.
+   Only the document head is scanned, and only when the configured URL has
+   already failed, so the cost is bounded. */
+async function discoverFeedUrl(feed) {
+  const home = 'https://' + feed.domain + '/';
+  const res = await fetchFeedText(home);
+  if (!res.ok) return null;
+
+  /* Feed links live in <head>; scanning a whole news homepage would be a lot
+     of regex work for nothing. */
+  const headEnd = res.text.search(/<\/head>/i);
+  const head = res.text.slice(0, headEnd > 0 ? headEnd : 60000);
+
+  const candidates = [];
+  (head.match(/<link[^>]*>/gi) || []).forEach((tag) => {
+    if (!/type=["']?application\/(rss|atom)\+xml/i.test(tag)) return;
+    const href = (/href=["']([^"']+)["']/i.exec(tag) || [])[1];
+    if (!href) return;
+    const title = (/title=["']([^"']*)["']/i.exec(tag) || [])[1] || '';
+    try { candidates.push({ url: new URL(href, home).toString(), title }); } catch (e) { /* unusable href */ }
+  });
+  if (!candidates.length) return null;
+
+  /* Prefer a general/latest feed over a section-specific one when the
+     publisher advertises several. */
+  const preferred = candidates.find((c) => /latest|top|all|news|home/i.test(c.title)) || candidates[0];
+  return preferred.url;
+}
+
 /* Fetches and caches one feed. A failure deliberately keeps whatever articles
    were cached previously and just records the error alongside them, so a feed
-   that blips doesn't vanish from the merged list. */
+   that blips doesn't vanish from the merged list.
+
+   A configured URL that fails, or that responds but yields no articles at all
+   (an HTML error page parses to zero items just as an empty feed does), falls
+   through to discovery. Whatever discovery finds is remembered in this feed's
+   own cache entry and tried first next time, so the homepage fetch happens
+   once rather than every refresh. */
 async function refreshOneFeed(feed) {
   const cacheUrl = newsFeedCacheUrl(feed.url);
-  const res = await fetchFeedText(feed.url);
+  let previous = [], knownGood = null;
+  const existing = await readSharedCache(cacheUrl);
+  if (existing) {
+    try {
+      const prev = await existing.response.json();
+      previous = prev.articles || [];
+      knownGood = prev.resolvedUrl || null;
+    } catch (e) { /* unreadable cache is the same as none */ }
+  }
 
-  if (!res.ok) {
-    let previous = [];
-    const existing = await readSharedCache(cacheUrl);
-    if (existing) {
-      try { previous = (await existing.response.json()).articles || []; } catch (e) { previous = []; }
+  const attempt = async (url) => {
+    const res = await fetchFeedText(url);
+    if (!res.ok) return { ok: false, error: res.error };
+    try {
+      return { ok: true, articles: parseRssArticles(res.text, feed) };
+    } catch (err) {
+      return { ok: false, error: 'Parse failed: ' + err.message };
     }
-    await writeSharedCache(cacheUrl, JSON.stringify({
-      articles: previous, lastError: res.error, checkedAt: Date.now()
-    }), 'application/json');
-    return { ok: false, error: res.error };
+  };
+
+  const tried = [];
+  /* A URL discovered on a previous run goes first -- it's the one known to
+     work for this outlet. */
+  for (const url of (knownGood && knownGood !== feed.url) ? [knownGood, feed.url] : [feed.url]) {
+    const r = await attempt(url);
+    tried.push(url);
+    if (r.ok && r.articles.length) {
+      await writeSharedCache(cacheUrl, JSON.stringify({
+        articles: r.articles, resolvedUrl: url, fetchedAt: Date.now()
+      }), 'application/json');
+      return { ok: true, count: r.articles.length, resolvedUrl: url };
+    }
+    if (r.ok) {
+      /* Responded, but nothing usable came out of it. Genuinely empty feeds
+         exist, so this is only worth re-routing if discovery finds something
+         better -- handled below. */
+      var emptyResult = r;
+    } else {
+      var lastError = r.error;
+    }
   }
 
-  let articles;
-  try {
-    articles = parseRssArticles(res.text, feed);
-  } catch (err) {
-    return { ok: false, error: 'Parse failed: ' + err.message };
+  const found = await discoverFeedUrl(feed);
+  if (found && tried.indexOf(found) === -1) {
+    const r = await attempt(found);
+    if (r.ok && r.articles.length) {
+      await writeSharedCache(cacheUrl, JSON.stringify({
+        articles: r.articles, resolvedUrl: found, discovered: true, fetchedAt: Date.now()
+      }), 'application/json');
+      return { ok: true, count: r.articles.length, resolvedUrl: found, discovered: true };
+    }
   }
+
+  /* Nothing worked. Keep the previous articles and record why, distinguishing
+     "the request failed" from "it answered but had nothing we could read" --
+     those need different fixes and shouldn't look the same. */
+  const reason = typeof lastError !== 'undefined' ? lastError
+    : (typeof emptyResult !== 'undefined' ? 'Responded, but no articles could be read from it' : 'Unavailable');
   await writeSharedCache(cacheUrl, JSON.stringify({
-    articles, fetchedAt: Date.now()
+    articles: previous, lastError: reason, checkedAt: Date.now(),
+    triedUrls: found ? tried.concat(found) : tried
   }), 'application/json');
-  return { ok: true, count: articles.length };
+  return { ok: false, error: reason };
 }
 
 /* Rebuilds the merged article list from every feed's individual cache. */
@@ -364,6 +446,12 @@ async function rebuildNewsMerged() {
         ok: !payload.lastError,
         count: articles.length,
         error: payload.lastError,
+        /* Where the articles actually came from, and whether that URL was
+           found by discovery rather than configured -- worth surfacing so a
+           corrected URL can be folded back into NEWS_FEEDS. */
+        resolvedUrl: payload.resolvedUrl,
+        discovered: payload.discovered || undefined,
+        triedUrls: payload.triedUrls,
         ageSeconds: Math.round(cached.ageSeconds),
         articles
       };
@@ -394,7 +482,8 @@ async function rebuildNewsMerged() {
 
   const payload = {
     articles: articles.slice(0, 300),
-    feeds: entries.map((e) => ({ name: e.name, url: e.url, group: e.group, ok: e.ok, count: e.count, error: e.error, ageSeconds: e.ageSeconds })),
+    feeds: entries.map((e) => ({ name: e.name, url: e.url, group: e.group, ok: e.ok, count: e.count,
+      error: e.error, resolvedUrl: e.resolvedUrl, discovered: e.discovered, triedUrls: e.triedUrls, ageSeconds: e.ageSeconds })),
     fetchedAt: Date.now(),
     newestPubMs: articles.length ? articles[0].pubMs : null
   };
