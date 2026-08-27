@@ -58,6 +58,11 @@
   .news-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 24px 12px}
   .news-toolbar .cache-note{font-size:.72rem;color:#5a6a6a}
   .news-toolbar .cache-note.stale{color:#a06000}
+  .news-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .source-filter{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:#5a6a6a}
+  .source-filter span{font-weight:700;color:var(--heritage-green)}
+  .source-filter select{font-family:inherit;font-size:.74rem;font-weight:600;color:var(--heritage-green);background:var(--true-white);border:1px solid #cdd6d4;border-radius:8px;padding:6px 9px;max-width:230px;cursor:pointer}
+  .source-filter select:focus{outline:2px solid var(--light-green);outline-offset:1px}
   .refresh-btn{border:none;cursor:pointer;background:var(--neutral-green);color:#fff;font-weight:700;font-size:.76rem;padding:7px 13px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;transition:.15s}
   .refresh-btn:hover{background:var(--heritage-green)}
   .refresh-btn.loading{opacity:.65;cursor:progress}
@@ -212,7 +217,7 @@
     <section class="tile tile-news" id="section-news">
       <div class="tile-head">
         <h2>📡 Live News Feed</h2>
-        <div class="src">Live from each outlet&rsquo;s own news feed, read server-side and merged &mdash; ABC, SBS, Nine, 7NEWS, The Australian, Guardian Australia, AAP and The Conversation; the capital-city mastheads (SMH, The Age, Brisbane Times, WAtoday, The West Australian); regional papers across NSW, VIC, TAS and the ACT; insuranceNEWS.com.au for trade coverage; and Al Jazeera for world news. Shows the last 24 hours, or the most recent available if it has been quieter than that.</div>
+        <div class="src">Live from each outlet&rsquo;s own news feed, read server-side and merged &mdash; ABC, SBS, Nine, 7NEWS, news.com.au, The Australian, Guardian Australia, AAP and The Conversation; the capital-city mastheads (SMH, The Age, Brisbane Times, WAtoday, The West Australian); regional papers across NSW, VIC, TAS and the ACT; insuranceNEWS.com.au for trade coverage; and Al Jazeera for world news. Use the Source dropdown to narrow the feed to one outlet or a group (national, capital-city, regional, trade or world). Shows the last 24 hours, or the most recent available if it has been quieter than that.</div>
         <div class="count">Showing <b id="shown">…</b> of <b id="total">…</b> articles · scroll within the tile to see more</div>
       </div>
       <div class="filters" id="filters">
@@ -230,7 +235,13 @@
       </div>
       <div class="news-toolbar">
         <div class="cache-note" id="cacheNote">Loading latest Australian news…</div>
-        <button class="refresh-btn" id="newsRefresh">🔄 Refresh now</button>
+        <div class="news-actions">
+          <label class="source-filter" for="sourceFilter">
+            <span>Source</span>
+            <select id="sourceFilter"><option value="all">All sources</option></select>
+          </label>
+          <button class="refresh-btn" id="newsRefresh">🔄 Refresh now</button>
+        </div>
       </div>
       <div class="feed" id="feed">
         <div class="empty" id="empty">No articles in this category for the last 24 hours.</div>
@@ -351,7 +362,7 @@
 </main>
 
 <footer>
-  <p><strong>About this dashboard:</strong> News headlines come live from each outlet’s own RSS feed — national and wire services (ABC, SBS, Nine, 7NEWS, The Australian, Guardian Australia, AAP, The New Daily, The Conversation), the capital-city mastheads (Sydney Morning Herald, The Age, Brisbane Times, WAtoday, The West Australian), regional and rural papers (Canberra Times, Newcastle Herald, Illawarra Mercury, The Examiner, The Advocate, The Border Mail, The Courier, Bendigo Advertiser, Northern Daily Leader, Daily Advertiser, Central Western Daily, The Land), insuranceNEWS.com.au for trade coverage, and Al Jazeera for world news — fetched server-side, merged and de-duplicated. The feed shows the last 24 hours, or the most recent available if it has been quieter than that; each headline carries its own age. Some mastheads (notably The Australian) are subscriber-only, so following those links may hit a paywall. The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State emergency incident data is live for all eight states and territories, each from its own official agency feed (NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES, ACT ESA), proxied server-side with no API key; if a feed is temporarily unreachable that state says so and links through to its official current-incidents page rather than showing older data. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. Styling uses the Suncorp brand colour palette.</p>
+  <p><strong>About this dashboard:</strong> News headlines come live from each outlet’s own RSS feed — national and wire services (ABC, SBS, Nine, 7NEWS, news.com.au, The Australian, Guardian Australia, AAP, The New Daily, The Conversation), the capital-city mastheads (Sydney Morning Herald, The Age, Brisbane Times, WAtoday, The West Australian), regional and rural papers (Canberra Times, Newcastle Herald, Illawarra Mercury, The Examiner, The Advocate, The Border Mail, The Courier, Bendigo Advertiser, Northern Daily Leader, Daily Advertiser, Central Western Daily, The Land), insuranceNEWS.com.au for trade coverage, and Al Jazeera for world news — fetched server-side, merged and de-duplicated. The feed shows the last 24 hours, or the most recent available if it has been quieter than that; each headline carries its own age. Some mastheads (notably The Australian) are subscriber-only, so following those links may hit a paywall. The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State emergency incident data is live for all eight states and territories, each from its own official agency feed (NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES, ACT ESA), proxied server-side with no API key; if a feed is temporarily unreachable that state says so and links through to its official current-incidents page rather than showing older data. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. Styling uses the Suncorp brand colour palette.</p>
 </footer>
 
 <script>
@@ -443,6 +454,63 @@
         catChips=document.querySelectorAll('#filters .chip');
 
   let currentCat='all',currentArticles=null;
+  /* Source filtering runs alongside the category chips. `lastFeeds` is the
+     per-outlet status from /api/news, kept so the dropdown can list every
+     configured source -- including ones that returned nothing -- rather than
+     only those that happen to have articles. That makes a source which isn't
+     arriving visible in the UI instead of just absent. */
+  let currentSource='all',lastFeeds=[];
+  const sourceFilterEl=document.getElementById('sourceFilter');
+  const GROUP_LABEL={national:'National & wire',capital:'Capital city',regional:'Regional & rural',trade:'Trade press',world:'World',other:'Other'};
+  function sourceNameOf(a){return a.source||a.domain||'Unknown';}
+  function matchesSource(a){
+    if(currentSource==='all')return true;
+    if(currentSource.indexOf('group:')===0)return (a.group||'other')===currentSource.slice(6);
+    if(currentSource.indexOf('src:')===0)return sourceNameOf(a)===currentSource.slice(4);
+    return true;
+  }
+  /* Rebuilt whenever the article set changes. Counts come from what's actually
+     displayable, so "Bendigo Advertiser (0)" and "The Australian — unavailable"
+     are both immediately legible. */
+  function buildSourceOptions(){
+    if(!sourceFilterEl)return;
+    const arts=currentArticles||[];
+    const byName={},byGroup={};
+    arts.forEach(a=>{
+      const n=sourceNameOf(a);byName[n]=(byName[n]||0)+1;
+      const g=a.group||'other';byGroup[g]=(byGroup[g]||0)+1;
+    });
+    const info={};
+    (lastFeeds||[]).forEach(f=>{
+      if(!f||!f.name)return;
+      const e=info[f.name]||(info[f.name]={group:f.group||'other',ok:false});
+      if(f.ok)e.ok=true;
+      if(f.group)e.group=f.group;
+    });
+    Object.keys(byName).forEach(n=>{if(!info[n])info[n]={group:'other',ok:true};});
+
+    const prev=currentSource;
+    const html=['<option value="all">All sources ('+arts.length+')</option>'];
+    const groupsPresent=Object.keys(GROUP_LABEL).filter(g=>byGroup[g]||Object.keys(info).some(n=>info[n].group===g));
+    if(groupsPresent.length){
+      html.push('<optgroup label="Groups">');
+      groupsPresent.forEach(g=>html.push('<option value="group:'+g+'">'+escapeHtml(GROUP_LABEL[g])+' ('+(byGroup[g]||0)+')</option>'));
+      html.push('</optgroup>');
+    }
+    const names=Object.keys(info).sort((a,b)=>a.localeCompare(b));
+    if(names.length){
+      html.push('<optgroup label="Outlets">');
+      names.forEach(n=>{
+        const c=byName[n]||0;
+        const label=n+((!c&&info[n].ok===false)?' — unavailable':' ('+c+')');
+        html.push('<option value="src:'+escapeHtml(n)+'">'+escapeHtml(label)+'</option>');
+      });
+      html.push('</optgroup>');
+    }
+    sourceFilterEl.innerHTML=html.join('');
+    sourceFilterEl.value=prev;
+    if(sourceFilterEl.value!==prev){sourceFilterEl.value='all';currentSource='all';} // previous pick no longer exists
+  }
 
   /* Many of these keywords are deliberately stems ("insur" for insurance,
      "polic" for police, "econom" for economic), so they must still match the
@@ -534,7 +602,10 @@
            some other real category too. */
         if((cats.length===0||(cats.length===1&&cats[0]==='world'))&&!AU_RELEVANCE.test(a.title))return;
       }
-      out.push({title:a.title,url:a.url,domain:a.domain||'',source:a.source||'',summary:a.summary||'',pubMs:a.pubMs,cats});
+      /* `group` must survive here -- it's what the source filter's group
+         options key off. Rebuilding the object without it silently put every
+         article in "Other" and made every group count zero. */
+      out.push({title:a.title,url:a.url,domain:a.domain||'',source:a.source||'',group:a.group||'other',summary:a.summary||'',pubMs:a.pubMs,cats});
     });
     out.sort((x,y)=>y.pubMs-x.pubMs);
     return out;
@@ -587,7 +658,7 @@
       const cat=ch.dataset.cat;
       const base=(cat==='all')?'All':CAT_LABEL[cat];
       if(!currentArticles){ch.innerHTML=base;return;}
-      const n=currentArticles.filter(a=>cat==='all'||a.cats.includes(cat)).length;
+      const n=currentArticles.filter(a=>matchesSource(a)&&(cat==='all'||a.cats.includes(cat))).length;
       ch.innerHTML=base+' <span class="n">('+n+')</span>';
     });
   }
@@ -596,7 +667,7 @@
     if(!currentArticles)return;
     const loadingEl=document.getElementById('newsLoading');
     if(loadingEl)loadingEl.style.display='none';
-    const visible=currentArticles.filter(a=>currentCat==='all'||a.cats.includes(currentCat));
+    const visible=currentArticles.filter(a=>matchesSource(a)&&(currentCat==='all'||a.cats.includes(currentCat)));
     feed.querySelectorAll('.item').forEach(el=>el.remove());
     visible.forEach(a=>{
       const el=document.createElement('div');el.className='item';el.dataset.cat=a.cats.join(' ');
@@ -619,6 +690,12 @@
     });
     shown.textContent=visible.length;total.textContent=currentArticles.length;
     empty.style.display=visible.length===0?'block':'none';
+    if(visible.length===0&&currentArticles.length){
+      const src=currentSource==='all'?null:sourceFilterEl&&sourceFilterEl.options[sourceFilterEl.selectedIndex];
+      empty.textContent=src
+        ?'No articles from '+src.text.replace(/\s*\(\d+\)$/,'').replace(/\s*—\s*unavailable$/,'')+' in this category.'
+        :'No articles in this category for the last 24 hours.';
+    }
     feed.scrollTop=0;
     renderCatCounts();
   }
@@ -643,6 +720,7 @@
     }else{
       setCacheNote(context(recent.length));
     }
+    buildSourceOptions();
     applyFilters();
     return true;
   }
@@ -656,6 +734,7 @@
     setCacheNote('Fetching the latest Australian headlines…');
     try{
       const {articles,via,feeds}=await fetchNews();
+      lastFeeds=feeds||[];
       writeCache(articles);
       presentArticles(articles,n=>{
         if(via==='gdelt')return 'Live · '+n+' articles via the backup source — the main news service didn’t respond.';
@@ -717,6 +796,7 @@
   }
 
   catChips.forEach(ch=>ch.addEventListener('click',()=>{catChips.forEach(c=>c.classList.remove('active'));ch.classList.add('active');currentCat=ch.dataset.cat;applyFilters();}));
+  if(sourceFilterEl)sourceFilterEl.addEventListener('change',()=>{currentSource=sourceFilterEl.value;applyFilters();});
   refreshBtn.addEventListener('click',()=>loadNews(true));
 
   loadNews(false);
