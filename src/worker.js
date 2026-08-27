@@ -24,7 +24,7 @@
    to Australian sources) sourcecountry clause to stay well under it. */
 /* The Guardian AU was dropped -- it pulls a disproportionate amount of
    international coverage even after the client's AU-relevance filtering. */
-const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'smh.com.au', 'theage.com.au',
+const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
   'sbs.com.au', '7news.com.au', 'theaustralian.com.au', 'insurancenews.com.au'];
 const WORLD_DOMAIN = 'aljazeera.com';
 
@@ -179,53 +179,57 @@ async function handleGdelt() {
    HTTP status, and cost nothing else. */
 const NEWS_FEEDS = [
   /* --- national / wire --- */
-  { name: 'ABC News', domain: 'abc.net.au', url: 'https://www.abc.net.au/news/feed/51120/rss.xml', priority: true },
-  { name: 'ABC News', domain: 'abc.net.au', url: 'https://www.abc.net.au/news/feed/10719986/rss.xml', priority: true },
-  { name: 'SBS News', domain: 'sbs.com.au', url: 'https://www.sbs.com.au/news/feed', priority: true },
-  { name: '9News', domain: '9news.com.au', url: 'https://www.9news.com.au/rss', priority: true },
-  { name: '7NEWS', domain: '7news.com.au', url: 'https://7news.com.au/feed', priority: true },
+  { name: 'ABC News', domain: 'abc.net.au', group: 'national', url: 'https://www.abc.net.au/news/feed/51120/rss.xml', priority: true },
+  { name: 'ABC News', domain: 'abc.net.au', group: 'national', url: 'https://www.abc.net.au/news/feed/10719986/rss.xml', priority: true },
+  { name: 'SBS News', domain: 'sbs.com.au', group: 'national', url: 'https://www.sbs.com.au/news/feed', priority: true },
+  { name: '9News', domain: '9news.com.au', group: 'national', url: 'https://www.9news.com.au/rss', priority: true },
+  { name: '7NEWS', domain: '7news.com.au', group: 'national', url: 'https://7news.com.au/feed', priority: true },
+  /* Back in now that the feed can be filtered by source -- anyone who doesn't
+     want it can simply deselect it rather than it having to be dropped
+     wholesale. */
+  { name: 'news.com.au', domain: 'news.com.au', group: 'national', url: 'https://www.news.com.au/content-feeds/latest-news-national/' },
   /* Guardian Australia's own AU edition feed. It was dropped back when the
      source was GDELT, because a domain-scoped search pulled in the whole
      international site; this feed is already AU-scoped, so that objection
      doesn't apply. */
-  { name: 'Guardian Australia', domain: 'theguardian.com', url: 'https://www.theguardian.com/au/rss', priority: true },
+  { name: 'Guardian Australia', domain: 'theguardian.com', group: 'national', url: 'https://www.theguardian.com/au/rss', priority: true },
   /* The Australian is paywalled -- headlines and standfirsts come through,
      but following a link will hit the paywall unless the reader subscribes.
      UNVERIFIED URL. */
-  { name: 'The Australian', domain: 'theaustralian.com.au', url: 'https://www.theaustralian.com.au/feed/' },
-  { name: 'AAP', domain: 'aap.com.au', url: 'https://www.aap.com.au/feed/' },                                  // UNVERIFIED
-  { name: 'The New Daily', domain: 'thenewdaily.com.au', url: 'https://thenewdaily.com.au/feed/' },             // UNVERIFIED
-  { name: 'The Conversation AU', domain: 'theconversation.com', url: 'https://theconversation.com/au/articles.atom' },
+  { name: 'The Australian', domain: 'theaustralian.com.au', group: 'national', url: 'https://www.theaustralian.com.au/feed/' },
+  { name: 'AAP', domain: 'aap.com.au', group: 'national', url: 'https://www.aap.com.au/feed/' },                                  // UNVERIFIED
+  { name: 'The New Daily', domain: 'thenewdaily.com.au', group: 'national', url: 'https://thenewdaily.com.au/feed/' },             // UNVERIFIED
+  { name: 'The Conversation AU', domain: 'theconversation.com', group: 'national', url: 'https://theconversation.com/au/articles.atom' },
 
-  /* --- capital-city mastheads (Nine) --- */
-  { name: 'Sydney Morning Herald', domain: 'smh.com.au', url: 'https://www.smh.com.au/rss/feed.xml', priority: true },
-  { name: 'The Age', domain: 'theage.com.au', url: 'https://www.theage.com.au/rss/feed.xml' },
-  { name: 'Brisbane Times', domain: 'brisbanetimes.com.au', url: 'https://www.brisbanetimes.com.au/rss/feed.xml' },
-  { name: 'WAtoday', domain: 'watoday.com.au', url: 'https://www.watoday.com.au/rss/feed.xml' },
-  { name: 'The West Australian', domain: 'thewest.com.au', url: 'https://thewest.com.au/rss' },                 // UNVERIFIED
+  /* --- capital-city mastheads (Nine + Seven West) --- */
+  { name: 'Sydney Morning Herald', domain: 'smh.com.au', group: 'capital', url: 'https://www.smh.com.au/rss/feed.xml', priority: true },
+  { name: 'The Age', domain: 'theage.com.au', group: 'capital', url: 'https://www.theage.com.au/rss/feed.xml' },
+  { name: 'Brisbane Times', domain: 'brisbanetimes.com.au', group: 'capital', url: 'https://www.brisbanetimes.com.au/rss/feed.xml' },
+  { name: 'WAtoday', domain: 'watoday.com.au', group: 'capital', url: 'https://www.watoday.com.au/rss/feed.xml' },
+  { name: 'The West Australian', domain: 'thewest.com.au', group: 'capital', url: 'https://thewest.com.au/rss' },                 // UNVERIFIED
 
   /* --- regional / local (Australian Community Media, /rss.xml pattern) --- */
-  { name: 'The Canberra Times', domain: 'canberratimes.com.au', url: 'https://www.canberratimes.com.au/rss.xml' },
-  { name: 'Newcastle Herald', domain: 'newcastleherald.com.au', url: 'https://www.newcastleherald.com.au/rss.xml' },
-  { name: 'Illawarra Mercury', domain: 'illawarramercury.com.au', url: 'https://www.illawarramercury.com.au/rss.xml' },
-  { name: 'The Examiner (Launceston)', domain: 'examiner.com.au', url: 'https://www.examiner.com.au/rss.xml' },
-  { name: 'The Advocate (Burnie)', domain: 'theadvocate.com.au', url: 'https://www.theadvocate.com.au/rss.xml' },
-  { name: 'The Border Mail', domain: 'bordermail.com.au', url: 'https://www.bordermail.com.au/rss.xml' },
-  { name: 'The Courier (Ballarat)', domain: 'thecourier.com.au', url: 'https://www.thecourier.com.au/rss.xml' },
-  { name: 'Bendigo Advertiser', domain: 'bendigoadvertiser.com.au', url: 'https://www.bendigoadvertiser.com.au/rss.xml' },
-  { name: 'Northern Daily Leader (Tamworth)', domain: 'northerndailyleader.com.au', url: 'https://www.northerndailyleader.com.au/rss.xml' },
-  { name: 'The Daily Advertiser (Wagga)', domain: 'dailyadvertiser.com.au', url: 'https://www.dailyadvertiser.com.au/rss.xml' },
-  { name: 'Central Western Daily (Orange)', domain: 'centralwesterndaily.com.au', url: 'https://www.centralwesterndaily.com.au/rss.xml' },
-  { name: 'The Land (rural NSW)', domain: 'theland.com.au', url: 'https://www.theland.com.au/rss.xml' },
+  { name: 'The Canberra Times', domain: 'canberratimes.com.au', group: 'regional', url: 'https://www.canberratimes.com.au/rss.xml' },
+  { name: 'Newcastle Herald', domain: 'newcastleherald.com.au', group: 'regional', url: 'https://www.newcastleherald.com.au/rss.xml' },
+  { name: 'Illawarra Mercury', domain: 'illawarramercury.com.au', group: 'regional', url: 'https://www.illawarramercury.com.au/rss.xml' },
+  { name: 'The Examiner (Launceston)', domain: 'examiner.com.au', group: 'regional', url: 'https://www.examiner.com.au/rss.xml' },
+  { name: 'The Advocate (Burnie)', domain: 'theadvocate.com.au', group: 'regional', url: 'https://www.theadvocate.com.au/rss.xml' },
+  { name: 'The Border Mail', domain: 'bordermail.com.au', group: 'regional', url: 'https://www.bordermail.com.au/rss.xml' },
+  { name: 'The Courier (Ballarat)', domain: 'thecourier.com.au', group: 'regional', url: 'https://www.thecourier.com.au/rss.xml' },
+  { name: 'Bendigo Advertiser', domain: 'bendigoadvertiser.com.au', group: 'regional', url: 'https://www.bendigoadvertiser.com.au/rss.xml' },
+  { name: 'Northern Daily Leader (Tamworth)', domain: 'northerndailyleader.com.au', group: 'regional', url: 'https://www.northerndailyleader.com.au/rss.xml' },
+  { name: 'The Daily Advertiser (Wagga)', domain: 'dailyadvertiser.com.au', group: 'regional', url: 'https://www.dailyadvertiser.com.au/rss.xml' },
+  { name: 'Central Western Daily (Orange)', domain: 'centralwesterndaily.com.au', group: 'regional', url: 'https://www.centralwesterndaily.com.au/rss.xml' },
+  { name: 'The Land (rural NSW)', domain: 'theland.com.au', group: 'regional', url: 'https://www.theland.com.au/rss.xml' },
 
   /* --- trade press for the insurance category --- */
   /* UNVERIFIED: insuranceNEWS publishes RSS but lists the real addresses on a
      page unreachable from here (insurancenews.com.au/rss-channels). */
-  { name: 'insuranceNEWS', domain: 'insurancenews.com.au', url: 'https://www.insurancenews.com.au/rss/all-news' },
+  { name: 'insuranceNEWS', domain: 'insurancenews.com.au', group: 'trade', url: 'https://www.insurancenews.com.au/rss/all-news' },
 
   /* --- world --- */
   /* Exempt from the client's AU-relevance filter, same as under GDELT. */
-  { name: 'Al Jazeera', domain: 'aljazeera.com', url: 'https://www.aljazeera.com/xml/rss/all.xml', world: true, priority: true }
+  { name: 'Al Jazeera', domain: 'aljazeera.com', group: 'world', url: 'https://www.aljazeera.com/xml/rss/all.xml', world: true, priority: true }
 ];
 
 const NEWS_CACHE_URL = 'https://newsradar-internal-cache.example/news';
@@ -273,6 +277,7 @@ function parseRssArticles(xml, feed) {
       url: link,
       domain: feed.domain,
       source: feed.name,
+      group: feed.group,
       summary: summary && summary.length > 300 ? summary.slice(0, 300) + '…' : summary,
       pubMs,
       world: !!feed.world
@@ -349,13 +354,13 @@ async function rebuildNewsMerged() {
   const entries = await Promise.all(NEWS_FEEDS.map(async (feed) => {
     const cached = await readSharedCache(newsFeedCacheUrl(feed.url));
     if (!cached) {
-      return { name: feed.name, url: feed.url, ok: false, count: 0, error: 'Not fetched yet', articles: [] };
+      return { name: feed.name, url: feed.url, group: feed.group, ok: false, count: 0, error: 'Not fetched yet', articles: [] };
     }
     try {
       const payload = await cached.response.json();
       const articles = payload.articles || [];
       return {
-        name: feed.name, url: feed.url,
+        name: feed.name, url: feed.url, group: feed.group,
         ok: !payload.lastError,
         count: articles.length,
         error: payload.lastError,
@@ -363,7 +368,7 @@ async function rebuildNewsMerged() {
         articles
       };
     } catch (e) {
-      return { name: feed.name, url: feed.url, ok: false, count: 0, error: 'Cached data unreadable', articles: [] };
+      return { name: feed.name, url: feed.url, group: feed.group, ok: false, count: 0, error: 'Cached data unreadable', articles: [] };
     }
   }));
 
@@ -389,7 +394,7 @@ async function rebuildNewsMerged() {
 
   const payload = {
     articles: articles.slice(0, 300),
-    feeds: entries.map((e) => ({ name: e.name, url: e.url, ok: e.ok, count: e.count, error: e.error, ageSeconds: e.ageSeconds })),
+    feeds: entries.map((e) => ({ name: e.name, url: e.url, group: e.group, ok: e.ok, count: e.count, error: e.error, ageSeconds: e.ageSeconds })),
     fetchedAt: Date.now(),
     newestPubMs: articles.length ? articles[0].pubMs : null
   };
