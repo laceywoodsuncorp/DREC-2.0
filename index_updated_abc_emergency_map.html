@@ -435,7 +435,7 @@
      list. It's checked after CAT_KEYWORDS.bushfire in classify() below so a
      genuine bushfire/wildfire story (which often also mentions evacuations
      or deaths) doesn't get double-tagged as a house fire too. */
-  const FIRE_REGEX=/\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure|garage|shed|caravan)s?\b[^.]{0,25}\bfires?\b|\bfires?\b[^.]{0,25}\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure)s?\b|\b(fire|blaze)\b[^.]{0,40}\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescue\w*|escape\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke)\b|\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescue\w*|escape\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke)\b[^.]{0,40}\b(fire|blaze)\b/i;
+  const FIRE_REGEX=/\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure|garage|shed|caravan)s?\b[^.]{0,25}\bfires?\b|\bfires?\b[^.]{0,25}\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure)s?\b|\b(fire|blaze)\b[^.]{0,40}\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescue\w*|escape\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke|contain\w*|under control|alight|crews)\b|\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescue\w*|escape\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke|contain\w*|under control|alight|crews)\b[^.]{0,40}\b(fire|blaze)\b/i;
 
   const feed=document.getElementById('feed'),empty=document.getElementById('empty'),
         shown=document.getElementById('shown'),total=document.getElementById('total'),
@@ -444,9 +444,25 @@
 
   let currentCat='all',currentArticles=null;
 
+  /* Many of these keywords are deliberately stems ("insur" for insurance,
+     "polic" for police, "econom" for economic), so they must still match the
+     start of a longer word -- but a bare substring test also matches inside
+     unrelated words, and that bites hard now regional mastheads are in the
+     mix: "war" matches inside "Illawarra", tagging every Illawarra Mercury
+     story as World news. Anchoring single words to a leading word boundary
+     keeps the stem behaviour ("insur" still finds "insurance") while
+     preventing matches that begin mid-word. Multi-word phrases are
+     unambiguous enough to stay plain substring tests. */
+  const kwMatchers={};
+  function keywordHit(text,kw){
+    if(/\s/.test(kw))return text.includes(kw);
+    let re=kwMatchers[kw];
+    if(!re){re=new RegExp('\\b'+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');kwMatchers[kw]=re;}
+    return re.test(text);
+  }
   function classify(title){
     const t=title.toLowerCase();const cats=[];
-    Object.keys(CAT_KEYWORDS).forEach(k=>{if(CAT_KEYWORDS[k].some(kw=>t.includes(kw)))cats.push(k);});
+    Object.keys(CAT_KEYWORDS).forEach(k=>{if(CAT_KEYWORDS[k].some(kw=>keywordHit(t,kw)))cats.push(k);});
     if(!cats.includes('fire')&&!cats.includes('bushfire')&&FIRE_REGEX.test(t))cats.push('fire');
     return cats;
   }
@@ -480,7 +496,17 @@
      exclusions and the AU-relevance rule, and drops anything outside the
      display window. Whatever the upstream, an article arriving here is
      {title,url,domain,pubMs,summary?,world?}. */
-  function buildArticles(raw){
+  /* `trustSource` is set for articles that came from an Australian outlet's
+     own RSS feed. Those are Australian news by construction, so the
+     AU-relevance gate below is skipped for them. That gate exists for the
+     GDELT fallback, where a domain-scoped *search* can return international
+     coverage published on an Australian domain -- a different situation.
+     Applying it to RSS silently dropped most local reporting: a measured
+     9 of 14 realistic regional headlines ("Council approves new library for
+     Eaglehawk", "Roadworks to close Wagga main street") were discarded for
+     not naming a capital city, which defeated the point of carrying regional
+     papers at all. */
+  function buildArticles(raw,trustSource){
     const seen=new Set(),seenTitles=new Set(),out=[];
     raw.forEach(a=>{
       if(!a.title||!a.url||!a.pubMs||seen.has(a.url))return;seen.add(a.url);
@@ -500,13 +526,12 @@
            regardless of keyword matches, exempt from the AU-relevance gate
            below (that's the whole point of it). */
         if(!cats.includes('world'))cats.push('world');
-      }else{
-        /* Every other article comes from an Australian outlet, but that
-           doesn't mean the story itself is about Australia or anything
-           substantive -- a purely international story only earns the generic
-           "world" tag, and lots of filler matches no category at all. Drop
-           both unless the headline actually mentions Australia (or a
-           state/city) or matches some other real category too. */
+      }else if(!trustSource){
+        /* Search-derived results only: a purely international story published
+           on an Australian domain earns just the generic "world" tag, and
+           plenty of filler matches no category at all. Drop both unless the
+           headline actually mentions Australia (or a state/city) or matches
+           some other real category too. */
         if((cats.length===0||(cats.length===1&&cats[0]==='world'))&&!AU_RELEVANCE.test(a.title))return;
       }
       out.push({title:a.title,url:a.url,domain:a.domain||'',source:a.source||'',summary:a.summary||'',pubMs:a.pubMs,cats});
@@ -526,7 +551,7 @@
     /* Preferred: the Worker's merged RSS feed. */
     try{
       const j=await fetchJsonWithTimeout(NEWS_ROUTE,20000);
-      const articles=buildArticles(j.articles||[]);
+      const articles=buildArticles(j.articles||[],true); // outlets' own feeds
       if(articles.length){
         const dead=(j.feeds||[]).filter(f=>!f.ok);
         if(dead.length)console.warn('News outlets unavailable:',dead);
@@ -550,7 +575,7 @@
         const j=await fetchJsonWithTimeout(route,20000);
         const articles=buildArticles((j.articles||[]).map(a=>({
           title:a.title,url:a.url,domain:a.domain||'',pubMs:parseGdeltDateToMs(a.seendate)
-        })));
+        })),false); // search results -- AU-relevance gate applies
         if(articles.length)return {articles,via:'gdelt',feeds:[]};
       }catch(err){problems.push(route.split('?')[0]+': '+err.message);}
     }
@@ -630,9 +655,20 @@
     refreshBtn.classList.add('loading');refreshBtn.textContent='⏳ Refreshing…';
     setCacheNote('Fetching the latest Australian headlines…');
     try{
-      const {articles,via}=await fetchNews();
+      const {articles,via,feeds}=await fetchNews();
       writeCache(articles);
-      presentArticles(articles,n=>'Live · '+n+' articles'+(via==='gdelt'?' (via backup source)':'')+' · updates every 10 min');
+      presentArticles(articles,n=>{
+        if(via==='gdelt')return 'Live · '+n+' articles via the backup source — the main news service didn’t respond.';
+        /* Showing the source tally makes a partial outage visible: "12 of 29"
+           explains a thin feed that would otherwise just look like a quiet
+           day. */
+        const live=(feeds||[]).filter(f=>f.ok).length,total=(feeds||[]).length;
+        return 'Live · '+n+' articles'+(total?' from '+live+' of '+total+' sources':'')+' · updates every 10 min';
+      });
+      if(via!=='gdelt'&&feeds&&feeds.length){
+        const down=feeds.filter(f=>!f.ok);
+        if(down.length>feeds.length/2)cacheNote.classList.add('stale');
+      }
     }catch(err){
       /* A failed refresh with a usable cached copy on hand is the normal,
          expected fallback now (the shared server-side cache means this is
@@ -643,6 +679,11 @@
          (but still calm) note, since that's a materially different,
          more-degraded state. */
       console.warn('Live news fetch failed:',err);
+      /* A 404 on /api/news means the Worker serving this page predates the
+         route -- i.e. the site HTML deployed but src/worker.js didn't. That's
+         a deployment state, not an outage, and worth saying so plainly rather
+         than reporting it as unavailable news. */
+      const routeMissing=/\/api\/news: HTTP 404/.test(err&&err.message||'');
       /* Cached articles are real and worth showing, but only while they are
          still recent enough to be news. Past that they get flagged, and past
          the display window they are dropped entirely -- the previous code
@@ -651,15 +692,18 @@
          indication they weren't today's. Nothing recent is a state worth
          stating plainly. */
       const cachedAgeH=cached?(Date.now()-cached.fetchedAt)/3600000:Infinity;
-      if(presentArticles(cached&&cached.articles,()=>'Showing results from '+agoText(cached.fetchedAt)+'.')){
-        if(cachedAgeH>1)cacheNote.classList.add('stale');
+      if(presentArticles(cached&&cached.articles,()=>'Showing results from '+agoText(cached.fetchedAt)+'.'+
+          (routeMissing?' (News service not found — the Worker may need redeploying.)':''))){
+        if(cachedAgeH>1||routeMissing)cacheNote.classList.add('stale');
       }else{
         currentArticles=[];
         feed.querySelectorAll('.item').forEach(el=>el.remove());
         shown.textContent='0';total.textContent='0';
         empty.style.display='block';
-        empty.textContent='Couldn’t reach the news service just now — nothing recent to show. Try Refresh in a moment.';
-        setCacheNote('No current headlines available.',true);
+        empty.textContent=routeMissing
+          ?'The news service (/api/news) isn’t responding on this deployment — src/worker.js may not have been deployed alongside the page.'
+          :'Couldn’t reach the news service just now — nothing recent to show. Try Refresh in a moment.';
+        setCacheNote(routeMissing?'News service not deployed.':'No current headlines available.',true);
         renderCatCounts();
       }
     }finally{
