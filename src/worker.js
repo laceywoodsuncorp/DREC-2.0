@@ -24,8 +24,8 @@
    to Australian sources) sourcecountry clause to stay well under it. */
 /* The Guardian AU was dropped -- it pulls a disproportionate amount of
    international coverage even after the client's AU-relevance filtering. */
-const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'news.com.au', 'smh.com.au',
-  'sbs.com.au', '7news.com.au', 'insurancenews.com.au'];
+const AU_DOMAINS = ['abc.net.au', '9news.com.au', 'smh.com.au', 'theage.com.au',
+  'sbs.com.au', '7news.com.au', 'theaustralian.com.au', 'insurancenews.com.au'];
 const WORLD_DOMAIN = 'aljazeera.com';
 
 function buildGdeltUrl() {
@@ -163,24 +163,69 @@ async function handleGdelt() {
    coverage, not the whole feed -- and per-feed status travels with the
    payload so a silently-dead source is visible rather than just meaning
    fewer articles. */
+/* Sources. Grouped by role rather than alphabetically, because the mix is
+   the point: national wires for breaking coverage, the capital-city
+   mastheads, and regional papers so incidents outside the capitals surface
+   at all -- a house fire in Ballarat or a flood in Tamworth rarely reaches a
+   national feed, and those are exactly the events this dashboard is for.
+
+   `priority: true` marks the feeds used to bootstrap a cold start (see
+   handleNews) so a fresh deploy has content immediately rather than waiting
+   for the shard rotation to come round.
+
+   Feeds marked UNVERIFIED could not be confirmed from this build environment
+   (no outbound access to these hosts). They follow each publisher's usual
+   pattern; any that are wrong show up as a failed feed in /api/news with the
+   HTTP status, and cost nothing else. */
 const NEWS_FEEDS = [
-  { name: 'ABC News', domain: 'abc.net.au', url: 'https://www.abc.net.au/news/feed/51120/rss.xml' },
-  { name: 'ABC News', domain: 'abc.net.au', url: 'https://www.abc.net.au/news/feed/10719986/rss.xml' },
-  { name: 'SBS News', domain: 'sbs.com.au', url: 'https://www.sbs.com.au/news/feed' },
-  { name: 'news.com.au', domain: 'news.com.au', url: 'https://www.news.com.au/content-feeds/latest-news-national/' },
-  { name: '9News', domain: '9news.com.au', url: 'https://www.9news.com.au/rss' },
-  { name: '7NEWS', domain: '7news.com.au', url: 'https://7news.com.au/feed' },
-  { name: 'Sydney Morning Herald', domain: 'smh.com.au', url: 'https://www.smh.com.au/rss/feed.xml' },
-  /* Trade press for the insurance category. UNVERIFIED URL: insuranceNEWS
-     publishes RSS but lists the real feed addresses on a page this build
-     environment can't reach (insurancenews.com.au/rss-channels), so this is
-     the conventional path rather than a confirmed one. If it 404s it simply
-     shows as a failed feed in the payload's `feeds` array and costs nothing
-     else -- swap in the correct URL from that page. */
+  /* --- national / wire --- */
+  { name: 'ABC News', domain: 'abc.net.au', url: 'https://www.abc.net.au/news/feed/51120/rss.xml', priority: true },
+  { name: 'ABC News', domain: 'abc.net.au', url: 'https://www.abc.net.au/news/feed/10719986/rss.xml', priority: true },
+  { name: 'SBS News', domain: 'sbs.com.au', url: 'https://www.sbs.com.au/news/feed', priority: true },
+  { name: '9News', domain: '9news.com.au', url: 'https://www.9news.com.au/rss', priority: true },
+  { name: '7NEWS', domain: '7news.com.au', url: 'https://7news.com.au/feed', priority: true },
+  /* Guardian Australia's own AU edition feed. It was dropped back when the
+     source was GDELT, because a domain-scoped search pulled in the whole
+     international site; this feed is already AU-scoped, so that objection
+     doesn't apply. */
+  { name: 'Guardian Australia', domain: 'theguardian.com', url: 'https://www.theguardian.com/au/rss', priority: true },
+  /* The Australian is paywalled -- headlines and standfirsts come through,
+     but following a link will hit the paywall unless the reader subscribes.
+     UNVERIFIED URL. */
+  { name: 'The Australian', domain: 'theaustralian.com.au', url: 'https://www.theaustralian.com.au/feed/' },
+  { name: 'AAP', domain: 'aap.com.au', url: 'https://www.aap.com.au/feed/' },                                  // UNVERIFIED
+  { name: 'The New Daily', domain: 'thenewdaily.com.au', url: 'https://thenewdaily.com.au/feed/' },             // UNVERIFIED
+  { name: 'The Conversation AU', domain: 'theconversation.com', url: 'https://theconversation.com/au/articles.atom' },
+
+  /* --- capital-city mastheads (Nine) --- */
+  { name: 'Sydney Morning Herald', domain: 'smh.com.au', url: 'https://www.smh.com.au/rss/feed.xml', priority: true },
+  { name: 'The Age', domain: 'theage.com.au', url: 'https://www.theage.com.au/rss/feed.xml' },
+  { name: 'Brisbane Times', domain: 'brisbanetimes.com.au', url: 'https://www.brisbanetimes.com.au/rss/feed.xml' },
+  { name: 'WAtoday', domain: 'watoday.com.au', url: 'https://www.watoday.com.au/rss/feed.xml' },
+  { name: 'The West Australian', domain: 'thewest.com.au', url: 'https://thewest.com.au/rss' },                 // UNVERIFIED
+
+  /* --- regional / local (Australian Community Media, /rss.xml pattern) --- */
+  { name: 'The Canberra Times', domain: 'canberratimes.com.au', url: 'https://www.canberratimes.com.au/rss.xml' },
+  { name: 'Newcastle Herald', domain: 'newcastleherald.com.au', url: 'https://www.newcastleherald.com.au/rss.xml' },
+  { name: 'Illawarra Mercury', domain: 'illawarramercury.com.au', url: 'https://www.illawarramercury.com.au/rss.xml' },
+  { name: 'The Examiner (Launceston)', domain: 'examiner.com.au', url: 'https://www.examiner.com.au/rss.xml' },
+  { name: 'The Advocate (Burnie)', domain: 'theadvocate.com.au', url: 'https://www.theadvocate.com.au/rss.xml' },
+  { name: 'The Border Mail', domain: 'bordermail.com.au', url: 'https://www.bordermail.com.au/rss.xml' },
+  { name: 'The Courier (Ballarat)', domain: 'thecourier.com.au', url: 'https://www.thecourier.com.au/rss.xml' },
+  { name: 'Bendigo Advertiser', domain: 'bendigoadvertiser.com.au', url: 'https://www.bendigoadvertiser.com.au/rss.xml' },
+  { name: 'Northern Daily Leader (Tamworth)', domain: 'northerndailyleader.com.au', url: 'https://www.northerndailyleader.com.au/rss.xml' },
+  { name: 'The Daily Advertiser (Wagga)', domain: 'dailyadvertiser.com.au', url: 'https://www.dailyadvertiser.com.au/rss.xml' },
+  { name: 'Central Western Daily (Orange)', domain: 'centralwesterndaily.com.au', url: 'https://www.centralwesterndaily.com.au/rss.xml' },
+  { name: 'The Land (rural NSW)', domain: 'theland.com.au', url: 'https://www.theland.com.au/rss.xml' },
+
+  /* --- trade press for the insurance category --- */
+  /* UNVERIFIED: insuranceNEWS publishes RSS but lists the real addresses on a
+     page unreachable from here (insurancenews.com.au/rss-channels). */
   { name: 'insuranceNEWS', domain: 'insurancenews.com.au', url: 'https://www.insurancenews.com.au/rss/all-news' },
-  /* Dedicated World source -- exempt from the client's AU-relevance filter,
-     same as it was under GDELT. */
-  { name: 'Al Jazeera', domain: 'aljazeera.com', url: 'https://www.aljazeera.com/xml/rss/all.xml', world: true }
+
+  /* --- world --- */
+  /* Exempt from the client's AU-relevance filter, same as under GDELT. */
+  { name: 'Al Jazeera', domain: 'aljazeera.com', url: 'https://www.aljazeera.com/xml/rss/all.xml', world: true, priority: true }
 ];
 
 const NEWS_CACHE_URL = 'https://newsradar-internal-cache.example/news';
@@ -194,7 +239,11 @@ const NEWS_WINDOW_MS = 7 * 24 * 3600 * 1000;
 
 function parseRssArticles(xml, feed) {
   const out = [];
-  const items = xml.match(/<(?:item|entry)[\s>][\s\S]*?<\/(?:item|entry)>/gi) || [];
+  const all = xml.match(/<(?:item|entry)[\s>][\s\S]*?<\/(?:item|entry)>/gi) || [];
+  /* Feeds are newest-first, and only the last day or so is ever displayed, so
+     parsing the whole backlog is wasted CPU -- which matters here, see the
+     sharding note on refreshNewsShard(). */
+  const items = all.slice(0, MAX_ITEMS_PER_FEED);
   items.forEach((item) => {
     const tag = (name) => {
       const m = new RegExp('<' + name + '(?:\\s[^>]*)?>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/' + name + '>', 'i').exec(item);
@@ -246,14 +295,75 @@ async function fetchFeedText(url) {
   }
 }
 
-async function refreshNewsCache() {
-  const results = await Promise.all(NEWS_FEEDS.map(async (feed) => {
-    const res = await fetchFeedText(feed.url);
-    if (!res.ok) return { feed, ok: false, error: res.error, articles: [] };
+/* Refreshing every feed in one go would parse ~28 XML documents in a single
+   invocation, and the Workers free plan allows 10ms of CPU per invocation --
+   fetch waiting time is free, but parsing is not. So the feeds are split into
+   shards and each 5-minute cron tick refreshes one shard: roughly seven feeds
+   per tick, every feed refreshed every 20 minutes. That is ample for a news
+   feed, and keeps each tick well inside the budget.
+
+   Each feed's parsed articles are cached individually, and the merged list is
+   rebuilt from those caches -- so the merged view always reflects every feed,
+   regardless of which shard last ran. */
+const MAX_ITEMS_PER_FEED = 20;
+const NEWS_SHARDS = 4;
+
+function newsFeedCacheUrl(feedUrl) {
+  return 'https://newsradar-internal-cache.example/news/feed/' +
+    feedUrl.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 100);
+}
+
+/* Fetches and caches one feed. A failure deliberately keeps whatever articles
+   were cached previously and just records the error alongside them, so a feed
+   that blips doesn't vanish from the merged list. */
+async function refreshOneFeed(feed) {
+  const cacheUrl = newsFeedCacheUrl(feed.url);
+  const res = await fetchFeedText(feed.url);
+
+  if (!res.ok) {
+    let previous = [];
+    const existing = await readSharedCache(cacheUrl);
+    if (existing) {
+      try { previous = (await existing.response.json()).articles || []; } catch (e) { previous = []; }
+    }
+    await writeSharedCache(cacheUrl, JSON.stringify({
+      articles: previous, lastError: res.error, checkedAt: Date.now()
+    }), 'application/json');
+    return { ok: false, error: res.error };
+  }
+
+  let articles;
+  try {
+    articles = parseRssArticles(res.text, feed);
+  } catch (err) {
+    return { ok: false, error: 'Parse failed: ' + err.message };
+  }
+  await writeSharedCache(cacheUrl, JSON.stringify({
+    articles, fetchedAt: Date.now()
+  }), 'application/json');
+  return { ok: true, count: articles.length };
+}
+
+/* Rebuilds the merged article list from every feed's individual cache. */
+async function rebuildNewsMerged() {
+  const entries = await Promise.all(NEWS_FEEDS.map(async (feed) => {
+    const cached = await readSharedCache(newsFeedCacheUrl(feed.url));
+    if (!cached) {
+      return { name: feed.name, url: feed.url, ok: false, count: 0, error: 'Not fetched yet', articles: [] };
+    }
     try {
-      return { feed, ok: true, articles: parseRssArticles(res.text, feed) };
-    } catch (err) {
-      return { feed, ok: false, error: 'Parse failed: ' + err.message, articles: [] };
+      const payload = await cached.response.json();
+      const articles = payload.articles || [];
+      return {
+        name: feed.name, url: feed.url,
+        ok: !payload.lastError,
+        count: articles.length,
+        error: payload.lastError,
+        ageSeconds: Math.round(cached.ageSeconds),
+        articles
+      };
+    } catch (e) {
+      return { name: feed.name, url: feed.url, ok: false, count: 0, error: 'Cached data unreadable', articles: [] };
     }
   }));
 
@@ -261,13 +371,14 @@ async function refreshNewsCache() {
   const seenUrl = new Set();
   const seenTitle = new Set();
   const articles = [];
-  results.forEach((r) => {
-    r.articles.forEach((a) => {
-      if (a.pubMs < cutoff || a.pubMs > Date.now() + 3600000) return; // ignore stale and implausibly-future items
+  entries.forEach((entry) => {
+    entry.articles.forEach((a) => {
+      if (!a || !a.pubMs || a.pubMs < cutoff || a.pubMs > Date.now() + 3600000) return;
       if (seenUrl.has(a.url)) return;
       /* The same story syndicated across outlets, or an outlet's own
-         duplicate/AMP entry, would otherwise appear several times. */
-      const key = a.title.trim().toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
+         duplicate/AMP entry, would otherwise appear several times -- and with
+         both metro and regional papers in the mix that is now common. */
+      const key = String(a.title).trim().toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
       if (seenTitle.has(key)) return;
       seenUrl.add(a.url);
       seenTitle.add(key);
@@ -278,32 +389,40 @@ async function refreshNewsCache() {
 
   const payload = {
     articles: articles.slice(0, 300),
-    feeds: results.map((r) => ({
-      name: r.feed.name,
-      url: r.feed.url,
-      ok: r.ok,
-      count: r.articles.length,
-      error: r.error
-    })),
+    feeds: entries.map((e) => ({ name: e.name, url: e.url, ok: e.ok, count: e.count, error: e.error, ageSeconds: e.ageSeconds })),
     fetchedAt: Date.now(),
     newestPubMs: articles.length ? articles[0].pubMs : null
   };
 
-  /* Never overwrite a good cache with an empty one -- if every outlet is
-     unreachable this round, the previous articles are far better than none. */
+  /* Never replace a good merged list with an empty one. */
   if (!payload.articles.length) {
     const existing = await readSharedCache(NEWS_CACHE_URL);
-    if (existing) return { ok: false, error: 'No articles retrieved; kept previous cache', payload };
+    if (existing) return { ok: false, error: 'No articles available; kept previous merged cache', payload };
   }
   await writeSharedCache(NEWS_CACHE_URL, JSON.stringify(payload), 'application/json');
   return { ok: true, payload };
+}
+
+/* Refreshes one shard's feeds, then rebuilds the merged list. */
+async function refreshNewsShard(shard) {
+  const due = NEWS_FEEDS.filter((_, i) => i % NEWS_SHARDS === shard);
+  await Promise.all(due.map((f) => refreshOneFeed(f)));
+  return rebuildNewsMerged();
+}
+
+/* Cold start only: populate the priority feeds so a fresh deploy has content
+   straight away, rather than a thin feed until the shard rotation completes. */
+async function bootstrapNews() {
+  const primary = NEWS_FEEDS.filter((f) => f.priority);
+  await Promise.all(primary.map((f) => refreshOneFeed(f)));
+  return rebuildNewsMerged();
 }
 
 async function handleNews() {
   const cached = await readSharedCache(NEWS_CACHE_URL);
   if (cached) return respondFromCache(cached);
 
-  const result = await refreshNewsCache();
+  const result = await bootstrapNews();
   return new Response(JSON.stringify(result.payload), {
     status: result.payload.articles.length ? 200 : 502,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
@@ -1129,7 +1248,12 @@ export default {
      failing doesn't stop the other, and so the Worker instance isn't
      recycled before both finish. */
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(refreshNewsCache());
+    /* Rotate through the news shards so each tick parses only its share --
+       see refreshNewsShard() for why. Derived from the scheduled time rather
+       than kept in memory, since a Worker isn't guaranteed to be the same
+       instance between ticks. */
+    const minute = new Date(event && event.scheduledTime ? event.scheduledTime : Date.now()).getUTCMinutes();
+    ctx.waitUntil(refreshNewsShard(Math.floor(minute / 5) % NEWS_SHARDS));
     ctx.waitUntil(refreshAllIncidents());
     /* GDELT stays on the cron only as a fallback for /api/gdelt; the page
        reads /api/news first. Its refresh failing is expected and harmless. */
