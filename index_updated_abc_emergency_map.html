@@ -302,7 +302,7 @@
     <section class="tile tile-firemap" id="section-firemap">
       <div class="tile-head">
         <h2>🛰️ Active Fire Map — Australia</h2>
-        <div class="src">NASA FIRMS active fire detections and NASA SEDAC population density, plotted on an OpenStreetMap street basemap so town and road names stay visible. Colour scales from red (just detected) to green (up to 5 days old), and older detections fade so the most recent fires stand out.</div>
+        <div class="src">NASA FIRMS active fire detections and NASA SEDAC population density, plotted on an OpenStreetMap street basemap so town and road names stay visible. Colour scales from red (detected in the last few hours) to green (up to 5 days old), and older detections fade so the most recent fires stand out. Satellite passes are processed with a 3&ndash;6 hour lag, so the newest detections available are a few hours old.</div>
       </div>
       <div class="map-tools">
         <input id="firmsKey" type="text" value="04cfe71e54d1492e72d2db48ad74f4d5" placeholder="Paste your free NASA FIRMS MAP_KEY to load live fire detections…">
@@ -317,7 +317,7 @@
         <div class="grp"><span class="sw" style="background:#fd8d3c"></span>Medium</div>
         <div class="grp"><span class="sw" style="background:#bd0026"></span>High</div>
         <div class="grp" style="margin-left:14px"><b>Fires (time since detection):</b></div>
-        <div class="grp"><span class="sw" style="background:#ff0000"></span>Just detected</div>
+        <div class="grp"><span class="sw" style="background:#ff0000"></span>Detected in the last ~6h</div>
         <div class="grp"><span class="sw" style="background:linear-gradient(90deg,#ff0000,#ffff00,#00b300);width:70px"></span>fading to green over ~5 days</div>
         <div class="grp"><span class="sw" style="background:#00b300"></span>~5 days old</div>
         <div class="grp"><span class="sw" style="background:#00b300;opacity:.4"></span>older detections also fade out</div>
@@ -774,9 +774,53 @@ const TOWN_FACTS=[
 const map=L.map('map',{minZoom:3,maxZoom:12}).setView([-25.6,134.3],4);
 const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:12});
 osm.addTo(map);
-/* Population density (NASA SEDAC GPW v4) back on as a semi-transparent overlay --
-   opacity kept low enough that OSM's street/town labels still read through it. */
-const popDensity=L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GPW_Population_Density_2020/default/2020-01-01/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png',{maxNativeZoom:7,maxZoom:12,opacity:0.5,attribution:'Population © NASA SEDAC GPW v4'});
+/* Population density (NASA SEDAC GPW v4) as a semi-transparent overlay --
+   opacity kept low enough that OSM's street/town labels still read through it.
+
+   The URL previously carried a "/2020-01-01/" date segment. GIBS' WMTS path is
+   {layer}/{style}/[{time}/]{tilematrixset}/{z}/{y}/{x} where the time segment
+   exists only for layers that actually have a time dimension -- GPW is a single
+   static epoch and has none, so that segment made every tile request 404 and the
+   layer simply never drew. Omitting time is the safe form either way: GIBS
+   serves a time-enabled layer's default date when it's left out.
+
+   Tile failures here are otherwise completely silent -- a missing overlay looks
+   identical to a working one over sparsely-populated country -- so a tileerror
+   handler falls back to GIBS' WMS endpoint and, if that fails too, says so in
+   the map's status line rather than leaving a legend entry for a layer that
+   isn't there. */
+const POP_WMTS='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GPW_Population_Density_2020/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png';
+const popDensity=L.tileLayer(POP_WMTS,{maxNativeZoom:7,maxZoom:12,opacity:0.5,attribution:'Population © NASA SEDAC GPW v4'});
+let popTileErrors=0,popFellBack=false;
+popDensity.on('tileerror',()=>{
+  popTileErrors++;
+  /* One failed tile is normal at the edges of coverage; a run of them means the
+     layer isn't serving. */
+  if(popTileErrors>=4&&!popFellBack){
+    popFellBack=true;
+    map.removeLayer(popDensity);
+    const popWms=L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',{
+      layers:'GPW_Population_Density_2020',format:'image/png',transparent:true,
+      opacity:0.5,maxZoom:12,attribution:'Population © NASA SEDAC GPW v4'
+    });
+    let wmsErrors=0;
+    popWms.on('tileerror',()=>{
+      if(++wmsErrors>=4){
+        map.removeLayer(popWms);
+        const legend=document.querySelector('.legend');
+        if(legend&&!document.getElementById('popLayerNote')){
+          const note=document.createElement('div');
+          note.className='grp';note.id='popLayerNote';
+          note.style.color='#a06000';note.style.fontWeight='600';
+          note.textContent='⚠️ Population density layer unavailable right now (NASA GIBS not responding).';
+          legend.appendChild(note);
+        }
+      }
+    });
+    popWms.addTo(map);
+    popWms.bringToFront();
+  }
+});
 popDensity.addTo(map);
 /* ============ FIRMS ACTIVE FIRES — real detection POINTS via the FIRMS API ============
    The WMS-Time raster approach never registered a transaction on NASA's side (browser
@@ -790,18 +834,33 @@ const FIRMS_AREA='110,-45,156,-9';      /* west,south,east,north — Australia *
 const FIRMS_DAYS=5;                       /* rolling window; NASA's area API rejects anything outside 1-5 */
 const firmsStatusEl=document.getElementById('firmsStatus');
 let firmsLayer=null;
-/* Smooth red -> green gradient by hours-since-detection (0h = red, FIRMS_DAYS*24h = green),
-   instead of the old 4-bucket colour scheme, so the map reads as a continuous timeline
-   rather than a handful of hard steps. A plain linear scale over 5 days compresses
-   almost the whole "just detected" -> "several hours old" range into a sliver near
-   hue 0, so a fire spotted 10 minutes ago and one from 6 hours ago both read as
-   near-identical deep red. Taking the square root of the elapsed-time fraction before
-   mapping it to hue front-loads much more of the red->green range onto the first day,
-   so early hours actually move the colour visibly, while it still reaches green by the
-   full 5-day window. */
+/* Smooth red -> green gradient by hours-since-detection, so the map reads as a
+   continuous timeline rather than a handful of hard steps.
+   Two failed attempts are worth recording, because the fix has to satisfy both:
+     - A plain linear scale over 5 days crushed the whole "just detected" ->
+       "several hours old" range into a sliver near hue 0, so everything recent
+       looked identically deep red.
+     - Square-rooting the elapsed fraction fixed that but overshot in the other
+       direction: it put 3h at hue 19 and 6h at hue 27, both plainly orange.
+       Since VIIRS near-real-time data carries a 3-6 hour processing latency,
+       the freshest detection that can ever arrive was already orange by the
+       time we saw it, and red never appeared on the map at all.
+   So the curve is now piecewise. Anything within FRESH_HOURS -- i.e. as fresh
+   as NRT data ever gets -- stays inside hue 0-10 and reads unmistakably red,
+   while still shading slightly with age. Past that it uses the square-root
+   spread across the remaining range so the following days stay distinguishable
+   and still reach green at the end of the window. */
+const FIRE_FRESH_HOURS=6;
 function fireColour(h){
-  const t=Math.max(0,Math.min(1,h/(FIRMS_DAYS*24)));
-  const hue=Math.sqrt(t)*120; // 0=red -> 120=green, front-loaded onto the first day
+  const maxH=FIRMS_DAYS*24;
+  const hours=Math.max(0,Math.min(maxH,h));
+  let hue;
+  if(hours<=FIRE_FRESH_HOURS){
+    hue=(hours/FIRE_FRESH_HOURS)*10;                       // 0 -> 10: red
+  }else{
+    const t=(hours-FIRE_FRESH_HOURS)/(maxH-FIRE_FRESH_HOURS);
+    hue=10+Math.sqrt(Math.max(0,Math.min(1,t)))*110;       // 10 -> 120: orange -> green
+  }
   return 'hsl('+hue.toFixed(0)+',85%,45%)';
 }
 /* Fades older detections out (down to a floor so they're never invisible) so the most
