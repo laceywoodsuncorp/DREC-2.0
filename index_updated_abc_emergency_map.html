@@ -212,7 +212,7 @@
     <section class="tile tile-news" id="section-news">
       <div class="tile-head">
         <h2>📡 Live News Feed</h2>
-        <div class="src">Live from each outlet's own news feed — ABC, SBS, Nine, 7NEWS, news.com.au, SMH, insuranceNEWS.com.au and Al Jazeera for world coverage — read server-side and merged. Shows the last 24 hours, or the most recent available if it has been quieter than that.</div>
+        <div class="src">Live from each outlet&rsquo;s own news feed, read server-side and merged &mdash; ABC, SBS, Nine, 7NEWS, The Australian, Guardian Australia, AAP and The Conversation; the capital-city mastheads (SMH, The Age, Brisbane Times, WAtoday, The West Australian); regional papers across NSW, VIC, TAS and the ACT; insuranceNEWS.com.au for trade coverage; and Al Jazeera for world news. Shows the last 24 hours, or the most recent available if it has been quieter than that.</div>
         <div class="count">Showing <b id="shown">…</b> of <b id="total">…</b> articles · scroll within the tile to see more</div>
       </div>
       <div class="filters" id="filters">
@@ -351,7 +351,7 @@
 </main>
 
 <footer>
-  <p><strong>About this dashboard:</strong> News headlines come live from each outlet’s own RSS feed (ABC, SBS, Nine, 7NEWS, news.com.au, SMH, insuranceNEWS.com.au, plus Al Jazeera for world coverage), fetched server-side, merged and de-duplicated, showing the last 24 hours. The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State emergency incident data is live for all eight states and territories, each from its own official agency feed (NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES, ACT ESA), proxied server-side with no API key; if a feed is temporarily unreachable that state says so and links through to its official current-incidents page rather than showing older data. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. Styling uses the Suncorp brand colour palette.</p>
+  <p><strong>About this dashboard:</strong> News headlines come live from each outlet’s own RSS feed — national and wire services (ABC, SBS, Nine, 7NEWS, The Australian, Guardian Australia, AAP, The New Daily, The Conversation), the capital-city mastheads (Sydney Morning Herald, The Age, Brisbane Times, WAtoday, The West Australian), regional and rural papers (Canberra Times, Newcastle Herald, Illawarra Mercury, The Examiner, The Advocate, The Border Mail, The Courier, Bendigo Advertiser, Northern Daily Leader, Daily Advertiser, Central Western Daily, The Land), insuranceNEWS.com.au for trade coverage, and Al Jazeera for world news — fetched server-side, merged and de-duplicated. The feed shows the last 24 hours, or the most recent available if it has been quieter than that; each headline carries its own age. Some mastheads (notably The Australian) are subscriber-only, so following those links may hit a paywall. The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State emergency incident data is live for all eight states and territories, each from its own official agency feed (NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES, ACT ESA), proxied server-side with no API key; if a feed is temporarily unreachable that state says so and links through to its official current-incidents page rather than showing older data. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. Styling uses the Suncorp brand colour palette.</p>
 </footer>
 
 <script>
@@ -392,8 +392,10 @@
      outlets (plus Al Jazeera for World) to stay well under it. The Guardian
      AU was dropped -- it pulls a disproportionate amount of international
      coverage even after the AU-relevance filtering below. */
-  const AU_DOMAINS=['abc.net.au','9news.com.au','news.com.au','smh.com.au',
-    'sbs.com.au','7news.com.au','insurancenews.com.au'];
+  /* Only used to build the GDELT fallback query, kept in step with the
+     Worker's own list so a dropped outlet can't reappear via that path. */
+  const AU_DOMAINS=['abc.net.au','9news.com.au','smh.com.au','theage.com.au',
+    'sbs.com.au','7news.com.au','theaustralian.com.au','insurancenews.com.au'];
   /* Dedicated source for World-tagged coverage -- see the Al Jazeera handling
      below in the article loop, which exempts this domain from the
      AU-relevance gate applied to everyone else's world/uncategorised
