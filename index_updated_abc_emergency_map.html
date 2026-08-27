@@ -59,10 +59,27 @@
   .news-toolbar .cache-note{font-size:.72rem;color:#5a6a6a}
   .news-toolbar .cache-note.stale{color:#a06000}
   .news-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .source-filter{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:#5a6a6a}
-  .source-filter span{font-weight:700;color:var(--heritage-green)}
-  .source-filter select{font-family:inherit;font-size:.74rem;font-weight:600;color:var(--heritage-green);background:var(--true-white);border:1px solid #cdd6d4;border-radius:8px;padding:6px 9px;max-width:230px;cursor:pointer}
-  .source-filter select:focus{outline:2px solid var(--light-green);outline-offset:1px}
+  .source-filter{position:relative}
+  .source-btn{font-family:inherit;font-size:.74rem;font-weight:700;color:var(--heritage-green);background:var(--true-white);border:1px solid #cdd6d4;border-radius:8px;padding:7px 12px;cursor:pointer;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .source-btn:hover{border-color:var(--light-green)}
+  .source-btn[aria-expanded="true"]{border-color:var(--neutral-green);box-shadow:0 0 0 2px rgba(18,167,145,.2)}
+  /* Fixed, not absolute: the enclosing .tile sets overflow:hidden (it's what
+     rounds the corners over the embedded maps), which clips an absolutely
+     positioned panel -- and anchoring to the button's right edge pushed the
+     panel off the left of a phone screen. Coordinates are set in JS from the
+     button's position, clamped to the viewport. */
+  .source-panel{position:fixed;z-index:60;width:340px;background:var(--true-white);border:1px solid #dfe5e3;border-radius:12px;box-shadow:0 10px 30px rgba(0,67,70,.22);overflow:hidden;display:flex;flex-direction:column}
+  .source-panel[hidden]{display:none}
+  .source-panel-actions{display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid #eef0ed;background:var(--off-white)}
+  .source-panel-actions button{flex:1;font-family:inherit;font-size:.72rem;font-weight:700;cursor:pointer;border:none;border-radius:7px;padding:7px 8px;background:var(--neutral-green);color:#fff}
+  .source-panel-actions button:hover{background:var(--heritage-green)}
+  .source-panel-list{max-height:340px;overflow-y:auto;overscroll-behavior:contain;padding:6px 0}
+  .source-panel-list .grp-head{display:flex;align-items:center;gap:8px;padding:8px 12px 4px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--neutral-green);background:#f7f9f8}
+  .source-panel-list label{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 24px;font-size:.78rem;color:var(--ink);cursor:pointer}
+  .source-panel-list label:hover{background:var(--off-white)}
+  .source-panel-list input{accent-color:var(--neutral-green);width:15px;height:15px;flex-shrink:0;cursor:pointer}
+  .source-panel-list .n{color:#5a6a6a;font-size:.72rem}
+  .source-panel-list .dead{color:#a06000;font-size:.7rem;font-weight:600}
   .refresh-btn{border:none;cursor:pointer;background:var(--neutral-green);color:#fff;font-weight:700;font-size:.76rem;padding:7px 13px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;transition:.15s}
   .refresh-btn:hover{background:var(--heritage-green)}
   .refresh-btn.loading{opacity:.65;cursor:progress}
@@ -217,7 +234,7 @@
     <section class="tile tile-news" id="section-news">
       <div class="tile-head">
         <h2>📡 Live News Feed</h2>
-        <div class="src">Live from each outlet&rsquo;s own news feed, read server-side and merged &mdash; ABC, SBS, Nine, 7NEWS, news.com.au, The Australian, Guardian Australia, AAP and The Conversation; the capital-city mastheads (SMH, The Age, Brisbane Times, WAtoday, The West Australian); regional papers across NSW, VIC, TAS and the ACT; insuranceNEWS.com.au for trade coverage; and Al Jazeera for world news. Use the Source dropdown to narrow the feed to one outlet or a group (national, capital-city, regional, trade or world). Shows the last 24 hours, or the most recent available if it has been quieter than that.</div>
+        <div class="src">Live from each outlet&rsquo;s own news feed, read server-side and merged &mdash; ABC, SBS, Nine, 7NEWS, news.com.au, The Australian, Guardian Australia, AAP and The Conversation; the capital-city mastheads (SMH, The Age, Brisbane Times, WAtoday, The West Australian); regional papers across NSW, VIC, TAS and the ACT; insuranceNEWS.com.au for trade coverage; and Al Jazeera for world news. Use the Sources menu to pick exactly which outlets you want — individually or by group (national, capital-city, regional, trade, world), with Select all / Deselect all. Outlets that returned nothing are still listed, so you can see what is and isn&rsquo;t coming through. Shows the last 24 hours, or the most recent available if it has been quieter than that.</div>
         <div class="count">Showing <b id="shown">…</b> of <b id="total">…</b> articles · scroll within the tile to see more</div>
       </div>
       <div class="filters" id="filters">
@@ -236,10 +253,16 @@
       <div class="news-toolbar">
         <div class="cache-note" id="cacheNote">Loading latest Australian news…</div>
         <div class="news-actions">
-          <label class="source-filter" for="sourceFilter">
-            <span>Source</span>
-            <select id="sourceFilter"><option value="all">All sources</option></select>
-          </label>
+          <div class="source-filter" id="sourceFilterWrap">
+            <button type="button" class="source-btn" id="sourceBtn" aria-expanded="false" aria-haspopup="true">Sources: all</button>
+            <div class="source-panel" id="sourcePanel" hidden>
+              <div class="source-panel-actions">
+                <button type="button" id="sourceSelectAll">Select all</button>
+                <button type="button" id="sourceClearAll">Deselect all</button>
+              </div>
+              <div class="source-panel-list" id="sourcePanelList"></div>
+            </div>
+          </div>
           <button class="refresh-btn" id="newsRefresh">🔄 Refresh now</button>
         </div>
       </div>
@@ -459,59 +482,92 @@
      configured source -- including ones that returned nothing -- rather than
      only those that happen to have articles. That makes a source which isn't
      arriving visible in the UI instead of just absent. */
-  let currentSource='all',lastFeeds=[];
-  const sourceFilterEl=document.getElementById('sourceFilter');
+  /* A null selection means "everything", which is different from an empty Set
+     ("nothing selected") -- the latter is a state the user can deliberately
+     reach with Deselect all, and it must show an empty feed rather than
+     silently reverting to all. */
+  let selectedSources=null,lastFeeds=[];
+  const SOURCE_PREF_KEY='newsradar_sources_v1';
+  const sourceBtn=document.getElementById('sourceBtn');
+  const sourcePanel=document.getElementById('sourcePanel');
+  const sourcePanelList=document.getElementById('sourcePanelList');
+  function readSourcePref(){
+    try{const raw=localStorage.getItem(SOURCE_PREF_KEY);if(!raw)return null;const a=JSON.parse(raw);return Array.isArray(a)?new Set(a):null;}catch(e){return null;}
+  }
+  function writeSourcePref(){
+    try{
+      if(selectedSources===null)localStorage.removeItem(SOURCE_PREF_KEY);
+      else localStorage.setItem(SOURCE_PREF_KEY,JSON.stringify([...selectedSources]));
+    }catch(e){}
+  }
+  selectedSources=readSourcePref();
   const GROUP_LABEL={national:'National & wire',capital:'Capital city',regional:'Regional & rural',trade:'Trade press',world:'World',other:'Other'};
   function sourceNameOf(a){return a.source||a.domain||'Unknown';}
   function matchesSource(a){
-    if(currentSource==='all')return true;
-    if(currentSource.indexOf('group:')===0)return (a.group||'other')===currentSource.slice(6);
-    if(currentSource.indexOf('src:')===0)return sourceNameOf(a)===currentSource.slice(4);
-    return true;
+    if(selectedSources===null)return true;
+    return selectedSources.has(sourceNameOf(a));
   }
-  /* Rebuilt whenever the article set changes. Counts come from what's actually
-     displayable, so "Bendigo Advertiser (0)" and "The Australian — unavailable"
-     are both immediately legible. */
-  function buildSourceOptions(){
-    if(!sourceFilterEl)return;
+  /* Every configured outlet, grouped, with how many articles it contributed.
+     Sources that returned nothing stay listed -- that's how "did my new
+     sources arrive?" is answerable from the UI rather than by inspecting the
+     API by hand. */
+  function sourceInventory(){
     const arts=currentArticles||[];
-    const byName={},byGroup={};
-    arts.forEach(a=>{
-      const n=sourceNameOf(a);byName[n]=(byName[n]||0)+1;
-      const g=a.group||'other';byGroup[g]=(byGroup[g]||0)+1;
-    });
+    const byName={};
+    arts.forEach(a=>{const n=sourceNameOf(a);byName[n]=(byName[n]||0)+1;});
     const info={};
     (lastFeeds||[]).forEach(f=>{
       if(!f||!f.name)return;
-      const e=info[f.name]||(info[f.name]={group:f.group||'other',ok:false});
+      const e=info[f.name]||(info[f.name]={group:f.group||'other',ok:false,count:0});
       if(f.ok)e.ok=true;
       if(f.group)e.group=f.group;
     });
     Object.keys(byName).forEach(n=>{if(!info[n])info[n]={group:'other',ok:true};});
-
-    const prev=currentSource;
-    const html=['<option value="all">All sources ('+arts.length+')</option>'];
-    const groupsPresent=Object.keys(GROUP_LABEL).filter(g=>byGroup[g]||Object.keys(info).some(n=>info[n].group===g));
-    if(groupsPresent.length){
-      html.push('<optgroup label="Groups">');
-      groupsPresent.forEach(g=>html.push('<option value="group:'+g+'">'+escapeHtml(GROUP_LABEL[g])+' ('+(byGroup[g]||0)+')</option>'));
-      html.push('</optgroup>');
-    }
-    const names=Object.keys(info).sort((a,b)=>a.localeCompare(b));
-    if(names.length){
-      html.push('<optgroup label="Outlets">');
-      names.forEach(n=>{
-        const c=byName[n]||0;
-        const label=n+((!c&&info[n].ok===false)?' — unavailable':' ('+c+')');
-        html.push('<option value="src:'+escapeHtml(n)+'">'+escapeHtml(label)+'</option>');
-      });
-      html.push('</optgroup>');
-    }
-    sourceFilterEl.innerHTML=html.join('');
-    sourceFilterEl.value=prev;
-    if(sourceFilterEl.value!==prev){sourceFilterEl.value='all';currentSource='all';} // previous pick no longer exists
+    Object.keys(info).forEach(n=>{info[n].count=byName[n]||0;});
+    const groups={};
+    Object.keys(info).sort((a,b)=>a.localeCompare(b)).forEach(n=>{
+      const g=info[n].group||'other';
+      (groups[g]=groups[g]||[]).push({name:n,count:info[n].count,ok:info[n].ok});
+    });
+    return {info,groups};
   }
-
+  function allSourceNames(){return Object.keys(sourceInventory().info);}
+  function updateSourceButton(){
+    if(!sourceBtn)return;
+    const names=allSourceNames();
+    if(selectedSources===null||names.every(n=>selectedSources.has(n))){sourceBtn.textContent='Sources: all';return;}
+    if(!selectedSources.size){sourceBtn.textContent='Sources: none selected';return;}
+    if(selectedSources.size===1){sourceBtn.textContent='Sources: '+[...selectedSources][0];return;}
+    sourceBtn.textContent='Sources: '+selectedSources.size+' of '+names.length;
+  }
+  function buildSourcePanel(){
+    if(!sourcePanelList)return;
+    const {groups}=sourceInventory();
+    const order=['national','capital','regional','trade','world','other'];
+    const html=[];
+    order.filter(g=>groups[g]&&groups[g].length).forEach(g=>{
+      const names=groups[g].map(o=>o.name);
+      const allOn=selectedSources===null||names.every(n=>selectedSources.has(n));
+      const someOn=selectedSources!==null&&names.some(n=>selectedSources.has(n));
+      html.push('<div class="grp-head"><input type="checkbox" data-group="'+escapeHtml(g)+'"'+(allOn?' checked':'')+
+        (!allOn&&someOn?' data-indeterminate="1"':'')+'> '+escapeHtml(GROUP_LABEL[g]||g)+'</div>');
+      groups[g].forEach(o=>{
+        const on=selectedSources===null||selectedSources.has(o.name);
+        const tail=(!o.count&&!o.ok)?'<span class="dead">unavailable</span>':'<span class="n">('+o.count+')</span>';
+        html.push('<label><input type="checkbox" data-src="'+escapeHtml(o.name)+'"'+(on?' checked':'')+'> <span>'+escapeHtml(o.name)+'</span> '+tail+'</label>');
+      });
+    });
+    sourcePanelList.innerHTML=html.join('');
+    /* Indeterminate can't be expressed in markup, only as a property. */
+    sourcePanelList.querySelectorAll('input[data-indeterminate]').forEach(el=>{el.indeterminate=true;});
+    updateSourceButton();
+  }
+  function setSourceSelection(names){
+    selectedSources=names===null?null:new Set(names);
+    writeSourcePref();
+    buildSourcePanel();
+    applyFilters();
+  }
   /* Many of these keywords are deliberately stems ("insur" for insurance,
      "polic" for police, "econom" for economic), so they must still match the
      start of a longer word -- but a bare substring test also matches inside
@@ -691,10 +747,14 @@
     shown.textContent=visible.length;total.textContent=currentArticles.length;
     empty.style.display=visible.length===0?'block':'none';
     if(visible.length===0&&currentArticles.length){
-      const src=currentSource==='all'?null:sourceFilterEl&&sourceFilterEl.options[sourceFilterEl.selectedIndex];
-      empty.textContent=src
-        ?'No articles from '+src.text.replace(/\s*\(\d+\)$/,'').replace(/\s*—\s*unavailable$/,'')+' in this category.'
-        :'No articles in this category for the last 24 hours.';
+      if(selectedSources&&!selectedSources.size){
+        empty.textContent='No sources selected — pick at least one from the Sources menu.';
+      }else if(selectedSources){
+        const n=selectedSources.size;
+        empty.textContent='No articles in this category from the '+n+' selected source'+(n===1?'':'s')+'.';
+      }else{
+        empty.textContent='No articles in this category for the last 24 hours.';
+      }
     }
     feed.scrollTop=0;
     renderCatCounts();
@@ -720,7 +780,7 @@
     }else{
       setCacheNote(context(recent.length));
     }
-    buildSourceOptions();
+    buildSourcePanel();
     applyFilters();
     return true;
   }
@@ -796,7 +856,64 @@
   }
 
   catChips.forEach(ch=>ch.addEventListener('click',()=>{catChips.forEach(c=>c.classList.remove('active'));ch.classList.add('active');currentCat=ch.dataset.cat;applyFilters();}));
-  if(sourceFilterEl)sourceFilterEl.addEventListener('change',()=>{currentSource=sourceFilterEl.value;applyFilters();});
+  /* Keeps the panel on screen at any width. Anchored under the button and to
+     its right edge where there's room, otherwise clamped to the viewport --
+     on a phone the button sits far enough right that a right-aligned 340px
+     panel would hang off the left edge. */
+  function positionSourcePanel(){
+    if(!sourceBtn||!sourcePanel||sourcePanel.hasAttribute('hidden'))return;
+    const r=sourceBtn.getBoundingClientRect();
+    const margin=12;
+    const w=Math.min(340,window.innerWidth-margin*2);
+    const left=Math.min(Math.max(margin,r.right-w),window.innerWidth-w-margin);
+    const top=r.bottom+6;
+    const maxH=Math.max(200,window.innerHeight-top-margin);
+    sourcePanel.style.width=w+'px';
+    sourcePanel.style.left=left+'px';
+    sourcePanel.style.top=top+'px';
+    sourcePanel.style.maxHeight=maxH+'px';
+    if(sourcePanelList)sourcePanelList.style.maxHeight=Math.max(120,maxH-58)+'px';
+  }
+  if(sourceBtn&&sourcePanel){
+    sourceBtn.addEventListener('click',()=>{
+      const open=sourcePanel.hasAttribute('hidden');
+      if(open)buildSourcePanel(); // refresh counts each time it's opened
+      if(open)sourcePanel.removeAttribute('hidden');else sourcePanel.setAttribute('hidden','');
+      sourceBtn.setAttribute('aria-expanded',open?'true':'false');
+      if(open)positionSourcePanel();
+    });
+    window.addEventListener('resize',positionSourcePanel);
+    window.addEventListener('scroll',positionSourcePanel,{passive:true});
+    document.addEventListener('click',e=>{
+      if(sourcePanel.hasAttribute('hidden'))return;
+      if(e.target===sourceBtn||sourceBtn.contains(e.target)||sourcePanel.contains(e.target))return;
+      sourcePanel.setAttribute('hidden','');sourceBtn.setAttribute('aria-expanded','false');
+    });
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape'&&!sourcePanel.hasAttribute('hidden')){
+        sourcePanel.setAttribute('hidden','');sourceBtn.setAttribute('aria-expanded','false');sourceBtn.focus();
+      }
+    });
+    document.getElementById('sourceSelectAll').addEventListener('click',()=>setSourceSelection(null));
+    document.getElementById('sourceClearAll').addEventListener('click',()=>setSourceSelection([]));
+    sourcePanelList.addEventListener('change',e=>{
+      const el=e.target;
+      if(!el||el.tagName!=='INPUT')return;
+      /* Working from the full name list keeps "all selected" and an explicit
+         Set of every name behaving identically from here on. */
+      const names=allSourceNames();
+      const next=new Set(selectedSources===null?names:selectedSources);
+      if(el.dataset.group){
+        const {groups}=sourceInventory();
+        (groups[el.dataset.group]||[]).forEach(o=>{if(el.checked)next.add(o.name);else next.delete(o.name);});
+      }else if(el.dataset.src){
+        if(el.checked)next.add(el.dataset.src);else next.delete(el.dataset.src);
+      }else return;
+      /* Collapse back to "all" when everything ends up ticked, so the label
+         reads "all" rather than "30 of 30". */
+      setSourceSelection(names.every(n=>next.has(n))?null:[...next]);
+    });
+  }
   refreshBtn.addEventListener('click',()=>loadNews(true));
 
   loadNews(false);
