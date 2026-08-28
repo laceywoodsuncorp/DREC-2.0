@@ -121,6 +121,20 @@
 
   .incident-feed{flex:1;min-height:0;max-height:640px;overflow-y:auto;padding:6px 24px 18px}
   .inc-empty{padding:30px 20px;text-align:center;color:#5a6a6a;font-size:.86rem;line-height:1.55}
+  /* Shown instead of a half-filled feed while the server is still reaching
+     the rest of the sources. A count and a bar rather than a bare spinner,
+     because "loading" with no end in sight is the thing people give up on. */
+  .news-warming{padding:34px 20px;text-align:center;color:#5a6a6a;font-size:.86rem;line-height:1.6}
+  .news-warming .spin{width:26px;height:26px;margin:0 auto 14px;border-radius:50%;
+    border:3px solid #d7dee2;border-top-color:#0a6ebd;animation:newsspin .9s linear infinite}
+  .news-warming .warm-head{font-weight:600;color:#2b3a3f}
+  .news-warming .warm-bar{max-width:260px;height:5px;margin:12px auto 8px;border-radius:3px;
+    background:#e3e9ec;overflow:hidden}
+  .news-warming .warm-bar i{display:block;height:100%;background:#0a6ebd;border-radius:3px;
+    transition:width .4s ease}
+  .news-warming .warm-sub{font-size:.78rem;color:#7b8a8f}
+  @keyframes newsspin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.news-warming .spin{animation:none}}
   .inc-empty a{color:var(--neutral-green);font-weight:600}
   .state-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:14px 24px;background:var(--off-white);border-bottom:1px solid #e7e9e6}
   .state-tab{border:none;cursor:pointer;font-size:.78rem;font-weight:700;padding:7px 14px;border-radius:999px;background:var(--true-white);color:var(--heritage-green);box-shadow:0 2px 6px rgba(0,67,70,.1);transition:.15s}
@@ -272,6 +286,12 @@
       <div class="feed" id="feed">
         <div class="empty" id="empty">No articles in this category for the last 24 hours.</div>
         <div class="inc-empty" id="newsLoading">Loading the latest Australian headlines…</div>
+        <div class="news-warming" id="newsWarming" hidden>
+          <div class="spin" aria-hidden="true"></div>
+          <div class="warm-head" id="newsWarmingHead">Gathering today’s headlines…</div>
+          <div class="warm-bar"><i id="newsWarmingBar" style="width:0%"></i></div>
+          <div class="warm-sub" id="newsWarmingSub">Checking Australian news sources</div>
+        </div>
       </div>
     </section>
 
@@ -706,11 +726,17 @@
       const articles=buildArticles(j.articles||[],true); // outlets' own feeds
       workerBuildSeen=j.build||'(pre-build-stamp)';
       if(j.feeds&&j.feeds.length)lastFeeds=j.feeds; // keep the roster even if no articles came through
+      const pending=(j.feeds||[]).filter(f=>f.pending).length;
       if(articles.length){
-        const dead=(j.feeds||[]).filter(f=>!f.ok);
+        const dead=(j.feeds||[]).filter(f=>!f.ok&&!f.pending);
         if(dead.length)console.warn('News outlets unavailable:',dead);
-        return {articles,via:'rss',feeds:j.feeds||[]};
+        return {articles,via:'rss',feeds:j.feeds||[],pending};
       }
+      /* Empty *and* still filling is not a failure, so it mustn't trigger the
+         GDELT chain -- that's a 20s detour through a service that rejects us
+         anyway, taken at the exact moment the real feed is seconds away. Hand
+         it back so the caller can show the placeholder and poll. */
+      if(pending||j.warming)return {articles:[],via:'rss',feeds:j.feeds||[],pending:pending||(j.feeds||[]).length};
       /* Distinguish the states that look identical from the outside: the
          service is still warming up, it reported its own error, or it
          answered normally with nothing in the window. */
@@ -817,6 +843,41 @@
     return true;
   }
 
+  /* While the server is still reaching sources, show a placeholder with real
+     progress and poll, rather than painting a four-source feed that grows
+     under the reader. Two bounds keep it honest: the placeholder gives up
+     after WARM_SPINNER_MAX_MS and shows whatever arrived, and polling itself
+     stops after WARM_TOTAL_MAX_MS so a permanently broken source can't leave
+     the page fetching forever. */
+  const WARM_POLL_MS=2500,WARM_SLOW_POLL_MS=15000,
+        WARM_SPINNER_MAX_MS=30000,WARM_TOTAL_MAX_MS=180000;
+  let warmStartedAt=0,warmTimer=null;
+  const warmEl=document.getElementById('newsWarming'),
+        warmHead=document.getElementById('newsWarmingHead'),
+        warmBar=document.getElementById('newsWarmingBar'),
+        warmSub=document.getElementById('newsWarmingSub');
+
+  function showWarming(feeds){
+    if(!warmEl)return;
+    /* Not named `total` -- that's the DOM counter in this scope, and shadowing
+       it here silently breaks the header. */
+    const srcTotal=(feeds||[]).length,pending=(feeds||[]).filter(f=>f.pending).length;
+    const done=srcTotal-pending;
+    feed.querySelectorAll('.item').forEach(el=>el.remove());
+    empty.style.display='none';
+    const loadingEl=document.getElementById('newsLoading');
+    if(loadingEl)loadingEl.style.display='none';
+    warmEl.removeAttribute('hidden');
+    warmHead.textContent='Gathering today’s headlines…';
+    if(srcTotal){
+      warmBar.style.width=Math.round(done/srcTotal*100)+'%';
+      warmSub.textContent=done+' of '+srcTotal+' sources checked';
+    }
+    shown.textContent='…';total.textContent='…';
+  }
+  function hideWarming(){if(warmEl)warmEl.setAttribute('hidden','');}
+  function stopWarmPolling(){if(warmTimer){clearTimeout(warmTimer);warmTimer=null;}}
+
   async function loadNews(force){
     const cached=readCache();
     if(!force&&cached&&(Date.now()-cached.fetchedAt<CACHE_TTL_MS)){
@@ -825,8 +886,33 @@
     refreshBtn.classList.add('loading');refreshBtn.textContent='⏳ Refreshing…';
     setCacheNote('Fetching the latest Australian headlines…');
     try{
-      const {articles,via,feeds}=await fetchNews();
+      const {articles,via,feeds,pending=0}=await fetchNews();
       lastFeeds=feeds||[];
+
+      /* Keep asking while sources are outstanding: each request also nudges
+         the server to fetch the next batch, so polling is what makes the feed
+         fill rather than just what notices that it has. */
+      if(!warmStartedAt)warmStartedAt=Date.now();
+      const warmElapsed=Date.now()-warmStartedAt;
+      stopWarmPolling();
+      if(via==='rss'&&pending>0&&warmElapsed<WARM_TOTAL_MAX_MS){
+        warmTimer=setTimeout(()=>loadNews(true),
+          warmElapsed<WARM_SPINNER_MAX_MS?WARM_POLL_MS:WARM_SLOW_POLL_MS);
+      }
+      /* Only ever place the placeholder over an empty tile. Once there are
+         headlines on screen -- from this load or a cached one -- replacing
+         them with a spinner would be a step backwards, so the feed just widens
+         quietly underneath instead. */
+      if(via==='rss'&&pending>0&&warmElapsed<WARM_SPINNER_MAX_MS&&(!currentArticles||!currentArticles.length)){
+        showWarming(feeds);
+        setCacheNote('Gathering headlines from '+((feeds||[]).length)+' Australian sources…');
+        return;
+      }
+      hideWarming();
+      /* Fully covered: forget this warm-up so a later cold record (a new
+         datacentre, a redeploy) gets its own placeholder and poll rather than
+         inheriting an expired budget. */
+      if(!pending)warmStartedAt=0;
       writeCache(articles);
       presentArticles(articles,n=>{
         if(via==='gdelt')return 'Live · '+n+' articles via the backup source — the main news service didn’t respond.';
@@ -863,6 +949,7 @@
          (but still calm) note, since that's a materially different,
          more-degraded state. */
       console.warn('Live news fetch failed:',err);
+      hideWarming();
       /* A 404 on /api/news means the Worker serving this page predates the
          route -- i.e. the site HTML deployed but src/worker.js didn't. That's
          a deployment state, not an outage, and worth saying so plainly rather

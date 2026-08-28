@@ -649,11 +649,28 @@ async function bootstrapNews(env) {
    limited, so a busy location does this about once a minute rather than once
    per visitor -- which walks the whole list in roughly the ten minutes the
    cron rotation would take anyway. */
-const TOPUP_FEEDS_PER_RUN = 3;
-const TOPUP_MIN_INTERVAL_MS = 60 * 1000;
+/* Two speeds, because filling a cold record and keeping a warm one fresh are
+   different jobs. Filling is a race the visitor is watching -- they are
+   looking at a spinner until it finishes -- so it runs in big steps with
+   barely any gap. Refreshing is housekeeping nobody is waiting on, so it goes
+   back to a slow trickle. At the cold rate a thirty-feed list is complete in
+   about twenty seconds of polling; at the warm rate a feed is re-read every
+   fifteen minutes or so. */
+const TOPUP_FEEDS_COLD = 6;
+const TOPUP_FEEDS_WARM = 3;
+const TOPUP_INTERVAL_COLD_MS = 3 * 1000;
+const TOPUP_INTERVAL_WARM_MS = 60 * 1000;
 const TOPUP_STALE_MS = 15 * 60 * 1000;
 
-function feedsNeedingTopUp(state) {
+/* Cold means at least one feed has never been fetched in this location -- not
+   "the record is old". A record where everything has been tried once is warm
+   even if all of it is now stale. */
+function newsRecordIsCold(state) {
+  const feeds = (state && state.feeds) || {};
+  return NEWS_FEEDS.some((f) => !feeds[f.url]);
+}
+
+function feedsNeedingTopUp(state, limit) {
   const now = Date.now();
   const due = [];
   NEWS_FEEDS.forEach((feed) => {
@@ -663,16 +680,17 @@ function feedsNeedingTopUp(state) {
     if (now - at >= TOPUP_STALE_MS) due.push({ feed, at });
   });
   due.sort((a, b) => a.at - b.at);
-  return due.slice(0, TOPUP_FEEDS_PER_RUN).map((d) => d.feed);
+  return due.slice(0, limit).map((d) => d.feed);
 }
 
 async function topUpNews(env) {
   const state = await readNewsState(env);
   if (!state) return;
   state.feeds = state.feeds || {};
+  const cold = newsRecordIsCold(state);
   const now = Date.now();
-  if (state.topUpAt && now - state.topUpAt < TOPUP_MIN_INTERVAL_MS) return;
-  const due = feedsNeedingTopUp(state);
+  if (state.topUpAt && now - state.topUpAt < (cold ? TOPUP_INTERVAL_COLD_MS : TOPUP_INTERVAL_WARM_MS)) return;
+  const due = feedsNeedingTopUp(state, cold ? TOPUP_FEEDS_COLD : TOPUP_FEEDS_WARM);
   if (!due.length) return;
 
   /* Two requests arriving together will both read, both refresh and the later
