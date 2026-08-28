@@ -232,6 +232,13 @@ const NEWS_FEEDS = [
   { name: 'Al Jazeera', domain: 'aljazeera.com', group: 'world', url: 'https://www.aljazeera.com/xml/rss/all.xml', world: true, priority: true }
 ];
 
+/* Stamped into /api/news so the page can tell whether the Worker serving it
+   is the one that matches. Deploying the HTML without src/worker.js (or vice
+   versa) has repeatedly looked like a code bug from the outside -- the page
+   can now say which it is instead. Bump this whenever the news pipeline
+   changes in a way the page depends on. */
+const WORKER_BUILD = '2026-08-27-discovery';
+
 const NEWS_CACHE_URL = 'https://newsradar-internal-cache.example/news';
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -481,6 +488,8 @@ async function rebuildNewsMerged() {
   articles.sort((a, b) => b.pubMs - a.pubMs);
 
   const payload = {
+    build: WORKER_BUILD,
+    feedCount: NEWS_FEEDS.length,
     articles: articles.slice(0, 300),
     feeds: entries.map((e) => ({ name: e.name, url: e.url, group: e.group, ok: e.ok, count: e.count,
       error: e.error, resolvedUrl: e.resolvedUrl, discovered: e.discovered, triedUrls: e.triedUrls, ageSeconds: e.ageSeconds })),

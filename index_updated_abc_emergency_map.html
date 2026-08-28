@@ -80,6 +80,8 @@
   .source-panel-list input{accent-color:var(--neutral-green);width:15px;height:15px;flex-shrink:0;cursor:pointer}
   .source-panel-list .n{color:#5a6a6a;font-size:.72rem}
   .source-panel-list .dead{color:#a06000;font-size:.7rem;font-weight:600}
+  .source-panel-list .panel-foot{padding:10px 12px;border-top:1px solid #eef0ed;background:var(--off-white);font-size:.7rem;color:#5a6a6a;line-height:1.45}
+  .source-panel-list .panel-foot b{color:#a06000}
   .refresh-btn{border:none;cursor:pointer;background:var(--neutral-green);color:#fff;font-weight:700;font-size:.76rem;padding:7px 13px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;transition:.15s}
   .refresh-btn:hover{background:var(--heritage-green)}
   .refresh-btn.loading{opacity:.65;cursor:progress}
@@ -518,8 +520,8 @@
     const info={};
     (lastFeeds||[]).forEach(f=>{
       if(!f||!f.name)return;
-      const e=info[f.name]||(info[f.name]={group:f.group||'other',ok:false,count:0});
-      if(f.ok)e.ok=true;
+      const e=info[f.name]||(info[f.name]={group:f.group||'other',ok:false,count:0,error:''});
+      if(f.ok)e.ok=true;else if(f.error&&!e.error)e.error=f.error;
       if(f.group)e.group=f.group;
     });
     Object.keys(byName).forEach(n=>{if(!info[n])info[n]={group:'other',ok:true};});
@@ -527,7 +529,7 @@
     const groups={};
     Object.keys(info).sort((a,b)=>a.localeCompare(b)).forEach(n=>{
       const g=info[n].group||'other';
-      (groups[g]=groups[g]||[]).push({name:n,count:info[n].count,ok:info[n].ok});
+      (groups[g]=groups[g]||[]).push({name:n,count:info[n].count,ok:info[n].ok,error:info[n].error});
     });
     return {info,groups};
   }
@@ -554,9 +556,19 @@
       groups[g].forEach(o=>{
         const on=selectedSources===null||selectedSources.has(o.name);
         const tail=(!o.count&&!o.ok)?'<span class="dead">unavailable</span>':'<span class="n">('+o.count+')</span>';
-        html.push('<label><input type="checkbox" data-src="'+escapeHtml(o.name)+'"'+(on?' checked':'')+'> <span>'+escapeHtml(o.name)+'</span> '+tail+'</label>');
+        /* The upstream reason on hover/long-press, so diagnosing a dead
+           outlet doesn't require reading the API by hand. */
+        const why=o.error?' title="'+escapeHtml(o.error)+'"':'';
+        html.push('<label'+why+'><input type="checkbox" data-src="'+escapeHtml(o.name)+'"'+(on?' checked':'')+'> <span>'+escapeHtml(o.name)+'</span> '+tail+'</label>');
       });
     });
+    const live=(lastFeeds||[]).filter(f=>f.ok).length,total=(lastFeeds||[]).length;
+    if(total){
+      const mismatch=workerBuildSeen&&workerBuildSeen!==EXPECTED_WORKER_BUILD;
+      html.push('<div class="panel-foot">'+live+' of '+total+' sources returning articles'+
+        (mismatch?'<br><b>Worker build '+escapeHtml(workerBuildSeen)+' is older than this page ('+escapeHtml(EXPECTED_WORKER_BUILD)+') — redeploy src/worker.js.</b>':'')+
+        '</div>');
+    }
     sourcePanelList.innerHTML=html.join('');
     /* Indeterminate can't be expressed in markup, only as a property. */
     sourcePanelList.querySelectorAll('input[data-indeterminate]').forEach(el=>{el.indeterminate=true;});
@@ -606,6 +618,12 @@
      3) GDELT direct, then public CORS proxies -- last resort for a plain
         static host with no Worker in front of it. */
   const NEWS_ROUTE='/api/news';
+  /* Must match WORKER_BUILD in src/worker.js. The two files are deployed by
+     hand, and a mismatch has repeatedly been mistaken for a code fault -- so
+     the page checks and says so rather than silently running against an old
+     Worker. */
+  const EXPECTED_WORKER_BUILD='2026-08-27-discovery';
+  let workerBuildSeen=null;
   const SAME_ORIGIN_ROUTES=['/api/gdelt','/.netlify/functions/gdelt'];
   async function fetchJsonWithTimeout(url,ms){
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),ms);
@@ -679,6 +697,7 @@
     try{
       const j=await fetchJsonWithTimeout(NEWS_ROUTE,20000);
       const articles=buildArticles(j.articles||[],true); // outlets' own feeds
+      workerBuildSeen=j.build||'(pre-build-stamp)';
       if(articles.length){
         const dead=(j.feeds||[]).filter(f=>!f.ok);
         if(dead.length)console.warn('News outlets unavailable:',dead);
@@ -802,11 +821,17 @@
            explains a thin feed that would otherwise just look like a quiet
            day. */
         const live=(feeds||[]).filter(f=>f.ok).length,total=(feeds||[]).length;
-        return 'Live · '+n+' articles'+(total?' from '+live+' of '+total+' sources':'')+' · updates every 10 min';
+        const stale=workerBuildSeen&&workerBuildSeen!==EXPECTED_WORKER_BUILD;
+        return 'Live · '+n+' articles'+(total?' from '+live+' of '+total+' sources':'')+
+          (stale?' · ⚠️ Worker out of date ('+workerBuildSeen+') — redeploy src/worker.js':' · updates every 10 min');
       });
       if(via!=='gdelt'&&feeds&&feeds.length){
         const down=feeds.filter(f=>!f.ok);
         if(down.length>feeds.length/2)cacheNote.classList.add('stale');
+      }
+      if(workerBuildSeen&&workerBuildSeen!==EXPECTED_WORKER_BUILD){
+        cacheNote.classList.add('stale');
+        console.warn('Worker build mismatch: page expects '+EXPECTED_WORKER_BUILD+', worker reports '+workerBuildSeen);
       }
     }catch(err){
       /* A failed refresh with a usable cached copy on hand is the normal,
