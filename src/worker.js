@@ -371,7 +371,8 @@ async function discoverFeedUrl(feed) {
    through to discovery. Whatever discovery finds is remembered in this feed's
    own cache entry and tried first next time, so the homepage fetch happens
    once rather than every refresh. */
-async function refreshOneFeed(feed) {
+async function refreshOneFeed(feed, opts) {
+  const allowDiscovery = !!(opts && opts.allowDiscovery);
   const cacheUrl = newsFeedCacheUrl(feed.url);
   let previous = [], knownGood = null;
   const existing = await readSharedCache(cacheUrl);
@@ -400,10 +401,15 @@ async function refreshOneFeed(feed) {
     const r = await attempt(url);
     tried.push(url);
     if (r.ok && r.articles.length) {
+      /* The flag means "this is not the configured URL", not "we discovered it
+         on this particular run" -- once a discovered URL is cached it gets
+         tried first and would otherwise look like an ordinary success, losing
+         the very fact that makes it worth folding back into NEWS_FEEDS. */
+      const viaDiscovery = url !== feed.url;
       await writeSharedCache(cacheUrl, JSON.stringify({
-        articles: r.articles, resolvedUrl: url, fetchedAt: Date.now()
+        articles: r.articles, resolvedUrl: url, discovered: viaDiscovery || undefined, fetchedAt: Date.now()
       }), 'application/json');
-      return { ok: true, count: r.articles.length, resolvedUrl: url };
+      return { ok: true, count: r.articles.length, resolvedUrl: url, discovered: viaDiscovery || undefined };
     }
     if (r.ok) {
       /* Responded, but nothing usable came out of it. Genuinely empty feeds
@@ -415,7 +421,14 @@ async function refreshOneFeed(feed) {
     }
   }
 
-  const found = await discoverFeedUrl(feed);
+  /* Discovery costs an extra fetch plus a scan of a news homepage's <head>.
+     That is fine on a cron tick and far too much on a visitor's request --
+     the Workers free plan allows 10ms of CPU per invocation, and a cold-start
+     request that discovered for every failing feed was exceeding it, killing
+     the request. Killed requests meant the cache never filled, which made the
+     next request another cold start: the failure sustained itself. So
+     discovery is cron-only, and budgeted there too. */
+  const found = allowDiscovery ? await discoverFeedUrl(feed) : null;
   if (found && tried.indexOf(found) === -1) {
     const r = await attempt(found);
     if (r.ok && r.articles.length) {
@@ -506,18 +519,35 @@ async function rebuildNewsMerged() {
   return { ok: true, payload };
 }
 
-/* Refreshes one shard's feeds, then rebuilds the merged list. */
-async function refreshNewsShard(shard) {
+/* Refreshes one shard's feeds, then rebuilds the merged list.
+   Discovery is allowed here, but only for the first few feeds in the shard,
+   so one tick can never spend its whole CPU budget scanning homepages. Feeds
+   rotate through the shards, so over successive ticks every failing feed
+   still gets its turn. */
+const MAX_DISCOVERIES_PER_TICK = 2;
+async function refreshNewsShard(shard, tick) {
   const due = NEWS_FEEDS.filter((_, i) => i % NEWS_SHARDS === shard);
-  await Promise.all(due.map((f) => refreshOneFeed(f)));
+  /* The discovery slots rotate with the tick. Handing them to the first feeds
+     in the shard every time would mean feeds further down the list never got
+     a turn -- so a wrong URL late in the list would stay wrong forever. With
+     a rotating offset every feed comes round within about an hour. */
+  const offset = ((tick || 0) * MAX_DISCOVERIES_PER_TICK) % (due.length || 1);
+  const allowed = new Set();
+  for (let k = 0; k < Math.min(MAX_DISCOVERIES_PER_TICK, due.length); k++) {
+    allowed.add((offset + k) % due.length);
+  }
+  await Promise.all(due.map((f, i) => refreshOneFeed(f, { allowDiscovery: allowed.has(i) })));
   return rebuildNewsMerged();
 }
 
-/* Cold start only: populate the priority feeds so a fresh deploy has content
-   straight away, rather than a thin feed until the shard rotation completes. */
+/* Cold start only, on a visitor's request: fetch just enough to put something
+   on the page, and nothing more. Deliberately a small number of feeds with no
+   discovery -- this runs inside a request's CPU budget, and the cron fills in
+   the rest within minutes. */
+const BOOTSTRAP_FEED_LIMIT = 3;
 async function bootstrapNews() {
-  const primary = NEWS_FEEDS.filter((f) => f.priority);
-  await Promise.all(primary.map((f) => refreshOneFeed(f)));
+  const primary = NEWS_FEEDS.filter((f) => f.priority).slice(0, BOOTSTRAP_FEED_LIMIT);
+  await Promise.all(primary.map((f) => refreshOneFeed(f, { allowDiscovery: false })));
   return rebuildNewsMerged();
 }
 
@@ -525,9 +555,23 @@ async function handleNews() {
   const cached = await readSharedCache(NEWS_CACHE_URL);
   if (cached) return respondFromCache(cached);
 
-  const result = await bootstrapNews();
-  return new Response(JSON.stringify(result.payload), {
-    status: result.payload.articles.length ? 200 : 502,
+  /* A cold start that fails shouldn't take the route down with it -- the page
+     handles an empty article list gracefully, and the cron will fill the cache
+     shortly. Returning 200 with a reason beats a 502 the client can only
+     report as "couldn't reach the news service". */
+  let result;
+  try {
+    result = await bootstrapNews();
+  } catch (err) {
+    return new Response(JSON.stringify({
+      build: WORKER_BUILD, articles: [], feeds: [],
+      error: 'Cold-start bootstrap failed: ' + err.message
+    }), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  }
+  const payload = result.payload || { build: WORKER_BUILD, articles: [], feeds: [] };
+  if (!payload.articles.length) payload.warming = true; // cron hasn't populated the caches yet
+  return new Response(JSON.stringify(payload), {
+    status: 200,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
   });
 }
@@ -1354,12 +1398,24 @@ export default {
     /* Rotate through the news shards so each tick parses only its share --
        see refreshNewsShard() for why. Derived from the scheduled time rather
        than kept in memory, since a Worker isn't guaranteed to be the same
-       instance between ticks. */
-    const minute = new Date(event && event.scheduledTime ? event.scheduledTime : Date.now()).getUTCMinutes();
-    ctx.waitUntil(refreshNewsShard(Math.floor(minute / 5) % NEWS_SHARDS));
+       instance between ticks.
+
+       Counted in absolute 5-minute periods since the epoch, NOT as
+       minute-of-hour. A minute-of-hour tick only ever takes 12 values, so a
+       given shard would only ever see 3 of them -- and since the discovery
+       slot rotates with the tick, feeds at the other positions in that shard
+       would never get a discovery attempt at all. An absolute counter keeps
+       advancing, so every position comes round. */
+    const nowMs = event && event.scheduledTime ? event.scheduledTime : Date.now();
+    const tick = Math.floor(nowMs / 300000);
+    ctx.waitUntil(refreshNewsShard(tick % NEWS_SHARDS, tick));
     ctx.waitUntil(refreshAllIncidents());
     /* GDELT stays on the cron only as a fallback for /api/gdelt; the page
        reads /api/news first. Its refresh failing is expected and harmless. */
-    ctx.waitUntil(refreshGdeltCache().catch(() => {}));
+    /* GDELT is only a fallback for /api/gdelt and rejects most attempts
+       anyway; running it every tick alongside the news shard and all eight
+       incident feeds pushes one invocation toward the subrequest and CPU
+       ceilings. Once an hour is plenty for a backstop. */
+    if (tick % 12 === 0) ctx.waitUntil(refreshGdeltCache().catch(() => {}));
   }
 };

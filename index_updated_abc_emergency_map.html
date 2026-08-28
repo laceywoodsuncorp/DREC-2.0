@@ -698,12 +698,18 @@
       const j=await fetchJsonWithTimeout(NEWS_ROUTE,20000);
       const articles=buildArticles(j.articles||[],true); // outlets' own feeds
       workerBuildSeen=j.build||'(pre-build-stamp)';
+      if(j.feeds&&j.feeds.length)lastFeeds=j.feeds; // keep the roster even if no articles came through
       if(articles.length){
         const dead=(j.feeds||[]).filter(f=>!f.ok);
         if(dead.length)console.warn('News outlets unavailable:',dead);
         return {articles,via:'rss',feeds:j.feeds||[]};
       }
-      problems.push('/api/news returned no usable articles');
+      /* Distinguish the states that look identical from the outside: the
+         service is still warming up, it reported its own error, or it
+         answered normally with nothing in the window. */
+      problems.push(j.warming?'/api/news is still warming up (no sources cached yet)'
+        :j.error?('/api/news: '+j.error)
+        :'/api/news returned 0 articles from '+((j.feeds||[]).length)+' sources');
     }catch(err){problems.push('/api/news: '+err.message);}
 
     /* Fallback: GDELT, via the Worker, then direct, then public proxies. */
@@ -856,9 +862,12 @@
          indication they weren't today's. Nothing recent is a state worth
          stating plainly. */
       const cachedAgeH=cached?(Date.now()-cached.fetchedAt)/3600000:Infinity;
-      if(presentArticles(cached&&cached.articles,()=>'Showing results from '+agoText(cached.fetchedAt)+'.'+
-          (routeMissing?' (News service not found — the Worker may need redeploying.)':''))){
-        if(cachedAgeH>1||routeMissing)cacheNote.classList.add('stale');
+      /* The first problem in the chain is the useful one -- the later entries
+         are just the GDELT fallbacks failing in turn, which is expected. */
+      const why=(err&&err.message||'').split(' | ')[0]||'';
+      if(presentArticles(cached&&cached.articles,()=>'Showing results from '+agoText(cached.fetchedAt)+
+          ' — live refresh failed'+(why?': '+why:'')+'.')){
+        cacheNote.classList.add('stale');
       }else{
         currentArticles=[];
         feed.querySelectorAll('.item').forEach(el=>el.remove());
@@ -866,7 +875,7 @@
         empty.style.display='block';
         empty.textContent=routeMissing
           ?'The news service (/api/news) isn’t responding on this deployment — src/worker.js may not have been deployed alongside the page.'
-          :'Couldn’t reach the news service just now — nothing recent to show. Try Refresh in a moment.';
+          :('Couldn’t reach the news service just now — '+(why||'no reason reported')+'. Try Refresh in a moment.');
         setCacheNote(routeMissing?'News service not deployed.':'No current headlines available.',true);
         renderCatCounts();
       }
