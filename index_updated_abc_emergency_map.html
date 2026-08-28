@@ -125,20 +125,60 @@
      the rest of the sources. A count and a bar rather than a bare spinner,
      because "loading" with no end in sight is the thing people give up on. */
   .news-warming{padding:34px 20px;text-align:center;color:#5a6a6a;font-size:.86rem;line-height:1.6}
-  /* A rotating weather emoji rather than a spinner ring -- it reads as
-     "checking on things" on a dashboard that is largely about weather, and
-     it gives the wait a bit of character. The swap itself is the animation,
-     so the pop is only there to stop each change feeling like a jump cut. */
-  .news-warming .spin{height:38px;margin:0 auto 10px;font-size:2rem;line-height:1;
-    animation:newspop .5s ease}
+  /* A little weather scene instead of a spinner ring, on a dashboard that is
+     largely about weather. Sun, then a cloud slides across it, greys over and
+     rains, a flash of lightning, then it clears to a rainbow and back to sun
+     -- a twelve-second loop. All CSS on one shared timeline, so the parts stay
+     in step with each other however long the page has been open; a JS timer
+     driving seven elements would drift and would keep running when the tab is
+     backgrounded. */
+  .wx-scene{position:relative;width:132px;height:64px;margin:0 auto 8px}
+  .wx-scene span{position:absolute;line-height:1;will-change:transform,opacity}
+  .wx-sun{left:52px;top:15px;font-size:1.65rem;animation:wxSun 12s ease-in-out infinite}
+  .wx-cloud{left:34px;top:3px;font-size:2rem;animation:wxCloud 12s ease-in-out infinite}
+  /* Under the cloud, not beside it -- the cloud spans roughly 34-66px. */
+  .wx-drop{top:36px;font-size:.75rem;animation:wxFall .85s linear infinite,wxRainOn 12s step-end infinite}
+  .wx-drop.d1{left:40px;animation-delay:0s,0s}
+  .wx-drop.d2{left:52px;animation-delay:-.28s,0s}
+  .wx-drop.d3{left:64px;animation-delay:-.56s,0s}
+  .wx-bolt{left:55px;top:29px;font-size:1.15rem;opacity:0;animation:wxBolt 12s linear infinite}
+  .wx-bow{left:48px;top:18px;font-size:1.8rem;opacity:0;animation:wxBow 12s ease-in-out infinite}
   .news-warming .warm-head{font-weight:600;color:#2b3a3f}
   .news-warming .warm-bar{max-width:260px;height:5px;margin:12px auto 8px;border-radius:3px;
     background:#e3e9ec;overflow:hidden}
   .news-warming .warm-bar i{display:block;height:100%;background:#0a6ebd;border-radius:3px;
     transition:width .4s ease}
   .news-warming .warm-sub{font-size:.78rem;color:#7b8a8f}
-  @keyframes newspop{0%{opacity:.25;transform:scale(.82)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
-  @media (prefers-reduced-motion:reduce){.news-warming .spin{animation:none}}
+  /* One 12s timeline, read as: 0-20% sun out; 20-32% cloud slides over it;
+     32-40% cloud greys; 40-68% rain (lightning at 52%); 68-78% cloud clears
+     off to the right; 78-92% rainbow, sun returning. */
+  @keyframes wxSun{
+    0%,16%{opacity:1;transform:translateY(0) scale(1)}
+    8%{opacity:1;transform:translateY(-3px) scale(1.04)}
+    30%{opacity:.6;transform:translateY(0) scale(.96)}
+    38%,72%{opacity:0;transform:translateY(2px) scale(.9)}
+    84%{opacity:.7;transform:translateY(0) scale(1)}
+    94%,100%{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes wxCloud{
+    0%,13%{opacity:0;transform:translateX(-62px) translateY(-2px);filter:none}
+    22%{opacity:1;transform:translateX(-8px) translateY(0);filter:none}
+    32%{opacity:1;transform:translateX(0);filter:none}
+    40%,64%{opacity:1;transform:translateX(0) translateY(1px);filter:grayscale(.8) brightness(.68)}
+    72%{opacity:1;transform:translateX(10px);filter:grayscale(.3) brightness(.9)}
+    80%{opacity:0;transform:translateX(68px);filter:none}
+    81%,100%{opacity:0;transform:translateX(-62px);filter:none}}
+  @keyframes wxFall{0%{opacity:0;transform:translateY(-5px)}25%{opacity:1}
+    75%{opacity:1}100%{opacity:0;transform:translateY(12px)}}
+  @keyframes wxRainOn{0%{visibility:hidden}41%{visibility:visible}68%{visibility:hidden}100%{visibility:hidden}}
+  @keyframes wxBolt{0%,50%{opacity:0}51%{opacity:1}53%{opacity:0}55%{opacity:.9}57%,100%{opacity:0}}
+  @keyframes wxBow{0%,73%{opacity:0;transform:translateY(4px) scale(.9)}
+    80%,88%{opacity:1;transform:translateY(0) scale(1)}
+    95%,100%{opacity:0;transform:translateY(0) scale(1)}}
+  /* Reduced motion gets the scene's opening frame and nothing moving. */
+  @media (prefers-reduced-motion:reduce){
+    .wx-scene span{animation:none!important}
+    .wx-cloud,.wx-drop,.wx-bolt,.wx-bow{display:none}
+  }
   .inc-empty a{color:var(--neutral-green);font-weight:600}
   .state-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:14px 24px;background:var(--off-white);border-bottom:1px solid #e7e9e6}
   .state-tab{border:none;cursor:pointer;font-size:.78rem;font-weight:700;padding:7px 14px;border-radius:999px;background:var(--true-white);color:var(--heritage-green);box-shadow:0 2px 6px rgba(0,67,70,.1);transition:.15s}
@@ -291,7 +331,15 @@
         <div class="empty" id="empty">No articles in this category for the last 24 hours.</div>
         <div class="inc-empty" id="newsLoading">Loading the latest Australian headlines…</div>
         <div class="news-warming" id="newsWarming" hidden>
-          <div class="spin" id="newsWarmingIcon" aria-hidden="true">🌤️</div>
+          <div class="wx-scene" id="newsWarmingIcon" aria-hidden="true">
+            <span class="wx-sun">☀️</span>
+            <span class="wx-cloud">☁️</span>
+            <span class="wx-drop d1">💧</span>
+            <span class="wx-drop d2">💧</span>
+            <span class="wx-drop d3">💧</span>
+            <span class="wx-bolt">⚡</span>
+            <span class="wx-bow">🌈</span>
+          </div>
           <div class="warm-head" id="newsWarmingHead">Gathering today’s headlines…</div>
           <div class="warm-bar"><i id="newsWarmingBar" style="width:0%"></i></div>
           <div class="warm-sub" id="newsWarmingSub">Checking Australian news sources</div>
@@ -859,28 +907,7 @@
   const warmEl=document.getElementById('newsWarming'),
         warmHead=document.getElementById('newsWarmingHead'),
         warmBar=document.getElementById('newsWarmingBar'),
-        warmSub=document.getElementById('newsWarmingSub'),
-        warmIcon=document.getElementById('newsWarmingIcon');
-
-  /* Roughly a day of Australian weather, in order, so the cycle reads as
-     something moving through rather than a random shuffle. */
-  const WARM_ICONS=['🌤️','☀️','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌈','💨','🌪️','❄️'];
-  let warmIconTimer=null,warmIconAt=0;
-  /* Someone who has asked for reduced motion gets one settled icon instead of
-     a change every 700ms -- the swap IS the animation here, so disabling only
-     the CSS pop wouldn't honour the request. */
-  const reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function startWarmIcons(){
-    if(!warmIcon||warmIconTimer||reduceMotion)return;
-    warmIconTimer=setInterval(()=>{
-      warmIconAt=(warmIconAt+1)%WARM_ICONS.length;
-      warmIcon.textContent=WARM_ICONS[warmIconAt];
-      /* Restart the pop: an animation only replays if it is removed and
-         re-added, and reading offsetWidth is what forces that reflow. */
-      warmIcon.style.animation='none';void warmIcon.offsetWidth;warmIcon.style.animation='';
-    },700);
-  }
-  function stopWarmIcons(){if(warmIconTimer){clearInterval(warmIconTimer);warmIconTimer=null;}}
+        warmSub=document.getElementById('newsWarmingSub');
 
   function showWarming(feeds){
     if(!warmEl)return;
@@ -893,7 +920,6 @@
     const loadingEl=document.getElementById('newsLoading');
     if(loadingEl)loadingEl.style.display='none';
     warmEl.removeAttribute('hidden');
-    startWarmIcons();
     warmHead.textContent='Gathering today’s headlines…';
     if(srcTotal){
       warmBar.style.width=Math.round(done/srcTotal*100)+'%';
@@ -901,7 +927,9 @@
     }
     shown.textContent='…';total.textContent='…';
   }
-  function hideWarming(){stopWarmIcons();if(warmEl)warmEl.setAttribute('hidden','');}
+  /* Hiding the element is enough to stop the scene: CSS animations on a
+     display:none subtree don't run, so there is no timer to clear. */
+  function hideWarming(){if(warmEl)warmEl.setAttribute('hidden','');}
   function stopWarmPolling(){if(warmTimer){clearTimeout(warmTimer);warmTimer=null;}}
 
   async function loadNews(force){
