@@ -239,7 +239,6 @@ const NEWS_FEEDS = [
    changes in a way the page depends on. */
 const WORKER_BUILD = '2026-08-27-discovery';
 
-const NEWS_CACHE_URL = 'https://newsradar-internal-cache.example/news';
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
    showing an empty feed, so this is the pool it draws that fallback from --
@@ -360,9 +359,50 @@ function feedProbeUrls(feed) {
 const MAX_ITEMS_PER_FEED = 20;
 const NEWS_SHARDS = 4;
 
-function newsFeedCacheUrl(feedUrl) {
-  return 'https://newsradar-internal-cache.example/news/feed/' +
-    feedUrl.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 100);
+/* Every feed's articles and the merged list live together in ONE record.
+
+   Two reasons. First, correctness across locations: the Cloudflare Cache API
+   is per-datacentre, so the colo the cron happens to run in gets a warm cache
+   while every other colo serves visitors from an empty one -- which is how a
+   reader can land on a thin feed even when the background refresh is working
+   perfectly. Workers KV is globally replicated, so one background write is
+   readable everywhere immediately.
+
+   Second, cost: KV's free tier allows 1,000 writes a day. Writing 30 feeds
+   separately on a 5-minute cron would be ~2,300 and blow through that,
+   whereas one record per tick is 288. Reading it is one KV read per page load
+   against a 100,000/day allowance. A single record also means a request does
+   one JSON parse instead of thirty, which keeps it well inside the
+   per-request CPU budget.
+
+   KV is optional. Bind a namespace as NEWS_KV (see wrangler.jsonc) and it is
+   used; without one this falls back to the Cache API and behaves as before,
+   so nothing breaks while the binding is being set up. */
+const NEWS_STATE_KEY = 'news-state-v1';
+const NEWS_STATE_CACHE_URL = 'https://newsradar-internal-cache.example/news-state';
+
+async function readNewsState(env) {
+  if (env && env.NEWS_KV) {
+    try {
+      const v = await env.NEWS_KV.get(NEWS_STATE_KEY, 'json');
+      if (v) return v;
+    } catch (e) { /* fall through to the cache copy */ }
+  }
+  const cached = await readSharedCache(NEWS_STATE_CACHE_URL);
+  if (cached) {
+    try { return await cached.response.json(); } catch (e) { /* unreadable */ }
+  }
+  return null;
+}
+
+async function writeNewsState(env, state) {
+  const body = JSON.stringify(state);
+  if (env && env.NEWS_KV) {
+    try { await env.NEWS_KV.put(NEWS_STATE_KEY, body); } catch (e) { /* cache copy still written */ }
+  }
+  /* Always keep the local cache copy too: it serves this colo without a KV
+     round trip, and it is the whole mechanism when no namespace is bound. */
+  await writeSharedCache(NEWS_STATE_CACHE_URL, body, 'application/json');
 }
 
 /* Finds an outlet's real feed URL by reading its homepage, the same way a
@@ -411,18 +451,13 @@ async function discoverFeedUrl(feed) {
    through to discovery. Whatever discovery finds is remembered in this feed's
    own cache entry and tried first next time, so the homepage fetch happens
    once rather than every refresh. */
-async function refreshOneFeed(feed, opts) {
+/* Refreshes one feed and returns its new state entry. Pure with respect to
+   storage -- the caller collects the entries and writes the record once,
+   rather than each feed writing separately. */
+async function refreshOneFeed(feed, opts, previousEntry) {
   const allowDiscovery = !!(opts && opts.allowDiscovery);
-  const cacheUrl = newsFeedCacheUrl(feed.url);
-  let previous = [], knownGood = null;
-  const existing = await readSharedCache(cacheUrl);
-  if (existing) {
-    try {
-      const prev = await existing.response.json();
-      previous = prev.articles || [];
-      knownGood = prev.resolvedUrl || null;
-    } catch (e) { /* unreadable cache is the same as none */ }
-  }
+  const previous = (previousEntry && previousEntry.articles) || [];
+  const knownGood = (previousEntry && previousEntry.resolvedUrl) || null;
 
   const attempt = async (url) => {
     const res = await fetchFeedText(url);
@@ -438,44 +473,27 @@ async function refreshOneFeed(feed, opts) {
   };
 
   const tried = [];
-  /* A URL discovered on a previous run goes first -- it's the one known to
-     work for this outlet. */
-  for (const url of (knownGood && knownGood !== feed.url) ? [knownGood, feed.url] : [feed.url]) {
-    const r = await attempt(url);
+  let lastError = null, sawEmpty = false;
+
+  /* A URL resolved on a previous run goes first -- it's the one known to work
+     for this outlet. */
+  const first = (knownGood && knownGood !== feed.url) ? [knownGood, feed.url] : [feed.url];
+  for (const url of first) {
     tried.push(url);
+    const r = await attempt(url);
     if (r.ok && r.articles.length) {
-      /* The flag means "this is not the configured URL", not "we discovered it
-         on this particular run" -- once a discovered URL is cached it gets
-         tried first and would otherwise look like an ordinary success, losing
-         the very fact that makes it worth folding back into NEWS_FEEDS. */
-      const viaDiscovery = url !== feed.url;
-      await writeSharedCache(cacheUrl, JSON.stringify({
-        articles: r.articles, resolvedUrl: url, discovered: viaDiscovery || undefined, fetchedAt: Date.now()
-      }), 'application/json');
-      return { ok: true, count: r.articles.length, resolvedUrl: url, discovered: viaDiscovery || undefined };
+      /* `discovered` means "this is not the configured URL", not "found on
+         this run" -- once a resolved URL is stored it gets tried first and
+         would otherwise look like an ordinary success, losing the very fact
+         that makes it worth folding back into NEWS_FEEDS. */
+      return { articles: r.articles, resolvedUrl: url,
+        discovered: url !== feed.url || undefined, fetchedAt: Date.now() };
     }
-    if (r.ok) {
-      /* Responded, but nothing usable came out of it. Genuinely empty feeds
-         exist, so this is only worth re-routing if discovery finds something
-         better -- handled below. */
-      var emptyResult = r;
-    } else {
-      var lastError = r.error;
-    }
+    if (r.ok) sawEmpty = true; else lastError = r.error;
   }
 
-  /* Discovery costs an extra fetch plus a scan of a news homepage's <head>.
-     That is fine on a cron tick and far too much on a visitor's request --
-     the Workers free plan allows 10ms of CPU per invocation, and a cold-start
-     request that discovered for every failing feed was exceeding it, killing
-     the request. Killed requests meant the cache never filled, which made the
-     next request another cold start: the failure sustained itself. So
-     discovery is cron-only, and budgeted there too. */
   if (allowDiscovery) {
     const candidates = [];
-    /* The publisher's own advertised feed first -- it's authoritative when
-       present. Then the conventional paths, which is what catches sites that
-       no longer advertise one. */
     const advertised = await discoverFeedUrl(feed);
     if (advertised) candidates.push(advertised);
     feedProbeUrls(feed).forEach((u) => candidates.push(u));
@@ -485,54 +503,39 @@ async function refreshOneFeed(feed, opts) {
       tried.push(url);
       const r = await attempt(url);
       if (r.ok && r.articles.length) {
-        await writeSharedCache(cacheUrl, JSON.stringify({
-          articles: r.articles, resolvedUrl: url, discovered: true, fetchedAt: Date.now()
-        }), 'application/json');
-        return { ok: true, count: r.articles.length, resolvedUrl: url, discovered: true };
+        return { articles: r.articles, resolvedUrl: url, discovered: true, fetchedAt: Date.now() };
       }
     }
   }
 
-  /* Nothing worked. Keep the previous articles and record why, distinguishing
-     "the request failed" from "it answered but had nothing we could read" --
-     those need different fixes and shouldn't look the same. */
-  const reason = typeof lastError !== 'undefined' ? lastError
-    : (typeof emptyResult !== 'undefined' ? 'Responded, but no articles could be read from it' : 'Unavailable');
-  await writeSharedCache(cacheUrl, JSON.stringify({
-    articles: previous, lastError: reason, checkedAt: Date.now(),
-    triedUrls: tried   // already includes every probe URL attempted above
-  }), 'application/json');
-  return { ok: false, error: reason };
+  /* Nothing worked. Keep whatever articles were already there and record why,
+     distinguishing "the request failed" from "it answered but had nothing we
+     could read" -- those need different fixes and shouldn't look the same. */
+  return {
+    articles: previous,
+    resolvedUrl: knownGood || undefined,
+    lastError: lastError || (sawEmpty ? 'Responded, but no articles could be read from it' : 'Unavailable'),
+    triedUrls: tried,
+    checkedAt: Date.now()
+  };
 }
 
-/* Rebuilds the merged article list from every feed's individual cache. */
-async function rebuildNewsMerged() {
-  const entries = await Promise.all(NEWS_FEEDS.map(async (feed) => {
-    const cached = await readSharedCache(newsFeedCacheUrl(feed.url));
-    if (!cached) {
-      return { name: feed.name, url: feed.url, group: feed.group, ok: false, count: 0, error: 'Not fetched yet', articles: [] };
-    }
-    try {
-      const payload = await cached.response.json();
-      const articles = payload.articles || [];
-      return {
-        name: feed.name, url: feed.url, group: feed.group,
-        ok: !payload.lastError,
-        count: articles.length,
-        error: payload.lastError,
-        /* Where the articles actually came from, and whether that URL was
-           found by discovery rather than configured -- worth surfacing so a
-           corrected URL can be folded back into NEWS_FEEDS. */
-        resolvedUrl: payload.resolvedUrl,
-        discovered: payload.discovered || undefined,
-        triedUrls: payload.triedUrls,
-        ageSeconds: Math.round(cached.ageSeconds),
-        articles
-      };
-    } catch (e) {
-      return { name: feed.name, url: feed.url, group: feed.group, ok: false, count: 0, error: 'Cached data unreadable', articles: [] };
-    }
-  }));
+/* Builds the merged, de-duplicated article list from the per-feed entries. */
+function buildMergedNews(feedState) {
+  const entries = NEWS_FEEDS.map((feed) => {
+    const e = (feedState && feedState[feed.url]) || null;
+    const articles = (e && e.articles) || [];
+    return {
+      name: feed.name, url: feed.url, group: feed.group,
+      ok: !!(e && !e.lastError),
+      count: articles.length,
+      error: e ? e.lastError : 'Not fetched yet',
+      resolvedUrl: e ? e.resolvedUrl : undefined,
+      discovered: e ? e.discovered : undefined,
+      triedUrls: e ? e.triedUrls : undefined,
+      articles
+    };
+  });
 
   const cutoff = Date.now() - NEWS_WINDOW_MS;
   const seenUrl = new Set();
@@ -542,9 +545,9 @@ async function rebuildNewsMerged() {
     entry.articles.forEach((a) => {
       if (!a || !a.pubMs || a.pubMs < cutoff || a.pubMs > Date.now() + 3600000) return;
       if (seenUrl.has(a.url)) return;
-      /* The same story syndicated across outlets, or an outlet's own
-         duplicate/AMP entry, would otherwise appear several times -- and with
-         both metro and regional papers in the mix that is now common. */
+      /* The same story syndicated across outlets, or an outlet's own duplicate
+         or AMP entry, would otherwise appear several times -- common now that
+         metro and regional papers are both in the mix. */
       const key = String(a.title).trim().toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ');
       if (seenTitle.has(key)) return;
       seenUrl.add(a.url);
@@ -554,84 +557,93 @@ async function rebuildNewsMerged() {
   });
   articles.sort((a, b) => b.pubMs - a.pubMs);
 
-  const payload = {
+  return {
     build: WORKER_BUILD,
     feedCount: NEWS_FEEDS.length,
     articles: articles.slice(0, 300),
     feeds: entries.map((e) => ({ name: e.name, url: e.url, group: e.group, ok: e.ok, count: e.count,
-      error: e.error, resolvedUrl: e.resolvedUrl, discovered: e.discovered, triedUrls: e.triedUrls, ageSeconds: e.ageSeconds })),
+      error: e.error, resolvedUrl: e.resolvedUrl, discovered: e.discovered, triedUrls: e.triedUrls })),
     fetchedAt: Date.now(),
     newestPubMs: articles.length ? articles[0].pubMs : null
   };
-
-  /* Never replace a good merged list with an empty one. */
-  if (!payload.articles.length) {
-    const existing = await readSharedCache(NEWS_CACHE_URL);
-    if (existing) return { ok: false, error: 'No articles available; kept previous merged cache', payload };
-  }
-  await writeSharedCache(NEWS_CACHE_URL, JSON.stringify(payload), 'application/json');
-  return { ok: true, payload };
 }
 
-/* Refreshes one shard's feeds, then rebuilds the merged list.
-   Discovery is allowed here, but only for the first few feeds in the shard,
-   so one tick can never spend its whole CPU budget scanning homepages. Feeds
-   rotate through the shards, so over successive ticks every failing feed
-   still gets its turn. */
+/* Refreshes one shard's feeds, then rewrites the record. */
 const MAX_DISCOVERIES_PER_TICK = 2;
-async function refreshNewsShard(shard, tick) {
+async function refreshNewsShard(shard, tick, env) {
+  const state = (await readNewsState(env)) || { feeds: {} };
+  state.feeds = state.feeds || {};
+
   const due = NEWS_FEEDS.filter((_, i) => i % NEWS_SHARDS === shard);
-  /* The discovery slots rotate with the tick. Handing them to the first feeds
-     in the shard every time would mean feeds further down the list never got
-     a turn -- so a wrong URL late in the list would stay wrong forever. With
-     a rotating offset every feed comes round within about an hour. */
   /* Offset by how many times THIS shard has run, not by the raw tick. A shard
      only runs every NEWS_SHARDS ticks, so a raw-tick offset advances by
      (NEWS_SHARDS * budget) each time -- which for a shard of 8 feeds and a
      budget of 2 is a step of 8, i.e. no movement at all. Counting the shard's
-     own runs advances the window by exactly the budget each time, so it walks
-     the whole list regardless of how many feeds are in it. */
+     own runs advances the window by exactly the budget, so it walks the whole
+     list regardless of its length. */
   const runNo = Math.floor((tick || 0) / NEWS_SHARDS);
   const offset = (runNo * MAX_DISCOVERIES_PER_TICK) % (due.length || 1);
   const allowed = new Set();
   for (let k = 0; k < Math.min(MAX_DISCOVERIES_PER_TICK, due.length); k++) {
     allowed.add((offset + k) % due.length);
   }
-  await Promise.all(due.map((f, i) => refreshOneFeed(f, { allowDiscovery: allowed.has(i) })));
-  return rebuildNewsMerged();
+
+  const results = await Promise.all(due.map((f, i) =>
+    refreshOneFeed(f, { allowDiscovery: allowed.has(i) }, state.feeds[f.url])));
+  due.forEach((f, i) => { state.feeds[f.url] = results[i]; });
+
+  state.merged = buildMergedNews(state.feeds);
+  state.updatedAt = Date.now();
+  await writeNewsState(env, state);
+  return state.merged;
 }
 
 /* Cold start only, on a visitor's request: fetch just enough to put something
-   on the page, and nothing more. Deliberately a small number of feeds with no
-   discovery -- this runs inside a request's CPU budget, and the cron fills in
-   the rest within minutes. */
+   on the page, and nothing more. A small number of feeds with no discovery --
+   this runs inside a request's CPU budget, and the cron fills in the rest
+   within minutes. */
 const BOOTSTRAP_FEED_LIMIT = 3;
-async function bootstrapNews() {
+async function bootstrapNews(env) {
+  const state = (await readNewsState(env)) || { feeds: {} };
+  state.feeds = state.feeds || {};
   const primary = NEWS_FEEDS.filter((f) => f.priority).slice(0, BOOTSTRAP_FEED_LIMIT);
-  await Promise.all(primary.map((f) => refreshOneFeed(f, { allowDiscovery: false })));
-  return rebuildNewsMerged();
+  const results = await Promise.all(primary.map((f) =>
+    refreshOneFeed(f, { allowDiscovery: false }, state.feeds[f.url])));
+  primary.forEach((f, i) => { state.feeds[f.url] = results[i]; });
+  state.merged = buildMergedNews(state.feeds);
+  state.updatedAt = Date.now();
+  await writeNewsState(env, state);
+  return state.merged;
 }
 
-async function handleNews() {
-  const cached = await readSharedCache(NEWS_CACHE_URL);
-  if (cached) return respondFromCache(cached);
+async function handleNews(env) {
+  const state = await readNewsState(env);
+  if (state && state.merged && state.merged.articles && state.merged.articles.length) {
+    return new Response(JSON.stringify(state.merged), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'X-News-Age': String(Math.round((Date.now() - (state.updatedAt || 0)) / 1000)),
+        'X-News-Store': (env && env.NEWS_KV) ? 'kv' : 'cache'
+      }
+    });
+  }
 
-  /* A cold start that fails shouldn't take the route down with it -- the page
-     handles an empty article list gracefully, and the cron will fill the cache
-     shortly. Returning 200 with a reason beats a 502 the client can only
-     report as "couldn't reach the news service". */
-  let result;
+  /* Nothing usable stored yet. Bootstrap a little, and never let a failure
+     here take the route down -- the page handles an empty list gracefully and
+     the cron will fill the record shortly. */
+  let merged;
   try {
-    result = await bootstrapNews();
+    merged = await bootstrapNews(env);
   } catch (err) {
     return new Response(JSON.stringify({
       build: WORKER_BUILD, articles: [], feeds: [],
       error: 'Cold-start bootstrap failed: ' + err.message
     }), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
   }
-  const payload = result.payload || { build: WORKER_BUILD, articles: [], feeds: [] };
-  if (!payload.articles.length) payload.warming = true; // cron hasn't populated the caches yet
-  return new Response(JSON.stringify(payload), {
+  if (!merged.articles.length) merged.warming = true; // cron hasn't populated the record yet
+  return new Response(JSON.stringify(merged), {
     status: 200,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
   });
@@ -1426,7 +1438,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/news') {
-      return handleNews();
+      return handleNews(env);
     }
 
     if (url.pathname === '/api/gdelt') {
@@ -1469,7 +1481,7 @@ export default {
        advancing, so every position comes round. */
     const nowMs = event && event.scheduledTime ? event.scheduledTime : Date.now();
     const tick = Math.floor(nowMs / 300000);
-    ctx.waitUntil(refreshNewsShard(tick % NEWS_SHARDS, tick));
+    ctx.waitUntil(refreshNewsShard(tick % NEWS_SHARDS, tick, env));
     ctx.waitUntil(refreshAllIncidents());
     /* GDELT stays on the cron only as a fallback for /api/gdelt; the page
        reads /api/news first. Its refresh failing is expected and harmless. */

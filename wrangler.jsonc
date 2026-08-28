@@ -29,4 +29,30 @@
     // is no longer any credential here to expire, rotate or leak.
     "crons": ["*/5 * * * *"]
   }
+
+  // ---------------------------------------------------------------------
+  // OPTIONAL, but recommended: a KV namespace for the news record.
+  //
+  // Without it the news article list is held in the Cloudflare Cache API,
+  // which is PER DATACENTRE. The cron warms whichever location it runs in,
+  // so a reader routed to a different one finds nothing cached and gets the
+  // small cold-start feed until that location warms up too. With KV the
+  // background refresh writes once and every location reads the same list
+  // immediately -- so the dashboard opens with the full feed already there.
+  //
+  // To enable:
+  //   1. Cloudflare dashboard -> Storage & Databases -> KV -> Create -> name
+  //      it e.g. "newsradar" and copy its ID.
+  //   2. Uncomment the block below and paste the ID.
+  //   3. Redeploy.
+  //
+  // Cost on the free plan: the cron writes one record per 5-minute tick
+  // (288/day against a 1,000/day limit) and each page load is one read
+  // (against 100,000/day). The code falls back to the cache automatically if
+  // the binding is absent, so this can be added at any time without a code
+  // change.
+  //
+  // "kv_namespaces": [
+  //   { "binding": "NEWS_KV", "id": "PASTE_YOUR_NAMESPACE_ID_HERE" }
+  // ]
 }
