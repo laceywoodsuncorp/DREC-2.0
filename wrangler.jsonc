@@ -34,11 +34,16 @@
   // OPTIONAL, but recommended: a KV namespace for the news record.
   //
   // Without it the news article list is held in the Cloudflare Cache API,
-  // which is PER DATACENTRE. The cron warms whichever location it runs in,
-  // so a reader routed to a different one finds nothing cached and gets the
-  // small cold-start feed until that location warms up too. With KV the
-  // background refresh writes once and every location reads the same list
-  // immediately -- so the dashboard opens with the full feed already there.
+  // which is PER DATACENTRE. The cron warms whichever location it runs in, so
+  // a reader routed to a different one starts from a cold record: a handful
+  // of feeds fetched on the spot, then a few more added behind each request
+  // until that location has the whole list (see topUpNews in src/worker.js).
+  // That converges within about ten minutes of traffic, but until it does the
+  // dashboard shows a thin feed and marks the rest "still loading".
+  //
+  // With KV the background refresh writes once and every location reads the
+  // same list immediately -- so the dashboard opens with the full feed
+  // already there, and no visitor ever pays for a fetch.
   //
   // To enable:
   //   1. Cloudflare dashboard -> Storage & Databases -> KV -> Create -> name

@@ -237,7 +237,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-08-27-discovery';
+const WORKER_BUILD = '2026-08-28-topup';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -528,8 +528,13 @@ function buildMergedNews(feedState) {
     return {
       name: feed.name, url: feed.url, group: feed.group,
       ok: !!(e && !e.lastError),
+      /* Never tried here yet is not the same as tried and failed: on the
+         Cache API a fresh datacentre starts with every feed pending, and
+         showing those as "unavailable" makes a warming location look like a
+         broken one. */
+      pending: e ? undefined : true,
       count: articles.length,
-      error: e ? e.lastError : 'Not fetched yet',
+      error: e ? e.lastError : 'Not fetched in this location yet',
       resolvedUrl: e ? e.resolvedUrl : undefined,
       discovered: e ? e.discovered : undefined,
       triedUrls: e ? e.triedUrls : undefined,
@@ -562,7 +567,8 @@ function buildMergedNews(feedState) {
     feedCount: NEWS_FEEDS.length,
     articles: articles.slice(0, 300),
     feeds: entries.map((e) => ({ name: e.name, url: e.url, group: e.group, ok: e.ok, count: e.count,
-      error: e.error, resolvedUrl: e.resolvedUrl, discovered: e.discovered, triedUrls: e.triedUrls })),
+      pending: e.pending, error: e.error, resolvedUrl: e.resolvedUrl,
+      discovered: e.discovered, triedUrls: e.triedUrls })),
     fetchedAt: Date.now(),
     newestPubMs: articles.length ? articles[0].pubMs : null
   };
@@ -599,14 +605,29 @@ async function refreshNewsShard(shard, tick, env) {
 }
 
 /* Cold start only, on a visitor's request: fetch just enough to put something
-   on the page, and nothing more. A small number of feeds with no discovery --
-   this runs inside a request's CPU budget, and the cron fills in the rest
-   within minutes. */
-const BOOTSTRAP_FEED_LIMIT = 3;
+   on the page, and nothing more. A handful of feeds with no discovery -- this
+   runs inside a request's CPU budget, and the top-up below fills in the rest.
+
+   One feed per outlet. Taking the first N priority feeds in list order spent
+   two of three slots on ABC (it has two feeds), so a cold start that also lost
+   SBS produced a page of nothing but ABC. */
+const BOOTSTRAP_FEED_LIMIT = 4;
+function bootstrapFeeds() {
+  const seen = new Set();
+  const picked = [];
+  for (const feed of NEWS_FEEDS) {
+    if (!feed.priority || seen.has(feed.domain)) continue;
+    seen.add(feed.domain);
+    picked.push(feed);
+    if (picked.length >= BOOTSTRAP_FEED_LIMIT) break;
+  }
+  return picked;
+}
+
 async function bootstrapNews(env) {
   const state = (await readNewsState(env)) || { feeds: {} };
   state.feeds = state.feeds || {};
-  const primary = NEWS_FEEDS.filter((f) => f.priority).slice(0, BOOTSTRAP_FEED_LIMIT);
+  const primary = bootstrapFeeds();
   const results = await Promise.all(primary.map((f) =>
     refreshOneFeed(f, { allowDiscovery: false }, state.feeds[f.url])));
   primary.forEach((f, i) => { state.feeds[f.url] = results[i]; });
@@ -616,16 +637,77 @@ async function bootstrapNews(env) {
   return state.merged;
 }
 
-async function handleNews(env) {
+/* The record is only as complete as whatever filled it in. With NEWS_KV bound
+   the cron fills it once for everywhere; on the Cache API it can only warm the
+   datacentre it happened to run in, so a reader routed anywhere else sees what
+   the cold-start bootstrap managed -- and sees only that, indefinitely, since
+   handleNews serves any non-empty record without looking further. That is the
+   difference between a feed of four outlets and a feed of thirty.
+
+   So every request advances the record a little, after its response has gone
+   out: feeds never fetched in this location first, then the stalest. Rate
+   limited, so a busy location does this about once a minute rather than once
+   per visitor -- which walks the whole list in roughly the ten minutes the
+   cron rotation would take anyway. */
+const TOPUP_FEEDS_PER_RUN = 3;
+const TOPUP_MIN_INTERVAL_MS = 60 * 1000;
+const TOPUP_STALE_MS = 15 * 60 * 1000;
+
+function feedsNeedingTopUp(state) {
+  const now = Date.now();
+  const due = [];
+  NEWS_FEEDS.forEach((feed) => {
+    const entry = state.feeds[feed.url];
+    if (!entry) { due.push({ feed, at: 0 }); return; }
+    const at = entry.fetchedAt || entry.checkedAt || 0;
+    if (now - at >= TOPUP_STALE_MS) due.push({ feed, at });
+  });
+  due.sort((a, b) => a.at - b.at);
+  return due.slice(0, TOPUP_FEEDS_PER_RUN).map((d) => d.feed);
+}
+
+async function topUpNews(env) {
+  const state = await readNewsState(env);
+  if (!state) return;
+  state.feeds = state.feeds || {};
+  const now = Date.now();
+  if (state.topUpAt && now - state.topUpAt < TOPUP_MIN_INTERVAL_MS) return;
+  const due = feedsNeedingTopUp(state);
+  if (!due.length) return;
+
+  /* Two requests arriving together will both read, both refresh and the later
+     write wins, losing the other's feeds until they come round again. Harmless
+     at this cadence, and cheaper than coordinating. */
+  state.topUpAt = now;
+  const results = await Promise.all(due.map((f) =>
+    refreshOneFeed(f, { allowDiscovery: false }, state.feeds[f.url])));
+  due.forEach((f, i) => { state.feeds[f.url] = results[i]; });
+  state.merged = buildMergedNews(state.feeds);
+  state.updatedAt = Date.now();
+  await writeNewsState(env, state);
+}
+
+/* Counts the feeds this location has actually tried, which is not the same as
+   the number configured -- the gap is the whole cold-start story, so it goes
+   in a header rather than staying invisible. */
+function coveredFeedCount(state) {
+  const feeds = (state && state.feeds) || {};
+  return NEWS_FEEDS.filter((f) => feeds[f.url]).length;
+}
+
+async function handleNews(env, ctx) {
   const state = await readNewsState(env);
   if (state && state.merged && state.merged.articles && state.merged.articles.length) {
+    /* Queued after the response, so the reader waits for none of it. */
+    if (ctx && ctx.waitUntil) ctx.waitUntil(topUpNews(env).catch(() => {}));
     return new Response(JSON.stringify(state.merged), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store',
         'X-News-Age': String(Math.round((Date.now() - (state.updatedAt || 0)) / 1000)),
-        'X-News-Store': (env && env.NEWS_KV) ? 'kv' : 'cache'
+        'X-News-Store': (env && env.NEWS_KV) ? 'kv' : 'cache',
+        'X-News-Feeds': coveredFeedCount(state) + '/' + NEWS_FEEDS.length
       }
     });
   }
@@ -645,7 +727,12 @@ async function handleNews(env) {
   if (!merged.articles.length) merged.warming = true; // cron hasn't populated the record yet
   return new Response(JSON.stringify(merged), {
     status: 200,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      'X-News-Store': (env && env.NEWS_KV) ? 'kv' : 'cache',
+      'X-News-Feeds': String(bootstrapFeeds().length) + '/' + NEWS_FEEDS.length
+    }
   });
 }
 
@@ -1434,11 +1521,11 @@ async function handleIncidentsAll() {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/news') {
-      return handleNews(env);
+      return handleNews(env, ctx);
     }
 
     if (url.pathname === '/api/gdelt') {
