@@ -125,15 +125,19 @@
      the rest of the sources. A count and a bar rather than a bare spinner,
      because "loading" with no end in sight is the thing people give up on. */
   .news-warming{padding:34px 20px;text-align:center;color:#5a6a6a;font-size:.86rem;line-height:1.6}
-  .news-warming .spin{width:26px;height:26px;margin:0 auto 14px;border-radius:50%;
-    border:3px solid #d7dee2;border-top-color:#0a6ebd;animation:newsspin .9s linear infinite}
+  /* A rotating weather emoji rather than a spinner ring -- it reads as
+     "checking on things" on a dashboard that is largely about weather, and
+     it gives the wait a bit of character. The swap itself is the animation,
+     so the pop is only there to stop each change feeling like a jump cut. */
+  .news-warming .spin{height:38px;margin:0 auto 10px;font-size:2rem;line-height:1;
+    animation:newspop .5s ease}
   .news-warming .warm-head{font-weight:600;color:#2b3a3f}
   .news-warming .warm-bar{max-width:260px;height:5px;margin:12px auto 8px;border-radius:3px;
     background:#e3e9ec;overflow:hidden}
   .news-warming .warm-bar i{display:block;height:100%;background:#0a6ebd;border-radius:3px;
     transition:width .4s ease}
   .news-warming .warm-sub{font-size:.78rem;color:#7b8a8f}
-  @keyframes newsspin{to{transform:rotate(360deg)}}
+  @keyframes newspop{0%{opacity:.25;transform:scale(.82)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
   @media (prefers-reduced-motion:reduce){.news-warming .spin{animation:none}}
   .inc-empty a{color:var(--neutral-green);font-weight:600}
   .state-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:14px 24px;background:var(--off-white);border-bottom:1px solid #e7e9e6}
@@ -287,7 +291,7 @@
         <div class="empty" id="empty">No articles in this category for the last 24 hours.</div>
         <div class="inc-empty" id="newsLoading">Loading the latest Australian headlines…</div>
         <div class="news-warming" id="newsWarming" hidden>
-          <div class="spin" aria-hidden="true"></div>
+          <div class="spin" id="newsWarmingIcon" aria-hidden="true">🌤️</div>
           <div class="warm-head" id="newsWarmingHead">Gathering today’s headlines…</div>
           <div class="warm-bar"><i id="newsWarmingBar" style="width:0%"></i></div>
           <div class="warm-sub" id="newsWarmingSub">Checking Australian news sources</div>
@@ -855,7 +859,28 @@
   const warmEl=document.getElementById('newsWarming'),
         warmHead=document.getElementById('newsWarmingHead'),
         warmBar=document.getElementById('newsWarmingBar'),
-        warmSub=document.getElementById('newsWarmingSub');
+        warmSub=document.getElementById('newsWarmingSub'),
+        warmIcon=document.getElementById('newsWarmingIcon');
+
+  /* Roughly a day of Australian weather, in order, so the cycle reads as
+     something moving through rather than a random shuffle. */
+  const WARM_ICONS=['🌤️','☀️','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌈','💨','🌪️','❄️'];
+  let warmIconTimer=null,warmIconAt=0;
+  /* Someone who has asked for reduced motion gets one settled icon instead of
+     a change every 700ms -- the swap IS the animation here, so disabling only
+     the CSS pop wouldn't honour the request. */
+  const reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function startWarmIcons(){
+    if(!warmIcon||warmIconTimer||reduceMotion)return;
+    warmIconTimer=setInterval(()=>{
+      warmIconAt=(warmIconAt+1)%WARM_ICONS.length;
+      warmIcon.textContent=WARM_ICONS[warmIconAt];
+      /* Restart the pop: an animation only replays if it is removed and
+         re-added, and reading offsetWidth is what forces that reflow. */
+      warmIcon.style.animation='none';void warmIcon.offsetWidth;warmIcon.style.animation='';
+    },700);
+  }
+  function stopWarmIcons(){if(warmIconTimer){clearInterval(warmIconTimer);warmIconTimer=null;}}
 
   function showWarming(feeds){
     if(!warmEl)return;
@@ -868,6 +893,7 @@
     const loadingEl=document.getElementById('newsLoading');
     if(loadingEl)loadingEl.style.display='none';
     warmEl.removeAttribute('hidden');
+    startWarmIcons();
     warmHead.textContent='Gathering today’s headlines…';
     if(srcTotal){
       warmBar.style.width=Math.round(done/srcTotal*100)+'%';
@@ -875,7 +901,7 @@
     }
     shown.textContent='…';total.textContent='…';
   }
-  function hideWarming(){if(warmEl)warmEl.setAttribute('hidden','');}
+  function hideWarming(){stopWarmIcons();if(warmEl)warmEl.setAttribute('hidden','');}
   function stopWarmPolling(){if(warmTimer){clearTimeout(warmTimer);warmTimer=null;}}
 
   async function loadNews(force){
