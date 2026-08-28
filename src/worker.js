@@ -299,12 +299,52 @@ async function fetchFeedText(url) {
   try {
     const r = await fetch(url, { headers: FEED_REQUEST_HEADERS, signal: ctrl.signal, redirect: 'follow', cf: { cacheTtl: 0 } });
     if (!r.ok) return { ok: false, error: 'HTTP ' + r.status };
-    return { ok: true, text: await r.text() };
+    return { ok: true, text: await r.text(), contentType: r.headers.get('content-type') || '' };
   } catch (err) {
     return { ok: false, error: err.name === 'AbortError' ? 'Timed out after 15s' : err.message };
   } finally {
     clearTimeout(timer);
   }
+}
+
+/* A cheap look at the first bytes before committing to a full regex parse.
+   Probing candidate paths means most responses are ordinary HTML pages, and
+   running the item regex over a whole news homepage is exactly the kind of
+   CPU cost that has to stay off this Worker. */
+function looksLikeFeed(text, contentType) {
+  if (/(rss|atom|xml)/i.test(contentType || '')) return true;
+  const head = String(text || '').slice(0, 1000);
+  return /<\?xml|<rss[\s>]|<feed[\s>]|<channel[\s>]/i.test(head);
+}
+
+/* Publishers move their feeds and rarely redirect the old address. Rather
+   than one configured guess per outlet, a failing feed is probed against the
+   handful of paths publishers actually use. Ordered by how common they are,
+   so the usual answer is found in the first couple of requests.
+   This is what recovers, for example, a masthead whose sibling works on
+   /rss/feed.xml while it serves /rss/feed -- a difference no amount of
+   guessing from outside would reliably land on. */
+const FEED_PATH_CANDIDATES = ['/rss', '/feed', '/rss.xml', '/rss/feed',
+  '/feed.xml', '/rss/feed.xml', '/index.xml', '/atom.xml'];
+/* Hard cap on probe requests per feed. The cron tick also refreshes the whole
+   shard and all eight incident feeds, and a Worker invocation may make at most
+   50 subrequests -- so this is a budget, not a preference. Two feeds probe per
+   tick (MAX_DISCOVERIES_PER_TICK), giving ~12 probes plus ~8 shard fetches
+   plus the incident feeds: comfortably inside the ceiling. */
+const MAX_PATH_PROBES = 6;
+
+function feedProbeUrls(feed) {
+  /* Probe paths on the configured URL's own origin. That host is known to
+     resolve -- the configured feed came back with an HTTP status, not a
+     network error -- so spending half a small budget on www/non-www variants
+     would just halve the number of paths actually tried. */
+  let origin;
+  try {
+    origin = new URL(feed.url).origin;
+  } catch (e) {
+    origin = 'https://' + feed.domain;
+  }
+  return FEED_PATH_CANDIDATES.slice(0, MAX_PATH_PROBES).map((path) => origin + path);
 }
 
 /* Refreshing every feed in one go would parse ~28 XML documents in a single
@@ -387,6 +427,9 @@ async function refreshOneFeed(feed, opts) {
   const attempt = async (url) => {
     const res = await fetchFeedText(url);
     if (!res.ok) return { ok: false, error: res.error };
+    if (!looksLikeFeed(res.text, res.contentType)) {
+      return { ok: false, error: 'Not a feed — got ' + (/^\s*</.test(res.text) ? 'an HTML page' : 'unrecognised content') };
+    }
     try {
       return { ok: true, articles: parseRssArticles(res.text, feed) };
     } catch (err) {
@@ -428,14 +471,25 @@ async function refreshOneFeed(feed, opts) {
      the request. Killed requests meant the cache never filled, which made the
      next request another cold start: the failure sustained itself. So
      discovery is cron-only, and budgeted there too. */
-  const found = allowDiscovery ? await discoverFeedUrl(feed) : null;
-  if (found && tried.indexOf(found) === -1) {
-    const r = await attempt(found);
-    if (r.ok && r.articles.length) {
-      await writeSharedCache(cacheUrl, JSON.stringify({
-        articles: r.articles, resolvedUrl: found, discovered: true, fetchedAt: Date.now()
-      }), 'application/json');
-      return { ok: true, count: r.articles.length, resolvedUrl: found, discovered: true };
+  if (allowDiscovery) {
+    const candidates = [];
+    /* The publisher's own advertised feed first -- it's authoritative when
+       present. Then the conventional paths, which is what catches sites that
+       no longer advertise one. */
+    const advertised = await discoverFeedUrl(feed);
+    if (advertised) candidates.push(advertised);
+    feedProbeUrls(feed).forEach((u) => candidates.push(u));
+
+    for (const url of candidates) {
+      if (tried.indexOf(url) !== -1) continue;
+      tried.push(url);
+      const r = await attempt(url);
+      if (r.ok && r.articles.length) {
+        await writeSharedCache(cacheUrl, JSON.stringify({
+          articles: r.articles, resolvedUrl: url, discovered: true, fetchedAt: Date.now()
+        }), 'application/json');
+        return { ok: true, count: r.articles.length, resolvedUrl: url, discovered: true };
+      }
     }
   }
 
@@ -446,7 +500,7 @@ async function refreshOneFeed(feed, opts) {
     : (typeof emptyResult !== 'undefined' ? 'Responded, but no articles could be read from it' : 'Unavailable');
   await writeSharedCache(cacheUrl, JSON.stringify({
     articles: previous, lastError: reason, checkedAt: Date.now(),
-    triedUrls: found ? tried.concat(found) : tried
+    triedUrls: tried   // already includes every probe URL attempted above
   }), 'application/json');
   return { ok: false, error: reason };
 }
@@ -531,7 +585,14 @@ async function refreshNewsShard(shard, tick) {
      in the shard every time would mean feeds further down the list never got
      a turn -- so a wrong URL late in the list would stay wrong forever. With
      a rotating offset every feed comes round within about an hour. */
-  const offset = ((tick || 0) * MAX_DISCOVERIES_PER_TICK) % (due.length || 1);
+  /* Offset by how many times THIS shard has run, not by the raw tick. A shard
+     only runs every NEWS_SHARDS ticks, so a raw-tick offset advances by
+     (NEWS_SHARDS * budget) each time -- which for a shard of 8 feeds and a
+     budget of 2 is a step of 8, i.e. no movement at all. Counting the shard's
+     own runs advances the window by exactly the budget each time, so it walks
+     the whole list regardless of how many feeds are in it. */
+  const runNo = Math.floor((tick || 0) / NEWS_SHARDS);
+  const offset = (runNo * MAX_DISCOVERIES_PER_TICK) % (due.length || 1);
   const allowed = new Set();
   for (let k = 0; k < Math.min(MAX_DISCOVERIES_PER_TICK, due.length); k++) {
     allowed.add((offset + k) % due.length);
