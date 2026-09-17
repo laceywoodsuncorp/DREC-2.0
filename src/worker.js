@@ -1538,6 +1538,463 @@ async function handleIncidentsAll() {
   });
 }
 
+/* ============================================================
+   ELECTRICITY OUTAGES -- per state, from the network operators
+   ============================================================
+   This replaces an embedded third-party outage map. That map was a single
+   iframe from one aggregator: when it stopped rendering there was nothing to
+   fall back to, no way to tell "no outages" from "the embed broke", and no
+   way to see anything per state.
+
+   Electricity distribution in Australia is carved up by operator, not by
+   state, so a state's picture is the union of two or three networks -- NSW is
+   Ausgrid plus Endeavour plus Essential, Victoria is five. Each is fetched
+   independently and reported independently, so one operator being unreachable
+   degrades that state's list to "partial, and here's who is missing" rather
+   than to nothing.
+
+   IMPORTANT, and the reason every source below carries fallbacks and
+   diagnostics: none of these endpoints could be verified from the build
+   environment, which has no outbound access to these hosts (every request is
+   refused at the proxy with a 403 before it leaves). The operators publish
+   this data to their own outage maps rather than as documented open APIs, so
+   the URLs are best-effort. Anything wrong here surfaces as a per-operator
+   error in /api/outages/<state> with the HTTP status and a body excerpt --
+   enough to tell a moved URL from a WAF block from a schema change -- and
+   costs nothing else. Correcting one is a single line in OUTAGE_NETWORKS. */
+
+const OUTAGE_STATES = ['nsw', 'qld', 'vic', 'sa', 'wa', 'tas', 'nt', 'act'];
+
+function outageCacheUrl(state) {
+  return 'https://newsradar-internal-cache.example/outages/' + state;
+}
+const OUTAGES_ALL_CACHE_URL = 'https://newsradar-internal-cache.example/outages-all';
+
+/* Candidate field names per normalised field, matched case-insensitively and
+   in priority order -- the same approach as the incident feeds, for the same
+   reason: a dozen operators with no shared schema between them. */
+const OUTAGE_FIELDS = {
+  location: ['suburb', 'suburbs', 'locality', 'localities', 'location', 'locationname',
+    'location_name', 'area', 'areas', 'town', 'place', 'street', 'streets', 'address',
+    'region', 'name', 'title'],
+  status: ['status', 'outagestatus', 'currentstatus', 'jobstatus', 'stage', 'progress', 'phase'],
+  cause: ['cause', 'reason', 'outagecause', 'causedescription', 'causedesc', 'faulttype',
+    'description', 'comment', 'comments', 'details', 'event', 'eventdescription'],
+  customers: ['customersaffected', 'customeraffected', 'affectedcustomers', 'numcustomersaffected',
+    'numcustomers', 'custaffected', 'customercount', 'noofcustomers', 'impactedcustomers',
+    'customers', 'custs', 'numberofcustomers'],
+  start: ['starttime', 'outagestarttime', 'startdate', 'start', 'begin', 'reportedtime',
+    'reported', 'firstreported', 'datereported', 'created', 'createddate', 'timeoff'],
+  restore: ['estimatedrestorationtime', 'estimatedrestoretime', 'estimatedrestoration',
+    'expectedrestoration', 'restorationtime', 'restoretime', 'etr', 'eta', 'timeon',
+    'estimatedtimeofrestoration', 'estrestoretime', 'estimatedon'],
+  kind: ['type', 'outagetype', 'plannedtype', 'worktype', 'jobtype', 'category', 'classification'],
+  id: ['id', 'outageid', 'jobid', 'eventid', 'incidentid', 'reference', 'ref', 'objectid']
+};
+
+function pickOutageField(lowered, kind) {
+  const candidates = OUTAGE_FIELDS[kind] || [];
+  for (const name of candidates) {
+    const v = lowered[name];
+    if (v === undefined || v === null) continue;
+    if (typeof v === 'object') continue;
+    const s = String(v).trim();
+    if (s && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'undefined') return s;
+  }
+  return '';
+}
+
+/* Customer counts arrive as numbers, numeric strings, "1,234", or a range
+   like "50-100". Anything that isn't a definite number stays absent rather
+   than becoming a 0 -- "0 customers affected" and "the operator didn't say"
+   are very different claims to put on a dashboard. */
+function parseCustomerCount(raw) {
+  if (raw === '' || raw === null || raw === undefined) return null;
+  const s = String(raw).replace(/,/g, '').trim();
+  const m = /^(\d+)/.exec(s);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return isFinite(n) ? n : null;
+}
+
+/* Planned works and faults read very differently to someone checking whether
+   their power is coming back, so they are separated when the operator says
+   which it is -- and left unlabelled when it doesn't, rather than guessed. */
+function classifyOutage(kindText, statusText, causeText) {
+  const hay = (kindText + ' ' + statusText + ' ' + causeText).toLowerCase();
+  if (/\bplanned|\bscheduled|maintenance/.test(hay)) return 'planned';
+  if (/\bunplanned|\bfault|emergency|unexpected/.test(hay)) return 'unplanned';
+  return '';
+}
+
+/* Shape-tolerant normaliser for one operator's payload. Same contract as
+   normaliseRecords(): returns the rows, plus `diagnostics` only when
+   something genuinely looks wrong, so a network with no outages reads as
+   quiet rather than broken. */
+function normaliseOutages(json) {
+  const { records, envelope } = collectRecords(json);
+  const outages = [];
+  records.forEach(({ props, geometry }) => {
+    const lowered = lowerKeyMap(props);
+    const location = pickOutageField(lowered, 'location');
+    const id = pickOutageField(lowered, 'id');
+    /* A row with neither a place nor an identifier can't be shown or
+       de-duplicated, so it isn't a row. */
+    if (!location && !id) return;
+    const status = pickOutageField(lowered, 'status');
+    const cause = pickOutageField(lowered, 'cause');
+    const kindText = pickOutageField(lowered, 'kind');
+    const start = normaliseWhen(pickOutageField(lowered, 'start'));
+    const restore = normaliseWhen(pickOutageField(lowered, 'restore'));
+    outages.push(Object.assign({
+      id: id || undefined,
+      location: location || 'Outage ' + id,
+      status: status || undefined,
+      cause: cause || undefined,
+      kind: classifyOutage(kindText, status, cause) || undefined,
+      customers: parseCustomerCount(pickOutageField(lowered, 'customers')),
+      start: start.when || undefined,
+      startIso: start.whenIso,
+      restore: restore.when || undefined,
+      restoreIso: restore.whenIso
+    }, pickCoords(props, geometry)));
+  });
+
+  const result = { outages };
+  const noListFound = envelope === 'unrecognised';
+  if (!outages.length && (records.length > 0 || noListFound)) {
+    const sample = records.length && records[0].props ? Object.keys(records[0].props).slice(0, 25) : [];
+    result.diagnostics = { envelope, recordsSeen: records.length, sampleKeys: sample };
+  }
+  return result;
+}
+
+/* The distribution networks, by state. `area` is what the operator actually
+   covers -- worth showing, because "Essential Energy is unavailable" means
+   something quite different in Sydney than it does in Dubbo.
+
+   Each operator lists its candidate data URLs in order; the first that
+   answers with recognisable rows wins and the rest aren't tried. `site` is
+   the operator's own outage page, always shown so there is a way through even
+   when every candidate fails. */
+const OUTAGE_NETWORKS = {
+  nsw: {
+    name: 'New South Wales',
+    networks: [
+      { name: 'Ausgrid', area: 'Sydney, Central Coast and the Hunter',
+        site: 'https://www.ausgrid.com.au/Outages',
+        sources: [
+          { url: 'https://www.ausgrid.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.ausgrid.com.au/Outages/api/outages', format: 'json', parse: normaliseOutages }
+        ] },
+      { name: 'Endeavour Energy', area: "Sydney's greater west, Blue Mountains, Southern Highlands and Illawarra",
+        site: 'https://www.endeavourenergy.com.au/outages',
+        sources: [
+          { url: 'https://www.endeavourenergy.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.endeavourenergy.com.au/outages/api/unplanned', format: 'json', parse: normaliseOutages }
+        ] },
+      { name: 'Essential Energy', area: 'Regional and rural NSW',
+        site: 'https://www.essentialenergy.com.au/outages',
+        sources: [
+          { url: 'https://www.essentialenergy.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.essentialenergy.com.au/outages/api/outages', format: 'json', parse: normaliseOutages }
+        ] }
+    ]
+  },
+  qld: {
+    name: 'Queensland',
+    networks: [
+      { name: 'Energex', area: 'South East Queensland',
+        site: 'https://www.energex.com.au/outages/current-outages',
+        sources: [
+          { url: 'https://www.energex.com.au/static/Energex/Network%20Outages/EQLOutageMapData.json', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.energex.com.au/api/outages/v1/current', format: 'json', parse: normaliseOutages }
+        ] },
+      { name: 'Ergon Energy', area: 'Regional Queensland',
+        site: 'https://www.ergon.com.au/outages/current-outages',
+        sources: [
+          { url: 'https://www.ergon.com.au/static/Ergon/Outages/ergon_outages.json', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.ergon.com.au/api/outages/v1/current', format: 'json', parse: normaliseOutages }
+        ] }
+    ]
+  },
+  vic: {
+    name: 'Victoria',
+    networks: [
+      { name: 'AusNet Services', area: 'Eastern and north-eastern Victoria',
+        site: 'https://www.ausnetservices.com.au/outages',
+        sources: [
+          { url: 'https://api.ausnetservices.com.au/outages/v1/current', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.ausnetservices.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+        ] },
+      { name: 'Powercor', area: 'Western Victoria',
+        site: 'https://www.powercor.com.au/outages-faults/current-outages/',
+        sources: [
+          { url: 'https://www.powercor.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+        ] },
+      { name: 'CitiPower', area: 'Inner Melbourne',
+        site: 'https://www.citipower.com.au/outages-faults/current-outages/',
+        sources: [
+          { url: 'https://www.citipower.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+        ] },
+      { name: 'United Energy', area: 'South-eastern Melbourne and the Mornington Peninsula',
+        site: 'https://www.unitedenergy.com.au/outages-faults/current-outages/',
+        sources: [
+          { url: 'https://www.unitedenergy.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+        ] },
+      { name: 'Jemena', area: 'North-western Melbourne',
+        site: 'https://jemena.com.au/electricity/outages',
+        sources: [
+          { url: 'https://jemena.com.au/api/outages/electricity/current', format: 'json', parse: normaliseOutages }
+        ] }
+    ]
+  },
+  sa: {
+    name: 'South Australia',
+    networks: [
+      { name: 'SA Power Networks', area: 'All of South Australia',
+        site: 'https://www.sapowernetworks.com.au/outages',
+        sources: [
+          { url: 'https://www.sapowernetworks.com.au/public/data/powerdata/current-outages.json', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.sapowernetworks.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+        ] }
+    ]
+  },
+  wa: {
+    name: 'Western Australia',
+    networks: [
+      { name: 'Western Power', area: 'South-west interconnected system (Perth and the south-west)',
+        site: 'https://www.westernpower.com.au/faults-outages/power-outages/',
+        sources: [
+          { url: 'https://www.westernpower.com.au/api/v1/outages/current', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.westernpower.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+        ] },
+      { name: 'Horizon Power', area: 'Regional and remote WA',
+        site: 'https://www.horizonpower.com.au/faults-outages/',
+        sources: [
+          { url: 'https://www.horizonpower.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+        ] }
+    ]
+  },
+  tas: {
+    name: 'Tasmania',
+    networks: [
+      { name: 'TasNetworks', area: 'All of Tasmania',
+        site: 'https://www.tasnetworks.com.au/outages',
+        sources: [
+          { url: 'https://www.tasnetworks.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.tasnetworks.com.au/outages/api/outages', format: 'json', parse: normaliseOutages }
+        ] }
+    ]
+  },
+  nt: {
+    name: 'Northern Territory',
+    networks: [
+      { name: 'Power and Water Corporation', area: 'All of the Northern Territory',
+        site: 'https://www.powerwater.com.au/outages',
+        sources: [
+          { url: 'https://www.powerwater.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+        ] }
+    ]
+  },
+  act: {
+    name: 'Australian Capital Territory',
+    networks: [
+      { name: 'Evoenergy', area: 'All of the ACT',
+        site: 'https://www.evoenergy.com.au/outages',
+        sources: [
+          { url: 'https://www.evoenergy.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.evoenergy.com.au/outages/api/unplanned', format: 'json', parse: normaliseOutages }
+        ] }
+    ]
+  }
+};
+
+/* A hard ceiling on upstream calls for one state's refresh. Victoria alone has
+   five operators with candidates each; on a bad day where everything fails,
+   an unbounded sweep would eat the invocation's 50-subrequest budget and
+   starve the news and incident refreshes sharing that tick. Operators past
+   the ceiling are reported as not-yet-checked, not as failed. */
+const MAX_OUTAGE_ATTEMPTS_PER_STATE = 7;
+
+/* Fetches every operator in a state, normalises, and caches the result.
+   Parsing happens here on the cron rather than on a visitor's request, for
+   the same CPU-budget reason as the incident feeds. A total failure leaves
+   the previous cache entry in place. */
+async function refreshStateOutages(state) {
+  const group = OUTAGE_NETWORKS[state];
+  if (!group) return { ok: false, state, error: 'Unknown state' };
+
+  let budget = MAX_OUTAGE_ATTEMPTS_PER_STATE;
+  const networks = [];
+
+  for (const net of group.networks) {
+    const entry = { name: net.name, area: net.area, site: net.site, ok: false, count: 0, outages: [] };
+    const attempts = [];
+    let drifted = null;
+
+    for (const source of net.sources) {
+      if (budget <= 0) break;
+      budget--;
+      /* tryIncidentSource is the generic "fetch, check, parse, never throw"
+         step -- the same headers, timeout and HTML-instead-of-JSON detection
+         apply here, so it is reused rather than duplicated. */
+      const result = await tryIncidentSource(source);
+      if (!result.ok) { attempts.push({ url: source.url, error: result.error }); continue; }
+      if (result.parsed.diagnostics) {
+        attempts.push({ url: source.url, error: 'Responded, but no recognisable outage fields' });
+        if (!drifted) drifted = { source, parsed: result.parsed };
+        continue;
+      }
+      entry.ok = true;
+      entry.outages = result.parsed.outages;
+      entry.count = result.parsed.outages.length;
+      entry.sourceUrl = source.url;
+      break;
+    }
+
+    if (!entry.ok && drifted) {
+      /* Answered, shape unrecognised. That is a parser fix, not an outage, so
+         it is reported as reachable-but-undreadable rather than as down. */
+      entry.ok = true;
+      entry.sourceUrl = drifted.source.url;
+      entry.diagnostics = drifted.parsed.diagnostics;
+    }
+    if (!entry.ok) {
+      entry.error = attempts.length
+        ? (attempts.length === 1 ? attempts[0].error
+          : 'All ' + attempts.length + ' sources failed — ' + attempts.map((a) => a.error).join(' | '))
+        : 'Not checked on this pass';
+    }
+    if (attempts.length) entry.attempts = attempts;
+    networks.push(entry);
+  }
+
+  /* Merge for the state-level list, tagging each row with the operator that
+     reported it -- without that tag a list spanning three networks gives no
+     way to tell which one to ring. */
+  const outages = [];
+  networks.forEach((net) => {
+    (net.outages || []).forEach((o) => { outages.push(Object.assign({ network: net.name }, o)); });
+  });
+  outages.sort((a, b) => {
+    const ca = a.customers === null || a.customers === undefined ? -1 : a.customers;
+    const cb = b.customers === null || b.customers === undefined ? -1 : b.customers;
+    if (cb !== ca) return cb - ca;
+    return (Date.parse(b.startIso || 0) || 0) - (Date.parse(a.startIso || 0) || 0);
+  });
+
+  const reporting = networks.filter((n) => n.ok);
+  const customers = outages.reduce((sum, o) => sum + (o.customers || 0), 0);
+  const payload = {
+    state: state.toUpperCase(),
+    name: group.name,
+    /* ok means at least one operator answered. A state is never all-or-
+       nothing here: the per-network list below says exactly who is in. */
+    ok: reporting.length > 0,
+    count: outages.length,
+    customers,
+    /* Only meaningful if every operator reported, so the client can say
+       "partial" instead of quoting a total that silently excludes a network. */
+    complete: reporting.length === networks.length,
+    outages: outages.slice(0, 400),
+    truncated: outages.length > 400 || undefined,
+    networks: networks.map((n) => ({
+      name: n.name, area: n.area, site: n.site, ok: n.ok, count: n.count,
+      customers: (n.outages || []).reduce((s, o) => s + (o.customers || 0), 0),
+      error: n.error, sourceUrl: n.sourceUrl, diagnostics: n.diagnostics, attempts: n.attempts
+    })),
+    fetchedAt: Date.now()
+  };
+
+  await writeSharedCache(outageCacheUrl(state), JSON.stringify(payload), 'application/json');
+  return { ok: true, state, payload };
+}
+
+async function readStateOutages(state) {
+  const cached = await readSharedCache(outageCacheUrl(state));
+  if (!cached) return null;
+  try {
+    const payload = await cached.response.json();
+    payload.cacheAgeSeconds = Math.round(cached.ageSeconds);
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* The aggregate carries per-state totals and network status but NOT every
+   outage row -- a storm across two states can run to hundreds of rows, and
+   the page only ever displays one state at a time. The tabs render from this;
+   selecting a state fetches that state's own route for the list. */
+async function rebuildOutagesAggregate() {
+  const states = await Promise.all(OUTAGE_STATES.map(async (state) => {
+    const payload = await readStateOutages(state);
+    const group = OUTAGE_NETWORKS[state];
+    if (!payload) {
+      return {
+        state: state.toUpperCase(), name: group.name, ok: false, count: 0, customers: 0,
+        complete: false, networks: group.networks.map((n) => ({
+          name: n.name, area: n.area, site: n.site, ok: false, count: 0,
+          error: 'No data cached yet for this network'
+        })),
+        error: 'No data cached yet for this state'
+      };
+    }
+    const { outages, ...rest } = payload;
+    return rest;
+  }));
+
+  const aggregate = {
+    states,
+    builtAt: Date.now(),
+    liveStates: states.filter((s) => s.ok).map((s) => s.state)
+  };
+  await writeSharedCache(OUTAGES_ALL_CACHE_URL, JSON.stringify(aggregate), 'application/json');
+  return aggregate;
+}
+
+/* Refreshes one shard of states. Outages are sharded across cron ticks where
+   the incident feeds are not, because there are far more operators than
+   agencies -- sweeping all eight states every tick would compete with the
+   news and incident refreshes for the same invocation's subrequest budget.
+   Two shards at a 5-minute cron means every state is re-read every 10
+   minutes, which is well inside how fast an operator updates its own map. */
+const OUTAGE_SHARDS = 2;
+async function refreshOutageShard(shard) {
+  const due = OUTAGE_STATES.filter((_, i) => i % OUTAGE_SHARDS === shard);
+  await Promise.allSettled(due.map((s) => refreshStateOutages(s)));
+  await rebuildOutagesAggregate();
+}
+
+/* GET /api/outages/<state> -- one state's full list. */
+async function handleOutagesState(state) {
+  const group = OUTAGE_NETWORKS[state];
+  if (!group) {
+    return new Response(JSON.stringify({ ok: false, error: 'Unknown state: ' + state }), {
+      status: 404, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+    });
+  }
+  const cached = await readSharedCache(outageCacheUrl(state));
+  if (cached) return respondFromCache(cached);
+
+  const result = await refreshStateOutages(state);
+  return new Response(JSON.stringify(result.payload || {
+    state: state.toUpperCase(), name: group.name, ok: false, count: 0, outages: [],
+    error: result.error || 'Refresh failed'
+  }), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+}
+
+/* GET /api/outages -- every state's totals and per-network status, no rows. */
+async function handleOutagesAll() {
+  const cached = await readSharedCache(OUTAGES_ALL_CACHE_URL);
+  if (cached) return respondFromCache(cached);
+  const aggregate = await rebuildOutagesAggregate();
+  return new Response(JSON.stringify(aggregate), {
+    status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+  });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -1557,6 +2014,15 @@ export default {
     if (url.pathname.startsWith('/api/incidents/')) {
       const state = url.pathname.slice('/api/incidents/'.length).replace(/\/+$/, '').toLowerCase();
       return handleIncidentsState(state);
+    }
+
+    /* /api/outages and /api/outages/<state> */
+    if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') {
+      return handleOutagesAll();
+    }
+    if (url.pathname.startsWith('/api/outages/')) {
+      const state = url.pathname.slice('/api/outages/'.length).replace(/\/+$/, '').toLowerCase();
+      return handleOutagesState(state);
     }
 
     if (url.pathname === '/') {
@@ -1588,6 +2054,9 @@ export default {
     const tick = Math.floor(nowMs / 300000);
     ctx.waitUntil(refreshNewsShard(tick % NEWS_SHARDS, tick, env));
     ctx.waitUntil(refreshAllIncidents());
+    /* Half the states per tick -- see refreshOutageShard for why outages are
+       sharded when the incident feeds are not. */
+    ctx.waitUntil(refreshOutageShard(tick % OUTAGE_SHARDS));
     /* GDELT stays on the cron only as a fallback for /api/gdelt; the page
        reads /api/news first. Its refresh failing is expected and harmless. */
     /* GDELT is only a fallback for /api/gdelt and rejects most attempts

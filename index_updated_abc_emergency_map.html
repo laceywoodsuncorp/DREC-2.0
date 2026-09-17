@@ -197,7 +197,40 @@
 
   /* Power & Network Outages tile */
   .tile-outages{margin:24px 0}
-  .power-embed-wrap iframe{min-height:1280px!important}
+  .outage-heading{margin:0;padding:16px 24px 0;font-size:.95rem;color:var(--heritage-green)}
+  .outage-summary{padding:12px 24px;display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;
+    font-size:.8rem;color:#4a5a5a}
+  .outage-summary b{font-size:1.15rem;color:var(--heritage-green);margin-right:4px}
+  .outage-summary .warn{color:#8a5200}
+  /* One chip per distribution network, always all of them: a network that
+     isn't answering has to stay visible, because "no outages listed" and
+     "we couldn't reach Essential Energy" look identical in a list. */
+  .outage-networks{padding:0 24px 12px;display:flex;flex-wrap:wrap;gap:7px}
+  .outage-net{font-size:.71rem;line-height:1.3;border-radius:999px;padding:5px 11px;
+    background:var(--off-white);color:#3c4a4a;border:1px solid #e2e7e3}
+  .outage-net b{font-weight:700}
+  .outage-net.down{background:#fff4e8;border-color:#f0d3ae;color:#8a5200}
+  .outage-net.quiet{opacity:.8}
+  .outage-net a{color:inherit;text-decoration:underline}
+  .outage-list{max-height:560px;overflow-y:auto;border-top:1px solid #eef1ee}
+  .outage{display:flex;gap:12px;padding:12px 24px;border-bottom:1px solid #f2f4f2}
+  .outage:last-child{border-bottom:none}
+  .outage .bar{width:4px;border-radius:2px;background:#d94f2b;flex:none}
+  .outage.planned .bar{background:#2e86c1}
+  .outage .body{flex:1;min-width:0}
+  .outage h4{margin:0 0 2px;font-size:.88rem;color:var(--heritage-green)}
+  .outage p{margin:0;font-size:.78rem;color:#5a6a6a}
+  .outage .meta{margin-top:5px;font-size:.71rem;color:#7b8a8f;display:flex;flex-wrap:wrap;gap:3px 14px}
+  .outage .cust{font-weight:700;color:var(--heritage-green)}
+  .outage .tag{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    padding:2px 7px;border-radius:999px;background:#fdece7;color:#a33c1e}
+  .outage.planned .tag{background:#e8f1fa;color:#1d5f8f}
+  .outage-foot{padding:12px 24px 18px;font-size:.75rem;color:#7b8a8f;line-height:1.55}
+  .outage-foot a{color:var(--neutral-green)}
+  @media(max-width:640px){
+    .outage{padding:12px 16px}
+    .outage-summary,.outage-networks,.outage-foot,.outage-heading{padding-left:16px;padding-right:16px}
+  }
   .crowd-badge{font-size:.64rem;font-weight:700;color:#a06000;background:#fff3d6;padding:3px 8px;border-radius:999px}
   .mobile-map-block{padding:4px 24px 22px}
   .mobile-map-block h3{font-size:.92rem;color:var(--heritage-green);margin:4px 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -370,16 +403,26 @@
 <section class="tile tile-outages" id="section-outages">
   <div class="tile-head">
     <h2>⚡📶 Power &amp; Network Outages</h2>
-    <div class="src">Live electricity outage map embedded from <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener" style="color:var(--neutral-green)">isyourpowerout.com</a> (third-party, not Suncorp or an official network operator). Mobile network status is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
+    <div class="src">Electricity outages read directly from each state's <b>distribution network operators</b> — Ausgrid, Energex, SA Power Networks, Western Power and the rest — rather than from a third-party aggregator, so each operator's status is reported separately and a network that isn't answering says so instead of quietly disappearing. Mobile network status below is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
   </div>
 
-  <div class="ca-embed-wrap power-embed-wrap">
-    <iframe id="powerOutageFrame" src="https://isyourpowerout.com/live-map" title="Is Your Power Out — live Australian electricity outage map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  <h3 class="outage-heading">⚡ Electricity Outages by State</h3>
+  <div class="state-tabs" id="outageTabs">
+    <button class="state-tab active" data-state="NSW">NSW</button>
+    <button class="state-tab" data-state="QLD">QLD</button>
+    <button class="state-tab" data-state="VIC">VIC</button>
+    <button class="state-tab" data-state="SA">SA</button>
+    <button class="state-tab" data-state="WA">WA</button>
+    <button class="state-tab" data-state="TAS">TAS</button>
+    <button class="state-tab" data-state="NT">NT</button>
+    <button class="state-tab" data-state="ACT">ACT</button>
   </div>
-  <div class="ca-fallback">
-    Live electricity outages aggregated across Australian network operators. If the map appears blank, it may block embedding — just
-    <a href="https://isyourpowerout.com/live-map" target="_blank" rel="noopener">open it in a new tab ↗</a>.
+  <div class="outage-summary" id="outageSummary"></div>
+  <div class="outage-networks" id="outageNetworks"></div>
+  <div class="outage-list" id="outageList">
+    <div class="inc-empty" id="outageLoading">Loading current electricity outages…</div>
   </div>
+  <div class="outage-foot" id="outageFoot"></div>
 
   <div class="mobile-map-block">
     <h3>📶 Mobile Network Outage Reports <span class="crowd-badge">Crowdsourced — not carrier-confirmed</span></h3>
@@ -1637,12 +1680,217 @@ setInterval(loadIncidents,5*60*1000);
 window.addEventListener('load',()=>map.invalidateSize());
 window.addEventListener('resize',()=>map.invalidateSize());
 
-/* ============ POWER & NETWORK OUTAGES ============
-   isyourpowerout.com (electricity, above) embeds fine -- confirmed working
-   in the browser. StatusGator and DownDetector Australia both blocked
-   embedding; Outage.Report is confirmed working instead, and Telstra/Optus
-   are shown side by side with hardcoded iframe src attributes -- no
-   tab-switching needed since both render simultaneously. */
+
+/* ============ ELECTRICITY OUTAGES BY STATE ============
+   Replaces an embedded third-party outage map. The embed was a single point
+   of failure with no way to tell "no outages" from "the iframe broke", and no
+   per-state view at all.
+
+   Electricity distribution is split by operator, not by state, so a state is
+   the union of two to five networks. Each is reported separately: the chips
+   under the tabs always list every operator, including any that couldn't be
+   reached, because a quiet list and an unreachable network look identical
+   otherwise -- and on this dashboard that difference matters.
+
+   Data comes from the Worker (/api/outages for the tab counts, then
+   /api/outages/<state> for the rows), so the browser never talks to an
+   operator directly and never waits on one. */
+(function(){
+  const tabsEl=document.getElementById('outageTabs'),
+        summaryEl=document.getElementById('outageSummary'),
+        networksEl=document.getElementById('outageNetworks'),
+        listEl=document.getElementById('outageList'),
+        footEl=document.getElementById('outageFoot');
+  if(!tabsEl||!listEl)return;
+
+  let currentState='NSW',aggregate=null;
+  const stateCache={};   // state -> payload, so re-selecting a tab is instant
+  const inFlight={};
+
+  const num=n=>Number(n).toLocaleString('en-AU');
+
+  /* Operators report times as ISO strings when they can and as free text when
+     they can't. Show a relative time only when the Worker managed to derive a
+     real timestamp; otherwise show whatever the operator actually said rather
+     than inventing precision. */
+  function when(iso,raw){
+    if(iso){
+      const ms=Date.parse(iso);
+      if(!isNaN(ms)){
+        const mins=(Date.now()-ms)/60000;
+        if(Math.abs(mins)<60)return (mins>=0?Math.max(1,Math.round(mins))+'m ago':'in '+Math.max(1,Math.round(-mins))+'m');
+        const hrs=mins/60;
+        if(Math.abs(hrs)<24)return (hrs>=0?Math.round(hrs)+'h ago':'in '+Math.round(-hrs)+'h');
+        return new Date(ms).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+      }
+    }
+    return raw||'';
+  }
+
+  function setTabCounts(){
+    tabsEl.querySelectorAll('.state-tab').forEach(tab=>{
+      if(!tab.dataset.label)tab.dataset.label=tab.textContent.trim();
+      let badge='';
+      const st=aggregate&&(aggregate.states||[]).find(s=>s.state===tab.dataset.state);
+      if(st){
+        /* "!" rather than "0" when nothing answered -- zero is a claim about
+           the network, and we would not be entitled to make it. */
+        badge=st.ok?' <span class="n">('+st.count+')</span>'
+                   :' <span class="n" title="No operator reporting">(!)</span>';
+      }
+      tab.innerHTML=tab.dataset.label+badge;
+    });
+  }
+
+  function renderNetworks(payload){
+    const nets=payload.networks||[];
+    networksEl.innerHTML=nets.map(n=>{
+      const cls=n.ok?(n.count?'outage-net':'outage-net quiet'):'outage-net down';
+      const tail=n.ok
+        ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s'):' · none listed')
+        :' · unavailable';
+      /* The upstream reason on hover, and a way through to the operator's own
+         map either way -- a failed network must never be a dead end. */
+      const title=n.ok?(n.diagnostics?'Answered, but its data format was not recognised':(n.area||''))
+                      :(n.error||'Unavailable');
+      return '<span class="'+cls+'" title="'+escapeHtml(title)+'">'+
+        '<a href="'+escapeHtml(n.site||'#')+'" target="_blank" rel="noopener"><b>'+escapeHtml(n.name)+'</b></a>'+
+        escapeHtml(tail)+'</span>';
+    }).join('');
+  }
+
+  function renderSummary(payload){
+    const bits=[];
+    bits.push('<span><b>'+num(payload.count||0)+'</b> current outage'+((payload.count===1)?'':'s')+'</span>');
+    if(payload.customers)bits.push('<span><b>'+num(payload.customers)+'</b> customers affected</span>');
+    const down=(payload.networks||[]).filter(n=>!n.ok);
+    if(down.length){
+      bits.push('<span class="warn">⚠️ '+down.length+' of '+(payload.networks||[]).length+
+        ' networks not reporting — this list is incomplete</span>');
+    }
+    if(payload.cacheAgeSeconds>1500){
+      bits.push('<span class="warn">Data is '+Math.round(payload.cacheAgeSeconds/60)+' minutes old</span>');
+    }
+    summaryEl.innerHTML=bits.join('');
+  }
+
+  function renderList(payload){
+    const rows=payload.outages||[];
+    if(!rows.length){
+      const reporting=(payload.networks||[]).filter(n=>n.ok);
+      listEl.innerHTML='<div class="inc-empty">'+(reporting.length
+        ?'No current electricity outages listed for '+escapeHtml(payload.name||currentState)+'.'
+        :'No operator in '+escapeHtml(payload.name||currentState)+' is reporting right now — this is not the same as there being no outages.')+
+        '</div>';
+      return;
+    }
+    listEl.innerHTML=rows.map(o=>{
+      const planned=o.kind==='planned';
+      const detail=[o.cause,o.status].filter(Boolean).join(' · ');
+      const meta=[];
+      meta.push('<span>'+escapeHtml(o.network||'')+'</span>');
+      if(o.customers!==null&&o.customers!==undefined)meta.push('<span class="cust">'+num(o.customers)+' customers</span>');
+      const started=when(o.startIso,o.start);
+      if(started)meta.push('<span>Started '+escapeHtml(started)+'</span>');
+      const back=when(o.restoreIso,o.restore);
+      if(back)meta.push('<span>Est. restored '+escapeHtml(back)+'</span>');
+      return '<div class="outage'+(planned?' planned':'')+'">'+
+        '<div class="bar"></div><div class="body">'+
+        '<h4>'+escapeHtml(o.location||'Outage')+(o.kind?' <span class="tag">'+escapeHtml(o.kind)+'</span>':'')+'</h4>'+
+        (detail?'<p>'+escapeHtml(detail)+'</p>':'')+
+        '<div class="meta">'+meta.join('')+'</div>'+
+        '</div></div>';
+    }).join('');
+  }
+
+  function renderFoot(payload){
+    const notes=['Reported by each state’s distribution network operators. Outage counts and restoration estimates are the operators’ own and can change without notice — for anything operational, confirm on the operator’s site.'];
+    const drifted=(payload.networks||[]).filter(n=>n.ok&&n.diagnostics);
+    if(drifted.length){
+      /* Reachable but unreadable is a parser fix, not an outage, and saying
+         so is what turns it into a one-line change instead of a mystery. */
+      notes.push('⚠️ '+drifted.map(n=>escapeHtml(n.name)).join(', ')+
+        ' answered but in a format this dashboard didn’t recognise — their outages are missing from the list above. Details in /api/outages/'+
+        currentState.toLowerCase()+'.');
+    }
+    footEl.innerHTML=notes.join('<br>');
+  }
+
+  function render(){
+    const payload=stateCache[currentState];
+    if(!payload){
+      listEl.innerHTML='<div class="inc-empty" id="outageLoading">Loading current electricity outages…</div>';
+      summaryEl.innerHTML='';networksEl.innerHTML='';footEl.innerHTML='';
+      return;
+    }
+    renderSummary(payload);
+    renderNetworks(payload);
+    renderList(payload);
+    renderFoot(payload);
+  }
+
+  async function loadState(st){
+    if(stateCache[st]||inFlight[st])return;
+    inFlight[st]=true;
+    try{
+      const r=await fetch('/api/outages/'+st.toLowerCase(),{cache:'no-store'});
+      stateCache[st]=await r.json();
+    }catch(e){
+      /* The Worker itself is unreachable. Say that, rather than leaving the
+         tab on a spinner -- and keep the operators' own links reachable. */
+      console.warn('Outage request failed for '+st+':',e);
+      const group=(aggregate&&(aggregate.states||[]).find(s=>s.state===st))||null;
+      stateCache[st]={state:st,name:(group&&group.name)||st,ok:false,count:0,outages:[],
+        networks:(group&&group.networks)||[],
+        error:'Could not reach the outage service from this network.'};
+    }finally{
+      delete inFlight[st];
+      if(currentState===st)render();
+    }
+  }
+
+  async function loadAggregate(){
+    try{
+      const r=await fetch('/api/outages',{cache:'no-store'});
+      aggregate=await r.json();
+    }catch(e){
+      console.warn('Outage summary request failed:',e);
+    }finally{
+      setTabCounts();
+    }
+  }
+
+  tabsEl.querySelectorAll('.state-tab').forEach(tab=>{
+    tab.dataset.label=tab.textContent.trim();
+    tab.addEventListener('click',()=>{
+      tabsEl.querySelectorAll('.state-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      currentState=tab.dataset.state;
+      render();
+      loadState(currentState);
+    });
+  });
+  setTabCounts();
+
+  /* The Worker re-reads half the states every 5-minute cron tick, so every
+     state is at most ~10 minutes old. Re-polling on the same cadence keeps
+     the page current and costs only cache reads; dropping the per-state cache
+     is what makes the next render fetch fresh rows. */
+  function refreshAll(){
+    Object.keys(stateCache).forEach(k=>delete stateCache[k]);
+    loadAggregate();
+    loadState(currentState);
+  }
+  loadAggregate();
+  loadState(currentState);
+  setInterval(refreshAll,5*60*1000);
+})();
+
+/* ============ MOBILE NETWORK OUTAGES ============
+   StatusGator and DownDetector Australia both blocked embedding;
+   Outage.Report is confirmed working instead, and Telstra/Optus are shown
+   side by side with hardcoded iframe src attributes -- no tab-switching
+   needed since both render simultaneously. */
 </script>
 
 </body>

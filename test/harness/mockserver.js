@@ -1,0 +1,122 @@
+/* Serves a local copy of the dashboard with every /api route stubbed, so the
+   browser tests can drive real UI states (a working operator, a failing one,
+   an unreadable one) without touching a live endpoint -- which this build
+   environment could not reach anyway.
+
+   The page is staged into <scratch>/testsite/index.html with three rewrites
+   (see stage.sh): Leaflet is pointed at a local copy, and the two API routes
+   gain location.search so a test can select a scenario per page load.
+
+   Usage: node test/harness/mockserver.js [--root <dir>] [--port 8845]
+   Scenarios, chosen with ?outages=<name>:
+     live       all operators reporting
+     partial    one operator down
+     drift      an operator answers in an unrecognised shape
+     quiet      everyone reporting, nothing out
+     down       the outage service itself is unreachable
+*/
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const argv = process.argv.slice(2);
+const arg = (name, dflt) => { const i = argv.indexOf('--' + name); return i >= 0 ? argv[i + 1] : dflt; };
+const ROOT = path.resolve(arg('root', path.join(__dirname, '..', '..', '.testsite')));
+const PORT = Number(arg('port', 8845));
+
+const NSW_NETWORKS = [
+  { name: 'Ausgrid', area: 'Sydney, Central Coast and the Hunter', site: 'https://www.ausgrid.com.au/Outages' },
+  { name: 'Endeavour Energy', area: "Sydney's greater west", site: 'https://www.endeavourenergy.com.au/outages' },
+  { name: 'Essential Energy', area: 'Regional and rural NSW', site: 'https://www.essentialenergy.com.au/outages' }
+];
+
+function rows(now) {
+  return [
+    { network: 'Ausgrid', id: 'A1', location: 'Newtown', cause: 'Equipment fault', status: 'Crew on site',
+      kind: 'unplanned', customers: 412, startIso: new Date(now - 90 * 60000).toISOString(),
+      restoreIso: new Date(now + 120 * 60000).toISOString() },
+    { network: 'Endeavour Energy', id: 'E1', location: 'Penrith', cause: 'Planned maintenance', status: 'In progress',
+      kind: 'planned', customers: 1205, startIso: new Date(now - 30 * 60000).toISOString() },
+    { network: 'Essential Energy', id: 'S1', location: 'Dubbo', cause: 'Vegetation', status: 'Crew assigned',
+      kind: 'unplanned', customers: 88, startIso: new Date(now - 45 * 60000).toISOString() },
+    { network: 'Ausgrid', id: 'A2', location: 'Gosford', cause: 'Storm damage', status: 'Assessing',
+      kind: 'unplanned', customers: null, start: 'Early this morning' }
+  /* Returned in the order the Worker would return them -- biggest first, an
+     unreported count last -- because ordering is the Worker's job and the
+     page is supposed to render what it is given. */
+  ].sort((a, b) => (b.customers === null ? -1 : b.customers) - (a.customers === null ? -1 : a.customers));
+}
+
+function statePayload(scenario) {
+  const now = Date.now();
+  const nets = NSW_NETWORKS.map(n => Object.assign({ ok: true, count: 0, customers: 0 }, n));
+  let outages = rows(now);
+
+  if (scenario === 'quiet') { outages = []; }
+  if (scenario === 'partial') {
+    nets[2].ok = false;
+    nets[2].error = 'HTTP 403 — <html>Access denied</html>';
+    outages = outages.filter(o => o.network !== 'Essential Energy');
+  }
+  if (scenario === 'drift') {
+    nets[1].diagnostics = { envelope: 'array', recordsSeen: 12, sampleKeys: ['zzz', 'qqq'] };
+    outages = outages.filter(o => o.network !== 'Endeavour Energy');
+  }
+  nets.forEach(n => {
+    const mine = outages.filter(o => o.network === n.name);
+    n.count = mine.length;
+    n.customers = mine.reduce((s, o) => s + (o.customers || 0), 0);
+  });
+  return {
+    state: 'NSW', name: 'New South Wales',
+    ok: nets.some(n => n.ok), complete: nets.every(n => n.ok),
+    count: outages.length,
+    customers: outages.reduce((s, o) => s + (o.customers || 0), 0),
+    networks: nets, outages, fetchedAt: now, cacheAgeSeconds: 40
+  };
+}
+
+const STATES = ['NSW', 'QLD', 'VIC', 'SA', 'WA', 'TAS', 'NT', 'ACT'];
+
+const server = http.createServer((req, res) => {
+  const u = new URL(req.url, 'http://localhost');
+  const sc = u.searchParams.get('outages') || 'live';
+  const send = (code, body, type) => {
+    res.writeHead(code, { 'Content-Type': type || 'application/json' });
+    res.end(typeof body === 'string' ? body : JSON.stringify(body));
+  };
+
+  if (u.pathname === '/api/outages') {
+    if (sc === 'down') return send(502, 'gateway', 'text/plain');
+    const nsw = statePayload(sc);
+    const { outages, ...head } = nsw;
+    return send(200, {
+      states: STATES.map(s => s === 'NSW' ? head
+        : { state: s, name: s, ok: s !== 'WA', count: s === 'WA' ? 0 : 2, customers: 10, complete: true, networks: [] }),
+      builtAt: Date.now()
+    });
+  }
+  if (u.pathname.startsWith('/api/outages/')) {
+    if (sc === 'down') return send(502, 'gateway', 'text/plain');
+    const st = u.pathname.split('/')[3].toUpperCase();
+    if (st !== 'NSW') return send(200, { state: st, name: st, ok: true, complete: true, count: 0, customers: 0, networks: [], outages: [] });
+    return send(200, statePayload(sc));
+  }
+  /* Everything else the page asks for, answered blandly so one unrelated
+     route can't be what makes an outage test fail. */
+  if (u.pathname === '/api/news') return send(200, { build: 'test', articles: [], feeds: [], warming: true });
+  if (u.pathname.startsWith('/api/incidents')) return send(200, { states: [], builtAt: Date.now() });
+  if (u.pathname === '/api/gdelt') return send(200, { articles: [] });
+
+  let p = path.join(ROOT, u.pathname === '/' ? 'index.html' : u.pathname);
+  if (!p.startsWith(ROOT)) return send(403, 'no', 'text/plain');
+  fs.readFile(p, (err, data) => {
+    if (err) return send(404, 'not found', 'text/plain');
+    const ext = path.extname(p);
+    const type = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
+      '.png': 'image/png', '.svg': 'image/svg+xml' }[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': type });
+    res.end(data);
+  });
+});
+server.listen(PORT, () => console.log('mock server on http://localhost:' + PORT + ' serving ' + ROOT));

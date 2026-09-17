@@ -7,13 +7,20 @@
     "binding": "ASSETS"
   },
   "triggers": {
-    // Runs the GDELT + all-eight-state incident cache refreshes independently
-    // of visitor traffic every 5 minutes, so a page load never waits on a
-    // live fetch.
+    // Runs the GDELT, incident and electricity-outage cache refreshes
+    // independently of visitor traffic every 5 minutes, so a page load never
+    // waits on a live fetch.
     //
     // Caching note: the cron tick fetches AND normalises each feed, then
     // stores the finished JSON in the Cloudflare Cache API under
-    //   /gdelt, /incidents/<state> (x8), and /incidents-all
+    //   /gdelt, /incidents/<state> (x8), /incidents-all,
+    //   /outages/<state> (x8) and /outages-all
+    // Outages are the one refresh that is sharded across ticks rather than
+    // done every time -- there are far more distribution operators than
+    // emergency agencies, and sweeping all of them every tick would compete
+    // with the news and incident refreshes for the same invocation's
+    // 50-subrequest budget. Half the states per tick means every state is at
+    // most ~10 minutes old.
     // Visitor requests are therefore pure cache reads with no upstream call
     // and no JSON parsing -- which is what keeps per-request CPU inside the
     // free plan's budget. Entries carry a 2h max-age purely as an outer
