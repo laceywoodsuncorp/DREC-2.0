@@ -210,6 +210,9 @@
     background:var(--off-white);color:#3c4a4a;border:1px solid #e2e7e3}
   .outage-net b{font-weight:700}
   .outage-net.down{background:#fff4e8;border-color:#f0d3ae;color:#8a5200}
+  /* Not connected yet reads as a gap in this dashboard, not as an operator
+     problem, so it is muted rather than amber. */
+  .outage-net.pending{background:#f4f4f6;border-color:#e0e0e6;color:#6a6a78;font-style:italic}
   .outage-net.quiet{opacity:.8}
   .outage-net a{color:inherit;text-decoration:underline}
   .outage-list{max-height:560px;overflow-y:auto;border-top:1px solid #eef1ee}
@@ -1745,14 +1748,20 @@ window.addEventListener('resize',()=>map.invalidateSize());
   function renderNetworks(payload){
     const nets=payload.networks||[];
     networksEl.innerHTML=nets.map(n=>{
-      const cls=n.ok?(n.count?'outage-net':'outage-net quiet'):'outage-net down';
+      /* Three states, not two. An operator we have never managed to read is
+         not the same as one that has gone down, and saying "unavailable"
+         for the first would claim we checked something we haven't. */
+      const cls=n.ok?(n.count?'outage-net':'outage-net quiet')
+                    :(n.unconfirmed?'outage-net pending':'outage-net down');
       const tail=n.ok
         ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s'):' · none listed')
-        :' · unavailable';
+        :(n.unconfirmed?' · feed not connected yet':' · unavailable');
       /* The upstream reason on hover, and a way through to the operator's own
          map either way -- a failed network must never be a dead end. */
       const title=n.ok?(n.diagnostics?'Answered, but its data format was not recognised':(n.area||''))
-                      :(n.error||'Unavailable');
+                      :(n.unconfirmed
+                        ?'This dashboard does not have a working data feed for this operator yet — use their own outage map. ('+(n.error||'')+')'
+                        :(n.error||'Unavailable'));
       return '<span class="'+cls+'" title="'+escapeHtml(title)+'">'+
         '<a href="'+escapeHtml(n.site||'#')+'" target="_blank" rel="noopener"><b>'+escapeHtml(n.name)+'</b></a>'+
         escapeHtml(tail)+'</span>';
@@ -1763,10 +1772,16 @@ window.addEventListener('resize',()=>map.invalidateSize());
     const bits=[];
     bits.push('<span><b>'+num(payload.count||0)+'</b> current outage'+((payload.count===1)?'':'s')+'</span>');
     if(payload.customers)bits.push('<span><b>'+num(payload.customers)+'</b> customers affected</span>');
-    const down=(payload.networks||[]).filter(n=>!n.ok);
+    const nets=payload.networks||[];
+    const down=nets.filter(n=>!n.ok&&!n.unconfirmed);
+    const pending=nets.filter(n=>n.unconfirmed);
     if(down.length){
-      bits.push('<span class="warn">⚠️ '+down.length+' of '+(payload.networks||[]).length+
+      bits.push('<span class="warn">⚠️ '+down.length+' of '+nets.length+
         ' networks not reporting — this list is incomplete</span>');
+    }
+    if(pending.length){
+      bits.push('<span class="warn">'+pending.length+' of '+nets.length+
+        ' networks not connected yet — use their own maps below</span>');
     }
     if(payload.cacheAgeSeconds>1500){
       bits.push('<span class="warn">Data is '+Math.round(payload.cacheAgeSeconds/60)+' minutes old</span>');

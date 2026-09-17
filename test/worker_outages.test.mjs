@@ -200,6 +200,71 @@ console.log('\n== the cron refreshes outages in shards ==');
     a2.states.filter(s => !s.ok).map(s => s.state));
 }
 
+
+console.log('\n== Queensland: two complementary files, merged ==');
+{
+  reset();
+  /* Energy Queensland splits planned from unplanned across separate files
+     rather than flagging it per record, so the file is the only thing that
+     knows which it is. */
+  upstream['energex_po_current_unplanned'] = json({ type: 'FeatureCollection', features: [
+    { properties: { EVENT_ID: 'EQ1', LOCALITY: 'Ipswich', CUSTOMERSAFFECTED: 60 } }] });
+  upstream['energex_po_current_planned'] = json({ type: 'FeatureCollection', features: [
+    { properties: { EVENT_ID: 'EQ2', LOCALITY: 'Redcliffe', CUSTOMERSAFFECTED: 20 } }] });
+  upstream['ergon_po_current_unplanned'] = json({ type: 'FeatureCollection', features: [
+    { properties: { EVENT_ID: 'ER1', LOCALITY: 'Cairns', CUSTOMERSAFFECTED: 300 } }] });
+  upstream['ergon_po_current_planned'] = json({ type: 'FeatureCollection', features: [] });
+
+  const b = await (await call('/api/outages/qld')).json();
+  check('both files contribute to one operator', b.count === 3, b.count);
+  const energex = b.networks.find(n => n.name === 'Energex');
+  check('Energex merges rather than stopping at the first file', energex.count === 2, energex.count);
+  const planned = b.outages.find(o => o.location === 'Redcliffe');
+  const unplanned = b.outages.find(o => o.location === 'Ipswich');
+  check('the planned file marks its rows planned', planned && planned.kind === 'planned', planned);
+  check('and the unplanned file marks its own', unplanned && unplanned.kind === 'unplanned', unplanned);
+  check('an empty complementary file is not a failure',
+    b.networks.find(n => n.name === 'Ergon Energy').ok === true);
+}
+
+console.log('\n== Western Power: a boolean flag, not a word ==');
+{
+  reset();
+  // The real column names from its feature service
+  upstream['WP_Outage_Prod'] = json({ type: 'FeatureCollection', features: [
+    { properties: { INCIDENTREF: 'WP-1', AFFECTED_AREA: 'Mandurah', NOCUSTOMERSIMPACTED: 730,
+      AFFECTED_AREA_NOCUSTOMERS: 12, PLANNEDOUTAGE: 'No', OUTAGETYPE: 'Distribution',
+      OUTAGESTARTTIME: 1789000000000, ESTIMATEDRESTORATIONTIME: 1789010000000 } },
+    { properties: { INCIDENTREF: 'WP-2', AFFECTED_AREA: 'Bunbury', NOCUSTOMERSIMPACTED: 12,
+      PLANNEDOUTAGE: true, OUTAGETYPE: 'Distribution' } }]});
+  const b = await (await call('/api/outages/wa')).json();
+  const wp = b.networks.find(n => n.name === 'Western Power');
+  check('the service is read', wp.ok && wp.count === 2, wp);
+  const one = b.outages.find(o => o.location === 'Mandurah');
+  check('AFFECTED_AREA is the location', !!one, b.outages.map(o => o.location));
+  check('the total count wins over the per-area breakdown', one.customers === 730, one.customers);
+  check('"No" means unplanned, not unlabelled', one.kind === 'unplanned', one.kind);
+  check('a true flag means planned',
+    b.outages.find(o => o.location === 'Bunbury').kind === 'planned',
+    b.outages.find(o => o.location === 'Bunbury'));
+  check('epoch times become ISO', !!one.startIso && !!one.restoreIso, one);
+  check('INCIDENTREF is carried as the id', one.id === 'WP-1', one.id);
+}
+
+console.log('\n== an unconnected feed is not a reported outage ==');
+{
+  reset();
+  upstream.http = () => new Response('not found', { status: 404 });
+  const nsw = await (await call('/api/outages/nsw')).json();
+  check('operators with no confirmed feed say so',
+    nsw.networks.every(n => n.unconfirmed === true), nsw.networks.map(n => [n.name, n.unconfirmed]));
+  const wa = await (await call('/api/outages/wa')).json();
+  const wp = wa.networks.find(n => n.name === 'Western Power');
+  check('a confirmed feed failing is a plain failure, not "unconnected"',
+    wp.ok === false && !wp.unconfirmed, wp);
+  check('and still reports the status it got', /404/.test(wp.error), wp.error);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);

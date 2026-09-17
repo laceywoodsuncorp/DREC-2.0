@@ -1553,15 +1553,26 @@ async function handleIncidentsAll() {
    degrades that state's list to "partial, and here's who is missing" rather
    than to nothing.
 
-   IMPORTANT, and the reason every source below carries fallbacks and
-   diagnostics: none of these endpoints could be verified from the build
-   environment, which has no outbound access to these hosts (every request is
-   refused at the proxy with a 403 before it leaves). The operators publish
-   this data to their own outage maps rather than as documented open APIs, so
-   the URLs are best-effort. Anything wrong here surfaces as a per-operator
-   error in /api/outages/<state> with the HTTP status and a body excerpt --
-   enough to tell a moved URL from a WAF block from a schema change -- and
-   costs nothing else. Correcting one is a single line in OUTAGE_NETWORKS. */
+   ENDPOINT STATUS. Operators publish this data to their own outage maps
+   rather than as documented open APIs, and this build environment cannot
+   reach any of these hosts (every request is refused at the proxy before it
+   leaves), so nothing here could be confirmed by trying it. Two are confirmed
+   from published descriptions of the services instead, and carry
+   `confirmed: true`:
+
+     Energy Queensland  plain GeoJSON files, planned and unplanned separately
+                        (energex_po_current_*.geojson, ergon_po_current_*)
+     Western Power      a public anonymous ArcGIS feature service,
+                        WP_Outage_Prod/FeatureServer/0
+
+   The rest are pattern-matched guesses and are expected to fail until
+   someone reads the real request off the operator's own outage map (browser
+   devtools, Network, XHR). They report as `unconfirmed` rather than as
+   unavailable, because "we have not found this operator's feed" and "this
+   operator's feed is down" are different claims and only one of them is
+   true. Every attempt is recorded with its HTTP status and a body excerpt in
+   /api/outages/<state>, which is enough to tell a moved URL from a WAF block
+   from a schema change. Correcting one is a single line below. */
 
 const OUTAGE_STATES = ['nsw', 'qld', 'vic', 'sa', 'wa', 'tas', 'nt', 'act'];
 
@@ -1574,22 +1585,30 @@ const OUTAGES_ALL_CACHE_URL = 'https://newsradar-internal-cache.example/outages-
    in priority order -- the same approach as the incident feeds, for the same
    reason: a dozen operators with no shared schema between them. */
 const OUTAGE_FIELDS = {
-  location: ['suburb', 'suburbs', 'locality', 'localities', 'location', 'locationname',
-    'location_name', 'area', 'areas', 'town', 'place', 'street', 'streets', 'address',
-    'region', 'name', 'title'],
+  /* AFFECTED_AREA and NOCUSTOMERSIMPACTED are Western Power's real column
+     names, confirmed from its published feature service; EVENT_ID is Energy
+     Queensland's. The rest stay broad for the operators whose schema still
+     hasn't been seen. */
+  location: ['affected_area', 'affectedarea', 'suburb', 'suburbs', 'locality', 'localities',
+    'location', 'locationname', 'location_name', 'area', 'areas', 'town', 'place',
+    'street', 'streets', 'address', 'region', 'name', 'title'],
   status: ['status', 'outagestatus', 'currentstatus', 'jobstatus', 'stage', 'progress', 'phase'],
   cause: ['cause', 'reason', 'outagecause', 'causedescription', 'causedesc', 'faulttype',
     'description', 'comment', 'comments', 'details', 'event', 'eventdescription'],
-  customers: ['customersaffected', 'customeraffected', 'affectedcustomers', 'numcustomersaffected',
-    'numcustomers', 'custaffected', 'customercount', 'noofcustomers', 'impactedcustomers',
-    'customers', 'custs', 'numberofcustomers'],
-  start: ['starttime', 'outagestarttime', 'startdate', 'start', 'begin', 'reportedtime',
-    'reported', 'firstreported', 'datereported', 'created', 'createddate', 'timeoff'],
+  /* The total first: Western Power also carries AFFECTED_AREA_NOCUSTOMERS,
+     which is a per-area breakdown and would understate the outage. */
+  customers: ['nocustomersimpacted', 'customersaffected', 'customeraffected', 'affectedcustomers',
+    'numcustomersaffected', 'numcustomers', 'custaffected', 'customercount', 'noofcustomers',
+    'impactedcustomers', 'customers', 'custs', 'numberofcustomers', 'affected_area_nocustomers'],
+  start: ['outagestarttime', 'starttime', 'startdate', 'start', 'begin', 'reportedtime',
+    'reported', 'firstreported', 'datereported', 'created', 'createddate', 'timeoff', 'timeadded'],
   restore: ['estimatedrestorationtime', 'estimatedrestoretime', 'estimatedrestoration',
     'expectedrestoration', 'restorationtime', 'restoretime', 'etr', 'eta', 'timeon',
     'estimatedtimeofrestoration', 'estrestoretime', 'estimatedon'],
-  kind: ['type', 'outagetype', 'plannedtype', 'worktype', 'jobtype', 'category', 'classification'],
-  id: ['id', 'outageid', 'jobid', 'eventid', 'incidentid', 'reference', 'ref', 'objectid']
+  kind: ['plannedoutage', 'outagetype', 'type', 'plannedtype', 'worktype', 'jobtype',
+    'category', 'classification'],
+  id: ['incidentref', 'event_id', 'outageid', 'jobid', 'eventid', 'incidentid', 'enarnumber',
+    'id', 'reference', 'ref', 'objectid']
 };
 
 function pickOutageField(lowered, kind) {
@@ -1621,9 +1640,17 @@ function parseCustomerCount(raw) {
    their power is coming back, so they are separated when the operator says
    which it is -- and left unlabelled when it doesn't, rather than guessed. */
 function classifyOutage(kindText, statusText, causeText) {
+  /* Western Power answers this with a PLANNEDOUTAGE flag rather than a word,
+     and the flag arrives as a boolean, "Yes"/"No" or 1/0 depending on the
+     output format asked for. Checked before the text match, because "No"
+     contains none of the words below and would otherwise fall through to
+     unlabelled. */
+  const flag = String(kindText).trim().toLowerCase();
+  if (flag === 'true' || flag === 'yes' || flag === '1') return 'planned';
+  if (flag === 'false' || flag === 'no' || flag === '0') return 'unplanned';
   const hay = (kindText + ' ' + statusText + ' ' + causeText).toLowerCase();
-  if (/\bplanned|\bscheduled|maintenance/.test(hay)) return 'planned';
   if (/\bunplanned|\bfault|emergency|unexpected/.test(hay)) return 'unplanned';
+  if (/\bplanned|\bscheduled|maintenance/.test(hay)) return 'planned';
   return '';
 }
 
@@ -1631,7 +1658,12 @@ function classifyOutage(kindText, statusText, causeText) {
    normaliseRecords(): returns the rows, plus `diagnostics` only when
    something genuinely looks wrong, so a network with no outages reads as
    quiet rather than broken. */
-function normaliseOutages(json) {
+/* `opts.kindHint` is for operators that split planned from unplanned across
+   separate files rather than flagging it on the record -- Energy Queensland
+   does this -- so the file the row came from is the only thing that knows. A
+   value carried on the record itself still wins. */
+function normaliseOutages(json, opts) {
+  const kindHint = (opts && opts.kindHint) || '';
   const { records, envelope } = collectRecords(json);
   const outages = [];
   records.forEach(({ props, geometry }) => {
@@ -1651,7 +1683,7 @@ function normaliseOutages(json) {
       location: location || 'Outage ' + id,
       status: status || undefined,
       cause: cause || undefined,
-      kind: classifyOutage(kindText, status, cause) || undefined,
+      kind: classifyOutage(kindText, status, cause) || kindHint || undefined,
       customers: parseCustomerCount(pickOutageField(lowered, 'customers')),
       start: start.when || undefined,
       startIso: start.whenIso,
@@ -1701,20 +1733,31 @@ const OUTAGE_NETWORKS = {
         ] }
     ]
   },
+  /* Energy Queensland is the one operator whose feeds are properly confirmed:
+     it publishes plain GeoJSON files, and they split planned from unplanned
+     across separate files rather than flagging it per record -- hence
+     `combine` (fetch both and merge, rather than first-one-wins) and the
+     kind hints. A third file each, *_po_future_planned.geojson, carries works
+     scheduled for later; left out deliberately, since a dashboard of what is
+     happening now shouldn't be padded with next month's roadworks. */
   qld: {
     name: 'Queensland',
     networks: [
-      { name: 'Energex', area: 'South East Queensland',
-        site: 'https://www.energex.com.au/outages/current-outages',
+      { name: 'Energex', area: 'South East Queensland', confirmed: true, combine: true,
+        site: 'https://www.energex.com.au/outages/outage-finder/outage-finder-map',
         sources: [
-          { url: 'https://www.energex.com.au/static/Energex/Network%20Outages/EQLOutageMapData.json', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.energex.com.au/api/outages/v1/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.energex.com.au/static/Energex/energex_po_current_unplanned.geojson',
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'unplanned' }) },
+          { url: 'https://www.energex.com.au/static/Energex/energex_po_current_planned.geojson',
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) }
         ] },
-      { name: 'Ergon Energy', area: 'Regional Queensland',
-        site: 'https://www.ergon.com.au/outages/current-outages',
+      { name: 'Ergon Energy', area: 'Regional Queensland', confirmed: true, combine: true,
+        site: 'https://www.ergon.com.au/network/outages/outage-finder/outage-finder-map',
         sources: [
-          { url: 'https://www.ergon.com.au/static/Ergon/Outages/ergon_outages.json', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.ergon.com.au/api/outages/v1/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.ergon.com.au/static/Ergon/ergon_po_current_unplanned.geojson',
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'unplanned' }) },
+          { url: 'https://www.ergon.com.au/static/Ergon/ergon_po_current_planned.geojson',
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) }
         ] }
     ]
   },
@@ -1763,11 +1806,20 @@ const OUTAGE_NETWORKS = {
   wa: {
     name: 'Western Australia',
     networks: [
+      /* Western Power's outage map is backed by a public, anonymous ArcGIS
+         feature service. Its columns (AFFECTED_AREA, NOCUSTOMERSIMPACTED,
+         OUTAGESTARTTIME, ESTIMATEDRESTORATIONTIME, PLANNEDOUTAGE, INCIDENTREF)
+         are in OUTAGE_FIELDS. resultRecordCount is well under the service's
+         2,000 page size and keeps one bad day from returning a payload this
+         Worker has to parse inside a small CPU budget. */
       { name: 'Western Power', area: 'South-west interconnected system (Perth and the south-west)',
+        confirmed: true,
         site: 'https://www.westernpower.com.au/faults-outages/power-outages/',
         sources: [
-          { url: 'https://www.westernpower.com.au/api/v1/outages/current', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.westernpower.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson',
+            format: 'json', parse: normaliseOutages },
+          { url: 'https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&resultRecordCount=400&f=json',
+            format: 'json', parse: normaliseOutages }
         ] },
       { name: 'Horizon Power', area: 'Regional and remote WA',
         site: 'https://www.horizonpower.com.au/faults-outages/',
@@ -1847,10 +1899,13 @@ async function refreshStateOutages(state) {
         continue;
       }
       entry.ok = true;
-      entry.outages = result.parsed.outages;
-      entry.count = result.parsed.outages.length;
-      entry.sourceUrl = source.url;
-      break;
+      entry.outages = entry.outages.concat(result.parsed.outages);
+      entry.count = entry.outages.length;
+      entry.sourceUrl = entry.sourceUrl || source.url;
+      /* `combine` means the sources are complementary parts of one picture
+         (planned and unplanned in separate files), not fallbacks for each
+         other -- so keep going instead of stopping at the first success. */
+      if (!net.combine) break;
     }
 
     if (!entry.ok && drifted) {
@@ -1865,6 +1920,12 @@ async function refreshStateOutages(state) {
         ? (attempts.length === 1 ? attempts[0].error
           : 'All ' + attempts.length + ' sources failed — ' + attempts.map((a) => a.error).join(' | '))
         : 'Not checked on this pass';
+      /* An operator whose endpoint was never confirmed failing is a different
+         claim from a confirmed one going down: the first means we haven't
+         found its feed yet, the second means its feed is broken. Reporting
+         both as "unavailable" would be telling the reader we looked when we
+         haven't. */
+      if (!net.confirmed) entry.unconfirmed = true;
     }
     if (attempts.length) entry.attempts = attempts;
     networks.push(entry);
@@ -1902,7 +1963,8 @@ async function refreshStateOutages(state) {
     networks: networks.map((n) => ({
       name: n.name, area: n.area, site: n.site, ok: n.ok, count: n.count,
       customers: (n.outages || []).reduce((s, o) => s + (o.customers || 0), 0),
-      error: n.error, sourceUrl: n.sourceUrl, diagnostics: n.diagnostics, attempts: n.attempts
+      error: n.error, unconfirmed: n.unconfirmed, sourceUrl: n.sourceUrl,
+      diagnostics: n.diagnostics, attempts: n.attempts
     })),
     fetchedAt: Date.now()
   };

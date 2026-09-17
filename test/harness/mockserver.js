@@ -13,6 +13,7 @@
      partial    one operator down
      drift      an operator answers in an unrecognised shape
      quiet      everyone reporting, nothing out
+     unconnected  operators whose feed has not been found yet
      down       the outage service itself is unreachable
 */
 const http = require('http');
@@ -57,6 +58,11 @@ function statePayload(scenario) {
     nets[2].ok = false;
     nets[2].error = 'HTTP 403 — <html>Access denied</html>';
     outages = outages.filter(o => o.network !== 'Essential Energy');
+  }
+  if (scenario === 'unconnected') {
+    nets[1].ok = false; nets[1].unconfirmed = true; nets[1].error = 'HTTP 404';
+    nets[2].ok = false; nets[2].unconfirmed = true; nets[2].error = 'HTTP 404';
+    outages = outages.filter(o => o.network === 'Ausgrid');
   }
   if (scenario === 'drift') {
     nets[1].diagnostics = { envelope: 'array', recordsSeen: 12, sampleKeys: ['zzz', 'qqq'] };

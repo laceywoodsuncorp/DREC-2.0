@@ -107,6 +107,22 @@ const check = (n, c, x) => {
     await d.close();
   }
 
+  console.log('\n== "not connected yet" is not "unavailable" ==');
+  {
+    const p = await open('unconnected');
+    const c = await chips(p);
+    check('every operator still has a chip', c.length === 3, c.map(x => x.text));
+    check('unconnected operators say so, not "unavailable"',
+      c.filter(x => /not connected yet/i.test(x.text)).length === 2, c.map(x => x.text));
+    check('and are not styled as a failure', c.filter(x => x.down).length === 0, c);
+    const s = await summary(p);
+    check('the summary distinguishes it from an outage',
+      /not connected yet/i.test(s) && !/not reporting/i.test(s), s);
+    check('their own map is still one click away',
+      await p.$$eval('#outageNetworks .outage-net a', els => els.every(a => /^https:\/\//.test(a.href))));
+    await p.close();
+  }
+
   console.log('\n== tabs switch states and carry counts ==');
   {
     const p = await open('live');
