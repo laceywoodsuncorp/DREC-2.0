@@ -71,7 +71,13 @@ function respondFromCache(cached) {
     headers: {
       'Content-Type': cached.response.headers.get('content-type') || 'application/json',
       'Cache-Control': 'no-store',
-      'X-Cache-Age': String(Math.round(cached.ageSeconds))
+      'X-Cache-Age': String(Math.round(cached.ageSeconds)),
+      /* Which code is answering, as opposed to how old the answer is.
+         "Did my change deploy?" and "has the cron refreshed since it did?"
+         are separate questions and they get separate headers: the build
+         stamp is set when the response is written, so it reflects the
+         running Worker even when the body it is serving predates it. */
+      'X-Worker-Build': WORKER_BUILD
     }
   });
 }
@@ -237,7 +243,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-08-28-topup';
+const WORKER_BUILD = '2026-09-17-outages';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -2268,34 +2274,39 @@ async function handleOutagesAll() {
   });
 }
 
+/* The /api routes, split out so every one of them can be stamped with the
+   build in one place rather than each handler remembering to. */
+async function handleApi(url, env, ctx) {
+  if (url.pathname === '/api/news') return handleNews(env, ctx);
+  if (url.pathname === '/api/gdelt') return handleGdelt();
+
+  if (url.pathname === '/api/incidents' || url.pathname === '/api/incidents/') return handleIncidentsAll();
+  if (url.pathname.startsWith('/api/incidents/')) {
+    return handleIncidentsState(url.pathname.slice('/api/incidents/'.length).replace(/\/+$/, '').toLowerCase());
+  }
+
+  if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') return handleOutagesAll();
+  if (url.pathname.startsWith('/api/outages/')) {
+    return handleOutagesState(url.pathname.slice('/api/outages/'.length).replace(/\/+$/, '').toLowerCase());
+  }
+  return null;   // not an API route we serve; fall through to the assets
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/api/news') {
-      return handleNews(env, ctx);
-    }
-
-    if (url.pathname === '/api/gdelt') {
-      return handleGdelt();
-    }
-
-    /* /api/incidents and /api/incidents/<state> */
-    if (url.pathname === '/api/incidents' || url.pathname === '/api/incidents/') {
-      return handleIncidentsAll();
-    }
-    if (url.pathname.startsWith('/api/incidents/')) {
-      const state = url.pathname.slice('/api/incidents/'.length).replace(/\/+$/, '').toLowerCase();
-      return handleIncidentsState(state);
-    }
-
-    /* /api/outages and /api/outages/<state> */
-    if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') {
-      return handleOutagesAll();
-    }
-    if (url.pathname.startsWith('/api/outages/')) {
-      const state = url.pathname.slice('/api/outages/'.length).replace(/\/+$/, '').toLowerCase();
-      return handleOutagesState(state);
+    /* Every /api response carries the build stamp, so the deployed version is
+       one header away on any route rather than something to infer from
+       whether the data looks new. */
+    if (url.pathname.startsWith('/api/')) {
+      const res = await handleApi(url, env, ctx);
+      if (res && !res.headers.get('X-Worker-Build')) {
+        const stamped = new Response(res.body, res);
+        stamped.headers.set('X-Worker-Build', WORKER_BUILD);
+        return stamped;
+      }
+      if (res) return res;
     }
 
     if (url.pathname === '/') {

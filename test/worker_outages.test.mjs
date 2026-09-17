@@ -338,6 +338,28 @@ console.log('\n== an unconnected feed is not a reported outage ==');
   check('and still reports the status it got', /404/.test(wp.error), wp.error);
 }
 
+
+console.log('\n== every API response says which build answered ==');
+{
+  reset();
+  upstream.http = json([]);
+  const src = (await import('node:fs')).readFileSync('./src/worker.js', 'utf8');
+  const build = /const WORKER_BUILD = '([^']+)'/.exec(src)[1];
+  for (const route of ['/api/outages', '/api/outages/qld', '/api/incidents', '/api/incidents/nt', '/api/news']) {
+    const r = await call(route);
+    check(route + ' carries the build', r.headers.get('X-Worker-Build') === build,
+      [route, r.headers.get('X-Worker-Build')]);
+  }
+  /* The build stamp is about the code, the cache age is about the data --
+     a cached body from before a deploy must still report the running build,
+     or "did it deploy?" stays unanswerable. */
+  await call('/api/outages/qld');
+  const again = await call('/api/outages/qld');
+  check('a cache hit still reports the running build',
+    again.headers.get('X-Worker-Build') === build && again.headers.get('X-Cache-Age') !== null,
+    [again.headers.get('X-Worker-Build'), again.headers.get('X-Cache-Age')]);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);
