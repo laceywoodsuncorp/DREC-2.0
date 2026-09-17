@@ -8,6 +8,7 @@ happen again.
 
 ```sh
 node test/worker_outages.test.mjs
+node test/nt_incidents.test.mjs
 ```
 
 `fetch` and the Cache API are stubbed, so these assert what the Worker does

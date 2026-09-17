@@ -802,8 +802,11 @@ const FIELD_CANDIDATES = {
     'level', 'category', 'category1'],
   type: ['type', 'incidenttype', 'eventtype', 'groupedtype', 'category2',
     'vehicletypedescription', 'subtype', 'class'],
+  /* 'when' itself is here because the table reader keys its records by the
+     normalised field name -- without it a scraped "Last updated" column would
+     be found, mapped, and then dropped on the way out. */
   when: ['updated', 'lastupdate', 'lastupdated', 'last_update', 'pubdate', 'created',
-    'datetime', 'reported', 'starttime', 'timestamp', 'date', 'time']
+    'datetime', 'reported', 'starttime', 'timestamp', 'date', 'time', 'when']
 };
 
 /* Lowercased-key view of an object so candidate lookups don't depend on each
@@ -1012,6 +1015,129 @@ function stripTags(html) {
     .trim();
 }
 
+/* ---------- reading a table out of a page ----------
+   Several publishers -- electricity operators and at least one emergency
+   agency -- put their current list on a page as an ordinary HTML table,
+   alongside a map that is a JavaScript application a Worker cannot run. The
+   table is the better target: it is linked from their own site, it is
+   rendered on the server, and it is meant to stay readable.
+
+   None of these pages could be inspected from the build environment, so the
+   reader is driven by the table's own headings rather than by column
+   positions -- a fixed layout would be a guess stacked on a guess. Callers
+   supply the heading vocabulary for their domain; everything else is shared.
+
+   The three outcomes are kept distinct, because they need different fixes:
+   no table at all (the list is drawn client-side, so a data endpoint is
+   needed instead), a table whose headings could not be matched (and here
+   they are), or a table that was read. */
+
+const TABLE_HTML_LIMIT = 400000; // guard against a page that is mostly inline script
+const TABLE_CELL_LIMIT = 200;    // one runaway description shouldn't become the row
+
+function headingToField(heading, hints) {
+  const key = String(heading).toLowerCase().replace(/[^a-z]/g, '');
+  if (!key) return null;
+  /* Hints are in priority order and the first match wins, so more specific
+     vocabulary has to come first: "incident type" is a type, not an incident,
+     and "areas affected" is a place, not a customer count. */
+  for (const hint of hints) {
+    for (const w of hint.words) if (key.includes(w)) return hint.field;
+  }
+  return null;
+}
+
+function tableCells(rowHtml) {
+  const cells = [];
+  const re = /<t[hd]\b[^>]*>([\s\S]*?)<\/t[hd]>/gi;
+  let m;
+  while ((m = re.exec(rowHtml)) !== null) cells.push(stripTags(m[1]).slice(0, TABLE_CELL_LIMIT));
+  return cells;
+}
+
+/* Reads one table into records keyed by field name. Returns null when it has
+   no usable heading row at all, so the caller can move on to the next table
+   rather than treating a layout or navigation table as the answer. */
+function readTableWith(tableHtml, hints, requiredField) {
+  const rows = [];
+  const re = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
+  let m;
+  while ((m = re.exec(tableHtml)) !== null) rows.push(m[1]);
+  /* A header row on its own is kept, not discarded: a publisher with nothing
+     to report publishes exactly that, and treating it as unreadable would
+     turn a quiet day into a reported fault. */
+  if (!rows.length) return null;
+
+  /* The heading row is the first made of <th>, falling back to the first row
+     -- plenty of these tables use <td> throughout. */
+  let headIndex = rows.findIndex((r) => /<th\b/i.test(r));
+  if (headIndex === -1) headIndex = 0;
+  const headings = tableCells(rows[headIndex]);
+  if (!headings.length) return null;
+
+  const map = headings.map((h) => headingToField(h, hints));
+  /* `mapped` is what separates "this is the list and it is empty" from "this
+     is some other table": both yield no rows, and only the first is news. */
+  if (!map.some((f) => f === requiredField)) return { headings, mapped: false, records: [] };
+
+  const records = [];
+  for (let i = headIndex + 1; i < rows.length; i++) {
+    const cells = tableCells(rows[i]);
+    if (!cells.length) continue;
+    const rec = {};
+    map.forEach((field, col) => {
+      if (!field) return;
+      const v = (cells[col] || '').trim();
+      if (v && !rec[field]) rec[field] = v;
+    });
+    if (rec[requiredField]) records.push(rec);
+  }
+  return { headings, mapped: true, records };
+}
+
+/* Finds the list table on a page. Returns { records } on success, or
+   { diagnostics } naming what was actually there. */
+function scrapeTable(html, hints, requiredField) {
+  const text = String(html || '').slice(0, TABLE_HTML_LIMIT);
+  const tables = [];
+  const re = /<table\b[^>]*>([\s\S]*?)<\/table>/gi;
+  let m;
+  while ((m = re.exec(text)) !== null) tables.push(m[1]);
+
+  if (!tables.length) {
+    return { diagnostics: {
+      envelope: 'no-table',
+      recordsSeen: 0,
+      note: /<html/i.test(text)
+        ? 'Page loaded but contains no <table> — the list is probably rendered by JavaScript, so a data endpoint is needed instead'
+        : 'Response was not HTML',
+      sampleKeys: []
+    } };
+  }
+
+  /* Several tables on a page is normal. Take the one that yields the most
+     usable rows rather than the first, which is often layout or navigation. */
+  let best = null;
+  const headingsSeen = [];
+  tables.forEach((t) => {
+    const read = readTableWith(t, hints, requiredField);
+    if (!read) return;
+    read.headings.forEach((h) => { if (h && headingsSeen.indexOf(h) === -1) headingsSeen.push(h); });
+    if (!read.mapped) return;
+    if (!best || read.records.length > best.records.length) best = read;
+  });
+
+  if (!best) {
+    return { diagnostics: {
+      envelope: 'table-unmapped',
+      recordsSeen: 0,
+      note: 'Found ' + tables.length + ' table(s) but no column could be matched to a ' + requiredField,
+      sampleKeys: headingsSeen.slice(0, 25)
+    } };
+  }
+  return { records: best.records };
+}
+
 /* ---------- per-state parsers ---------- */
 
 /* NSW RFS majorIncidents.json -- GeoJSON whose useful detail lives inside a
@@ -1154,6 +1280,34 @@ function parseTas(html) {
    (or instead of) a JSON one, and those tend to live on a plainer host that
    is less likely to be sitting behind the same WAF as the main site -- which
    makes them a useful second source when the primary is being refused. */
+/* SecureNT publishes the NT's current bushfire alerts as a table on
+   securent.nt.gov.au/respond/bushfire-alerts -- location, the message, and
+   the alert level ("Advice", "Watch and Act", "Emergency Warning", "Planned
+   Burn Advice"). That page is the Territory's own published list, which
+   makes it a better primary than the incident map's internal JSON.
+
+   Headings drive the mapping (see scrapeTable), so a column being renamed or
+   reordered doesn't break it, and a column this doesn't recognise is
+   reported by name rather than silently dropped. The message column is read
+   as the incident's type/detail: it is the only place the actual fire is
+   described, and TABLE_CELL_LIMIT keeps a long one from swamping the row. */
+const INCIDENT_COLUMN_HINTS = [
+  { field: 'when', words: ['updated', 'issued', 'published', 'datetime', 'date', 'time', 'reported'] },
+  { field: 'status', words: ['alertlevel', 'alert', 'level', 'status', 'warning', 'severity'] },
+  { field: 'type', words: ['incidenttype', 'type', 'category', 'message', 'description', 'detail'] },
+  { field: 'title', words: ['location', 'area', 'place', 'suburb', 'region', 'locality',
+    'incident', 'name', 'fire', 'title', 'event'] }
+];
+
+function parseIncidentTable(html) {
+  const read = scrapeTable(html, INCIDENT_COLUMN_HINTS, 'title');
+  if (read.diagnostics) return { incidents: [], diagnostics: read.diagnostics };
+  /* An alerts page with the table present and no rows means no current
+     alerts, which is the good outcome and must not read as a broken feed. */
+  if (!read.records.length) return { incidents: [] };
+  return normaliseRecords({ rows: read.records });
+}
+
 function parseGeoRss(xml) {
   const incidents = [];
   const items = xml.match(/<(?:item|entry)[\s>][\s\S]*?<\/(?:item|entry)>/gi) || [];
@@ -1298,9 +1452,16 @@ const INCIDENT_FEEDS = {
       { url: 'https://www.fire.tas.gov.au/Show?pageId=colCurrentIncidents', format: 'text', parse: parseTas }
     ]
   },
+  /* SecureNT's bushfire alerts page is the Territory's own published list of
+     current alerts, so it leads. The PFES incident map's JSON stays behind it
+     as a fallback: it covers all incident types rather than bushfires alone,
+     which makes it a wider net but a less direct answer to "what is alerting
+     right now". */
   nt: {
-    name: 'Northern Territory', agency: 'NT PFES',
+    name: 'Northern Territory', agency: 'Bushfires NT / SecureNT',
     sources: [
+      { url: 'https://securent.nt.gov.au/respond/bushfire-alerts', format: 'text', parse: parseIncidentTable },
+      { url: 'https://securent.nt.gov.au/alerts-warnings', format: 'text', parse: parseIncidentTable },
       { url: 'https://www.pfes.nt.gov.au/incidentmap/json/incidents.json', format: 'json', parse: normaliseRecords }
     ]
   },
@@ -1710,24 +1871,11 @@ function normaliseOutages(json, opts) {
   return result;
 }
 
-/* ---------- the text/list views ----------
-   Most operators publish a plain list or "text view" of current outages
-   alongside the map, for people who can't use a map -- and unlike the map,
-   which is a JavaScript application talking to an undocumented internal
-   endpoint, the list is a page. Pages can be read.
-
-   Which columns a given operator uses is not knowable from here, so the
-   scraper is driven by the table's own headings rather than by fixed
-   positions: it matches each heading to a field, and when it can't, it
-   reports the headings it saw. That turns "this operator doesn't work" into
-   a one-line fix instead of a mystery. */
-
-/* Matched against a heading with everything but letters stripped, so
-   "Customers Affected", "customers_affected" and "No. of customers affected"
-   all land in the same place. Order is priority: the first field whose word
-   appears wins, so the specific ones come first. "affected" on its own is
-   deliberately NOT a customer word -- "Affected areas" is a heading several
-   of them use for the location. */
+/* ---------- the operators' text/list views ----------
+   Most distributors publish a plain list or "text view" of current outages
+   alongside the map. See scrapeTable() for why the page is the better target
+   and how it is read. "affected" on its own is deliberately NOT a customer
+   word -- "Affected areas" is a heading several of them use for the place. */
 const OUTAGE_COLUMN_HINTS = [
   { field: 'restore', words: ['restor', 'estimat', 'etr', 'expected', 'backon'] },
   { field: 'start', words: ['start', 'began', 'begun', 'reported', 'commenc', 'since', 'timeoff'] },
@@ -1740,112 +1888,14 @@ const OUTAGE_COLUMN_HINTS = [
     'address', 'region', 'place', 'name'] }
 ];
 
-function headingToField(heading) {
-  const key = String(heading).toLowerCase().replace(/[^a-z]/g, '');
-  if (!key) return null;
-  for (const hint of OUTAGE_COLUMN_HINTS) {
-    for (const w of hint.words) if (key.includes(w)) return hint.field;
-  }
-  return null;
-}
-
-function tableCells(rowHtml) {
-  const cells = [];
-  const re = /<t[hd]\b[^>]*>([\s\S]*?)<\/t[hd]>/gi;
-  let m;
-  while ((m = re.exec(rowHtml)) !== null) cells.push(stripTags(m[1]));
-  return cells;
-}
-
-/* Reads one HTML table into records keyed by normalised field name. Returns
-   null when the table has no usable heading row, so the caller can move on to
-   the next table on the page rather than treating the first one it finds --
-   often a nav or layout table -- as the answer. */
-function readOutageTable(tableHtml) {
-  const rows = [];
-  const re = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
-  let m;
-  while ((m = re.exec(tableHtml)) !== null) rows.push(m[1]);
-  /* A header row on its own is kept, not discarded: an operator with nothing
-     out publishes exactly that, and treating it as an unreadable table would
-     turn a quiet network into a reported fault. */
-  if (!rows.length) return null;
-
-  /* The heading row is the first one made of <th>, falling back to the first
-     row -- plenty of these tables use <td> throughout. */
-  let headIndex = rows.findIndex((r) => /<th\b/i.test(r));
-  if (headIndex === -1) headIndex = 0;
-  const headings = tableCells(rows[headIndex]);
-  if (!headings.length) return null;
-
-  const map = headings.map(headingToField);
-  /* `mapped` is what separates "this is the outage table and it is empty"
-     from "this is some other table" -- both have no rows we can use, and only
-     the first is good news. */
-  if (!map.some((f) => f === 'location')) return { headings, mapped: false, records: [] };
-
-  const records = [];
-  for (let i = headIndex + 1; i < rows.length; i++) {
-    const cells = tableCells(rows[i]);
-    if (!cells.length) continue;
-    const rec = {};
-    map.forEach((field, col) => {
-      if (!field) return;
-      const v = (cells[col] || '').trim();
-      if (v && !rec[field]) rec[field] = v;
-    });
-    if (rec.location) records.push(rec);
-  }
-  return { headings, mapped: true, records };
-}
-
-/* Scrapes the outage table out of a page. Same contract as normaliseOutages. */
-const OUTAGE_HTML_LIMIT = 400000; // a guard against a page that is mostly inline script
 function parseOutageTable(html, opts) {
-  const text = String(html || '').slice(0, OUTAGE_HTML_LIMIT);
-  const tables = [];
-  const re = /<table\b[^>]*>([\s\S]*?)<\/table>/gi;
-  let m;
-  while ((m = re.exec(text)) !== null) tables.push(m[1]);
-
-  if (!tables.length) {
-    /* No table at all. On these sites that nearly always means the list is
-       drawn by JavaScript after load, which a Worker will never see -- a
-       different problem from a missing page, and worth saying so plainly. */
-    return { outages: [], diagnostics: {
-      envelope: 'no-table',
-      recordsSeen: 0,
-      note: /<html/i.test(text)
-        ? 'Page loaded but contains no <table> — the list is probably rendered by JavaScript, so a data endpoint is needed instead'
-        : 'Response was not HTML',
-      sampleKeys: []
-    } };
-  }
-
-  /* Several tables on a page is normal. Take the one that yields the most
-     usable rows rather than the first, which is often layout or navigation. */
-  let best = null, headingsSeen = [];
-  tables.forEach((t) => {
-    const read = readOutageTable(t);
-    if (!read) return;
-    read.headings.forEach((h) => { if (h && headingsSeen.indexOf(h) === -1) headingsSeen.push(h); });
-    if (!read.mapped) return;
-    if (!best || read.records.length > best.records.length) best = read;
-  });
-
-  if (!best) {
-    return { outages: [], diagnostics: {
-      envelope: 'table-unmapped',
-      recordsSeen: 0,
-      note: 'Found ' + tables.length + ' table(s) but no column could be matched to a location',
-      sampleKeys: headingsSeen.slice(0, 25)
-    } };
-  }
-  /* The outage table was found and understood. If it has no rows, the
-     operator has nothing out -- which is a result, not a failure, so no
-     diagnostics. */
-  if (!best.records.length) return { outages: [] };
-  return normaliseOutages({ rows: best.records }, opts);
+  const read = scrapeTable(html, OUTAGE_COLUMN_HINTS, 'location');
+  if (read.diagnostics) return { outages: [], diagnostics: read.diagnostics };
+  /* The table was found and understood. No rows means the operator has
+     nothing out -- a result, not a failure -- so it returns a clean empty
+     list with no diagnostics to make it look broken. */
+  if (!read.records.length) return { outages: [] };
+  return normaliseOutages({ rows: read.records }, opts);
 }
 
 /* The distribution networks, by state. `area` is what the operator actually
