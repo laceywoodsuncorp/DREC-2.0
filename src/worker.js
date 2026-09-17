@@ -1565,14 +1565,23 @@ async function handleIncidentsAll() {
      Western Power      a public anonymous ArcGIS feature service,
                         WP_Outage_Prod/FeatureServer/0
 
-   The rest are pattern-matched guesses and are expected to fail until
-   someone reads the real request off the operator's own outage map (browser
-   devtools, Network, XHR). They report as `unconfirmed` rather than as
-   unavailable, because "we have not found this operator's feed" and "this
-   operator's feed is down" are different claims and only one of them is
-   true. Every attempt is recorded with its HTTP status and a body excerpt in
-   /api/outages/<state>, which is enough to tell a moved URL from a WAF block
-   from a schema change. Correcting one is a single line below. */
+   The rest are read from each operator's own text or list view of current
+   outages -- the accessible alternative to the map that most of them
+   publish. That is a better target than the map's internal endpoint for two
+   reasons: the page is findable and linked from their own site, where the
+   endpoint is undocumented and changes without notice; and the page is
+   rendered on the server, where the map is a JavaScript application a Worker
+   cannot run. Whether any given one really does render its table server-side
+   could not be checked from here, so parseOutageTable says which of the
+   three things happened -- no table on the page (so it is drawn by
+   JavaScript and needs a data endpoint after all), a table whose headings it
+   could not match (and what those headings were), or a table it read.
+
+   Those operators report as `unconfirmed` rather than as unavailable until
+   one of their sources works, because "we have not connected this operator
+   yet" and "this operator's feed is down" are different claims and only one
+   of them is true. Every attempt is recorded with its HTTP status and a body
+   excerpt in /api/outages/<state>. Correcting one is a single line below. */
 
 const OUTAGE_STATES = ['nsw', 'qld', 'vic', 'sa', 'wa', 'tas', 'nt', 'act'];
 
@@ -1604,9 +1613,9 @@ const OUTAGE_FIELDS = {
     'reported', 'firstreported', 'datereported', 'created', 'createddate', 'timeoff', 'timeadded'],
   restore: ['estimatedrestorationtime', 'estimatedrestoretime', 'estimatedrestoration',
     'expectedrestoration', 'restorationtime', 'restoretime', 'etr', 'eta', 'timeon',
-    'estimatedtimeofrestoration', 'estrestoretime', 'estimatedon'],
+    'estimatedtimeofrestoration', 'estrestoretime', 'estimatedon', 'restore'],
   kind: ['plannedoutage', 'outagetype', 'type', 'plannedtype', 'worktype', 'jobtype',
-    'category', 'classification'],
+    'category', 'classification', 'kind'],
   id: ['incidentref', 'event_id', 'outageid', 'jobid', 'eventid', 'incidentid', 'enarnumber',
     'id', 'reference', 'ref', 'objectid']
 };
@@ -1701,6 +1710,144 @@ function normaliseOutages(json, opts) {
   return result;
 }
 
+/* ---------- the text/list views ----------
+   Most operators publish a plain list or "text view" of current outages
+   alongside the map, for people who can't use a map -- and unlike the map,
+   which is a JavaScript application talking to an undocumented internal
+   endpoint, the list is a page. Pages can be read.
+
+   Which columns a given operator uses is not knowable from here, so the
+   scraper is driven by the table's own headings rather than by fixed
+   positions: it matches each heading to a field, and when it can't, it
+   reports the headings it saw. That turns "this operator doesn't work" into
+   a one-line fix instead of a mystery. */
+
+/* Matched against a heading with everything but letters stripped, so
+   "Customers Affected", "customers_affected" and "No. of customers affected"
+   all land in the same place. Order is priority: the first field whose word
+   appears wins, so the specific ones come first. "affected" on its own is
+   deliberately NOT a customer word -- "Affected areas" is a heading several
+   of them use for the location. */
+const OUTAGE_COLUMN_HINTS = [
+  { field: 'restore', words: ['restor', 'estimat', 'etr', 'expected', 'backon'] },
+  { field: 'start', words: ['start', 'began', 'begun', 'reported', 'commenc', 'since', 'timeoff'] },
+  { field: 'customers', words: ['customer', 'premises', 'properties', 'impacted', 'supplies'] },
+  { field: 'kind', words: ['planned', 'unplanned', 'outagetype', 'type', 'category'] },
+  { field: 'id', words: ['reference', 'jobno', 'jobnumber', 'eventid', 'outageid', 'incident'] },
+  { field: 'status', words: ['status', 'progress', 'stage', 'crew'] },
+  { field: 'cause', words: ['cause', 'reason', 'fault', 'description', 'details', 'event'] },
+  { field: 'location', words: ['suburb', 'locality', 'location', 'area', 'town', 'street',
+    'address', 'region', 'place', 'name'] }
+];
+
+function headingToField(heading) {
+  const key = String(heading).toLowerCase().replace(/[^a-z]/g, '');
+  if (!key) return null;
+  for (const hint of OUTAGE_COLUMN_HINTS) {
+    for (const w of hint.words) if (key.includes(w)) return hint.field;
+  }
+  return null;
+}
+
+function tableCells(rowHtml) {
+  const cells = [];
+  const re = /<t[hd]\b[^>]*>([\s\S]*?)<\/t[hd]>/gi;
+  let m;
+  while ((m = re.exec(rowHtml)) !== null) cells.push(stripTags(m[1]));
+  return cells;
+}
+
+/* Reads one HTML table into records keyed by normalised field name. Returns
+   null when the table has no usable heading row, so the caller can move on to
+   the next table on the page rather than treating the first one it finds --
+   often a nav or layout table -- as the answer. */
+function readOutageTable(tableHtml) {
+  const rows = [];
+  const re = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
+  let m;
+  while ((m = re.exec(tableHtml)) !== null) rows.push(m[1]);
+  /* A header row on its own is kept, not discarded: an operator with nothing
+     out publishes exactly that, and treating it as an unreadable table would
+     turn a quiet network into a reported fault. */
+  if (!rows.length) return null;
+
+  /* The heading row is the first one made of <th>, falling back to the first
+     row -- plenty of these tables use <td> throughout. */
+  let headIndex = rows.findIndex((r) => /<th\b/i.test(r));
+  if (headIndex === -1) headIndex = 0;
+  const headings = tableCells(rows[headIndex]);
+  if (!headings.length) return null;
+
+  const map = headings.map(headingToField);
+  /* `mapped` is what separates "this is the outage table and it is empty"
+     from "this is some other table" -- both have no rows we can use, and only
+     the first is good news. */
+  if (!map.some((f) => f === 'location')) return { headings, mapped: false, records: [] };
+
+  const records = [];
+  for (let i = headIndex + 1; i < rows.length; i++) {
+    const cells = tableCells(rows[i]);
+    if (!cells.length) continue;
+    const rec = {};
+    map.forEach((field, col) => {
+      if (!field) return;
+      const v = (cells[col] || '').trim();
+      if (v && !rec[field]) rec[field] = v;
+    });
+    if (rec.location) records.push(rec);
+  }
+  return { headings, mapped: true, records };
+}
+
+/* Scrapes the outage table out of a page. Same contract as normaliseOutages. */
+const OUTAGE_HTML_LIMIT = 400000; // a guard against a page that is mostly inline script
+function parseOutageTable(html, opts) {
+  const text = String(html || '').slice(0, OUTAGE_HTML_LIMIT);
+  const tables = [];
+  const re = /<table\b[^>]*>([\s\S]*?)<\/table>/gi;
+  let m;
+  while ((m = re.exec(text)) !== null) tables.push(m[1]);
+
+  if (!tables.length) {
+    /* No table at all. On these sites that nearly always means the list is
+       drawn by JavaScript after load, which a Worker will never see -- a
+       different problem from a missing page, and worth saying so plainly. */
+    return { outages: [], diagnostics: {
+      envelope: 'no-table',
+      recordsSeen: 0,
+      note: /<html/i.test(text)
+        ? 'Page loaded but contains no <table> — the list is probably rendered by JavaScript, so a data endpoint is needed instead'
+        : 'Response was not HTML',
+      sampleKeys: []
+    } };
+  }
+
+  /* Several tables on a page is normal. Take the one that yields the most
+     usable rows rather than the first, which is often layout or navigation. */
+  let best = null, headingsSeen = [];
+  tables.forEach((t) => {
+    const read = readOutageTable(t);
+    if (!read) return;
+    read.headings.forEach((h) => { if (h && headingsSeen.indexOf(h) === -1) headingsSeen.push(h); });
+    if (!read.mapped) return;
+    if (!best || read.records.length > best.records.length) best = read;
+  });
+
+  if (!best) {
+    return { outages: [], diagnostics: {
+      envelope: 'table-unmapped',
+      recordsSeen: 0,
+      note: 'Found ' + tables.length + ' table(s) but no column could be matched to a location',
+      sampleKeys: headingsSeen.slice(0, 25)
+    } };
+  }
+  /* The outage table was found and understood. If it has no rows, the
+     operator has nothing out -- which is a result, not a failure, so no
+     diagnostics. */
+  if (!best.records.length) return { outages: [] };
+  return normaliseOutages({ rows: best.records }, opts);
+}
+
 /* The distribution networks, by state. `area` is what the operator actually
    covers -- worth showing, because "Essential Energy is unavailable" means
    something quite different in Sydney than it does in Dubbo.
@@ -1713,23 +1860,25 @@ const OUTAGE_NETWORKS = {
   nsw: {
     name: 'New South Wales',
     networks: [
+      /* Ausgrid publishes a list view of its outage map -- a page, not an
+         application, so it can be read server-side. */
       { name: 'Ausgrid', area: 'Sydney, Central Coast and the Hunter',
-        site: 'https://www.ausgrid.com.au/Outages',
+        site: 'https://www.ausgrid.com.au/outages-list',
         sources: [
-          { url: 'https://www.ausgrid.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.ausgrid.com.au/Outages/api/outages', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.ausgrid.com.au/outages-list', format: 'text', parse: parseOutageTable },
+          { url: 'https://www.ausgrid.com.au/Outages/Current-Outages', format: 'text', parse: parseOutageTable }
         ] },
       { name: 'Endeavour Energy', area: "Sydney's greater west, Blue Mountains, Southern Highlands and Illawarra",
-        site: 'https://www.endeavourenergy.com.au/outages',
+        site: 'https://www.endeavourenergy.com.au/power-outages/outage-map',
         sources: [
-          { url: 'https://www.endeavourenergy.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.endeavourenergy.com.au/outages/api/unplanned', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.endeavourenergy.com.au/power-outages/current-outages', format: 'text', parse: parseOutageTable },
+          { url: 'https://www.endeavourenergy.com.au/power-outages/outage-map', format: 'text', parse: parseOutageTable }
         ] },
       { name: 'Essential Energy', area: 'Regional and rural NSW',
-        site: 'https://www.essentialenergy.com.au/outages',
+        site: 'https://www.essentialenergy.com.au/outages-and-faults/power-outages',
         sources: [
-          { url: 'https://www.essentialenergy.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.essentialenergy.com.au/outages/api/outages', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.essentialenergy.com.au/outages-and-faults/power-outages', format: 'text', parse: parseOutageTable },
+          { url: 'https://www.essentialenergy.com.au/outages-and-faults', format: 'text', parse: parseOutageTable }
         ] }
     ]
   },
@@ -1757,49 +1906,60 @@ const OUTAGE_NETWORKS = {
           { url: 'https://www.ergon.com.au/static/Ergon/ergon_po_current_unplanned.geojson',
             format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'unplanned' }) },
           { url: 'https://www.ergon.com.au/static/Ergon/ergon_po_current_planned.geojson',
-            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) }
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) },
+          /* Ergon's own text view, as a backstop if the static files move. */
+          { url: 'https://www.ergon.com.au/network/outages/outage-finder/outage-finder-text-view', format: 'text', parse: parseOutageTable }
         ] }
     ]
   },
   vic: {
     name: 'Victoria',
     networks: [
+      /* AusNet's tracker is a Salesforce Sites page, which is rendered on the
+         server -- more promising for a scrape than the main site's map. */
       { name: 'AusNet Services', area: 'Eastern and north-eastern Victoria',
         site: 'https://www.ausnetservices.com.au/outages',
         sources: [
-          { url: 'https://api.ausnetservices.com.au/outages/v1/current', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.ausnetservices.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://ausnetservices.my.salesforce-sites.com/OutageTracker/', format: 'text', parse: parseOutageTable },
+          { url: 'https://www.ausnetservices.com.au/outages', format: 'text', parse: parseOutageTable }
         ] },
+      /* CitiPower, Powercor and United Energy are one operator group on one
+         platform, and each publishes the same "full outage list" page. */
       { name: 'Powercor', area: 'Western Victoria',
-        site: 'https://www.powercor.com.au/outages-faults/current-outages/',
+        site: 'https://www.powercor.com.au/power-outages-and-emergencies/full-outage-list/',
         sources: [
-          { url: 'https://www.powercor.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.powercor.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable }
         ] },
       { name: 'CitiPower', area: 'Inner Melbourne',
-        site: 'https://www.citipower.com.au/outages-faults/current-outages/',
+        site: 'https://www.citipower.com.au/power-outages-and-emergencies/full-outage-list/',
         sources: [
-          { url: 'https://www.citipower.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.citipower.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable }
         ] },
       { name: 'United Energy', area: 'South-eastern Melbourne and the Mornington Peninsula',
-        site: 'https://www.unitedenergy.com.au/outages-faults/current-outages/',
+        site: 'https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/',
         sources: [
-          { url: 'https://www.unitedenergy.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable }
         ] },
       { name: 'Jemena', area: 'North-western Melbourne',
         site: 'https://jemena.com.au/electricity/outages',
         sources: [
-          { url: 'https://jemena.com.au/api/outages/electricity/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://jemena.com.au/electricity/outages', format: 'text', parse: parseOutageTable }
         ] }
     ]
   },
   sa: {
     name: 'South Australia',
     networks: [
+      /* SA Power Networks runs its outage report as a separate application
+         rather than a page on the main site, and publishes no list view that
+         could be found. These are the app's own paths -- the most likely
+         place a readable list lives. */
       { name: 'SA Power Networks', area: 'All of South Australia',
-        site: 'https://www.sapowernetworks.com.au/outages',
+        site: 'https://outage.apps.sapowernetworks.com.au/OutageReport/OutageMap',
         sources: [
-          { url: 'https://www.sapowernetworks.com.au/public/data/powerdata/current-outages.json', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.sapowernetworks.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://outage.apps.sapowernetworks.com.au/OutageReport/OutageList', format: 'text', parse: parseOutageTable },
+          { url: 'https://outage.apps.sapowernetworks.com.au/OutageReport/api/outages', format: 'json', parse: normaliseOutages },
+          { url: 'https://www.sapowernetworks.com.au/outages/', format: 'text', parse: parseOutageTable }
         ] }
     ]
   },
@@ -1824,7 +1984,8 @@ const OUTAGE_NETWORKS = {
       { name: 'Horizon Power', area: 'Regional and remote WA',
         site: 'https://www.horizonpower.com.au/faults-outages/',
         sources: [
-          { url: 'https://www.horizonpower.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.horizonpower.com.au/faults-outages/power-outages/', format: 'text', parse: parseOutageTable },
+          { url: 'https://www.horizonpower.com.au/faults-outages/', format: 'text', parse: parseOutageTable }
         ] }
     ]
   },
@@ -1832,10 +1993,9 @@ const OUTAGE_NETWORKS = {
     name: 'Tasmania',
     networks: [
       { name: 'TasNetworks', area: 'All of Tasmania',
-        site: 'https://www.tasnetworks.com.au/outages',
+        site: 'https://www.tasnetworks.com.au/current-power-outages',
         sources: [
-          { url: 'https://www.tasnetworks.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.tasnetworks.com.au/outages/api/outages', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.tasnetworks.com.au/current-power-outages', format: 'text', parse: parseOutageTable }
         ] }
     ]
   },
@@ -1845,7 +2005,8 @@ const OUTAGE_NETWORKS = {
       { name: 'Power and Water Corporation', area: 'All of the Northern Territory',
         site: 'https://www.powerwater.com.au/outages',
         sources: [
-          { url: 'https://www.powerwater.com.au/api/outages/current', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.powerwater.com.au/outages/current-outages', format: 'text', parse: parseOutageTable },
+          { url: 'https://www.powerwater.com.au/outages', format: 'text', parse: parseOutageTable }
         ] }
     ]
   },
@@ -1853,10 +2014,10 @@ const OUTAGE_NETWORKS = {
     name: 'Australian Capital Territory',
     networks: [
       { name: 'Evoenergy', area: 'All of the ACT',
-        site: 'https://www.evoenergy.com.au/outages',
+        site: 'https://www.evoenergy.com.au/Outages',
         sources: [
-          { url: 'https://www.evoenergy.com.au/api/outages/current', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.evoenergy.com.au/outages/api/unplanned', format: 'json', parse: normaliseOutages }
+          { url: 'https://www.evoenergy.com.au/Outages', format: 'text', parse: parseOutageTable },
+          { url: 'https://www.actewagl.com.au/outages', format: 'text', parse: parseOutageTable }
         ] }
     ]
   }

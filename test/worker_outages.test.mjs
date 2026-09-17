@@ -46,51 +46,117 @@ console.log('\n== the shapes operators actually publish ==');
 {
   reset();
   // A GeoJSON FeatureCollection, the most common of the three
-  upstream['ausgrid.com.au'] = json({
+  upstream['energex_po_current_unplanned'] = json({
     type: 'FeatureCollection',
     features: [{
       type: 'Feature',
-      geometry: { type: 'Point', coordinates: [151.2, -33.87] },
+      geometry: { type: 'Point', coordinates: [153.02, -27.47] },
       properties: {
-        outageId: 'AG-1', suburb: 'Newtown', customersAffected: 412,
-        cause: 'Equipment fault', status: 'Crew on site',
-        startTime: '2026-09-17T04:00:00Z', estimatedRestorationTime: '2026-09-17T09:30:00Z',
-        type: 'Unplanned'
+        EVENT_ID: 'EQ-1', LOCALITY: 'Newtown', CUSTOMERSAFFECTED: 412,
+        CAUSE: 'Equipment fault', STATUS: 'Crew on site',
+        STARTTIME: '2026-09-17T04:00:00Z', ESTIMATEDRESTORATIONTIME: '2026-09-17T09:30:00Z'
       }
     }]
   });
   // A bare array with completely different field names
-  upstream['endeavourenergy.com.au'] = json([
-    { id: 'EE-9', locality: 'Penrith', numCustomers: '1,205', reason: 'Storm damage',
-      jobStatus: 'Assessing', reportedTime: 1758081600000, etr: '2026-09-17T12:00:00Z', worktype: 'Planned works' }
+  upstream['energex_po_current_planned'] = json([
+    { id: 'EQ-2', locality: 'Penrith', numCustomers: '1,205', reason: 'Storm damage',
+      jobStatus: 'Assessing', reportedTime: 1758081600000, etr: '2026-09-17T12:00:00Z' }
   ]);
   // An object wrapping the list under an arbitrary key
-  upstream['essentialenergy.com.au'] = json({
+  upstream['ergon_po_current_unplanned'] = json({
     result: { generated: 'now' },
-    currentOutages: [{ outageID: 'ES-3', location: 'Dubbo', impactedCustomers: 37, faultType: 'Vegetation' }]
+    currentOutages: [{ outageID: 'ER-3', location: 'Dubbo', impactedCustomers: 37, faultType: 'Vegetation' }]
   });
+  upstream['ergon_po_current_planned'] = json([]);
 
-  const r = await call('/api/outages/nsw');
+  const r = await call('/api/outages/qld');
   const b = await r.json();
-  check('all three operators reported', (b.networks || []).filter(n => n.ok).length === 3,
+  check('both operators reported', (b.networks || []).filter(n => n.ok).length === 2,
     (b.networks || []).map(n => n.name + ':' + n.ok));
   check('state is marked complete', b.complete === true, b.complete);
   check('rows merged across operators', b.count === 3, b.count);
 
   const ag = b.outages.find(o => o.location === 'Newtown');
   check('GeoJSON properties read', ag && ag.customers === 412 && ag.cause === 'Equipment fault', ag);
-  check('coordinates carried through', ag && ag.lat === -33.87 && ag.lon === 151.2, ag);
+  check('coordinates carried through', ag && ag.lat === -27.47 && ag.lon === 153.02, ag);
   check('every row is tagged with its operator', b.outages.every(o => !!o.network),
     b.outages.map(o => o.network));
 
   const ee = b.outages.find(o => o.location === 'Penrith');
   check('"1,205" parses as a number', ee && ee.customers === 1205, ee && ee.customers);
   check('epoch-millisecond times get an ISO form', ee && !!ee.startIso, ee);
-  check('planned work is labelled planned', ee && ee.kind === 'planned', ee && ee.kind);
-  check('a fault is labelled unplanned', ag && ag.kind === 'unplanned', ag && ag.kind);
+  check('the file a row came from decides planned vs unplanned',
+    ee && ee.kind === 'planned' && ag.kind === 'unplanned', [ee && ee.kind, ag && ag.kind]);
 
   check('biggest outage sorts first', b.outages[0].location === 'Penrith', b.outages.map(o => o.location));
   check('customer totals add up', b.customers === 412 + 1205 + 37, b.customers);
+}
+
+console.log('\n== the text views: a table read by its own headings ==');
+{
+  reset();
+  /* No operator's markup could be inspected from here, so the scraper is
+     driven by the headings rather than by column positions. These three
+     tables are deliberately different from each other. */
+  const page = (inner) => () => new Response('<html><body>' + inner + '</body></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+
+  upstream['ausgrid.com.au'] = page(
+    '<table><tr><td>nav</td></tr></table>' +           // a layout table, to be ignored
+    '<table>' +
+    '<tr><th>Suburb</th><th>Customers affected</th><th>Cause</th><th>Status</th>' +
+    '<th>Estimated restoration</th></tr>' +
+    '<tr><td>Newtown</td><td>412</td><td>Equipment fault</td><td>Crew on site</td>' +
+    '<td>2026-09-17T09:30:00Z</td></tr>' +
+    '<tr><td>Gosford</td><td>1,205</td><td>Storm damage</td><td>Assessing</td><td></td></tr>' +
+    '</table>');
+
+  // headings in a different order, different words, no <th> at all
+  upstream['endeavourenergy.com.au'] = page(
+    '<table>' +
+    '<tr><td>Outage type</td><td>Areas affected</td><td>No. of premises</td><td>Time off supply</td></tr>' +
+    '<tr><td>Planned</td><td>Penrith</td><td>88</td><td>2026-09-17T04:00:00Z</td></tr>' +
+    '</table>');
+
+  upstream['essentialenergy.com.au'] = page('<div id="app"></div>');   // a JS-rendered page
+
+  const b = await (await call('/api/outages/nsw')).json();
+  const ausgrid = b.networks.find(n => n.name === 'Ausgrid');
+  check('the outage table is found among other tables', ausgrid.ok && ausgrid.count === 2, ausgrid);
+  const newtown = b.outages.find(o => o.location === 'Newtown');
+  check('columns map by heading, not position',
+    newtown && newtown.customers === 412 && newtown.cause === 'Equipment fault', newtown);
+  check('an estimated restoration is read', newtown && !!newtown.restoreIso, newtown);
+  check('an empty cell does not become a value',
+    b.outages.find(o => o.location === 'Gosford').restore === undefined,
+    b.outages.find(o => o.location === 'Gosford'));
+
+  const endeavour = b.networks.find(n => n.name === 'Endeavour Energy');
+  check('a table with no <th> and different wording still reads', endeavour.ok && endeavour.count === 1, endeavour);
+  const penrith = b.outages.find(o => o.location === 'Penrith');
+  check('"Areas affected" is a location, not a customer count',
+    penrith && penrith.location === 'Penrith' && penrith.customers === 88, penrith);
+  check('"Outage type" sets planned', penrith && penrith.kind === 'planned', penrith && penrith.kind);
+
+  const essential = b.networks.find(n => n.name === 'Essential Energy');
+  check('a JavaScript-rendered page is diagnosed, not just "failed"',
+    essential.diagnostics && essential.diagnostics.envelope === 'no-table', essential.diagnostics);
+  check('and says what would actually fix it',
+    essential.diagnostics && /JavaScript/.test(essential.diagnostics.note), essential.diagnostics);
+}
+
+console.log('\n== a table we cannot map reports its headings ==');
+{
+  reset();
+  upstream['tasnetworks.com.au'] = () => new Response(
+    '<html><table><tr><th>Widget</th><th>Sprocket</th></tr><tr><td>a</td><td>b</td></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+  const b = await (await call('/api/outages/tas')).json();
+  const d = b.networks[0].diagnostics;
+  check('the mismatch is reported', d && d.envelope === 'table-unmapped', d);
+  check('naming the headings it actually saw',
+    d && d.sampleKeys.includes('Widget') && d.sampleKeys.includes('Sprocket'), d);
 }
 
 console.log('\n== an unreported count is absent, never zero ==');
@@ -110,7 +176,10 @@ console.log('\n== an unreported count is absent, never zero ==');
 console.log('\n== one operator failing never takes the state down ==');
 {
   reset();
-  upstream['ausgrid.com.au'] = json([{ id: 'A', suburb: 'Bondi', customersAffected: 5 }]);
+  upstream['ausgrid.com.au'] = () => new Response(
+    '<html><table><tr><th>Suburb</th><th>Customers affected</th></tr>' +
+    '<tr><td>Bondi</td><td>5</td></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
   upstream['endeavourenergy.com.au'] = () => new Response('<html>Access denied</html>', { status: 403 });
   upstream['essentialenergy.com.au'] = () => new Response('nope', { status: 500 });
 
@@ -128,10 +197,10 @@ console.log('\n== one operator failing never takes the state down ==');
 console.log('\n== reachable but unreadable is a parser fix, not an outage ==');
 {
   reset();
-  // Answers 200 with records whose fields mean nothing to us
-  upstream['tasnetworks.com.au'] = json([{ zzz: 1, qqq: 2 }, { zzz: 3, qqq: 4 }]);
-  const b = await (await call('/api/outages/tas')).json();
-  const net = b.networks[0];
+  // A JSON feed answering 200 with records whose fields mean nothing to us
+  upstream['WP_Outage_Prod'] = json([{ zzz: 1, qqq: 2 }, { zzz: 3, qqq: 4 }]);
+  const b = await (await call('/api/outages/wa')).json();
+  const net = b.networks.find(n => n.name === 'Western Power');
   check('the operator counts as reachable', net.ok === true, net);
   check('and says what it actually sent', net.diagnostics && net.diagnostics.recordsSeen === 2, net.diagnostics);
   check('naming the keys it did have',
@@ -141,7 +210,11 @@ console.log('\n== reachable but unreadable is a parser fix, not an outage ==');
 console.log('\n== a quiet network is not a broken one ==');
 {
   reset();
-  upstream['evoenergy.com.au'] = json([]);
+  /* What an operator with nothing out actually publishes: the outage table,
+     with its headings and no rows. */
+  upstream['evoenergy.com.au'] = () => new Response(
+    '<html><table><tr><th>Suburb</th><th>Customers affected</th><th>Cause</th></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
   const b = await (await call('/api/outages/act')).json();
   check('empty list is ok', b.networks[0].ok === true, b.networks[0]);
   check('with no diagnostics attached', !b.networks[0].diagnostics, b.networks[0].diagnostics);
