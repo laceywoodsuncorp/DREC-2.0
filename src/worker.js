@@ -2229,8 +2229,44 @@ async function rebuildOutagesAggregate() {
     builtAt: Date.now(),
     liveStates: states.filter((s) => s.ok).map((s) => s.state)
   };
-  await writeSharedCache(OUTAGES_ALL_CACHE_URL, JSON.stringify(aggregate), 'application/json');
+  /* Only cache an aggregate that says something. An aggregate built in a
+     datacentre where nothing has been fetched yet is not the answer "no
+     operator is reporting" -- it is "we have not looked here". Caching it
+     would pin that non-answer in front of every visitor routed to this
+     location for the full two-hour entry lifetime, which is exactly how
+     every tab ended up showing (!) while the feeds themselves were fine. */
+  if (aggregate.liveStates.length) {
+    await writeSharedCache(OUTAGES_ALL_CACHE_URL, JSON.stringify(aggregate), 'application/json');
+  }
   return aggregate;
+}
+
+/* The Cache API is per datacentre and the cron only ever runs in one of them,
+   so every other location starts empty and has no way to fill itself: unlike
+   the incident routes, the aggregate is built purely from cache reads and
+   makes no upstream call of its own. Each request therefore warms a couple of
+   the states this location is still missing, after its response has gone out
+   -- the same top-up the news feed uses, for the same reason. */
+const OUTAGE_WARM_PER_REQUEST = 2;
+const OUTAGE_WARM_MARKER_URL = 'https://newsradar-internal-cache.example/outages-warmed-at';
+const OUTAGE_WARM_MIN_INTERVAL_S = 60;
+
+async function warmColdOutages() {
+  /* Rate limit per datacentre, so a burst of visitors doesn't each start
+     their own sweep of the same operators. */
+  const marker = await readSharedCache(OUTAGE_WARM_MARKER_URL);
+  if (marker && marker.ageSeconds < OUTAGE_WARM_MIN_INTERVAL_S) return;
+
+  const missing = [];
+  for (const state of OUTAGE_STATES) {
+    if (!(await readSharedCache(outageCacheUrl(state)))) missing.push(state);
+    if (missing.length >= OUTAGE_WARM_PER_REQUEST) break;
+  }
+  if (!missing.length) return;
+
+  await writeSharedCache(OUTAGE_WARM_MARKER_URL, String(Date.now()), 'text/plain');
+  await Promise.allSettled(missing.map((s) => refreshStateOutages(s)));
+  await rebuildOutagesAggregate();
 }
 
 /* Refreshes one shard of states. Outages are sharded across cron ticks where
@@ -2264,13 +2300,20 @@ async function handleOutagesState(state) {
   }), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 }
 
-/* GET /api/outages -- every state's totals and per-network status, no rows. */
-async function handleOutagesAll() {
+/* GET /api/outages -- every state's totals and per-network status, no rows.
+   Warms whatever this datacentre is still missing after the response, so a
+   location the cron never runs in fills itself over a few page loads instead
+   of reporting eight dead states forever. */
+async function handleOutagesAll(ctx) {
   const cached = await readSharedCache(OUTAGES_ALL_CACHE_URL);
-  if (cached) return respondFromCache(cached);
+  const warm = () => { if (ctx && ctx.waitUntil) ctx.waitUntil(warmColdOutages().catch(() => {})); };
+  if (cached) { warm(); return respondFromCache(cached); }
   const aggregate = await rebuildOutagesAggregate();
+  warm();
   return new Response(JSON.stringify(aggregate), {
-    status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store',
+      'X-Worker-Build': WORKER_BUILD }
   });
 }
 
@@ -2285,7 +2328,7 @@ async function handleApi(url, env, ctx) {
     return handleIncidentsState(url.pathname.slice('/api/incidents/'.length).replace(/\/+$/, '').toLowerCase());
   }
 
-  if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') return handleOutagesAll();
+  if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') return handleOutagesAll(ctx);
   if (url.pathname.startsWith('/api/outages/')) {
     return handleOutagesState(url.pathname.slice('/api/outages/'.length).replace(/\/+$/, '').toLowerCase());
   }

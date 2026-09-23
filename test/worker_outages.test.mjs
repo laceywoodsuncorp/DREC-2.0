@@ -360,6 +360,65 @@ console.log('\n== every API response says which build answered ==');
     [again.headers.get('X-Worker-Build'), again.headers.get('X-Cache-Age')]);
 }
 
+
+console.log('\n== a datacentre the cron never ran in fills itself ==');
+{
+  /* The Cache API is per datacentre and the cron only warms the one it runs
+     in. The aggregate is built purely from cache reads and makes no upstream
+     call of its own, so every other location answered "eight states, none
+     reporting" -- and cached that non-answer for two hours. That is how every
+     tab showed (!) while the feeds themselves were fine. */
+  const coldStart = () => { reset(); upstream.http = json([{ suburb: 'Somewhere', customersAffected: 10 }]); };
+
+  let waits = [];
+  const callWarm = async (p) => {
+    const r = await worker.fetch(new Request('https://example.test' + p), env,
+      { waitUntil: (q) => waits.push(q) });
+    await Promise.all(waits); waits = [];
+    return r;
+  };
+  const okStates = (b) => b.states.filter(s => s.ok).length;
+  const AGG = 'https://newsradar-internal-cache.example/outages-all';
+  const MARKER = 'https://newsradar-internal-cache.example/outages-warmed-at';
+
+  coldStart();
+  const first = await (await callWarm('/api/outages')).json();
+  check('the first request still answers', first.states.length === 8, first.states.length);
+  /* Warming runs after the response, so the visitor who triggers it is not
+     the one who benefits -- their answer is the empty one, and the next
+     request is where it shows. Paying for the wait would defeat the point. */
+  check('and does not wait for the warming it started', okStates(first) === 0, okStates(first));
+  const shown = await (await callWarm('/api/outages')).json();
+  check('the next request sees what was warmed', okStates(shown) > 0, okStates(shown));
+  check('a couple of states at a time', okStates(shown) <= 2, okStates(shown));
+
+  /* If the empty aggregate were cached, warming could never show through:
+     every later request in this location would be served the non-answer.
+     Observed with warming discarded, since a warm that has already run would
+     have replaced it with a real one. */
+  coldStart();
+  await worker.fetch(new Request('https://example.test/api/outages'), env, { waitUntil: () => {} });
+  check('an aggregate with nothing in it is not cached', !store.has(AGG), [...store.keys()]);
+
+  /* Rate limited per datacentre, so a burst of visitors doesn't each start
+     their own sweep of the same operators. */
+  coldStart();
+  await callWarm('/api/outages');
+  const b = await (await callWarm('/api/outages')).json();
+  const c = await (await callWarm('/api/outages')).json();
+  check('a request within the interval warms nothing more',
+    okStates(c) === okStates(b), [okStates(b), okStates(c)]);
+
+  let last = c;
+  for (let i = 0; i < 6; i++) {
+    store.delete(MARKER);
+    last = await (await callWarm('/api/outages')).json();
+  }
+  check('and over a few page loads the location is complete', okStates(last) === 8,
+    last.states.filter(s => !s.ok).map(s => s.state));
+  check('once something is reporting, the aggregate is cached', store.has(AGG));
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);
