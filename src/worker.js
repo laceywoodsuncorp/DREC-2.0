@@ -1826,14 +1826,35 @@ const OUTAGE_FIELDS = {
     'id', 'reference', 'ref', 'objectid']
 };
 
-function pickOutageField(lowered, kind) {
+function usableScalar(v) {
+  if (v === undefined || v === null || typeof v === 'object') return '';
+  const s = String(v).trim();
+  return (s && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'undefined') ? s : '';
+}
+
+function pickOutageField(lowered, kind, props) {
   const candidates = OUTAGE_FIELDS[kind] || [];
   for (const name of candidates) {
-    const v = lowered[name];
-    if (v === undefined || v === null) continue;
-    if (typeof v === 'object') continue;
-    const s = String(v).trim();
-    if (s && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'undefined') return s;
+    const s = usableScalar(lowered[name]);
+    if (s) return s;
+  }
+  /* Nothing matched by name. Before giving up, read the record's keys the way
+     a table's headings are read -- same vocabulary, substring rather than
+     exact. An exhaustive list of names can't be kept for publishers whose
+     schema has never been seen, and this is the difference between reading
+     "locality_name" or "affected_suburbs" and reporting the whole feed
+     unreadable over a word this happens not to have listed. It runs only
+     after the exact pass, so a field named precisely stays authoritative. */
+  if (props) {
+    for (const key of Object.keys(props)) {
+      if (headingToField(key, OUTAGE_COLUMN_HINTS) !== kind) continue;
+      const s = usableScalar(props[key]);
+      if (!s) continue;
+      /* A count has to actually be a number -- "customer_type": "Residential"
+         matches the word and is not what was asked for. */
+      if (kind === 'customers' && parseCustomerCount(s) === null) continue;
+      return s;
+    }
   }
   return '';
 }
@@ -1883,23 +1904,23 @@ function normaliseOutages(json, opts) {
   const outages = [];
   records.forEach(({ props, geometry }) => {
     const lowered = lowerKeyMap(props);
-    const location = pickOutageField(lowered, 'location');
-    const id = pickOutageField(lowered, 'id');
+    const location = pickOutageField(lowered, 'location', props);
+    const id = pickOutageField(lowered, 'id', props);
     /* A row with neither a place nor an identifier can't be shown or
        de-duplicated, so it isn't a row. */
     if (!location && !id) return;
-    const status = pickOutageField(lowered, 'status');
-    const cause = pickOutageField(lowered, 'cause');
-    const kindText = pickOutageField(lowered, 'kind');
-    const start = normaliseWhen(pickOutageField(lowered, 'start'));
-    const restore = normaliseWhen(pickOutageField(lowered, 'restore'));
+    const status = pickOutageField(lowered, 'status', props);
+    const cause = pickOutageField(lowered, 'cause', props);
+    const kindText = pickOutageField(lowered, 'kind', props);
+    const start = normaliseWhen(pickOutageField(lowered, 'start', props));
+    const restore = normaliseWhen(pickOutageField(lowered, 'restore', props));
     outages.push(Object.assign({
       id: id || undefined,
       location: location || 'Outage ' + id,
       status: status || undefined,
       cause: cause || undefined,
       kind: classifyOutage(kindText, status, cause) || kindHint || undefined,
-      customers: parseCustomerCount(pickOutageField(lowered, 'customers')),
+      customers: parseCustomerCount(pickOutageField(lowered, 'customers', props)),
       start: start.when || undefined,
       startIso: start.whenIso,
       restore: restore.when || undefined,
@@ -1908,10 +1929,14 @@ function normaliseOutages(json, opts) {
   });
 
   const result = { outages };
+  /* The field names that were actually there, reported on success as well as
+     on failure -- the same reason a scrape reports its headings. A feed that
+     reads but yields three fields has columns going unread, and this is the
+     only way to see which. */
+  if (records.length && records[0].props) result.columns = Object.keys(records[0].props).slice(0, 30);
   const noListFound = envelope === 'unrecognised';
   if (!outages.length && (records.length > 0 || noListFound)) {
-    const sample = records.length && records[0].props ? Object.keys(records[0].props).slice(0, 25) : [];
-    result.diagnostics = { envelope, recordsSeen: records.length, sampleKeys: sample };
+    result.diagnostics = { envelope, recordsSeen: records.length, sampleKeys: result.columns || [] };
   }
   return result;
 }
@@ -1984,11 +2009,22 @@ const OUTAGE_NETWORKS = {
           { part: 'planned', url: 'https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/plannedoutagecustomer/records?limit=100',
             format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) }
         ] },
+      /* Essential Energy answers a bot challenge rather than its outage page,
+         so their own site cannot be a source here (see looksLikeBotChallenge).
+         Power Outages Australia republishes the same distributors' public
+         data and is used as a fallback -- tried last, and tagged with `via`
+         so the page can say whose figures these are. That matters on an
+         operational dashboard: an aggregator is a second-hand account, it
+         states itself that some networks are not covered, and it must not be
+         mistaken for the operator's own numbers. The operator's page is still
+         what `site` links to. */
       { name: 'Essential Energy', area: 'Regional and rural NSW',
         site: 'https://www.essentialenergy.com.au/outages-and-faults/power-outages',
         sources: [
           { url: 'https://www.essentialenergy.com.au/outages-and-faults/power-outages', format: 'text', parse: parseOutageTable },
-          { url: 'https://www.essentialenergy.com.au/outages-and-faults', format: 'text', parse: parseOutageTable }
+          { url: 'https://poweroutagesaustralia.com.au/distributors/essential-energy/',
+            format: 'text', parse: parseOutageTable,
+            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/essential-energy/' }
         ] }
     ]
   },
@@ -2150,12 +2186,17 @@ function looksLikeBotChallenge(text) {
     .test(String(text || ''));
 }
 
-/* A hard ceiling on upstream calls for one state's refresh. Victoria alone has
-   five operators with candidates each; on a bad day where everything fails,
-   an unbounded sweep would eat the invocation's 50-subrequest budget and
-   starve the news and incident refreshes sharing that tick. Operators past
-   the ceiling are reported as not-yet-checked, not as failed. */
-const MAX_OUTAGE_ATTEMPTS_PER_STATE = 7;
+/* A hard ceiling on upstream calls for one state's refresh, so that on a bad
+   day where everything fails an unbounded sweep can't eat the invocation's
+   50-subrequest budget. Operators past the ceiling are reported as
+   not-yet-checked rather than as failed.
+
+   It has to clear the busiest state with room to spare, not just fit it. NSW
+   now has eight sources across its three operators, and at a ceiling of seven
+   Essential Energy's fallback was silently never reached -- the budget ran
+   out one source short, and nothing said so. The outage refresh has its own
+   cron tick now (it alternates with the incidents), so the headroom is there. */
+const MAX_OUTAGE_ATTEMPTS_PER_STATE = 12;
 
 /* Fetches every operator in a state, normalises, and caches the result.
    Parsing happens here on the cron rather than on a visitor's request, for
@@ -2189,9 +2230,9 @@ async function refreshStateOutages(state) {
          step -- the same headers, timeout and HTML-instead-of-JSON detection
          apply here, so it is reused rather than duplicated. */
       const result = await tryIncidentSource(source);
-      if (!result.ok) { attempts.push({ url: source.url, error: result.error }); continue; }
+      if (!result.ok) { attempts.push({ url: source.url, error: result.error, via: source.via }); continue; }
       if (result.parsed.diagnostics) {
-        attempts.push({ url: source.url, error: 'Responded, but no recognisable outage fields' });
+        attempts.push({ url: source.url, error: 'Responded, but no recognisable outage fields', via: source.via });
         if (!drifted) drifted = { source, parsed: result.parsed };
         continue;
       }
@@ -2200,6 +2241,7 @@ async function refreshStateOutages(state) {
       entry.count = entry.outages.length;
       entry.sourceUrl = entry.sourceUrl || source.url;
       if (result.parsed.columns) entry.columns = result.parsed.columns;
+      if (source.via) { entry.via = source.via; entry.viaUrl = source.viaUrl; }
       partsDone.add(part);
       if (!net.combine) break;
     }
@@ -2212,11 +2254,17 @@ async function refreshStateOutages(state) {
       entry.diagnostics = drifted.parsed.diagnostics;
     }
     if (!entry.ok) {
-      const challenged = attempts.length && attempts.every((a) => looksLikeBotChallenge(a.error));
+      /* Judged on the operator's own sources only. Whether a third-party
+         fallback happened to answer is a separate fact -- "this operator
+         blocks us" stays true either way, and it is the one that tells you no
+         amount of URL-fixing will help. */
+      const own = attempts.filter((a) => !a.via);
+      const challenged = own.length && own.every((a) => looksLikeBotChallenge(a.error));
       if (challenged) {
         entry.blocked = true;
-        entry.error = 'This operator blocks automated access to its outage page (bot challenge). '
-          + 'Their own map is linked and still works in a browser.';
+        entry.error = 'This operator blocks automated access to its outage page (bot challenge)'
+          + (attempts.length > own.length ? ', and the third-party fallback did not answer either' : '')
+          + '. Their own map is linked and still works in a browser.';
       } else {
         entry.error = attempts.length
           ? (attempts.length === 1 ? attempts[0].error
@@ -2270,7 +2318,7 @@ async function refreshStateOutages(state) {
       name: n.name, area: n.area, site: n.site, ok: n.ok, count: n.count,
       customers: (n.outages || []).reduce((s, o) => s + (o.customers || 0), 0),
       error: n.error, unconfirmed: n.unconfirmed, blocked: n.blocked,
-      sourceUrl: n.sourceUrl, columns: n.columns,
+      via: n.via, viaUrl: n.viaUrl, sourceUrl: n.sourceUrl, columns: n.columns,
       diagnostics: n.diagnostics, attempts: n.attempts
     })),
     fetchedAt: Date.now()

@@ -280,11 +280,22 @@ console.log('\n== the per-state attempt budget holds ==');
   upstream.http = () => new Response('down', { status: 503 });   // everything fails
   fetchLog = [];
   await call('/api/outages/vic');                                // five operators, most with 1-2 URLs
-  check('upstream attempts are capped', fetchLog.length <= 7, fetchLog.length);
+  check('upstream attempts are capped', fetchLog.length <= 12, fetchLog.length);
   const b = await (await call('/api/outages/vic')).json();
   check('operators past the cap are not reported as failed',
-    b.networks.some(n => /Not checked/.test(n.error || '')) || fetchLog.length < 7,
+    b.networks.some(n => /Not checked/.test(n.error || '')) || fetchLog.length < 12,
     b.networks.map(n => n.error));
+
+  /* The ceiling has to clear the busiest state, not just bound it: at seven,
+     NSW's eighth source -- Essential Energy's fallback -- was never reached
+     and nothing said so. */
+  reset();
+  upstream.http = () => new Response('down', { status: 503 });
+  fetchLog = [];
+  await call('/api/outages/nsw');
+  const nswSources = 8;
+  check('every source in the busiest state gets a turn', fetchLog.length >= nswSources,
+    [fetchLog.length, nswSources]);
 }
 
 console.log('\n== the routes ==');
@@ -573,7 +584,61 @@ console.log('\n== an operator that blocks robots is not a broken URL ==');
   check('it is marked as blocking, not as unavailable', ee.blocked === true, ee);
   check('and not as a feed we have yet to find', !ee.unconfirmed, ee);
   check('the reason says what it actually is', /blocks automated access/i.test(ee.error), ee.error);
+  /* The fallback not answering is a separate fact and is reported as one --
+     "this operator blocks us" stays true either way, and it is the part that
+     says no amount of URL-fixing will help. */
+  check('and mentions the fallback separately', /fallback did not answer/i.test(ee.error), ee.error);
   check('their own map is still offered', /^https:\/\//.test(ee.site), ee.site);
+}
+
+
+console.log('\n== a JSON feed whose field names were never seen before ==');
+{
+  reset();
+  /* An exhaustive list of field names can't be kept for a publisher whose
+     schema has never been inspected. When the exact names miss, the keys are
+     read the way a table's headings are read -- same vocabulary, substring
+     rather than exact. This is the difference between reading the feed and
+     declaring the whole thing unreadable over one unlisted word. */
+  upstream['outagecustomerlive/exports/geojson'] = json({ type: 'FeatureCollection', features: [
+    { properties: {
+      outage_reference_no: 'INC 42',
+      affected_locality_name: 'Katoomba',
+      number_of_customers_impacted: 64,
+      customer_type: 'Residential',          // matches the word, is not a count
+      outage_reason_description: 'Fallen branch'
+    } }] });
+  const b = await (await call('/api/outages/nsw')).json();
+  const e = b.networks.find(n => n.name === 'Endeavour Energy');
+  check('the feed reads instead of being declared unreadable', e.ok && e.count === 1, [e.ok, e.count, e.diagnostics]);
+  const one = b.outages.find(o => o.location === 'Katoomba');
+  check('an unlisted location field is still found', !!one, b.outages);
+  check('an unlisted count field too', one && one.customers === 64, one && one.customers);
+  check('and a non-numeric near-match is not mistaken for the count',
+    one && one.customers !== 'Residential', one && one.customers);
+  check('the field names are reported either way', (e.columns || []).includes('outage_reference_no'), e.columns);
+}
+
+console.log('\n== an aggregator is used, and said to be an aggregator ==');
+{
+  reset();
+  /* Essential Energy blocks automated access to its own page, so the
+     fallback is a third party -- which the payload has to admit to. */
+  upstream['essentialenergy.com.au'] = () => new Response(
+    '<html><title>Just a moment...</title></html>', { status: 403 });
+  upstream['poweroutagesaustralia.com.au'] = () => new Response(
+    '<html><table><tr><th>Suburb</th><th>Customers affected</th></tr>' +
+    '<tr><td>Armidale</td><td>107</td></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+
+  const b = await (await call('/api/outages/nsw')).json();
+  const ee = b.networks.find(n => n.name === 'Essential Energy');
+  check('the fallback answers', ee.ok && ee.count === 1, [ee.ok, ee.count, ee.error]);
+  check('and is attributed, not passed off as the operator', ee.via === 'Power Outages Australia', ee.via);
+  check('the operator own page is still what is linked',
+    /essentialenergy\.com\.au/.test(ee.site), ee.site);
+  check('the operator own page was tried first',
+    /essentialenergy\.com\.au/.test((ee.attempts || [])[0].url), ee.attempts);
 }
 
 console.log('\n----------------------------------------');

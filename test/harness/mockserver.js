@@ -13,6 +13,7 @@
      partial    one operator down
      drift      an operator answers in an unrecognised shape
      quiet      everyone reporting, nothing out
+     via        one operator read through a third-party aggregator
      unconnected  operators whose feed has not been found yet
      down       the outage service itself is unreachable
 */
@@ -58,6 +59,12 @@ function statePayload(scenario) {
     nets[2].ok = false;
     nets[2].error = 'HTTP 403 — <html>Access denied</html>';
     outages = outages.filter(o => o.network !== 'Essential Energy');
+  }
+  /* An operator read through a third-party aggregator rather than its own
+     site, which the page has to say out loud. */
+  if (scenario === 'via') {
+    nets[2].via = 'Power Outages Australia';
+    nets[2].viaUrl = 'https://poweroutagesaustralia.com.au/distributors/essential-energy/';
   }
   if (scenario === 'unconnected') {
     nets[1].ok = false; nets[1].unconfirmed = true; nets[1].error = 'HTTP 404';

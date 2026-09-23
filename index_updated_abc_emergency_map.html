@@ -212,6 +212,7 @@
   .outage-net.down{background:#fff4e8;border-color:#f0d3ae;color:#8a5200}
   /* Not connected yet reads as a gap in this dashboard, not as an operator
      problem, so it is muted rather than amber. */
+  .outage-net i{font-style:italic;opacity:.75}
   .outage-net.pending{background:#f4f4f6;border-color:#e0e0e6;color:#6a6a78;font-style:italic}
   .outage-net.quiet{opacity:.8}
   .outage-net a{color:inherit;text-decoration:underline}
@@ -1759,11 +1760,16 @@ window.addEventListener('resize',()=>map.invalidateSize());
       const cls=drifted?'outage-net down'
                 :(n.ok?(n.count?'outage-net':'outage-net quiet')
                       :((n.unconfirmed||n.blocked)?'outage-net pending':'outage-net down'));
-      const tail=drifted?' · data not readable'
+      const plain=drifted?' · data not readable'
         :(n.ok
           ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s'):' · none listed')
           :(n.blocked?' · blocks automated access'
             :(n.unconfirmed?' · feed not connected yet':' · unavailable')));
+      /* Where the figures came from, when it wasn't the operator. An
+         aggregator's numbers are a second-hand account, and on a dashboard
+         people act on that distinction has to be visible on the chip itself,
+         not only in the footnote. */
+      const tail=escapeHtml(plain)+(n.ok&&n.via?' <i>via '+escapeHtml(n.via)+'</i>':'');
       /* The upstream reason on hover, and a way through to the operator's own
          map either way -- a failed network must never be a dead end. */
       const title=n.ok?(n.diagnostics?('Answered, but this dashboard could not read its format — '+((n.diagnostics.note)||'')):(n.area||''))
@@ -1773,7 +1779,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
                           :(n.error||'Unavailable')));
       return '<span class="'+cls+'" title="'+escapeHtml(title)+'">'+
         '<a href="'+escapeHtml(n.site||'#')+'" target="_blank" rel="noopener"><b>'+escapeHtml(n.name)+'</b></a>'+
-        escapeHtml(tail)+'</span>';
+        tail+'</span>';
     }).join('');
   }
 
@@ -1828,7 +1834,18 @@ window.addEventListener('resize',()=>map.invalidateSize());
   }
 
   function renderFoot(payload){
-    const notes=['Reported by each state’s distribution network operators. Outage counts and restoration estimates are the operators’ own and can change without notice — for anything operational, confirm on the operator’s site.'];
+    const notes=[];
+    /* Whose figures these are, said plainly. An aggregator is a second-hand
+       account of the operator's data and the distinction matters on a
+       dashboard people act on. */
+    const viaNets=(payload.networks||[]).filter(n=>n.ok&&n.via);
+    if(viaNets.length){
+      notes.push('ℹ️ '+viaNets.map(n=>escapeHtml(n.name)+' figures come via '+escapeHtml(n.via)).join('; ')+
+        ' — a third-party aggregator rather than the operator, because '+
+        (viaNets.length===1?'that operator blocks':'those operators block')+
+        ' automated access to its own page. Treat as indicative and confirm on their site.');
+    }
+    notes.push('Reported by each state’s distribution network operators. Outage counts and restoration estimates are the operators’ own and can change without notice — for anything operational, confirm on the operator’s site.');
     const drifted=(payload.networks||[]).filter(n=>n.ok&&n.diagnostics);
     if(drifted.length){
       /* Reachable but unreadable is a parser fix, not an outage, and saying

@@ -129,6 +129,19 @@ const check = (n, c, x) => {
     await p.close();
   }
 
+  console.log('\n== an aggregator figures are labelled as such ==');
+  {
+    const p = await open('via');
+    const c = await chips(p);
+    const ee = c.find(x => /Essential/.test(x.text));
+    check('the chip names the source', /via Power Outages Australia/i.test(ee.text), c.map(x => x.text));
+    check('the footer explains why it is not the operator',
+      /third-party aggregator/i.test(await foot(p)) && /blocks/i.test(await foot(p)), await foot(p));
+    check('operators read directly carry no such label',
+      !/via /i.test(c.find(x => /Ausgrid/.test(x.text)).text), c.map(x => x.text));
+    await p.close();
+  }
+
   console.log('\n== tabs switch states and carry counts ==');
   {
     const p = await open('live');
