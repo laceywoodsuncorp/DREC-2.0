@@ -1758,17 +1758,19 @@ window.addEventListener('resize',()=>map.invalidateSize());
       const drifted=n.ok&&n.diagnostics;
       const cls=drifted?'outage-net down'
                 :(n.ok?(n.count?'outage-net':'outage-net quiet')
-                      :(n.unconfirmed?'outage-net pending':'outage-net down'));
+                      :((n.unconfirmed||n.blocked)?'outage-net pending':'outage-net down'));
       const tail=drifted?' · data not readable'
         :(n.ok
           ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s'):' · none listed')
-          :(n.unconfirmed?' · feed not connected yet':' · unavailable'));
+          :(n.blocked?' · blocks automated access'
+            :(n.unconfirmed?' · feed not connected yet':' · unavailable')));
       /* The upstream reason on hover, and a way through to the operator's own
          map either way -- a failed network must never be a dead end. */
       const title=n.ok?(n.diagnostics?('Answered, but this dashboard could not read its format — '+((n.diagnostics.note)||'')):(n.area||''))
-                      :(n.unconfirmed
-                        ?'This dashboard does not have a working data feed for this operator yet — use their own outage map. ('+(n.error||'')+')'
-                        :(n.error||'Unavailable'));
+                      :(n.blocked?(n.error||'Blocks automated access')
+                        :(n.unconfirmed
+                          ?'This dashboard does not have a working data feed for this operator yet — use their own outage map. ('+(n.error||'')+')'
+                          :(n.error||'Unavailable')));
       return '<span class="'+cls+'" title="'+escapeHtml(title)+'">'+
         '<a href="'+escapeHtml(n.site||'#')+'" target="_blank" rel="noopener"><b>'+escapeHtml(n.name)+'</b></a>'+
         escapeHtml(tail)+'</span>';
@@ -1781,7 +1783,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     if(payload.customers)bits.push('<span><b>'+num(payload.customers)+'</b> customers affected</span>');
     const nets=payload.networks||[];
     const down=nets.filter(n=>(!n.ok&&!n.unconfirmed)||(n.ok&&n.diagnostics));
-    const pending=nets.filter(n=>n.unconfirmed);
+    const pending=nets.filter(n=>n.unconfirmed||n.blocked);
     if(down.length){
       bits.push('<span class="warn">⚠️ '+down.length+' of '+nets.length+
         ' networks not reporting — this list is incomplete</span>');

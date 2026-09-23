@@ -897,7 +897,17 @@ function normaliseWhen(raw) {
   let ms = null;
   if (/^\d{13}$/.test(out.when)) ms = Number(out.when);
   else if (/^\d{10}$/.test(out.when)) ms = Number(out.when) * 1000;
-  else {
+  else if (/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/.test(out.when)) {
+    /* Australian sources write the day first, and Date.parse reads d/m/y as
+       US month-first: "09/03/2026" is 3 March here and comes back as 3
+       September. A silently wrong date is worse than no date, and the raw
+       string is already shown, so this deliberately emits no ISO rather than
+       a confident wrong one. It cannot be fixed by reordering either -- these
+       strings carry no timezone, and guessing AEST vs AEDT would shift every
+       time by an hour for half the year. Feeds with a real timestamp (the
+       open data APIs, the GeoJSON files) are unaffected. */
+    return out;
+  } else {
     const parsed = Date.parse(out.when);
     if (!isNaN(parsed)) ms = parsed;
   }
@@ -1166,7 +1176,11 @@ function scrapeTable(html, hints, requiredField) {
       sampleKeys: headingsSeen.slice(0, 25)
     } };
   }
-  return { records: best.records };
+  /* The headings come back on success too, not just on failure. Ausgrid's
+     list read fine but yielded only three fields, which says the table has
+     columns this doesn't recognise -- and the only way to find out which is
+     to report what was there. */
+  return { records: best.records, headings: best.headings };
 }
 
 /* ---------- per-state parsers ---------- */
@@ -1925,8 +1939,10 @@ function parseOutageTable(html, opts) {
   /* The table was found and understood. No rows means the operator has
      nothing out -- a result, not a failure -- so it returns a clean empty
      list with no diagnostics to make it look broken. */
-  if (!read.records.length) return { outages: [] };
-  return normaliseOutages({ rows: read.records }, opts);
+  if (!read.records.length) return { outages: [], columns: read.headings };
+  const out = normaliseOutages({ rows: read.records }, opts);
+  out.columns = read.headings;
+  return out;
 }
 
 /* The distribution networks, by state. `area` is what the operator actually
@@ -2120,6 +2136,20 @@ const OUTAGE_NETWORKS = {
   }
 };
 
+/* Some operators put their outage page behind a bot challenge -- a 403
+   carrying "Just a moment..." or "Checking your browser" rather than the
+   page. That is a decision they have made about automated access, not a
+   broken URL and not a puzzle to solve: no header makes a JavaScript
+   challenge pass, and dressing the request up to look less like a robot in
+   order to get through one would be evading an access control rather than
+   reading something published for machines. So it is detected, named, and
+   left alone -- the reader gets sent to the operator's own map, and the fix,
+   if there is one, is a feed the operator actually publishes. */
+function looksLikeBotChallenge(text) {
+  return /just a moment|attention required|checking your browser|cf-browser-verification|enable javascript and cookies|ddos protection/i
+    .test(String(text || ''));
+}
+
 /* A hard ceiling on upstream calls for one state's refresh. Victoria alone has
    five operators with candidates each; on a bad day where everything fails,
    an unbounded sweep would eat the invocation's 50-subrequest budget and
@@ -2169,6 +2199,7 @@ async function refreshStateOutages(state) {
       entry.outages = entry.outages.concat(result.parsed.outages);
       entry.count = entry.outages.length;
       entry.sourceUrl = entry.sourceUrl || source.url;
+      if (result.parsed.columns) entry.columns = result.parsed.columns;
       partsDone.add(part);
       if (!net.combine) break;
     }
@@ -2181,16 +2212,26 @@ async function refreshStateOutages(state) {
       entry.diagnostics = drifted.parsed.diagnostics;
     }
     if (!entry.ok) {
-      entry.error = attempts.length
-        ? (attempts.length === 1 ? attempts[0].error
-          : 'All ' + attempts.length + ' sources failed — ' + attempts.map((a) => a.error).join(' | '))
-        : 'Not checked on this pass';
+      const challenged = attempts.length && attempts.every((a) => looksLikeBotChallenge(a.error));
+      if (challenged) {
+        entry.blocked = true;
+        entry.error = 'This operator blocks automated access to its outage page (bot challenge). '
+          + 'Their own map is linked and still works in a browser.';
+      } else {
+        entry.error = attempts.length
+          ? (attempts.length === 1 ? attempts[0].error
+            : 'All ' + attempts.length + ' sources failed — ' + attempts.map((a) => a.error).join(' | '))
+          : 'Not checked on this pass';
+      }
       /* An operator whose endpoint was never confirmed failing is a different
          claim from a confirmed one going down: the first means we haven't
          found its feed yet, the second means its feed is broken. Reporting
          both as "unavailable" would be telling the reader we looked when we
          haven't. */
-      if (!net.confirmed) entry.unconfirmed = true;
+      /* A blocked operator is not an unfound feed -- we found the page, they
+         declined to serve it to us. Saying "not connected yet" would imply
+         there is a URL still to find. */
+      if (!net.confirmed && !entry.blocked) entry.unconfirmed = true;
     }
     if (attempts.length) entry.attempts = attempts;
     networks.push(entry);
@@ -2228,7 +2269,8 @@ async function refreshStateOutages(state) {
     networks: networks.map((n) => ({
       name: n.name, area: n.area, site: n.site, ok: n.ok, count: n.count,
       customers: (n.outages || []).reduce((s, o) => s + (o.customers || 0), 0),
-      error: n.error, unconfirmed: n.unconfirmed, sourceUrl: n.sourceUrl,
+      error: n.error, unconfirmed: n.unconfirmed, blocked: n.blocked,
+      sourceUrl: n.sourceUrl, columns: n.columns,
       diagnostics: n.diagnostics, attempts: n.attempts
     })),
     fetchedAt: Date.now()

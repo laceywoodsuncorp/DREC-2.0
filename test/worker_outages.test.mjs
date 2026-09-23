@@ -525,6 +525,57 @@ console.log('\n== one cron tick stays inside the subrequest ceiling ==');
   check('both tick parities do real work', ticks.every(t => t > 10), ticks);
 }
 
+
+console.log('\n== a day-first date is never silently transposed ==');
+{
+  reset();
+  /* Ausgrid's list gives dates as 23/09/2026. Date.parse reads d/m/y as US
+     month-first, so 09/03/2026 -- 3 March here -- comes back as 3 September.
+     A confidently wrong date is worse than no date. */
+  upstream['ausgrid.com.au'] = () => new Response(
+    '<html><table><tr><th>Suburb</th><th>Customers affected</th><th>Start</th></tr>' +
+    '<tr><td>Waterloo</td><td>158</td><td>09/03/2026</td></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+  const b = await (await call('/api/outages/nsw')).json();
+  const one = b.outages.find(o => o.location === 'Waterloo');
+  check('the row still reads', !!one && one.customers === 158, one);
+  check('the date is kept exactly as published', one.start === '09/03/2026', one.start);
+  check('and no ISO is invented from it', one.startIso === undefined, one.startIso);
+}
+
+console.log('\n== a scrape reports the columns it saw ==');
+{
+  reset();
+  upstream['ausgrid.com.au'] = () => new Response(
+    '<html><table>' +
+    '<tr><th>Suburb</th><th>Customers affected</th><th>Start</th><th>Job reason</th></tr>' +
+    '<tr><td>Coogee</td><td>13</td><td>23/09/2026</td><td>Storm</td></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+  const b = await (await call('/api/outages/nsw')).json();
+  const ag = b.networks.find(n => n.name === 'Ausgrid');
+  /* Reported on success, not only on failure: a scrape that works but yields
+     three fields is how you learn the table has columns you aren't reading,
+     and the headings are the only way to find out which. */
+  check('the headings come back with a working scrape',
+    (ag.columns || []).includes('Customers affected'), ag.columns);
+  check('including ones that were not mapped', (ag.columns || []).includes('Job reason'), ag.columns);
+}
+
+console.log('\n== an operator that blocks robots is not a broken URL ==');
+{
+  reset();
+  /* Essential Energy answers a Cloudflare challenge rather than the page. */
+  upstream['essentialenergy.com.au'] = () => new Response(
+    '<html><head><title>Just a moment...</title></head><body>Enable JavaScript and cookies to continue</body></html>',
+    { status: 403, headers: { 'Content-Type': 'text/html' } });
+  const b = await (await call('/api/outages/nsw')).json();
+  const ee = b.networks.find(n => n.name === 'Essential Energy');
+  check('it is marked as blocking, not as unavailable', ee.blocked === true, ee);
+  check('and not as a feed we have yet to find', !ee.unconfirmed, ee);
+  check('the reason says what it actually is', /blocks automated access/i.test(ee.error), ee.error);
+  check('their own map is still offered', /^https:\/\//.test(ee.site), ee.site);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);
