@@ -65,7 +65,8 @@ function statePayload(scenario) {
     outages = outages.filter(o => o.network === 'Ausgrid');
   }
   if (scenario === 'drift') {
-    nets[1].diagnostics = { envelope: 'array', recordsSeen: 12, sampleKeys: ['zzz', 'qqq'] };
+    nets[1].diagnostics = { envelope: 'array', recordsSeen: 12, sampleKeys: ['zzz', 'qqq'],
+      note: 'Found 1 table(s) but no column could be matched to a location' };
     outages = outages.filter(o => o.network !== 'Endeavour Energy');
   }
   nets.forEach(n => {

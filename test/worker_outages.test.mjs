@@ -311,21 +311,41 @@ console.log('\n== the cron refreshes outages in shards ==');
 {
   reset();
   upstream.http = json([]);
-  const waits = [];
-  await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 17, 0, 0) }, env, { waitUntil: (p) => waits.push(p) });
-  await Promise.all(waits);
-  const a1 = await (await call('/api/outages')).json();
-  const first = a1.states.filter(s => s.ok).map(s => s.state);
-  check('a tick refreshes some states, not all', first.length > 0 && first.length < 8, first);
+  /* Outages run on odd ticks only -- they alternate with the incident
+     refresh so one invocation never carries both. So the two ticks that
+     cover the shards are 5 and 15 minutes apart, not 5. */
+  /* Read the per-state cache keys directly rather than through /api/outages:
+     that route warms this location as a side effect, which would count as
+     work the cron did. */
+  const cached = () => [...store.keys()]
+    .filter(k => k.includes('/outages/'))
+    .map(k => k.split('/outages/')[1].toUpperCase());
+  const runTick = async (minute) => {
+    const waits = [];
+    await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 24, 0, minute) }, env,
+      { waitUntil: (p) => waits.push(p) });
+    await Promise.allSettled(waits);
+    return cached();
+  };
 
-  const waits2 = [];
-  await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 17, 0, 5) }, env, { waitUntil: (p) => waits2.push(p) });
-  await Promise.all(waits2);
-  const a2 = await (await call('/api/outages')).json();
-  check('the next tick covers the rest', a2.states.filter(s => s.ok).length === 8,
-    a2.states.filter(s => !s.ok).map(s => s.state));
+  /* An even tick does the incidents instead. Asserted positively -- that the
+     incident caches get written -- rather than by checking that no outage
+     cache did: warming promises started by an earlier block's /api/outages
+     call are still in flight and can land in this store, which would make a
+     negative assertion flap for reasons that have nothing to do with the
+     cron. */
+  const even = await runTick(0);
+  const incidentKeys = [...store.keys()].filter(k => k.includes('/incidents/'));
+  check('an even tick runs the incident refresh', incidentKeys.length > 0, incidentKeys.length);
+
+  const first = await runTick(5);
+  check('an odd tick refreshes outage states', first.length > 0, first);
+  check('but only its own shard', first.length < 8, first);
+
+  const second = await runTick(15);
+  check('the next odd tick covers the rest', second.length === 8,
+    ['NSW','QLD','VIC','SA','WA','TAS','NT','ACT'].filter(s => second.indexOf(s) === -1));
 }
-
 
 console.log('\n== Queensland: two complementary files, merged ==');
 {
@@ -472,6 +492,37 @@ console.log('\n== a datacentre the cron never ran in fills itself ==');
   check('and over a few page loads the location is complete', okStates(last) === 8,
     last.states.filter(s => !s.ok).map(s => s.state));
   check('once something is reporting, the aggregate is cached', store.has(AGG));
+}
+
+
+console.log('\n== one cron tick stays inside the subrequest ceiling ==');
+{
+  /* A Worker invocation may make at most 50 subrequests and everything the
+     cron queues shares one. Doing all three refreshes every tick reached 58,
+     so the last requests issued threw -- and since they run concurrently,
+     which refresh got starved varied tick to tick. That is what "some feeds
+     populate and some never do" looked like from outside.
+
+     Measured with every upstream failing, which is the worst case: failures
+     are what make a feed try its fallbacks. */
+  const CEILING = 50;
+  const ticks = [];
+  for (const minute of [0, 5, 10, 15, 20, 25]) {
+    reset();
+    upstream.http = () => new Response('down', { status: 503 });
+    fetchLog = [];
+    const waits = [];
+    await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 24, 0, minute) }, env,
+      { waitUntil: (p) => waits.push(p) });
+    await Promise.allSettled(waits);
+    ticks.push(fetchLog.length);
+  }
+  const worst = Math.max.apply(null, ticks);
+  check('no tick comes close to the ceiling', worst <= CEILING - 8, { ticks, worst, CEILING });
+
+  /* Both halves of the alternation have to be affordable, not just the
+     average -- a cheap tick does not pay for an expensive one. */
+  check('both tick parities do real work', ticks.every(t => t > 10), ticks);
 }
 
 console.log('\n----------------------------------------');

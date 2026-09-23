@@ -1751,14 +1751,21 @@ window.addEventListener('resize',()=>map.invalidateSize());
       /* Three states, not two. An operator we have never managed to read is
          not the same as one that has gone down, and saying "unavailable"
          for the first would claim we checked something we haven't. */
-      const cls=n.ok?(n.count?'outage-net':'outage-net quiet')
-                    :(n.unconfirmed?'outage-net pending':'outage-net down');
-      const tail=n.ok
-        ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s'):' · none listed')
-        :(n.unconfirmed?' · feed not connected yet':' · unavailable');
+      /* Four states, and the one that used to hide was the worst of them:
+         an operator that answered in a shape we couldn't read counted as ok
+         with zero rows, so it said "none listed" -- reading as a quiet
+         network when its outages were actually being dropped on the floor. */
+      const drifted=n.ok&&n.diagnostics;
+      const cls=drifted?'outage-net down'
+                :(n.ok?(n.count?'outage-net':'outage-net quiet')
+                      :(n.unconfirmed?'outage-net pending':'outage-net down'));
+      const tail=drifted?' · data not readable'
+        :(n.ok
+          ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s'):' · none listed')
+          :(n.unconfirmed?' · feed not connected yet':' · unavailable'));
       /* The upstream reason on hover, and a way through to the operator's own
          map either way -- a failed network must never be a dead end. */
-      const title=n.ok?(n.diagnostics?'Answered, but its data format was not recognised':(n.area||''))
+      const title=n.ok?(n.diagnostics?('Answered, but this dashboard could not read its format — '+((n.diagnostics.note)||'')):(n.area||''))
                       :(n.unconfirmed
                         ?'This dashboard does not have a working data feed for this operator yet — use their own outage map. ('+(n.error||'')+')'
                         :(n.error||'Unavailable'));
@@ -1773,7 +1780,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     bits.push('<span><b>'+num(payload.count||0)+'</b> current outage'+((payload.count===1)?'':'s')+'</span>');
     if(payload.customers)bits.push('<span><b>'+num(payload.customers)+'</b> customers affected</span>');
     const nets=payload.networks||[];
-    const down=nets.filter(n=>!n.ok&&!n.unconfirmed);
+    const down=nets.filter(n=>(!n.ok&&!n.unconfirmed)||(n.ok&&n.diagnostics));
     const pending=nets.filter(n=>n.unconfirmed);
     if(down.length){
       bits.push('<span class="warn">⚠️ '+down.length+' of '+nets.length+

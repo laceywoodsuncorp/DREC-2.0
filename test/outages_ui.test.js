@@ -87,7 +87,13 @@ const check = (n, c, x) => {
     check('the tile explains the gap', /didn.t recognise/i.test(await foot(p)), await foot(p));
     check('and names the operator', /Endeavour/.test(await foot(p)), await foot(p));
     const c = await chips(p);
-    check('it is not reported as down', c.filter(x => x.down).length === 0, c);
+    /* It must not read as quiet either: "none listed" on an operator whose
+       rows were dropped is the most misleading thing this tile could say. */
+    check('the chip says the data was unreadable, not "none listed"',
+      c.some(x => /not readable/i.test(x.text)) && !c.some(x => /none listed/i.test(x.text)),
+      c.map(x => x.text));
+    check('and it counts against coverage in the summary',
+      /incomplete/i.test(await summary(p)), await summary(p));
     await p.close();
   }
 

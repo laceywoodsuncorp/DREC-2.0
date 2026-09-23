@@ -581,7 +581,12 @@ function buildMergedNews(feedState) {
 }
 
 /* Refreshes one shard's feeds, then rewrites the record. */
-const MAX_DISCOVERIES_PER_TICK = 2;
+/* One per tick, not two. Each discovery costs a homepage fetch plus up to
+   MAX_PATH_PROBES probes -- seven subrequests -- which made it the most
+   expensive thing on a tick by some margin, and the invocation has a hard
+   ceiling of 50 to share with the incident and outage refreshes. The
+   rotation still walks the whole shard, just a step at a time. */
+const MAX_DISCOVERIES_PER_TICK = 1;
 async function refreshNewsShard(shard, tick, env) {
   const state = (await readNewsState(env)) || { feeds: {} };
   state.feeds = state.feeds || {};
@@ -2422,11 +2427,25 @@ export default {
        advancing, so every position comes round. */
     const nowMs = event && event.scheduledTime ? event.scheduledTime : Date.now();
     const tick = Math.floor(nowMs / 300000);
+
+    /* A Worker invocation may make at most 50 subrequests, and everything
+       queued here shares one invocation. Doing all three refreshes on every
+       tick came to 58 in the worst case, so the last requests issued simply
+       threw -- and because the three run concurrently, which one got starved
+       varied from tick to tick. That is the intermittent "some feeds populate,
+       some never do" behaviour.
+
+       News runs every tick, since it is the headline of the page. The
+       incident and outage refreshes alternate, which halves the peak and
+       leaves both parities around 35. The cost is that each of those is
+       re-read every 10 minutes rather than every 5, well inside how fast
+       either actually changes. */
     ctx.waitUntil(refreshNewsShard(tick % NEWS_SHARDS, tick, env));
-    ctx.waitUntil(refreshAllIncidents());
-    /* Half the states per tick -- see refreshOutageShard for why outages are
-       sharded when the incident feeds are not. */
-    ctx.waitUntil(refreshOutageShard(tick % OUTAGE_SHARDS));
+    if (tick % 2 === 0) {
+      ctx.waitUntil(refreshAllIncidents());
+    } else {
+      ctx.waitUntil(refreshOutageShard(Math.floor(tick / 2) % OUTAGE_SHARDS));
+    }
     /* GDELT stays on the cron only as a fallback for /api/gdelt; the page
        reads /api/news first. Its refresh failing is expected and harmless. */
     /* GDELT is only a fallback for /api/gdelt and rejects most attempts
