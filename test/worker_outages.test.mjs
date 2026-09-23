@@ -113,13 +113,11 @@ console.log('\n== the text views: a table read by its own headings ==');
     '</table>');
 
   // headings in a different order, different words, no <th> at all
-  upstream['endeavourenergy.com.au'] = page(
+  upstream['essentialenergy.com.au'] = page(
     '<table>' +
     '<tr><td>Outage type</td><td>Areas affected</td><td>No. of premises</td><td>Time off supply</td></tr>' +
     '<tr><td>Planned</td><td>Penrith</td><td>88</td><td>2026-09-17T04:00:00Z</td></tr>' +
     '</table>');
-
-  upstream['essentialenergy.com.au'] = page('<div id="app"></div>');   // a JS-rendered page
 
   const b = await (await call('/api/outages/nsw')).json();
   const ausgrid = b.networks.find(n => n.name === 'Ausgrid');
@@ -132,18 +130,73 @@ console.log('\n== the text views: a table read by its own headings ==');
     b.outages.find(o => o.location === 'Gosford').restore === undefined,
     b.outages.find(o => o.location === 'Gosford'));
 
-  const endeavour = b.networks.find(n => n.name === 'Endeavour Energy');
-  check('a table with no <th> and different wording still reads', endeavour.ok && endeavour.count === 1, endeavour);
+  const essential = b.networks.find(n => n.name === 'Essential Energy');
+  check('a table with no <th> and different wording still reads', essential.ok && essential.count === 1, essential);
   const penrith = b.outages.find(o => o.location === 'Penrith');
   check('"Areas affected" is a location, not a customer count',
     penrith && penrith.location === 'Penrith' && penrith.customers === 88, penrith);
   check('"Outage type" sets planned', penrith && penrith.kind === 'planned', penrith && penrith.kind);
+}
 
-  const essential = b.networks.find(n => n.name === 'Essential Energy');
-  check('a JavaScript-rendered page is diagnosed, not just "failed"',
-    essential.diagnostics && essential.diagnostics.envelope === 'no-table', essential.diagnostics);
+console.log('\n== a page that draws its list in the browser is diagnosed ==');
+{
+  reset();
+  upstream['tasnetworks.com.au'] = () => new Response('<html><body><div id="app"></div></body></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+  const b = await (await call('/api/outages/tas')).json();
+  const net = b.networks[0];
+  check('reported as a page with no table, not "failed"',
+    net.diagnostics && net.diagnostics.envelope === 'no-table', net.diagnostics);
   check('and says what would actually fix it',
-    essential.diagnostics && /JavaScript/.test(essential.diagnostics.note), essential.diagnostics);
+    net.diagnostics && /JavaScript/.test(net.diagnostics.note), net.diagnostics);
+}
+
+console.log('\n== Endeavour: two datasets merged, their fallbacks not double-counted ==');
+{
+  reset();
+  /* The outage map draws its list in the browser, so Endeavour is read from
+     their Opendatasoft open data portal instead. Unplanned and planned are
+     separate datasets; each has an export and a capped /records fallback. */
+  const ods = (rows) => json({ total_count: rows.length, results: rows });
+  upstream['outagecustomerlive/exports/geojson'] = json({ type: 'FeatureCollection', features: [
+    { geometry: { type: 'Point', coordinates: [150.99, -33.82] },
+      properties: { reference: 'INC 1115105492', suburb: 'Greystanes',
+        customers_affected: 120, estimated_restoration_time: '2026-09-24T04:30:00Z' } }] });
+  upstream['plannedoutagecustomer/exports/geojson'] = json({ type: 'FeatureCollection', features: [
+    { properties: { reference: 'INC 1115105769', suburb: 'Vineyard', customers_affected: 30 } }] });
+  /* Both /records fallbacks also answer. If a part's fallback ran after its
+     primary succeeded, every row would be counted twice. */
+  upstream['outagecustomerlive/records'] = ods([{ reference: 'DUP-1', suburb: 'Greystanes' }]);
+  upstream['plannedoutagecustomer/records'] = ods([{ reference: 'DUP-2', suburb: 'Vineyard' }]);
+
+  const b = await (await call('/api/outages/nsw')).json();
+  const e = b.networks.find(n => n.name === 'Endeavour Energy');
+  check('both datasets contribute', e.ok && e.count === 2, e.count);
+  check('and the fallbacks did not also run',
+    !b.outages.some(o => /^DUP-/.test(o.id || '')), b.outages.map(o => o.id));
+  const gs = b.outages.find(o => o.location === 'Greystanes');
+  check('snake_case fields are read', gs && gs.customers === 120, gs);
+  check('including the restoration estimate', gs && !!gs.restoreIso, gs);
+  check('the INC reference is kept', gs && /1115105492/.test(gs.id || ''), gs && gs.id);
+  check('the dataset decides planned vs unplanned',
+    gs.kind === 'unplanned' && b.outages.find(o => o.location === 'Vineyard').kind === 'planned',
+    b.outages.map(o => [o.location, o.kind]));
+}
+
+console.log('\n== Opendatasoft\'s /records envelope is read too ==');
+{
+  reset();
+  upstream['outagecustomerlive/exports/geojson'] = () => new Response('down', { status: 503 });
+  upstream['outagecustomerlive/records'] = json({ total_count: 1, results: [
+    { reference: 'INC 9', suburb: 'Penrith', customers_affected: 7,
+      geo_point_2d: { lon: 150.69, lat: -33.75 } }] });
+  const b = await (await call('/api/outages/nsw')).json();
+  const e = b.networks.find(n => n.name === 'Endeavour Energy');
+  check('the fallback answers when the export is down', e.ok && e.count === 1, [e.ok, e.count, e.error]);
+  const one = b.outages.find(o => o.location === 'Penrith');
+  check('records are found inside the results envelope', !!one, b.outages);
+  check('and a nested geo_point_2d becomes coordinates',
+    one && one.lat === -33.75 && one.lon === 150.69, one);
 }
 
 console.log('\n== a table we cannot map reports its headings ==');
@@ -329,8 +382,10 @@ console.log('\n== an unconnected feed is not a reported outage ==');
   reset();
   upstream.http = () => new Response('not found', { status: 404 });
   const nsw = await (await call('/api/outages/nsw')).json();
+  const guessed = nsw.networks.filter(n => n.name !== 'Endeavour Energy');
   check('operators with no confirmed feed say so',
-    nsw.networks.every(n => n.unconfirmed === true), nsw.networks.map(n => [n.name, n.unconfirmed]));
+    guessed.every(n => n.unconfirmed === true), guessed.map(n => [n.name, n.unconfirmed]));
+  check('a confirmed one does not', !nsw.networks.find(n => n.name === 'Endeavour Energy').unconfirmed);
   const wa = await (await call('/api/outages/wa')).json();
   const wp = wa.networks.find(n => n.name === 'Western Power');
   check('a confirmed feed failing is a plain failure, not "unconnected"',

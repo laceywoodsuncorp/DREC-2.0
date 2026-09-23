@@ -819,7 +819,18 @@ const FIELD_CANDIDATES = {
    agency's capitalisation choices. */
 function lowerKeyMap(obj) {
   const map = {};
-  Object.keys(obj || {}).forEach((k) => { map[k.toLowerCase()] = obj[k]; });
+  Object.keys(obj || {}).forEach((k) => {
+    const lower = k.toLowerCase();
+    map[lower] = obj[k];
+    /* Also indexed with the separators removed, so one candidate name matches
+       whichever convention a publisher chose: ESTIMATEDRESTORATIONTIME,
+       estimated_restoration_time and estimatedRestorationTime are the same
+       field, and open-data portals overwhelmingly use the snake_case form
+       that a plain lowercase compare would miss. The exact key always wins,
+       so nothing that already matched changes. */
+    const squashed = lower.replace(/[^a-z0-9]/g, '');
+    if (squashed && map[squashed] === undefined) map[squashed] = obj[k];
+  });
   return map;
 }
 
@@ -846,6 +857,15 @@ function pickCoords(record, geometry) {
     }
   }
   const lowered = lowerKeyMap(record);
+  /* Opendatasoft carries the point as a nested object (geo_point_2d), not as
+     two columns -- so check that before falling back to flat lat/lon. */
+  for (const key of ['geopoint2d', 'geopoint', 'point', 'coordinates', 'geometry']) {
+    const nested = lowered[key];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested) &&
+        isFinite(nested.lat) && isFinite(nested.lon)) {
+      return { lat: Number(nested.lat), lon: Number(nested.lon) };
+    }
+  }
   const latRaw = lowered.lat !== undefined ? lowered.lat : lowered.latitude;
   const lonRaw = lowered.lon !== undefined ? lowered.lon
     : (lowered.lng !== undefined ? lowered.lng : lowered.longitude);
@@ -1924,11 +1944,24 @@ const OUTAGE_NETWORKS = {
           { url: 'https://www.ausgrid.com.au/outages-list', format: 'text', parse: parseOutageTable },
           { url: 'https://www.ausgrid.com.au/Outages/Current-Outages', format: 'text', parse: parseOutageTable }
         ] },
+      /* Endeavour's outage map draws its list in the browser, so there is no
+         table on the page to read -- but they publish the same data properly,
+         through an Opendatasoft open data portal, anonymous and key-free.
+         Unplanned and planned are separate datasets, hence the parts.
+         The export returns the whole set as GeoJSON; /records is capped at
+         100 by the platform, so it is the fallback rather than the primary. */
       { name: 'Endeavour Energy', area: "Sydney's greater west, Blue Mountains, Southern Highlands and Illawarra",
+        confirmed: true, combine: true,
         site: 'https://www.endeavourenergy.com.au/power-outages/outage-map',
         sources: [
-          { url: 'https://www.endeavourenergy.com.au/power-outages/current-outages', format: 'text', parse: parseOutageTable },
-          { url: 'https://www.endeavourenergy.com.au/power-outages/outage-map', format: 'text', parse: parseOutageTable }
+          { part: 'unplanned', url: 'https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/exports/geojson',
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'unplanned' }) },
+          { part: 'unplanned', url: 'https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/records?limit=100',
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'unplanned' }) },
+          { part: 'planned', url: 'https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/plannedoutagecustomer/exports/geojson',
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) },
+          { part: 'planned', url: 'https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/plannedoutagecustomer/records?limit=100',
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) }
         ] },
       { name: 'Essential Energy', area: 'Regional and rural NSW',
         site: 'https://www.essentialenergy.com.au/outages-and-faults/power-outages',
@@ -1951,20 +1984,23 @@ const OUTAGE_NETWORKS = {
       { name: 'Energex', area: 'South East Queensland', confirmed: true, combine: true,
         site: 'https://www.energex.com.au/outages/outage-finder/outage-finder-map',
         sources: [
-          { url: 'https://www.energex.com.au/static/Energex/energex_po_current_unplanned.geojson',
+          { part: 'unplanned', url: 'https://www.energex.com.au/static/Energex/energex_po_current_unplanned.geojson',
             format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'unplanned' }) },
-          { url: 'https://www.energex.com.au/static/Energex/energex_po_current_planned.geojson',
+          { part: 'planned', url: 'https://www.energex.com.au/static/Energex/energex_po_current_planned.geojson',
             format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) }
         ] },
       { name: 'Ergon Energy', area: 'Regional Queensland', confirmed: true, combine: true,
         site: 'https://www.ergon.com.au/network/outages/outage-finder/outage-finder-map',
         sources: [
-          { url: 'https://www.ergon.com.au/static/Ergon/ergon_po_current_unplanned.geojson',
+          { part: 'unplanned', url: 'https://www.ergon.com.au/static/Ergon/ergon_po_current_unplanned.geojson',
             format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'unplanned' }) },
-          { url: 'https://www.ergon.com.au/static/Ergon/ergon_po_current_planned.geojson',
-            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) },
-          /* Ergon's own text view, as a backstop if the static files move. */
-          { url: 'https://www.ergon.com.au/network/outages/outage-finder/outage-finder-text-view', format: 'text', parse: parseOutageTable }
+          { part: 'planned', url: 'https://www.ergon.com.au/static/Ergon/ergon_po_current_planned.geojson',
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) }
+          /* Ergon's outage-finder text view is deliberately NOT listed here.
+             It carries planned and unplanned together, so under `combine` it
+             would be fetched alongside the two GeoJSON files and every row
+             counted twice. A whole-network fallback doesn't fit a per-part
+             merge; if the static files move, the diagnostics will say so. */
         ] }
     ]
   },
@@ -2102,8 +2138,17 @@ async function refreshStateOutages(state) {
     const attempts = [];
     let drifted = null;
 
+    /* `combine` means the sources are complementary parts of one picture --
+       planned and unplanned published separately -- rather than fallbacks for
+       each other. `part` says which is which: within a part the first success
+       wins and the rest are its fallbacks, and the parts are then merged.
+       Without that distinction a part's fallback would be fetched even after
+       its primary succeeded and every row would be counted twice. */
+    const partsDone = new Set();
     for (const source of net.sources) {
       if (budget <= 0) break;
+      const part = source.part || source.url;
+      if (net.combine && partsDone.has(part)) continue;
       budget--;
       /* tryIncidentSource is the generic "fetch, check, parse, never throw"
          step -- the same headers, timeout and HTML-instead-of-JSON detection
@@ -2119,9 +2164,7 @@ async function refreshStateOutages(state) {
       entry.outages = entry.outages.concat(result.parsed.outages);
       entry.count = entry.outages.length;
       entry.sourceUrl = entry.sourceUrl || source.url;
-      /* `combine` means the sources are complementary parts of one picture
-         (planned and unplanned in separate files), not fallbacks for each
-         other -- so keep going instead of stopping at the first success. */
+      partsDone.add(part);
       if (!net.combine) break;
     }
 
