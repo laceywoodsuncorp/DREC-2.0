@@ -916,6 +916,68 @@ console.log('\n== an outage across four towns is findable by any of them ==');
     !(street.towns || []).some(t => /Albert Road|2250/.test(t)), street.towns);
 }
 
+
+console.log('\n== Endeavour publishes premises, not outages ==');
+{
+  reset();
+  /* Verbatim field names and shapes from their live feed. One record per
+     affected premise: their own site reports nine outages against 1,267 of
+     these. Read literally that is 1,267 outages -- wrong, and the kind of
+     wrong that looks plausible on a dashboard. */
+  const premise = (incident, city, street, when) => ({ properties: {
+    street_name: street, cityname: city, postcode: '2178',
+    incident_id: incident, outage_type: 'UNPLANNED', incident_status: 'NEW',
+    customers_affected: 1, start_date_time: when, est_restore_time: '2026-09-24 04:00' } });
+
+  upstream['outagecustomerlive/exports/geojson'] = json({ type: 'FeatureCollection', features: [
+    premise('INC 1115105813', 'KEMPS CREEK', '230-234 CLIFTON AVE', '2026-09-24 00:43'),
+    premise('INC 1115105813', 'KEMPS CREEK', '12 BADGERYS RD', '2026-09-24 00:43'),
+    premise('INC 1115105813', 'MOUNT VERNON', '4 CAPITOL HILL DR', '2026-09-24 00:43'),
+    premise('INC 1115105999', 'GREYSTANES', '9 PROSPECT HWY', '2026-09-24 01:10')
+  ] });
+
+  const b = await (await call('/api/outages/nsw')).json();
+  const e = b.networks.find(n => n.name === 'Endeavour Energy');
+  check('four premises are two outages', e.count === 2, e.count);
+
+  const big = b.outages.find(o => o.id === 'INC 1115105813');
+  check('the premises are counted as customers', big.customers === 3, big.customers);
+  /* The town, not the street -- street_name sits earlier in the record and
+     both contain "name". */
+  check('the place is the town, not the street',
+    !/CLIFTON AVE/.test(big.location), big.location);
+  check('every town in the event is listed',
+    (big.towns || []).includes('KEMPS CREEK') && (big.towns || []).includes('MOUNT VERNON'), big.towns);
+  check('a town is not repeated', (big.towns || []).length === 2, big.towns);
+  check('the premise count is kept', big.premises === 3, big.premises);
+  check('and the type is read', big.kind === 'unplanned', big.kind);
+}
+
+console.log('\n== Western Power names its towns in one field ==');
+{
+  reset();
+  /* Also verbatim: one record per incident, with the towns comma-joined and
+     a matching list of per-town customer counts. */
+  upstream['WP_Outage_Prod'] = json({ type: 'FeatureCollection', features: [{ properties: {
+    OBJECTID: 511287, INCIDENTREF: 'INCD-2037481-U', OUTAGETYPE: 'U',
+    PLANNEDOUTAGE: 'Unplanned', NOCUSTOMERSIMPACTED: 134,
+    OUTAGESTARTTIME: '31/05/2026 12:08 PM', ESTIMATEDRESTORATIONTIME: '01/06/2026 06:30 PM',
+    AFFECTED_AREA: 'KUKERIN,MOULYINNING,NAIRIBIN,DUMBLEYUNG',
+    AFFECTED_AREA_NOCUSTOMERS: '70,25,13,10' } }] });
+
+  const b = await (await call('/api/outages/wa')).json();
+  const one = b.outages[0];
+  check('one incident stays one outage', b.count === 1, b.count);
+  check('the towns are split out', (one.towns || []).length === 4, one.towns);
+  check('including the last one', (one.towns || []).includes('DUMBLEYUNG'), one.towns);
+  /* The total, not the per-town breakdown that sits beside it. */
+  check('the customer total is the incident total', one.customers === 134, one.customers);
+  check('"Unplanned" as a word is still read as unplanned', one.kind === 'unplanned', one.kind);
+  /* Day-first with a time; no ISO is invented from it. */
+  check('a day-first timestamp is left as published',
+    one.start === '31/05/2026 12:08 PM' && one.startIso === undefined, [one.start, one.startIso]);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);

@@ -1826,7 +1826,11 @@ const OUTAGE_FIELDS = {
      in theirs. Without it an "Areas affected" column is found, mapped, and
      then dropped on the way out. */
   towns: ['areasaffected', 'areaaffected', 'affectedarea', 'affectedareas',
-    'suburbsaffected', 'suburbaffected', 'townsaffected', 'localities', 'areas', 'towns'],
+    'suburbsaffected', 'suburbaffected', 'townsaffected', 'localities', 'areas', 'towns',
+    /* Endeavour calls it cityname, and its street_name sits earlier in the
+       record -- both contain "name", so without this the row's place came
+       out as "230-234 CLIFTON AVE" rather than KEMPS CREEK. */
+    'cityname', 'city', 'suburbname', 'localityname', 'town'],
   /* NOCUSTOMERSIMPACTED is Western Power's real column name, confirmed from
      its published feature service; EVENT_ID is Energy Queensland's. The rest
      stay broad for the operators whose schema still hasn't been seen. */
@@ -1896,6 +1900,47 @@ function parseCustomerCount(raw) {
   if (!m) return null;
   const n = Number(m[1]);
   return isFinite(n) ? n : null;
+}
+
+/* Collapses records that share an incident id into the one event they
+   describe. Only does anything when ids actually repeat, so a feed with one
+   record per outage passes through untouched. */
+function groupByIncident(rows) {
+  const order = [];
+  const byId = new Map();
+  let anyRepeat = false;
+  rows.forEach((r) => {
+    if (!r.id) { order.push(r); return; }
+    if (byId.has(r.id)) anyRepeat = true;
+    else { byId.set(r.id, []); order.push(r.id); }
+    byId.get(r.id).push(r);
+  });
+  if (!anyRepeat) return rows;
+
+  return order.map((entry) => {
+    if (typeof entry !== 'string') return entry;
+    const group = byId.get(entry);
+    if (group.length === 1) return group[0];
+
+    const towns = [];
+    group.forEach((g) => (g.towns || []).forEach((t) => { if (towns.indexOf(t) === -1) towns.push(t); }));
+    const counts = group.map((g) => g.customers).filter((c) => c !== null && c !== undefined);
+    /* A count repeated identically on every record of an event is the
+       event's total restated, and summing it would multiply the outage by
+       the number of rows describing it. A count of one per record is one
+       premise each, and there the sum is the answer. */
+    const same = counts.length && counts.every((c) => c === counts[0]);
+    const customers = !counts.length ? null
+      : ((same && counts[0] > 1) ? counts[0] : counts.reduce((a, b) => a + b, 0));
+
+    return Object.assign({}, group[0], {
+      location: towns.length ? towns.join(', ') : group[0].location,
+      towns: towns.length ? towns : group[0].towns,
+      moreTowns: undefined,
+      customers,
+      premises: group.length
+    });
+  });
 }
 
 /* Splits the town list an operator publishes as one string into the towns it
@@ -1985,14 +2030,23 @@ function normaliseOutages(json, opts) {
     }, pickCoords(props, geometry)));
   });
 
-  const result = { outages };
+  /* Endeavour publishes one record per affected PREMISE, not per outage:
+     1,267 records for the nine outages its own site reports, each with a
+     street, a town and customers_affected of 1. Read literally that is 1,267
+     outages, which is both wrong and exactly the kind of wrong that looks
+     plausible. Records sharing an incident id are one event, and the towns
+     of that event are the distinct towns across its records -- which is also
+     the answer to the "+4 more" their site hides. */
+  const grouped = groupByIncident(outages);
+
+  const result = { outages: grouped };
   /* The field names that were actually there, reported on success as well as
      on failure -- the same reason a scrape reports its headings. A feed that
      reads but yields three fields has columns going unread, and this is the
      only way to see which. */
   if (records.length && records[0].props) result.columns = Object.keys(records[0].props).slice(0, 30);
   const noListFound = envelope === 'unrecognised';
-  if (!outages.length && (records.length > 0 || noListFound)) {
+  if (!grouped.length && (records.length > 0 || noListFound)) {
     result.diagnostics = { envelope, recordsSeen: records.length, sampleKeys: result.columns || [] };
   }
   return result;
