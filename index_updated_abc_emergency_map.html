@@ -1785,8 +1785,20 @@ window.addEventListener('resize',()=>map.invalidateSize());
 
   function renderSummary(payload){
     const bits=[];
-    bits.push('<span><b>'+num(payload.count||0)+'</b> current outage'+((payload.count===1)?'':'s')+'</span>');
-    if(payload.customers)bits.push('<span><b>'+num(payload.customers)+'</b> customers affected</span>');
+    /* Faults first and on their own. Planned work is mostly scheduled, often
+       for a date that hasn't arrived, and it outnumbers live faults several
+       times over on these lists -- one combined "customers affected" reads as
+       a mass outage when the real answer is a handful of streets. */
+    const up=payload.unplannedCount,pl=payload.plannedCount;
+    if(up===undefined){
+      bits.push('<span><b>'+num(payload.count||0)+'</b> current outage'+((payload.count===1)?'':'s')+'</span>');
+      if(payload.customers)bits.push('<span><b>'+num(payload.customers)+'</b> customers affected</span>');
+    }else{
+      bits.push('<span><b>'+num(up)+'</b> unplanned outage'+(up===1?'':'s')+
+        (payload.unplannedCustomers?' · '+num(payload.unplannedCustomers)+' customers off':'')+'</span>');
+      bits.push('<span>'+num(pl)+' planned'+
+        (payload.plannedCustomers?' · '+num(payload.plannedCustomers)+' customers':'')+'</span>');
+    }
     const nets=payload.networks||[];
     const down=nets.filter(n=>(!n.ok&&!n.unconfirmed)||(n.ok&&n.diagnostics));
     const pending=nets.filter(n=>n.unconfirmed||n.blocked);

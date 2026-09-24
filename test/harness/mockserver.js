@@ -81,11 +81,16 @@ function statePayload(scenario) {
     n.count = mine.length;
     n.customers = mine.reduce((s, o) => s + (o.customers || 0), 0);
   });
+  const unplanned = outages.filter(o => o.kind !== 'planned');
+  const planned = outages.filter(o => o.kind === 'planned');
+  const sum = (rows) => rows.reduce((s, o) => s + (o.customers || 0), 0);
   return {
     state: 'NSW', name: 'New South Wales',
     ok: nets.some(n => n.ok), complete: nets.every(n => n.ok),
     count: outages.length,
-    customers: outages.reduce((s, o) => s + (o.customers || 0), 0),
+    customers: sum(outages),
+    unplannedCount: unplanned.length, unplannedCustomers: sum(unplanned),
+    plannedCount: planned.length, plannedCustomers: sum(planned),
     networks: nets, outages, fetchedAt: now, cacheAgeSeconds: 40
   };
 }

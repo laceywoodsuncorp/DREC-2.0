@@ -2302,10 +2302,24 @@ async function refreshStateOutages(state) {
 
   /* Merge for the state-level list, tagging each row with the operator that
      reported it -- without that tag a list spanning three networks gives no
-     way to tell which one to ring. */
+     way to tell which one to ring.
+
+     De-duplicated on what identifies an outage rather than on the whole
+     record: the same job routinely appears twice on one page (a summary row
+     and a detail row, or a desktop and a mobile table) differing only in some
+     column we don't read, and an exact-record compare misses that. An
+     overstated customer count is worse than an understated one here, because
+     it still looks plausible -- nobody double-takes at a bigger number. */
   const outages = [];
+  const seenRows = new Set();
   networks.forEach((net) => {
-    (net.outages || []).forEach((o) => { outages.push(Object.assign({ network: net.name }, o)); });
+    (net.outages || []).forEach((o) => {
+      const key = [net.name, o.id || '', o.location || '', o.customers, o.start || '']
+        .join('|').toLowerCase().replace(/\s+/g, ' ');
+      if (seenRows.has(key)) return;
+      seenRows.add(key);
+      outages.push(Object.assign({ network: net.name }, o));
+    });
   });
   outages.sort((a, b) => {
     const ca = a.customers === null || a.customers === undefined ? -1 : a.customers;
@@ -2316,6 +2330,15 @@ async function refreshStateOutages(state) {
 
   const reporting = networks.filter((n) => n.ok);
   const customers = outages.reduce((sum, o) => sum + (o.customers || 0), 0);
+  /* "Customers affected" has to mean people without power now. Planned work
+     is mostly scheduled, often for a date that has not arrived, and it
+     dominates these lists -- rolling it into one headline turns a handful of
+     live faults into a number several times larger than anything actually
+     happening. Counted, but counted separately. */
+  const unplanned = outages.filter((o) => o.kind !== 'planned');
+  const planned = outages.filter((o) => o.kind === 'planned');
+  const unplannedCustomers = unplanned.reduce((sum, o) => sum + (o.customers || 0), 0);
+  const plannedCustomers = planned.reduce((sum, o) => sum + (o.customers || 0), 0);
   const payload = {
     state: state.toUpperCase(),
     name: group.name,
@@ -2324,6 +2347,10 @@ async function refreshStateOutages(state) {
     ok: reporting.length > 0,
     count: outages.length,
     customers,
+    unplannedCount: unplanned.length,
+    unplannedCustomers,
+    plannedCount: planned.length,
+    plannedCustomers,
     /* Only meaningful if every operator reported, so the client can say
        "partial" instead of quoting a total that silently excludes a network. */
     complete: reporting.length === networks.length,

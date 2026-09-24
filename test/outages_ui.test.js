@@ -142,6 +142,19 @@ const check = (n, c, x) => {
     await p.close();
   }
 
+  console.log('\n== faults are counted apart from planned work ==');
+  {
+    const p = await open('live');
+    const s = await summary(p);
+    /* One combined "customers affected" reads as a mass outage when most of
+       the list is scheduled work that may not have started. */
+    check('unplanned is the headline', /unplanned outage/i.test(s), s);
+    check('planned is counted separately', /planned/i.test(s.replace(/unplanned/gi, '')), s);
+    check('the two totals are not merged into one',
+      !/^\s*\d+\s+current outages\b/i.test(s), s);
+    await p.close();
+  }
+
   console.log('\n== tabs switch states and carry counts ==');
   {
     const p = await open('live');
