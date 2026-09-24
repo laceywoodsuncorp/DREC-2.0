@@ -303,6 +303,10 @@ async function scrapeOperator(page, state, net, target) {
       /* Deliberately not worked around -- see the header. */
       result.blocked = true;
       result.error = 'Operator blocks automated access (bot challenge); not bypassed';
+      /* Recorded even here: "blocked" is a conclusion, and the page it drew
+         is the evidence for it. Without this a blocked operator left nothing
+         behind to check the conclusion against. */
+      result.diagnostic = await page.evaluate(summariseInPage).catch(() => null);
       return result;
     }
 
@@ -427,12 +431,20 @@ async function probeFeeds() {
         for (const alt of fallbackUrls(net)) {
           const viaResult = await scrapeOperator(page, state, net, alt);
           if (viaResult.ok) { viaResult.firstError = r.error || (r.blocked ? 'blocked' : ''); r = viaResult; break; }
+          /* A fallback that fails too is the thing worth seeing: discarding it
+             left no trace that the aggregator had even been visited, which is
+             how a whole run looked like the fallback was never wired up. Its
+             diagnostic is kept under its own key so the next run says what
+             that page actually is. */
+          r.viaError = alt.via + ': ' + (viaResult.blocked ? 'blocked' : (viaResult.error || 'no list found'));
+          r.viaUrl = alt.url;
+          if (viaResult.diagnostic) r.viaDiagnostic = viaResult.diagnostic;
         }
       }
       networks.push(r);
       console.log(r.ok ? String(r.count).padStart(4) + ' outages (' + r.shape + ')'
         + (r.via ? ' via ' + r.via : '')
-        : '  -- ' + (r.blocked ? 'blocked' : r.error));
+        : '  -- ' + (r.blocked ? 'blocked' : r.error) + (r.viaError ? ' | ' + r.viaError : ''));
     }
     /* CitiPower and Powercor publish one combined list on both their sites,
        so scraping each returned the same 28 outages twice -- 56 rows for 28
@@ -471,7 +483,7 @@ async function probeFeeds() {
       plannedCount: planned.length, plannedCustomers: sum(planned),
       networks: networks.map((n) => ({ name: n.name, ok: n.ok, count: n.count, blocked: n.blocked,
         error: n.error, shape: n.shape, labels: n.labels, reported: n.reported,
-        mergedInto: n.mergedInto, via: n.via,
+        mergedInto: n.mergedInto, via: n.via, viaError: n.viaError,
         diagnostic: n.diagnostic })),
       outages
     };
@@ -487,10 +499,11 @@ async function probeFeeds() {
   const diagnostics = {};
   Object.entries(states).forEach(([state, v]) => {
     clean[state] = Object.assign({}, v, {
-      networks: v.networks.map(({ diagnostic, ...rest }) => rest)
+      networks: v.networks.map(({ diagnostic, viaDiagnostic, ...rest }) => rest)
     });
     v.networks.forEach((n) => {
       if (n.diagnostic) diagnostics[state + '/' + n.name] = n.diagnostic;
+      if (n.viaDiagnostic) diagnostics[state + '/' + n.name + ' (via)'] = n.viaDiagnostic;
     });
   });
 
