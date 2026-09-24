@@ -1,5 +1,5 @@
 {
-  "capturedAt": 1790219474585,
+  "capturedAt": 1790220063423,
   "states": {
     "nsw": {
       "state": "NSW",
@@ -43,7 +43,8 @@
           "ok": false,
           "count": 0,
           "blocked": true,
-          "error": "Operator blocks automated access (bot challenge); not bypassed"
+          "error": "Operator blocks automated access (bot challenge); not bypassed",
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
         }
       ],
       "outages": [
@@ -128,11 +129,11 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 23,
+      "count": 24,
       "customers": 1300,
       "unplannedCount": 12,
       "unplannedCustomers": 1300,
-      "plannedCount": 11,
+      "plannedCount": 12,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -147,7 +148,7 @@
         {
           "name": "Powercor",
           "ok": true,
-          "count": 20,
+          "count": 21,
           "shape": "cards",
           "labels": [
             "Estimated restoration"
@@ -188,7 +189,8 @@
           "count": 0,
           "error": "Rendered, but no outage list could be recognised on the page",
           "shape": "none",
-          "labels": []
+          "labels": [],
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
         }
       ],
       "outages": [
@@ -210,6 +212,13 @@
           "kind": "planned",
           "customers": null,
           "restore": "12:58"
+        },
+        {
+          "network": "Powercor",
+          "location": "Cosgrove and surrounds",
+          "kind": "planned",
+          "customers": null,
+          "restore": "13:00"
         },
         {
           "network": "Powercor",
@@ -365,7 +374,8 @@
           "ok": false,
           "count": 0,
           "blocked": true,
-          "error": "Operator blocks automated access (bot challenge); not bypassed"
+          "error": "Operator blocks automated access (bot challenge); not bypassed",
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
         }
       ],
       "outages": []
@@ -401,23 +411,71 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 0,
-      "customers": 0,
+      "count": 6,
+      "customers": 321,
       "unplannedCount": 0,
       "unplannedCustomers": 0,
-      "plannedCount": 0,
-      "plannedCustomers": 0,
+      "plannedCount": 6,
+      "plannedCustomers": 321,
       "networks": [
         {
           "name": "TasNetworks",
-          "ok": false,
-          "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": []
+          "ok": true,
+          "count": 6,
+          "shape": "cards",
+          "labels": [
+            "North-West region affecting",
+            "Estimated restoration",
+            "Customers affected",
+            "North region affecting",
+            "South region affecting"
+          ]
         }
       ],
-      "outages": []
+      "outages": [
+        {
+          "network": "TasNetworks",
+          "location": "Gawler, Ulverstone",
+          "kind": "planned",
+          "customers": 96,
+          "restore": "Thursday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Longford",
+          "kind": "planned",
+          "customers": 78,
+          "restore": "Thursday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Somerset, West Mooreville",
+          "kind": "planned",
+          "customers": 74,
+          "restore": "Thursday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Longford",
+          "kind": "planned",
+          "customers": 48,
+          "restore": "Thursday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Taranna",
+          "kind": "planned",
+          "customers": 13,
+          "restore": "Thursday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Taranna",
+          "kind": "planned",
+          "customers": 12,
+          "restore": "Thursday 4:00 PM"
+        }
+      ]
     },
     "nt": {
       "state": "NT",
@@ -462,7 +520,8 @@
           "reported": {
             "outages": 4,
             "customers": 203
-          }
+          },
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
         }
       ],
       "outages": []
