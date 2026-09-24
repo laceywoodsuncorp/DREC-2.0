@@ -2679,12 +2679,25 @@ function applyOutageSnapshot(payload, snapshot, state) {
   const ageSeconds = Math.round((Date.now() - capturedAt) / 1000);
 
   const fromSnap = new Map();
-  (snap.networks || []).forEach((n) => { if (n.ok) fromSnap.set(n.name, n); });
-  if (!fromSnap.size) return payload;
+  /* Totals are carried across even from an operator the capture could not
+     list, because a true "47 outages, 3,067 customers off" attributed to
+     where it came from is worth more on a dashboard than a blank state. */
+  const totalsOnly = new Map();
+  (snap.networks || []).forEach((n) => {
+    if (n.ok) fromSnap.set(n.name, n);
+    else if (n.reported) totalsOnly.set(n.name, n);
+  });
+  if (!fromSnap.size && !totalsOnly.size) return payload;
 
   const networks = (payload.networks || []).map((live) => {
     const taken = fromSnap.get(live.name);
-    if (!taken) return live;
+    if (!taken) {
+      const totals = totalsOnly.get(live.name);
+      if (totals && !live.count) {
+        return Object.assign({}, live, { reported: totals.reported, reportedVia: totals.reportedVia });
+      }
+      return live;
+    }
     /* A verified machine-readable feed is not replaced by a capture that read
        less than it did. Endeavour publishes an open data API and keeps its
        list behind a panel the scraper never opens; Western Power's map is an

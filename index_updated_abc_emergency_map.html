@@ -1782,15 +1782,24 @@ window.addEventListener('resize',()=>map.invalidateSize());
          with zero rows, so it said "none listed" -- reading as a quiet
          network when its outages were actually being dropped on the floor. */
       const drifted=n.ok&&n.diagnostics;
+      /* An operator we cannot list but whose own total is known. Saying "47
+         outages, no town detail" is true and useful; saying nothing at all
+         about a network covering a whole state is neither. Declared before
+         the class and label below, both of which read it. */
+      const rep=(!n.count&&n.reported&&(n.reported.outages!=null||n.reported.customers!=null))?n.reported:null;
       const cls=drifted?'outage-net down'
-                :(n.ok?(n.count?'outage-net':'outage-net quiet')
-                      :((n.unconfirmed||n.blocked)?'outage-net pending':'outage-net down'));
+                :(rep?'outage-net pending'
+                  :(n.ok?(n.count?'outage-net':'outage-net quiet')
+                        :((n.unconfirmed||n.blocked)?'outage-net pending':'outage-net down')));
       const plain=drifted?' · data not readable'
-        :(n.ok
-          ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s')
-            :(n.mergedInto?' · listed under '+n.mergedInto:' · none listed'))
-          :(n.blocked?' · blocks automated access'
-            :(n.unconfirmed?' · feed not connected yet':' · unavailable')));
+        :(rep?' · '+(rep.outages!=null?rep.outages+' outage'+(rep.outages===1?'':'s'):'')+
+            (rep.customers!=null?(rep.outages!=null?', ':' ')+num(rep.customers)+' customers off':'')+
+            ' · no town detail'
+          :(n.ok
+            ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s')
+              :(n.mergedInto?' · listed under '+n.mergedInto:' · none listed'))
+            :(n.blocked?' · blocks automated access'
+              :(n.unconfirmed?' · feed not connected yet':' · unavailable'))));
       /* Where the figures came from, when it wasn't the operator. An
          aggregator's numbers are a second-hand account, and on a dashboard
          people act on that distinction has to be visible on the chip itself,
@@ -1798,10 +1807,13 @@ window.addEventListener('resize',()=>map.invalidateSize());
       /* A figure captured hours ago and one fetched a minute ago must not
          look alike on a screen people act on. */
       const snapTag=n.source==='snapshot'?' <i>snapshot</i>':'';
-      const tail=escapeHtml(plain)+(n.ok&&n.via?' <i>via '+escapeHtml(n.via)+'</i>':'')+snapTag;
+      const viaName=(n.ok&&n.via)||(rep&&n.reportedVia)||'';
+      const tail=escapeHtml(plain)+(viaName?' <i>via '+escapeHtml(viaName)+'</i>':'')+snapTag;
       /* The upstream reason on hover, and a way through to the operator's own
          map either way -- a failed network must never be a dead end. */
-      const title=n.ok?(n.diagnostics?('Answered, but this dashboard could not read its format — '+((n.diagnostics.note)||'')):(n.area||''))
+      const title=rep?('This operator blocks automated access, so only its totals are available'+
+        (n.reportedVia?' (via '+n.reportedVia+')':'')+' — no per-town list. Use their own map.')
+        :n.ok?(n.diagnostics?('Answered, but this dashboard could not read its format — '+((n.diagnostics.note)||'')):(n.area||''))
                       :(n.blocked?(n.error||'Blocks automated access')
                         :(n.unconfirmed
                           ?'This dashboard does not have a working data feed for this operator yet — use their own outage map. ('+(n.error||'')+')'

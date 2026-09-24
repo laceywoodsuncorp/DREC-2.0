@@ -212,11 +212,16 @@ function extractInPage(hints) {
   const readReported = () => {
     const t = String(document.body ? document.body.innerText : '').replace(/\s+/g, ' ');
     const num = (m) => (m ? Number(String(m[1]).replace(/,/g, '')) : null);
+    /* Both orders occur: "Active outages: 9" on the operator's own page,
+       "47 active outages" on the aggregator's. */
     const outages = num(/active outages:?\s*([\d,]+)/i.exec(t))
+      ?? num(/([\d,]+)\s+active outages?\b/i.exec(t))
+      ?? num(/has\s+([\d,]+)\s+outages?\s+right now/i.exec(t))
       ?? num(/currently\s+([\d,]+)\s+outages?/i.exec(t))
       ?? num(/([\d,]+)\s+outages?\s+(?:are\s+)?(?:currently\s+)?affecting/i.exec(t));
     const customers = num(/affected customers:?\s*([\d,]+)/i.exec(t))
       ?? num(/affecting\s+([\d,]+)\s+customers/i.exec(t))
+      ?? num(/([\d,]+)\s+customers off supply/i.exec(t))
       ?? num(/([\d,]+)\s+total customers off supply/i.exec(t))
       ?? num(/customers affected:?\s*([\d,]+)\s*$/i.exec(t));
     if (outages === null && customers === null) return undefined;
@@ -445,6 +450,15 @@ async function probeFeeds() {
           r.viaError = alt.via + ': ' + (viaResult.blocked ? 'blocked' : (viaResult.error || 'no list found'));
           r.viaUrl = alt.url;
           if (viaResult.diagnostic) r.viaDiagnostic = viaResult.diagnostic;
+          /* The aggregator's per-distributor page is a coverage directory --
+             every suburb the operator serves, not the ones currently out --
+             so there is no list to read. It does state the operator's totals,
+             and for a state that would otherwise show nothing at all, a true
+             total attributed to its source beats a blank. */
+          if (viaResult.reported && !r.reported) {
+            r.reported = viaResult.reported;
+            r.reportedVia = alt.via;
+          }
         }
       }
       networks.push(r);
@@ -490,6 +504,7 @@ async function probeFeeds() {
       networks: networks.map((n) => ({ name: n.name, ok: n.ok, count: n.count, blocked: n.blocked,
         error: n.error, shape: n.shape, labels: n.labels, reported: n.reported,
         mergedInto: n.mergedInto, via: n.via, viaError: n.viaError,
+        reportedVia: n.reportedVia,
         diagnostic: n.diagnostic, viaDiagnostic: n.viaDiagnostic })),
       outages
     };

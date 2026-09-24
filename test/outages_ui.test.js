@@ -260,6 +260,22 @@ const check = (n, c, x) => {
     await p.close();
   }
 
+  console.log('\n== an operator we cannot list, whose total is known ==');
+  {
+    const p = await open('totals');
+    const c = await chips(p);
+    const ee = c.find(x => /Essential/.test(x.text));
+    /* Saying "47 outages, no town detail" is true and useful. Saying nothing
+       about a network covering a whole state is neither. */
+    check('the operator total is shown', /47 outages/.test(ee.text), ee.text);
+    check('with the customers off', /3,067 customers off/.test(ee.text), ee.text);
+    check('and the gap named', /no town detail/i.test(ee.text), ee.text);
+    check('attributed to where it came from', /via Power Outages Australia/i.test(ee.text), ee.text);
+    check('it does not read as "blocks automated access"',
+      !/blocks automated access/i.test(ee.text), ee.text);
+    await p.close();
+  }
+
   console.log('\n== tabs switch states and carry counts ==');
   {
     const p = await open('live');

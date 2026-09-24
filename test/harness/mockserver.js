@@ -81,6 +81,13 @@ function statePayload(scenario) {
     nets[1].count = 0; nets[1].customers = 0; nets[1].mergedInto = 'Ausgrid';
     outages = outages.filter(o => o.network !== 'Endeavour Energy');
   }
+  /* An operator that blocks us but whose totals are known from elsewhere. */
+  if (scenario === 'totals') {
+    nets[2].ok = false; nets[2].blocked = true; nets[2].count = 0;
+    nets[2].reported = { outages: 47, customers: 3067 };
+    nets[2].reportedVia = 'Power Outages Australia';
+    outages = outages.filter(o => o.network !== 'Essential Energy');
+  }
   if (scenario === 'via') {
     nets[2].via = 'Power Outages Australia';
     nets[2].viaUrl = 'https://poweroutagesaustralia.com.au/distributors/essential-energy/';
