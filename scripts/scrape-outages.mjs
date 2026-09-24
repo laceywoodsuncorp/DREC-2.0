@@ -417,6 +417,53 @@ async function probeFeeds() {
   return out;
 }
 
+/* ArcGIS Online is a public catalogue, and several of these operators publish
+   their outage layers to it even where their own site refuses a robot --
+   Western Power is already read that way. Crucially it is a different host
+   from the operator's website, so an operator behind a bot challenge can
+   still have a perfectly open, documented feature service sitting in the
+   catalogue under its own name.
+
+   This searches for those, and resolves any web map it finds down to the
+   layer URLs behind it, so a service can be wired up by name rather than
+   guessed at. Nothing here reads anything that is not published for anyone
+   to query; it is a catalogue lookup, not a way around a block. */
+const ARCGIS_SEARCH = 'https://www.arcgis.com/sharing/rest/search';
+async function probeArcgis(names) {
+  const out = {};
+  for (const name of names) {
+    const q = '(' + JSON.stringify(name) + ') AND (outage OR outages)';
+    try {
+      const res = await fetch(ARCGIS_SEARCH + '?q=' + encodeURIComponent(q) +
+        '&f=json&num=8&sortField=numviews&sortOrder=desc');
+      if (!res.ok) { out[name] = { error: 'HTTP ' + res.status }; continue; }
+      const body = await res.json();
+      const hits = [];
+      for (const item of (body.results || [])) {
+        const hit = { title: item.title, type: item.type, owner: item.owner, id: item.id, url: item.url };
+        /* A web map is a container: the layers we want are inside it. */
+        if (item.type === 'Web Map') {
+          try {
+            const dRes = await fetch('https://www.arcgis.com/sharing/rest/content/items/' +
+              item.id + '/data?f=json');
+            if (dRes.ok) {
+              const data = await dRes.json();
+              hit.layers = (data.operationalLayers || [])
+                .map((l) => ({ title: l.title, url: l.url }))
+                .filter((l) => l.url);
+            }
+          } catch (e) { hit.layersError = String(e.message).slice(0, 80); }
+        }
+        hits.push(hit);
+      }
+      out[name] = { total: body.total, hits };
+    } catch (err) {
+      out[name] = { error: String(err.message).slice(0, 120) };
+    }
+  }
+  return out;
+}
+
 (async () => {
   const browser = await chromium.launch();
   const context = await browser.newContext({
@@ -529,6 +576,25 @@ async function probeFeeds() {
   });
 
   writeFileSync(OUT, JSON.stringify({ capturedAt: Date.now(), states: clean }, null, 2) + '\n');
+  /* Anything that could not be listed is worth looking for in the catalogue. */
+  const stuck = [];
+  Object.values(states).forEach((v) => v.networks.forEach((n) => {
+    if (!n.ok && stuck.indexOf(n.name) === -1) stuck.push(n.name);
+  }));
+  let arcgis = {};
+  if (stuck.length) {
+    console.log('\nsearching ArcGIS Online for: ' + stuck.join(', '));
+    arcgis = await probeArcgis(stuck);
+    Object.entries(arcgis).forEach(([name, r]) => {
+      const n = r.hits ? r.hits.length : 0;
+      console.log('  ' + name.padEnd(30) + (r.error ? '-- ' + r.error : n + ' item(s)'));
+      (r.hits || []).forEach((h) => {
+        console.log('      ' + h.type.padEnd(16) + (h.url || '(web map)') + '  ' + h.title);
+        (h.layers || []).forEach((l) => console.log('        layer: ' + l.url + '  ' + l.title));
+      });
+    });
+  }
+
   console.log('\nprobing the JSON feeds...');
   const feeds = await probeFeeds();
   Object.entries(feeds).forEach(([k, v]) => {
@@ -536,7 +602,7 @@ async function probeFeeds() {
       : '-- ' + (v.status ? 'HTTP ' + v.status : v.error)));
   });
 
-  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, feeds }, null, 2) + '\n');
+  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, feeds, arcgis }, null, 2) + '\n');
   console.log('\nwrote ' + OUT + '  (' + summary.join(', ') + ')');
   console.log('wrote ' + DIAG + '  (' + Object.keys(diagnostics).length + ' page(s) needing work)');
 })();
