@@ -762,6 +762,27 @@ async function probeDirect() {
         /* Two rows, because the interesting case is a quoted field with a
            comma in it and the first row may not have one. */
         entry.sampleRows = lines.slice(1, 3);
+        /* Two sample rows cannot tell you what a filter has to catch.
+           Evoenergy's export is 44 rows while its own page reports two
+           outages, so 42 are cancelled, finished or not started -- and a
+           status the filter does not know, "Postponed" say, would be counted
+           as current and overstate the day. The distinct values of the
+           short columns settle it; long free-text columns are skipped
+           because they are not categories and would just be a copy of the
+           file. */
+        const cells = lines.map((l) => l.split(','));
+        const headings = cells[0] || [];
+        entry.distinct = {};
+        headings.forEach((h, i) => {
+          const values = new Set();
+          for (let r = 1; r < cells.length && values.size <= 25; r++) {
+            const v = (cells[r][i] || '').trim();
+            if (v) values.add(v.slice(0, 40));
+          }
+          if (values.size && values.size <= 15) {
+            entry.distinct[h.trim()] = Array.from(values);
+          }
+        });
       } else {
         const body = JSON.parse(text);
         const rows = Array.isArray(body) ? body
@@ -976,6 +997,8 @@ async function probeDirect() {
         + (v.lines !== undefined ? ', ' + v.lines + ' line(s)' : '')
         + (v.records !== undefined ? ', ' + v.records + ' record(s)' : '')));
     if (v.headerRow) console.log('      header: ' + v.headerRow);
+    if (v.distinct) Object.entries(v.distinct).forEach(([h, vals]) =>
+      console.log('      values of ' + h + ': ' + vals.join(' | ').slice(0, 200)));
     (v.sampleRows || []).forEach((r) => console.log('      row:    ' + r.slice(0, 220)));
     if (v.sample) Object.entries(v.sample).forEach(([f, val]) =>
       console.log('      ' + f.padEnd(22) + val));
