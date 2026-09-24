@@ -1,13 +1,13 @@
 {
-  "capturedAt": 1790215500943,
+  "capturedAt": 1790216860235,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
       "count": 8,
-      "customers": 2180,
+      "customers": 2183,
       "unplannedCount": 8,
-      "unplannedCustomers": 2180,
+      "unplannedCustomers": 2183,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 8,
-            "customers": 1268
+            "outages": 11,
+            "customers": 1271
           }
         },
         {
@@ -94,7 +94,7 @@
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 1268
+          "customers": 1271
         }
       ]
     },
@@ -128,11 +128,11 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 26,
-      "customers": 0,
-      "unplannedCount": 13,
-      "unplannedCustomers": 0,
-      "plannedCount": 13,
+      "count": 28,
+      "customers": 1300,
+      "unplannedCount": 16,
+      "unplannedCustomers": 1300,
+      "plannedCount": 12,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -154,7 +154,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 1311
+            "customers": 1323
           }
         },
         {
@@ -167,17 +167,20 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 1311
+            "customers": 1323
           },
           "mergedInto": "Powercor"
         },
         {
           "name": "United Energy",
-          "ok": false,
-          "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": []
+          "ok": true,
+          "count": 2,
+          "shape": "cards",
+          "labels": [
+            "Vulnerable customer assistance program",
+            "Faults & emergencies",
+            "Customer enquiries"
+          ]
         },
         {
           "name": "Jemena",
@@ -203,13 +206,6 @@
         },
         {
           "network": "Powercor",
-          "location": "Heywood",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "11:30"
-        },
-        {
-          "network": "Powercor",
           "location": "Nichols Point",
           "kind": "planned",
           "customers": null,
@@ -221,13 +217,6 @@
           "kind": "unplanned",
           "customers": null,
           "restore": "12:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Lake Boga",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "13:00"
         },
         {
           "network": "Powercor",
@@ -308,15 +297,22 @@
         },
         {
           "network": "Powercor",
-          "location": "Portland",
+          "location": "Tyrendarra and surrounds",
           "kind": "planned",
           "customers": null,
           "restore": "15:00"
         },
         {
           "network": "Powercor",
-          "location": "Tyrendarra and surrounds",
-          "kind": "planned",
+          "location": "St Albans",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Mepunga West and surrounds",
+          "kind": "unplanned",
           "customers": null,
           "restore": "15:00"
         },
@@ -331,6 +327,13 @@
           "network": "Powercor",
           "location": "Irrewarra",
           "kind": "planned",
+          "customers": null,
+          "restore": "15:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Rainbow",
+          "kind": "unplanned",
           "customers": null,
           "restore": "15:30"
         },
@@ -368,6 +371,17 @@
           "kind": "unplanned",
           "customers": null,
           "restore": "Unknown"
+        },
+        {
+          "network": "United Energy",
+          "location": "<picture><source type=\"image/avif\" srcSet=\"/static/c50341b110a35486f15e1fd4f5e418d5/1fd1a/ue-logo.avif 18w,/static/c50341b110a35486f15e1fd4f5e418d5/436f9/ue-logo.avif 35w,/static/c50341b110a35486f15e1",
+          "customers": null
+        },
+        {
+          "network": "United Energy",
+          "location": "Oops, page not found!",
+          "cause": "132 099",
+          "customers": 1300
         }
       ]
     },
@@ -433,7 +447,9 @@
           "name": "TasNetworks",
           "ok": false,
           "count": 0,
-          "error": "page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.tasnetworks.com.au/current-power-outages\nCall log:\n  - navigating to \"https://www.tasnetworks.com.au/current-power-outages\", waiting until \"domcontentloaded\"\n"
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": []
         }
       ],
       "outages": []
@@ -452,7 +468,8 @@
           "name": "Power and Water Corporation",
           "ok": false,
           "count": 0,
-          "error": "page.goto: Navigation to \"https://www.powerwater.com.au/outages\" is interrupted by another navigation to \"chrome-error://chromewebdata/\"\nCall log:\n  - navigating to \"https://www.powerwater.com.au/outages\", waiting until \"domcontentloaded\"\n"
+          "blocked": true,
+          "error": "Operator blocks automated access (bot challenge); not bypassed"
         }
       ],
       "outages": []
@@ -471,7 +488,16 @@
           "name": "Evoenergy",
           "ok": false,
           "count": 0,
-          "error": "page.goto: Navigation to \"https://www.evoenergy.com.au/Outages\" is interrupted by another navigation to \"https://www.powerwater.com.au/outages\"\nCall log:\n  - navigating to \"https://www.evoenergy.com.au/Outages\", waiting until \"domcontentloaded\"\n"
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": [
+            "←",
+            "Move left"
+          ],
+          "reported": {
+            "outages": 3,
+            "customers": 155
+          }
         }
       ],
       "outages": []
