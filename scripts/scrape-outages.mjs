@@ -813,14 +813,48 @@ async function probeDirect() {
            endpoints return is Spring Boot's, so `content` was always the
            likely answer; taking the largest array under any key covers that
            without needing to guess which. */
-        let rows = null;
-        if (Array.isArray(body)) { rows = body; entry.envelope = 'array'; }
-        else {
-          entry.envelope = Object.keys(body).slice(0, 10).join(',');
-          const best = Object.entries(body).filter(([, v]) => Array.isArray(v) && v.length)
-            .sort((a, b) => b[1].length - a[1].length)[0];
-          if (best) { rows = best[1]; entry.envelope = 'wrapped:' + best[0]; }
-        }
+        /* Three times now an envelope guess has reported a live feed as
+           empty: array-only, then largest-top-level-array, and this body
+           has `items` and `total` yet still found nothing -- so `items` is
+           not a flat array either. Guessing the shape is the wrong move.
+           This walks the structure and reports both a skeleton of what is
+           actually there and the deepest array of objects it can find, with
+           the path to it, so the next decision is made from the shape
+           rather than from another assumption about it. */
+        const skeleton = (v, depth) => {
+          if (Array.isArray(v)) {
+            return depth <= 0 ? 'array[' + v.length + ']'
+              : 'array[' + v.length + '] of ' + (v.length ? skeleton(v[0], depth - 1) : 'empty');
+          }
+          if (v && typeof v === 'object') {
+            if (depth <= 0) return '{' + Object.keys(v).slice(0, 12).join(',') + '}';
+            const out = {};
+            Object.keys(v).slice(0, 12).forEach((k) => { out[k] = skeleton(v[k], depth - 1); });
+            return out;
+          }
+          return typeof v;
+        };
+        entry.skeleton = skeleton(body, 3);
+
+        let rows = null, rowPath = null;
+        const walk = (v, path, depth) => {
+          if (depth < 0) return;
+          if (Array.isArray(v)) {
+            if (v.length && typeof v[0] === 'object' && !Array.isArray(v[0])) {
+              if (!rows || v.length > rows.length) { rows = v; rowPath = path; }
+            }
+            /* An array of arrays, or of grouped objects, still worth
+               descending into. */
+            if (v.length) walk(v[0], path + '[0]', depth - 1);
+            return;
+          }
+          if (v && typeof v === 'object') {
+            Object.entries(v).forEach(([k, val]) => walk(val, path ? path + '.' + k : k, depth - 1));
+          }
+        };
+        if (Array.isArray(body)) { rows = body; rowPath = '(root)'; }
+        else walk(body, '', 4);
+        entry.envelope = rowPath ? 'rows at ' + rowPath : Object.keys(body).slice(0, 10).join(',');
         /* Pagination matters: a first page is not the list. */
         ['totalElements', 'totalPages', 'total', 'count', 'size', 'number'].forEach((k) => {
           if (body && body[k] !== undefined && typeof body[k] !== 'object') {
@@ -1202,6 +1236,7 @@ async function probeThirdParty(page) {
     if (v.distinct) Object.entries(v.distinct).forEach(([h, vals]) =>
       console.log('      values of ' + h + ': ' + vals.join(' | ').slice(0, 200)));
     (v.sampleRows || []).forEach((r) => console.log('      row:    ' + r.slice(0, 220)));
+    if (v.skeleton) console.log('      shape: ' + JSON.stringify(v.skeleton).slice(0, 600));
     if (v.envelope) console.log('      envelope: ' + v.envelope
       + (v.paging ? '   paging ' + JSON.stringify(v.paging) : ''));
     if (v.sample) Object.entries(v.sample).forEach(([f, val]) =>
