@@ -2625,9 +2625,132 @@ async function handleOutagesAll(ctx) {
   });
 }
 
+/* ============================================================
+   RUNNING THE SCRAPER FROM THE PAGE
+   ============================================================
+   The scraper is a GitHub Action, and starting one needs a token with write
+   access to Actions. That token cannot go anywhere near the browser --
+   anything the page holds is public -- so the page asks the Worker and the
+   Worker holds the credential. It is a Worker secret, set with
+
+     npx wrangler secret put SCRAPE_TOKEN
+
+   and never a var, never in wrangler.jsonc, never in this file. Without it
+   the route reports itself unconfigured and does nothing; it does not fail
+   in a way that hints at what is missing.
+
+   The endpoint is public, because the dashboard is. Two things keep that from
+   being a way to burn someone's Actions minutes: only POST starts anything,
+   and a cooldown means one run per COOLDOWN_S however many times it is
+   called. The cooldown lives in the shared cache, which is per datacentre --
+   so it is a brake, not a lock, and a determined caller could get one run per
+   datacentre. Binding KV would make it global; it is noted in wrangler.jsonc
+   along with everything else that binding fixes. */
+
+const SCRAPE_COOLDOWN_S = 10 * 60;
+const SCRAPE_MARKER_URL = 'https://newsradar-internal-cache.example/scrape-last-run';
+const SCRAPE_WORKFLOW = 'scrape-outages.yml';
+
+function scrapeConfig(env) {
+  return {
+    token: env && env.SCRAPE_TOKEN,
+    repo: (env && env.SCRAPE_REPO) || 'laceywoodsuncorp/DREC-2.0',
+    ref: (env && env.SCRAPE_REF) || 'claude/news-feed-loading-yx55qa'
+  };
+}
+
+async function scrapeCooldownLeft() {
+  const marker = await readSharedCache(SCRAPE_MARKER_URL);
+  if (!marker) return 0;
+  const left = Math.round(SCRAPE_COOLDOWN_S - marker.ageSeconds);
+  return left > 0 ? left : 0;
+}
+
+/* GET -- what the button should render as, without starting anything. */
+async function handleScrapeStatus(env) {
+  const { token } = scrapeConfig(env);
+  const cooldown = await scrapeCooldownLeft();
+  return new Response(JSON.stringify({
+    configured: !!token,
+    cooldownSeconds: cooldown,
+    cooldownTotalSeconds: SCRAPE_COOLDOWN_S
+  }), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+}
+
+/* POST -- asks GitHub to run the workflow. */
+async function handleScrapeRun(request, env) {
+  const { token, repo, ref } = scrapeConfig(env);
+  const reply = (status, body) => new Response(JSON.stringify(body), {
+    status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+  });
+
+  if (!token) {
+    return reply(503, { ok: false, configured: false,
+      error: 'The refresh button is not configured on this deployment. An operator needs to set the SCRAPE_TOKEN secret.' });
+  }
+
+  const cooldown = await scrapeCooldownLeft();
+  if (cooldown > 0) {
+    return reply(429, { ok: false, cooldownSeconds: cooldown,
+      error: 'A capture was started recently. Try again in ' + Math.ceil(cooldown / 60) + ' minute(s).' });
+  }
+
+  let only = '';
+  try {
+    const body = await request.json();
+    /* Only ever a list of state codes we know, so nothing a caller sends
+       reaches the workflow as-is. */
+    if (body && typeof body.only === 'string') {
+      only = body.only.split(',').map((x) => x.trim().toLowerCase())
+        .filter((x) => OUTAGE_STATES.indexOf(x) !== -1).join(',');
+    }
+  } catch (e) { /* no body is fine -- it means every state */ }
+
+  /* Claim the cooldown before dispatching, not after: two clicks arriving
+     together would otherwise both get through. */
+  await writeSharedCache(SCRAPE_MARKER_URL, String(Date.now()), 'text/plain');
+
+  const url = 'https://api.github.com/repos/' + repo + '/actions/workflows/' + SCRAPE_WORKFLOW + '/dispatches';
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'NewsRadar-Dashboard',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ref, inputs: only ? { only } : {} })
+    });
+  } catch (err) {
+    return reply(502, { ok: false, error: 'Could not reach GitHub: ' + err.message });
+  }
+
+  if (res.status === 204) {
+    return reply(202, { ok: true, started: true, only: only || 'all states',
+      note: 'The capture takes a few minutes, then a few more to deploy.' });
+  }
+
+  /* GitHub's own reason, trimmed -- a 404 here almost always means the token
+     cannot see the repo or the workflow is not on that branch, and saying so
+     saves a long hunt. The token is never echoed. */
+  const detail = (await res.text().catch(() => '')).slice(0, 300);
+  return reply(502, { ok: false,
+    error: 'GitHub refused the request (HTTP ' + res.status + ').'
+      + (res.status === 404 ? ' The token may not have access to this repository, or the workflow may not exist on branch ' + ref + '.' : ''),
+    detail });
+}
+
 /* The /api routes, split out so every one of them can be stamped with the
    build in one place rather than each handler remembering to. */
-async function handleApi(url, env, ctx) {
+async function handleApi(url, env, ctx, request) {
+  if (url.pathname === '/api/scrape') {
+    return request && request.method === 'POST'
+      ? handleScrapeRun(request, env)
+      : handleScrapeStatus(env);
+  }
   if (url.pathname === '/api/news') return handleNews(env, ctx);
   if (url.pathname === '/api/gdelt') return handleGdelt();
 
@@ -2651,7 +2774,7 @@ export default {
        one header away on any route rather than something to infer from
        whether the data looks new. */
     if (url.pathname.startsWith('/api/')) {
-      const res = await handleApi(url, env, ctx);
+      const res = await handleApi(url, env, ctx, request);
       if (res && !res.headers.get('X-Worker-Build')) {
         const stamped = new Response(res.body, res);
         stamped.headers.set('X-Worker-Build', WORKER_BUILD);

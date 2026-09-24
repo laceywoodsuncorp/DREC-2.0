@@ -197,7 +197,15 @@
 
   /* Power & Network Outages tile */
   .tile-outages{margin:24px 0}
-  .outage-heading{margin:0;padding:16px 24px 0;font-size:.95rem;color:var(--heritage-green)}
+  .outage-headrow{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:16px 24px 0;flex-wrap:wrap}
+  .outage-heading{margin:0;font-size:.95rem;color:var(--heritage-green)}
+  .scrape-btn{border:1px solid #d7dee2;background:var(--true-white);color:var(--heritage-green);
+    font-size:.74rem;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .scrape-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,67,70,.12)}
+  .scrape-btn:disabled{opacity:.55;cursor:default}
+  .scrape-note{padding:8px 24px 0;font-size:.75rem;color:#5a6a6a;line-height:1.5}
+  .scrape-note.bad{color:#8a5200}
   .outage-summary{padding:12px 24px;display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;
     font-size:.8rem;color:#4a5a5a}
   .outage-summary b{font-size:1.15rem;color:var(--heritage-green);margin-right:4px}
@@ -410,7 +418,11 @@
     <div class="src">Electricity outages read directly from each state's <b>distribution network operators</b> — Ausgrid, Energex, SA Power Networks, Western Power and the rest — rather than from a third-party aggregator, so each operator's status is reported separately and a network that isn't answering says so instead of quietly disappearing. Mobile network status below is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
   </div>
 
-  <h3 class="outage-heading">⚡ Electricity Outages by State</h3>
+  <div class="outage-headrow">
+    <h3 class="outage-heading">⚡ Electricity Outages by State</h3>
+    <button type="button" class="scrape-btn" id="scrapeBtn" hidden>📷 Refresh capture</button>
+  </div>
+  <div class="scrape-note" id="scrapeNote" hidden></div>
   <div class="state-tabs" id="outageTabs">
     <button class="state-tab active" data-state="NSW">NSW</button>
     <button class="state-tab" data-state="QLD">QLD</button>
@@ -1931,6 +1943,70 @@ window.addEventListener('resize',()=>map.invalidateSize());
       setTabCounts();
     }
   }
+
+  /* ---- starting a fresh capture ----
+     The scraper is a GitHub Action and starting one needs a token, which the
+     page must never hold -- so the page asks the Worker and the Worker holds
+     the credential. The button only appears where that is configured: a
+     button that cannot work is worse than no button. */
+  const scrapeBtn=document.getElementById('scrapeBtn'),scrapeNote=document.getElementById('scrapeNote');
+  let scrapeTimer=null;
+
+  function setScrapeNote(text,bad){
+    if(!scrapeNote)return;
+    if(!text){scrapeNote.setAttribute('hidden','');return;}
+    scrapeNote.textContent=text;
+    scrapeNote.classList.toggle('bad',!!bad);
+    scrapeNote.removeAttribute('hidden');
+  }
+  function cooldownLabel(s){
+    const m=Math.ceil(s/60);
+    return m<=1?'about a minute':m+' minutes';
+  }
+  function armScrapeButton(st){
+    if(!scrapeBtn)return;
+    if(!st||!st.configured){scrapeBtn.setAttribute('hidden','');return;}
+    scrapeBtn.removeAttribute('hidden');
+    if(st.cooldownSeconds>0){
+      scrapeBtn.disabled=true;
+      scrapeBtn.textContent='📷 Refreshed recently';
+      scrapeBtn.title='A capture was started recently. Available again in '+cooldownLabel(st.cooldownSeconds)+'.';
+      clearTimeout(scrapeTimer);
+      scrapeTimer=setTimeout(loadScrapeStatus,Math.min(st.cooldownSeconds,60)*1000);
+    }else{
+      scrapeBtn.disabled=false;
+      scrapeBtn.textContent='📷 Refresh capture';
+      scrapeBtn.title='Runs the scraper against every operator\u2019s own outage page.';
+    }
+  }
+  async function loadScrapeStatus(){
+    try{
+      const r=await fetch('/api/scrape',{cache:'no-store'});
+      armScrapeButton(await r.json());
+    }catch(e){ if(scrapeBtn)scrapeBtn.setAttribute('hidden',''); }
+  }
+  if(scrapeBtn)scrapeBtn.addEventListener('click',async()=>{
+    scrapeBtn.disabled=true;
+    scrapeBtn.textContent='📷 Starting…';
+    try{
+      const r=await fetch('/api/scrape',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({})});
+      const j=await r.json();
+      if(j.ok){
+        /* Honest about the wait: the Action runs for a few minutes, then the
+           commit has to deploy before the page can see it. Saying "done"
+           here would be a lie the reader finds out about later. */
+        setScrapeNote('Capture started. It runs for a few minutes, then a few more to deploy — this page will pick it up automatically.');
+      }else{
+        setScrapeNote(j.error||'Could not start the capture.',true);
+      }
+    }catch(e){
+      setScrapeNote('Could not reach the capture service.',true);
+    }finally{
+      loadScrapeStatus();
+    }
+  });
+  loadScrapeStatus();
 
   tabsEl.querySelectorAll('.state-tab').forEach(tab=>{
     tab.dataset.label=tab.textContent.trim();

@@ -38,6 +38,37 @@
   }
 
   // ---------------------------------------------------------------------
+  // OPTIONAL: the "Refresh capture" button on the outages tile.
+  //
+  // The button asks the Worker to start the scrape-outages GitHub Action.
+  // Starting one needs a token with write access to Actions, and that token
+  // must never reach the browser -- so it is a Worker SECRET, set from the
+  // command line and never written here:
+  //
+  //   npx wrangler secret put SCRAPE_TOKEN
+  //
+  // Create the token as a GitHub fine-grained personal access token scoped to
+  // this ONE repository, with a single permission: Actions -> Read and write.
+  // Nothing else. It cannot read code, secrets or anything outside Actions on
+  // that repo, which is the least that will start a workflow.
+  //
+  // Without the secret the route reports itself unconfigured and the button
+  // does not appear -- a button that cannot work is worse than no button.
+  //
+  // These two are ordinary vars, not secrets, and only needed if the repo or
+  // branch differs from the defaults in src/worker.js:
+  //
+  // "vars": {
+  //   "SCRAPE_REPO": "laceywoodsuncorp/DREC-2.0",
+  //   "SCRAPE_REF": "claude/news-feed-loading-yx55qa"
+  // }
+  //
+  // The endpoint is public, because the dashboard is. A 10-minute cooldown
+  // means repeated calls cannot burn Actions minutes. That cooldown lives in
+  // the per-datacentre cache, so it is a brake rather than a lock -- binding
+  // KV below makes it global.
+  //
+  // ---------------------------------------------------------------------
   // OPTIONAL, but recommended: a KV namespace for the news record.
   //
   // Without it the news article list is held in the Cloudflare Cache API,

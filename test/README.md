@@ -9,6 +9,7 @@ happen again.
 ```sh
 node test/worker_outages.test.mjs
 node test/nt_incidents.test.mjs
+node test/scrape_trigger.test.mjs
 ```
 
 `fetch` and the Cache API are stubbed, so these assert what the Worker does
@@ -66,3 +67,12 @@ rendered.
 
 It does not attempt to get past bot challenges. An operator that blocks
 automated access is recorded as blocked and skipped.
+
+### The "Refresh capture" button
+
+`/api/scrape` starts the scraper workflow. `GET` reports whether it is
+configured and any cooldown; `POST` dispatches it. The GitHub token is a
+Worker secret (`npx wrangler secret put SCRAPE_TOKEN`) and never reaches the
+browser — `test/scrape_trigger.test.mjs` pins that, along with the cooldown,
+GET never starting a run, and caller input never reaching the workflow
+unchecked.

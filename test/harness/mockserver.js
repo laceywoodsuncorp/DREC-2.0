@@ -112,6 +112,18 @@ const server = http.createServer((req, res) => {
     res.end(typeof body === 'string' ? body : JSON.stringify(body));
   };
 
+  /* The capture button's endpoint. `scrape` picks the state it reports:
+     off (not configured), ready, cooldown, or fail (GitHub refuses). */
+  if (u.pathname === '/api/scrape') {
+    const mode = u.searchParams.get('scrape') || 'ready';
+    if (mode === 'off') return send(200, { configured: false, cooldownSeconds: 0 });
+    if (req.method !== 'POST') {
+      return send(200, { configured: true, cooldownSeconds: mode === 'cooldown' ? 420 : 0,
+        cooldownTotalSeconds: 600 });
+    }
+    if (mode === 'fail') return send(502, { ok: false, error: 'GitHub refused the request (HTTP 404).' });
+    return send(202, { ok: true, started: true });
+  }
   if (u.pathname === '/api/outages') {
     if (sc === 'down') return send(502, 'gateway', 'text/plain');
     const nsw = statePayload(sc);

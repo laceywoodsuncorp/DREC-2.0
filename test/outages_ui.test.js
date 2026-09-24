@@ -25,7 +25,8 @@ const check = (n, c, x) => {
   const open = async (scenario) => {
     const p = await ctx.newPage();
     const errs = []; p.on('pageerror', e => errs.push(e.message));
-    await p.goto('http://localhost:8846/index.html?outages=' + scenario, { waitUntil: 'domcontentloaded' });
+    const qs = scenario.includes('=') ? scenario : 'outages=' + scenario;
+    await p.goto('http://localhost:8846/index.html?' + qs, { waitUntil: 'domcontentloaded' });
     await p.waitForTimeout(1200);
     p._errs = errs;
     return p;
@@ -167,6 +168,43 @@ const check = (n, c, x) => {
     check('operators fetched live carry no such mark',
       !/snapshot/i.test(c.find(x => /Endeavour/.test(x.text)).text), c.map(x => x.text));
     await p.close();
+  }
+
+  console.log('\n== the capture button ==');
+  {
+    /* A button that cannot work is worse than no button, so it only appears
+       where the Worker says the credential is configured. */
+    const off = await open('outages=live&scrape=off');
+    check('hidden when the deployment has no token',
+      await off.$eval('#scrapeBtn', e => e.hasAttribute('hidden')));
+    await off.close();
+
+    const p = await open('outages=live&scrape=ready');
+    check('shown when it is configured', !(await p.$eval('#scrapeBtn', e => e.hasAttribute('hidden'))));
+    check('and enabled', !(await p.$eval('#scrapeBtn', e => e.disabled)));
+    await p.click('#scrapeBtn');
+    await p.waitForTimeout(500);
+    const note = await p.$eval('#scrapeNote', e => e.innerText);
+    /* The Action runs for minutes and then has to deploy. Saying "done" here
+       would be a lie the reader finds out about later. */
+    check('it says the capture started, not that it finished', /started/i.test(note), note);
+    check('and sets the expectation that it takes minutes', /minutes/i.test(note), note);
+    await p.close();
+
+    const cd = await open('outages=live&scrape=cooldown');
+    check('disabled while a capture is still cooling down',
+      await cd.$eval('#scrapeBtn', e => e.disabled));
+    check('and explains why on hover',
+      /recently/i.test(await cd.$eval('#scrapeBtn', e => e.title)),
+      await cd.$eval('#scrapeBtn', e => e.title));
+    await cd.close();
+
+    const bad = await open('outages=live&scrape=fail');
+    await bad.click('#scrapeBtn');
+    await bad.waitForTimeout(500);
+    const err = await bad.$eval('#scrapeNote', e => e.innerText);
+    check('a refusal is surfaced, not swallowed', /refused|could not/i.test(err), err);
+    await bad.close();
   }
 
   console.log('\n== tabs switch states and carry counts ==');
