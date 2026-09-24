@@ -696,6 +696,49 @@ console.log('\n== a state written once does not stay frozen forever ==');
     await readSharedCacheAge(KEY));
 }
 
+
+console.log('\n== unplanned and planned in two tables are both read ==');
+{
+  reset();
+  /* Publishers routinely split the list under two headings. Taking only the
+     largest table dropped the smaller one silently -- and on a calm day the
+     smaller one is the unplanned faults, which is the half people care
+     about. */
+  upstream['ausgrid.com.au'] = () => new Response(
+    '<html>' +
+    '<table><tr><td>nav</td></tr></table>' +
+    '<h2>Unplanned</h2><table>' +
+    '<tr><th>Suburb</th><th>Customers affected</th></tr>' +
+    '<tr><td>Waterloo</td><td>158</td></tr></table>' +
+    '<h2>Planned</h2><table>' +
+    '<tr><th>Suburb</th><th>Customers affected</th></tr>' +
+    '<tr><td>Coogee</td><td>13</td></tr>' +
+    '<tr><td>Bateau Bay</td><td>42</td></tr></table>' +
+    '</html>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+
+  const b = await (await call('/api/outages/nsw')).json();
+  const ag = b.networks.find(n => n.name === 'Ausgrid');
+  check('rows from both tables are kept', ag.count === 3, ag.count);
+  check('including the smaller table', b.outages.some(o => o.location === 'Waterloo'),
+    b.outages.map(o => o.location));
+  check('customer totals span both', ag.customers === 158 + 13 + 42, ag.customers);
+}
+
+console.log('\n== the same row twice is still one row ==');
+{
+  reset();
+  /* A page carrying both a summary and a detail table would otherwise count
+     its rows twice -- worse than undercounting, because it looks plausible. */
+  const one = '<table><tr><th>Suburb</th><th>Customers affected</th></tr>' +
+    '<tr><td>Waterloo</td><td>158</td></tr></table>';
+  upstream['ausgrid.com.au'] = () => new Response('<html>' + one + one + '</html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+  const b = await (await call('/api/outages/nsw')).json();
+  const ag = b.networks.find(n => n.name === 'Ausgrid');
+  check('an identical row is not counted twice', ag.count === 1, ag.count);
+  check('and the total is not doubled', ag.customers === 158, ag.customers);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);

@@ -1156,19 +1156,33 @@ function scrapeTable(html, hints, requiredField) {
     } };
   }
 
-  /* Several tables on a page is normal. Take the one that yields the most
-     usable rows rather than the first, which is often layout or navigation. */
-  let best = null;
+  /* Every table that maps, not just the biggest one. Taking only the largest
+     was quietly losing half these pages: publishers routinely split unplanned
+     from planned into two tables under two headings, and the smaller one --
+     which on a calm day is the unplanned faults, the part people actually
+     care about -- was being dropped with nothing to show it had been seen.
+     Tables that don't map are still skipped; those are layout and navigation. */
+  const merged = [];
   const headingsSeen = [];
+  const seen = new Set();
+  let mappedTables = 0;
   tables.forEach((t) => {
     const read = readTableWith(t, hints, requiredField);
     if (!read) return;
     read.headings.forEach((h) => { if (h && headingsSeen.indexOf(h) === -1) headingsSeen.push(h); });
     if (!read.mapped) return;
-    if (!best || read.records.length > best.records.length) best = read;
+    mappedTables++;
+    read.records.forEach((rec) => {
+      /* A page that carries both a summary table and a detail table would
+         otherwise count its rows twice. Identical rows are the same row. */
+      const key = JSON.stringify(rec);
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(rec);
+    });
   });
 
-  if (!best) {
+  if (!mappedTables) {
     return { diagnostics: {
       envelope: 'table-unmapped',
       recordsSeen: 0,
@@ -1176,6 +1190,7 @@ function scrapeTable(html, hints, requiredField) {
       sampleKeys: headingsSeen.slice(0, 25)
     } };
   }
+  const best = { records: merged, headings: headingsSeen };
   /* The headings come back on success too, not just on failure. Ausgrid's
      list read fine but yielded only three fields, which says the table has
      columns this doesn't recognise -- and the only way to find out which is
