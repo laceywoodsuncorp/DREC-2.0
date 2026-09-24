@@ -808,6 +808,134 @@ async function probeDirect() {
   return out;
 }
 
+/* Four operators put a bot challenge in front of their own outage page, so
+   the remaining question is whether anyone else republishes the same lists.
+   These are the third-party trackers a web search turns up, visited with the
+   full browser so both passes apply: the DOM extractor for a rendered list,
+   and the request recorder, which matters more here -- an aggregator that
+   polls the distributors' public feeds has a backend API of its own, and
+   that is a far better thing to read than its markup.
+
+   Treated as candidates, not sources. Some of these are user reports, and a
+   crowdsourced "12 people reported a problem" is a different claim from
+   "SA Power Networks has 31 outages affecting 1,348 customers" -- the first
+   must never be shown as the second. The probe records which it is so the
+   decision rests on evidence rather than on the site's own billing. */
+/* Queensland was recovered because a state agency -- the Queensland
+   Reconstruction Authority -- published Energex's and Ergon's outage layers,
+   while the utilities' own sites refused a robot. The utility was blocked;
+   its data was not. That is worth trying for the states still missing, and
+   two of these agencies are ones this Worker already reads for fires and
+   warnings.
+
+   Searching the catalogue by layer title missed Energex once already (it was
+   found only because a council happened to put "Energex" in a title), so
+   this asks each agency's ArcGIS organisation for its service directory
+   instead. A directory listing is what the server publishes to anyone; it is
+   a different question from the one the operators' WAFs are answering. */
+const AGENCY_FEEDS = [
+  /* Already wired for incidents; the question is whether the same agency
+     carries power outages alongside fire and flood. */
+  ['Emergency WA incidents', 'https://www.emergency.wa.gov.au/data/incident_FCAD.json'],
+  ['Emergency WA all', 'https://www.emergency.wa.gov.au/data/all_incidents.json'],
+  ['SecureNT alerts', 'https://securent.nt.gov.au/alerts-warnings'],
+  /* SA and NSW equivalents. */
+  ['Alert SA', 'https://www.alert.sa.gov.au/'],
+  ['NSW Reconstruction/Resilience hub', 'https://www.nsw.gov.au/emergency']
+];
+
+const ARCGIS_ORGS = [
+  /* The org that hosts the NSW incident layer this Worker already reads --
+     if it publishes emergency data it may publish outages too. */
+  ['NSW (ESCAD host)', 'https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services?f=json'],
+  ['QLD (Ergon host)', 'https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services?f=json'],
+  ['QLD (Energex host)', 'https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services?f=json'],
+  ['WA (Western Power host)', 'https://services2.arcgis.com/tBLxde4cxSlNUxsM/arcgis/rest/services?f=json']
+];
+
+async function probeAgencies() {
+  const out = { feeds: {}, orgs: {} };
+  for (const [label, url] of AGENCY_FEEDS) {
+    try {
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsRadar/1.0)' } });
+      const text = await res.text();
+      const entry = { url, status: res.status, bytes: text.length };
+      /* Only whether outages are mentioned at all -- if they are, the feed
+         is worth reading properly, and if they are not, nothing more needs
+         fetching. */
+      entry.mentionsOutage = /outage|power\s*(?:is\s*)?(?:out|off)|loss of supply|electricity supply/i.test(text);
+      const m = text.match(/.{0,90}outage.{0,90}/i);
+      if (m) entry.context = m[0].replace(/\s+/g, ' ');
+      out.feeds[label] = entry;
+    } catch (err) { out.feeds[label] = { url, error: String(err.message).slice(0, 120) }; }
+  }
+  for (const [label, url] of ARCGIS_ORGS) {
+    try {
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      const entry = { url, status: res.status };
+      if (res.ok) {
+        const body = await res.json();
+        const names = (body.services || []).map((x) => x.name + ' (' + x.type + ')');
+        entry.serviceCount = names.length;
+        entry.outageServices = names.filter((n) => /outage|supply|power|electric/i.test(n));
+        entry.sample = names.slice(0, 30);
+        entry.folders = body.folders || [];
+      }
+      out.orgs[label] = entry;
+    } catch (err) { out.orgs[label] = { url, error: String(err.message).slice(0, 120) }; }
+  }
+  return out;
+}
+
+const THIRD_PARTY_CANDIDATES = [
+  ['GeoBlackout SA Power Networks', 'https://geoblackout.com/au/report/power-outage/sa-power-networks'],
+  ['GeoBlackout Essential Energy', 'https://geoblackout.com/au/report/power-outage/essential-energy'],
+  ['GeoBlackout Horizon Power', 'https://geoblackout.com/au/report/power-outage/horizon-power'],
+  ['GeoBlackout Power and Water', 'https://geoblackout.com/au/report/power-outage/power-and-water-corporation'],
+  ['GeoBlackout index', 'https://geoblackout.com/au/report/power-outage'],
+  /* This one says its backend polls the distributors' public feeds, which is
+     the shape worth having: if its API answers, it is the blocked operators'
+     own data at one remove rather than a separate opinion about it. */
+  ['Is Your Power Out map', 'https://isyourpowerout.com/live-map'],
+  ['Is Your Power Out home', 'https://isyourpowerout.com/']
+];
+
+async function probeThirdParty(page) {
+  const out = {};
+  for (const [label, url] of THIRD_PARTY_CANDIDATES) {
+    const entry = { url };
+    const recorder = recordResponses(page);
+    try {
+      const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+      entry.status = res ? res.status() : null;
+      await page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(2000);
+      const body = await page.evaluate(() => document.body ? document.body.innerText.slice(0, 3000) : '');
+      entry.title = await page.title().catch(() => '');
+      if (CHALLENGE.test(body)) {
+        entry.blocked = true;
+        entry.text = body.slice(0, 300);
+      } else {
+        entry.text = body.slice(0, 1200);
+        /* The tell for crowdsourced versus republished. */
+        entry.looksCrowdsourced = /user report|reports in the last|people report|report a problem here|submitted by/i.test(body);
+        const found = await page.evaluate(extractInPage, HINTS);
+        entry.rows = found.records.length;
+        entry.headings = (found.headings || []).slice(0, 20);
+        entry.sampleRow = found.records[0] || null;
+        if (found.reported) entry.reported = found.reported;
+      }
+      entry.endpoints = await describeResponses(page, recorder).catch(() => null);
+    } catch (err) {
+      entry.error = String(err.message).slice(0, 140);
+    } finally {
+      recorder.stop();
+    }
+    out[label] = entry;
+  }
+  return out;
+}
+
 (async () => {
   const browser = await chromium.launch();
   const context = await browser.newContext({
@@ -989,6 +1117,36 @@ async function probeDirect() {
     (v.hits || []).forEach((h) => console.log('      ' + (h.org || '') + ' :: ' + h.title));
   });
 
+  console.log('\nasking the state emergency agencies and their ArcGIS orgs...');
+  const agencies = await probeAgencies();
+  Object.entries(agencies.feeds).forEach(([k, v]) => {
+    console.log('  ' + k.padEnd(30) + (v.error ? 'ERR ' + v.error
+      : 'HTTP ' + v.status + ', ' + v.bytes + ' bytes'
+        + (v.mentionsOutage ? '  MENTIONS OUTAGES' : '  no mention')));
+    if (v.context) console.log('      ...' + v.context.slice(0, 170));
+  });
+  Object.entries(agencies.orgs).forEach(([k, v]) => {
+    console.log('  ' + k.padEnd(30) + (v.error ? 'ERR ' + v.error
+      : 'HTTP ' + v.status + ', ' + (v.serviceCount ?? '?') + ' service(s)'));
+    (v.outageServices || []).forEach((n) => console.log('      OUTAGE-ISH: ' + n));
+    if (v.folders && v.folders.length) console.log('      folders: ' + v.folders.join(', ').slice(0, 160));
+  });
+
+  console.log('\nlooking for anyone else who republishes the blocked operators...');
+  const thirdParty = await probeThirdParty(page).catch((e) => ({ error: String(e.message) }));
+  Object.entries(thirdParty).forEach(([k, v]) => {
+    console.log('  ' + k.padEnd(32) + (v.error ? 'ERR ' + v.error
+      : (v.blocked ? 'challenged'
+        : 'HTTP ' + v.status + ', ' + v.rows + ' row(s)'
+          + (v.looksCrowdsourced ? '  [reads as user reports]' : '')
+          + (v.reported ? '  totals: ' + JSON.stringify(v.reported) : ''))));
+    if (v.headings && v.headings.length) console.log('      headings: ' + v.headings.join(' | ').slice(0, 180));
+    if (v.sampleRow) console.log('      row: ' + JSON.stringify(v.sampleRow).slice(0, 220));
+    (v.endpoints || []).filter((e) => e.records).slice(0, 3).forEach((e) =>
+      console.log('      ' + String(e.records).padStart(5) + ' rows from ' + e.url.slice(0, 110)
+        + (e.keys ? '\n             keys: ' + e.keys.join(', ').slice(0, 200) : '')));
+  });
+
   console.log('\nsampling the newly wired sources directly...');
   const direct = await probeDirect();
   Object.entries(direct).forEach(([k, v]) => {
@@ -1006,7 +1164,7 @@ async function probeDirect() {
   });
 
   writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, endpoints,
-    feeds, arcgis, layers, ods, ckan, direct }, null, 2) + '\n');
+    feeds, arcgis, layers, ods, ckan, direct, thirdParty, agencies }, null, 2) + '\n');
   console.log('\nwrote ' + OUT + '  (' + summary.join(', ') + ')');
   console.log('wrote ' + DIAG + '  (' + Object.keys(diagnostics).length + ' page(s) needing work)');
 })();
