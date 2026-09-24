@@ -1,13 +1,13 @@
 {
-  "capturedAt": 1790213459390,
+  "capturedAt": 1790213930251,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 8,
-      "customers": 912,
-      "unplannedCount": 8,
-      "unplannedCustomers": 912,
+      "count": 9,
+      "customers": 2181,
+      "unplannedCount": 9,
+      "unplannedCustomers": 2181,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
@@ -26,9 +26,17 @@
         {
           "name": "Endeavour Energy",
           "ok": true,
-          "count": 1,
+          "count": 2,
           "shape": "cards",
-          "labels": []
+          "labels": [
+            "@media (max-width",
+            "Active outages",
+            "Affected customers"
+          ],
+          "reported": {
+            "outages": 9,
+            "customers": 1269
+          }
         },
         {
           "name": "Essential Energy",
@@ -83,8 +91,13 @@
         },
         {
           "network": "Endeavour Energy",
-          "location": "TYPE",
+          "location": "Search",
           "kind": "unplanned",
+          "customers": 1269
+        },
+        {
+          "network": "Endeavour Energy",
+          "location": "We're preparing the network for bushfire season",
           "customers": null
         }
       ]
@@ -119,59 +132,72 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 4,
+      "count": 63,
       "customers": 0,
-      "unplannedCount": 1,
+      "unplannedCount": 32,
       "unplannedCustomers": 0,
-      "plannedCount": 3,
+      "plannedCount": 31,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "AusNet Services",
           "ok": true,
-          "count": 2,
+          "count": 5,
           "shape": "cards",
           "labels": []
         },
         {
           "name": "Powercor",
-          "ok": false,
-          "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
+          "ok": true,
+          "count": 28,
+          "shape": "cards",
           "labels": [
-            "←",
-            "Move left"
-          ]
+            "Estimated restoration",
+            "Customers affected",
+            "Cause"
+          ],
+          "reported": {
+            "outages": null,
+            "customers": 1695
+          }
         },
         {
           "name": "CitiPower",
-          "ok": false,
-          "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
+          "ok": true,
+          "count": 28,
+          "shape": "cards",
           "labels": [
-            "←",
-            "Move left"
-          ]
+            "Estimated restoration",
+            "Customers affected",
+            "Cause"
+          ],
+          "reported": {
+            "outages": null,
+            "customers": 1695
+          }
         },
         {
           "name": "United Energy",
-          "ok": false,
-          "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": []
-        },
-        {
-          "name": "Jemena",
           "ok": true,
           "count": 2,
           "shape": "cards",
           "labels": []
+        },
+        {
+          "name": "Jemena",
+          "ok": false,
+          "count": 0,
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": []
         }
       ],
       "outages": [
+        {
+          "network": "AusNet Services",
+          "location": "Manage your notifications",
+          "customers": null
+        },
         {
           "network": "AusNet Services",
           "location": "Learn about planned outages",
@@ -185,15 +211,423 @@
           "customers": null
         },
         {
-          "network": "Jemena",
-          "location": "Planned Outage Preparation Tips",
-          "kind": "planned",
+          "network": "AusNet Services",
+          "location": "Prepare for a gas outage",
           "customers": null
         },
         {
-          "network": "Jemena",
-          "location": "Planned Outage Notifications",
+          "network": "AusNet Services",
+          "location": "Register as a life support customer",
+          "customers": null
+        },
+        {
+          "network": "Powercor",
+          "location": "South Melbourne",
           "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Heywood",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "11:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Nichols Point",
+          "kind": "planned",
+          "customers": null,
+          "restore": "12:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Cremorne",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "12:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Burrumbeet",
+          "kind": "planned",
+          "customers": null,
+          "restore": "13:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Lake Boga",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "13:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Fitzroy",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "13:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Bamawm",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "13:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Hoppers Crossing",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "13:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Balwyn",
+          "kind": "planned",
+          "customers": null,
+          "restore": "14:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Corio",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "14:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Colignan",
+          "kind": "planned",
+          "customers": null,
+          "restore": "14:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Carlton",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "14:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Dooen",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "14:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Thornbury",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Windsor",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Mount Duneed and surrounds",
+          "cause": "Areas affected",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Hamilton",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "New Gisborne",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Portland",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Tyrendarra and surrounds",
+          "cause": "Areas affected",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Sailors Gully and surrounds",
+          "cause": "Areas affected",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Irrewarra",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "West Melbourne",
+          "kind": "planned",
+          "customers": null,
+          "restore": "17:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Port Melbourne",
+          "kind": "planned",
+          "customers": null,
+          "restore": "17:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Mildura and surrounds",
+          "cause": "Areas affected",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "12:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Mildura",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "12:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Tylden",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "Unknown"
+        },
+        {
+          "network": "CitiPower",
+          "location": "South Melbourne",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Heywood",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "11:30"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Nichols Point",
+          "kind": "planned",
+          "customers": null,
+          "restore": "12:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Cremorne",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "12:30"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Burrumbeet",
+          "kind": "planned",
+          "customers": null,
+          "restore": "13:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Lake Boga",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "13:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Fitzroy",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "13:30"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Bamawm",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "13:30"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Hoppers Crossing",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "13:30"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Balwyn",
+          "kind": "planned",
+          "customers": null,
+          "restore": "14:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Corio",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "14:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Colignan",
+          "kind": "planned",
+          "customers": null,
+          "restore": "14:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Carlton",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "14:30"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Dooen",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "14:30"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Thornbury",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Windsor",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Mount Duneed and surrounds",
+          "cause": "Areas affected",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Hamilton",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "New Gisborne",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Portland",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Tyrendarra and surrounds",
+          "cause": "Areas affected",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Sailors Gully and surrounds",
+          "cause": "Areas affected",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:30"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Irrewarra",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:30"
+        },
+        {
+          "network": "CitiPower",
+          "location": "West Melbourne",
+          "kind": "planned",
+          "customers": null,
+          "restore": "17:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Port Melbourne",
+          "kind": "planned",
+          "customers": null,
+          "restore": "17:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Mildura and surrounds",
+          "cause": "Areas affected",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "12:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Mildura",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "12:00"
+        },
+        {
+          "network": "CitiPower",
+          "location": "Tylden",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "Unknown"
+        },
+        {
+          "network": "United Energy",
+          "location": "<picture><source type=\"image/avif\" srcSet=\"/static/c50341b110a35486f15e1fd4f5e418d5/1fd1a/ue-logo.avif 18w,/static/c50341b110a35486f15e1fd4f5e418d5/436f9/ue-logo.avif 35w,/static/c50341b110a35486f15e1",
+          "customers": null
+        },
+        {
+          "network": "United Energy",
+          "location": "Oops, page not found!",
           "customers": null
         }
       ]
@@ -354,26 +788,47 @@
     "act": {
       "state": "ACT",
       "name": "Australian Capital Territory",
-      "count": 0,
+      "count": 4,
       "customers": 0,
-      "unplannedCount": 0,
+      "unplannedCount": 4,
       "unplannedCustomers": 0,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Evoenergy",
-          "ok": false,
-          "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": [
-            "←",
-            "Move left"
-          ]
+          "ok": true,
+          "count": 4,
+          "shape": "cards",
+          "labels": [],
+          "reported": {
+            "outages": 3,
+            "customers": 155
+          }
         }
       ],
-      "outages": []
+      "outages": [
+        {
+          "network": "Evoenergy",
+          "location": "Restored planned outage",
+          "customers": null
+        },
+        {
+          "network": "Evoenergy",
+          "location": "Active planned outage",
+          "customers": null
+        },
+        {
+          "network": "Evoenergy",
+          "location": "Future planned outage",
+          "customers": null
+        },
+        {
+          "network": "Evoenergy",
+          "location": "Cancelled planned outage",
+          "customers": null
+        }
+      ]
     }
   }
 }
