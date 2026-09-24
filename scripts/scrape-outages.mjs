@@ -1009,6 +1009,45 @@ async function probeThirdParty(page) {
 }
 
 (async () => {
+  /* Everything used to be written in one go at the very end, so when the run
+     went past the job's 25-minute limit it was killed with nothing on disk --
+     twenty-five minutes of answers thrown away because the last line never
+     ran. The diagnostics are now written after each phase, and the cheap
+     HTTP probes go first: they take seconds, they are where the current
+     questions are being settled, and there is no reason for them to sit
+     behind twenty minutes of browser work to find out. */
+  const diagParts = {};
+  const saveDiag = () => {
+    try {
+      mkdirSync(DIAG.replace(/\/[^/]*$/, ''), { recursive: true });
+      writeFileSync(DIAG, JSON.stringify(Object.assign({ capturedAt: Date.now() }, diagParts), null, 2) + '\n');
+    } catch (e) { console.log('could not write diagnostics: ' + e.message); }
+  };
+
+  console.log('sampling the wired sources directly...');
+  diagParts.direct = await probeDirect().catch((e) => ({ error: String(e.message) }));
+  Object.entries(diagParts.direct).forEach(([k, v]) => {
+    console.log('  ' + k.padEnd(24) + (v.error ? 'ERR ' + v.error
+      : 'HTTP ' + v.status + ', ' + v.bytes + ' bytes'
+        + (v.lines !== undefined ? ', ' + v.lines + ' line(s)' : '')
+        + (v.records !== undefined ? ', ' + v.records + ' record(s)' : '')));
+    if (v.skeleton) console.log('      shape: ' + JSON.stringify(v.skeleton).slice(0, 700));
+    if (v.envelope) console.log('      envelope: ' + v.envelope
+      + (v.paging ? '   paging ' + JSON.stringify(v.paging) : ''));
+    if (v.headerRow) console.log('      header: ' + v.headerRow);
+    if (v.distinct) Object.entries(v.distinct).forEach(([h, vals]) =>
+      console.log('      values of ' + h + ': ' + vals.join(' | ').slice(0, 200)));
+    (v.sampleRows || []).forEach((r) => console.log('      row:    ' + r.slice(0, 220)));
+    if (v.sample) Object.entries(v.sample).forEach(([f, val]) =>
+      console.log('      ' + f.padEnd(22) + val));
+    if (v.head) console.log('      body:   ' + String(v.head).replace(/\s+/g, ' ').slice(0, 160));
+  });
+  saveDiag();
+
+  console.log('\nasking the state emergency agencies and their ArcGIS orgs...');
+  diagParts.agencies = await probeAgencies().catch((e) => ({ error: String(e.message) }));
+  saveDiag();
+
   const browser = await chromium.launch();
   const context = await browser.newContext({
     viewport: { width: 1400, height: 1200 },
@@ -1137,6 +1176,12 @@ async function probeThirdParty(page) {
   });
 
   writeFileSync(OUT, JSON.stringify({ capturedAt: Date.now(), states: clean }, null, 2) + '\n');
+  /* The browser work is done and it is the expensive half. Save what it
+     found before the catalogue probes run, so a run that overshoots the
+     job's limit still leaves the snapshot and the page diagnostics behind
+     rather than nothing at all. */
+  Object.assign(diagParts, { pages: diagnostics, endpoints, thirdParty });
+  saveDiag();
   /* Anything that could not be listed is worth looking for in the catalogue. */
   console.log('\nwhat each page fetched for itself:');
   Object.entries(endpoints).forEach(([k, list]) => {
@@ -1197,55 +1242,8 @@ async function probeThirdParty(page) {
     (v.hits || []).forEach((h) => console.log('      ' + (h.org || '') + ' :: ' + h.title));
   });
 
-  console.log('\nasking the state emergency agencies and their ArcGIS orgs...');
-  const agencies = await probeAgencies();
-  Object.entries(agencies.feeds).forEach(([k, v]) => {
-    console.log('  ' + k.padEnd(30) + (v.error ? 'ERR ' + v.error
-      : 'HTTP ' + v.status + ', ' + v.bytes + ' bytes'
-        + (v.mentionsOutage ? '  MENTIONS OUTAGES' : '  no mention')));
-    if (v.context) console.log('      ...' + v.context.slice(0, 170));
-  });
-  Object.entries(agencies.orgs).forEach(([k, v]) => {
-    console.log('  ' + k.padEnd(30) + (v.error ? 'ERR ' + v.error
-      : 'HTTP ' + v.status + ', ' + (v.serviceCount ?? '?') + ' service(s)'));
-    (v.outageServices || []).forEach((n) => console.log('      OUTAGE-ISH: ' + n));
-    if (v.folders && v.folders.length) console.log('      folders: ' + v.folders.join(', ').slice(0, 160));
-  });
-
-  Object.entries(thirdParty).forEach(([k, v]) => {
-    console.log('  ' + k.padEnd(32) + (v.error ? 'ERR ' + v.error
-      : (v.blocked ? 'challenged'
-        : 'HTTP ' + v.status + ', ' + v.rows + ' row(s)'
-          + (v.looksCrowdsourced ? '  [reads as user reports]' : '')
-          + (v.reported ? '  totals: ' + JSON.stringify(v.reported) : ''))));
-    if (v.headings && v.headings.length) console.log('      headings: ' + v.headings.join(' | ').slice(0, 180));
-    if (v.sampleRow) console.log('      row: ' + JSON.stringify(v.sampleRow).slice(0, 220));
-    (v.endpoints || []).filter((e) => e.records).slice(0, 3).forEach((e) =>
-      console.log('      ' + String(e.records).padStart(5) + ' rows from ' + e.url.slice(0, 110)
-        + (e.keys ? '\n             keys: ' + e.keys.join(', ').slice(0, 200) : '')));
-  });
-
-  console.log('\nsampling the newly wired sources directly...');
-  const direct = await probeDirect();
-  Object.entries(direct).forEach(([k, v]) => {
-    console.log('  ' + k.padEnd(24) + (v.error ? 'ERR ' + v.error
-      : 'HTTP ' + v.status + ', ' + v.bytes + ' bytes'
-        + (v.lines !== undefined ? ', ' + v.lines + ' line(s)' : '')
-        + (v.records !== undefined ? ', ' + v.records + ' record(s)' : '')));
-    if (v.headerRow) console.log('      header: ' + v.headerRow);
-    if (v.distinct) Object.entries(v.distinct).forEach(([h, vals]) =>
-      console.log('      values of ' + h + ': ' + vals.join(' | ').slice(0, 200)));
-    (v.sampleRows || []).forEach((r) => console.log('      row:    ' + r.slice(0, 220)));
-    if (v.skeleton) console.log('      shape: ' + JSON.stringify(v.skeleton).slice(0, 600));
-    if (v.envelope) console.log('      envelope: ' + v.envelope
-      + (v.paging ? '   paging ' + JSON.stringify(v.paging) : ''));
-    if (v.sample) Object.entries(v.sample).forEach(([f, val]) =>
-      console.log('      ' + f.padEnd(22) + val));
-    if (v.head) console.log('      body:   ' + v.head.replace(/\s+/g, ' ').slice(0, 160));
-  });
-
-  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, endpoints,
-    feeds, arcgis, layers, ods, ckan, direct, thirdParty, agencies }, null, 2) + '\n');
+  Object.assign(diagParts, { pages: diagnostics, endpoints, feeds, arcgis, layers, ods, ckan, thirdParty });
+  saveDiag();
   console.log('\nwrote ' + OUT + '  (' + summary.join(', ') + ')');
   console.log('wrote ' + DIAG + '  (' + Object.keys(diagnostics).length + ' page(s) needing work)');
 })();
