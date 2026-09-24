@@ -1,20 +1,20 @@
 {
-  "capturedAt": 1790220744238,
+  "capturedAt": 1790221712474,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 8,
-      "customers": 2165,
-      "unplannedCount": 8,
-      "unplannedCustomers": 2165,
+      "count": 9,
+      "customers": 2227,
+      "unplannedCount": 9,
+      "unplannedCustomers": 2227,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 7,
+          "count": 8,
           "shape": "table",
           "labels": [
             "Date",
@@ -44,7 +44,12 @@
           "count": 0,
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
-          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
+          "reported": {
+            "outages": 2920,
+            "customers": 2920
+          },
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
+          "reportedVia": "Power Outages Australia"
         }
       ],
       "outages": [
@@ -91,6 +96,12 @@
           "start": "8:35 am (Thu 24 Sep) to 3:30 pm (Thu 24 Sep)"
         },
         {
+          "network": "Ausgrid",
+          "location": "Botany",
+          "customers": 62,
+          "start": "12:30 pm (Thu 24 Sep) to 6:30 pm (Thu 24 Sep)"
+        },
+        {
           "network": "Endeavour Energy",
           "location": "Search",
           "cause": "Outage list",
@@ -131,9 +142,9 @@
       "name": "Victoria",
       "count": 21,
       "customers": 1300,
-      "unplannedCount": 11,
+      "unplannedCount": 12,
       "unplannedCustomers": 1300,
-      "plannedCount": 10,
+      "plannedCount": 9,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -155,7 +166,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 1179
+            "customers": 1137
           }
         },
         {
@@ -168,7 +179,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 1179
+            "customers": 1137
           },
           "mergedInto": "Powercor"
         },
@@ -190,7 +201,12 @@
           "error": "Rendered, but no outage list could be recognised on the page",
           "shape": "none",
           "labels": [],
-          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
+          "reported": {
+            "outages": 36,
+            "customers": 36
+          },
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
+          "reportedVia": "Power Outages Australia"
         }
       ],
       "outages": [
@@ -226,13 +242,6 @@
           "kind": "unplanned",
           "customers": null,
           "restore": "13:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Balwyn",
-          "kind": "planned",
-          "customers": null,
-          "restore": "14:00"
         },
         {
           "network": "Powercor",
@@ -313,6 +322,13 @@
         },
         {
           "network": "Powercor",
+          "location": "Melbourne",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "18:00"
+        },
+        {
+          "network": "Powercor",
           "location": "Mildura and surrounds",
           "kind": "unplanned",
           "customers": null,
@@ -354,7 +370,12 @@
           "count": 0,
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
-          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
+          "reported": {
+            "outages": 1871,
+            "customers": 1871
+          },
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
+          "reportedVia": "Power Outages Australia"
         }
       ],
       "outages": []
