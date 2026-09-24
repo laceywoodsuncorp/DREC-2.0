@@ -325,6 +325,49 @@ const check = (n, c, x) => {
     await p.close();
   }
 
+  console.log('\n== both maps zoom, and neither eats the page ==');
+  {
+    const p = await open('live');
+    await p.waitForTimeout(1300);
+
+    /* Buttons first: the wheel must never be the only way in. */
+    for (const sel of ['#outageMap', '#map']) {
+      const zc = await p.$$eval(sel + ' .leaflet-control-zoom a', els => els.length);
+      check('zoom buttons on ' + sel, zc === 2, zc);
+    }
+
+    /* Scrolling over a map you have not touched scrolls the page. This is
+       the case that made the fire map hostile: a 600px map mid-page that
+       swallowed the wheel on the way past. */
+    const before = await p.evaluate(() => window.scrollY);
+    await p.hover('#outageMap');
+    await p.mouse.wheel(0, 400);
+    await p.waitForTimeout(350);
+    const after = await p.evaluate(() => window.scrollY);
+    check('scrolling over an untouched map moves the page', after > before, { before, after });
+
+    /* Clicking hands the wheel to the map. The baseline is taken AFTER the
+       click, because Playwright scrolls an element into view before clicking
+       it -- measuring before would credit that scroll to the wheel. */
+    await p.click('#outageMap', { position: { x: 200, y: 200 } });
+    await p.waitForTimeout(300);
+    const parked = await p.evaluate(() => window.scrollY);
+    await p.mouse.wheel(0, -300);
+    await p.waitForTimeout(500);
+    const pageNow = await p.evaluate(() => window.scrollY);
+    check('after clicking, the wheel no longer scrolls the page',
+      pageNow === parked, { parked, pageNow });
+
+    /* And gives it back on the way out, so the page is never stuck. */
+    const hintOff = await p.$eval('.outage-mapstage .map-zoomhint', e => e.classList.contains('off'));
+    check('the badge says the map has the wheel', hintOff === true);
+    await p.hover('.outage-summary');
+    await p.waitForTimeout(250);
+    const hintBack = await p.$eval('.outage-mapstage .map-zoomhint', e => !e.classList.contains('off'));
+    check('and takes it back when the pointer leaves', hintBack === true);
+    await p.close();
+  }
+
   console.log('\n== the map ==');
   {
     const p = await open('live');

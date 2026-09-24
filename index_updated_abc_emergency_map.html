@@ -230,6 +230,12 @@
   .outage-mapwrap .outage-summary{padding:10px 24px;margin:0;border-bottom:1px solid var(--rule);
     background:#fbfcfc}
   .outage-mapstage{position:relative}
+  /* Sits above Leaflet's controls (1000) so it is never half-hidden behind
+     the zoom buttons it is telling you about. */
+  .map-zoomhint{position:absolute;right:12px;bottom:12px;z-index:1100;pointer-events:none;
+    background:rgba(20,28,28,.74);color:#fff;font-size:.68rem;letter-spacing:.01em;
+    padding:5px 9px;border-radius:6px;transition:opacity .18s ease}
+  .map-zoomhint.off{opacity:0}
   .outage-map{height:620px;width:100%;background:#eef2f2}
   @media(max-width:700px){ .outage-map{height:420px} }
 
@@ -1316,6 +1322,36 @@ const TOWN_FACTS=[
   if(townEl&&textEl){townEl.textContent=pick.town;textEl.textContent=pick.fact;}
 })();
 
+/* Scroll-wheel zoom on both maps, without either of them eating the page.
+
+   Leaflet's default is scroll zoom always on, which on a dashboard this tall
+   means scrolling past a 600px map traps the wheel and the page stops moving
+   -- the fire map did exactly that. Turning it off instead, which is what the
+   outage map did, leaves people spinning a wheel at a map that ignores them.
+
+   So the map takes the wheel once it has been clicked, and gives it back when
+   the pointer leaves. Passing over is scrolling the page; clicking in is
+   using the map. The badge says which of the two is currently true, because a
+   control that silently does nothing is the thing worth avoiding here.
+
+   The +/- buttons are always live, so the wheel is never the only way. */
+function zoomOnEngage(map, stage){
+  if(!map||!stage)return;
+  map.scrollWheelZoom.disable();
+  const hint=document.createElement('div');
+  hint.className='map-zoomhint';
+  hint.textContent='Click the map to zoom with your scroll wheel';
+  stage.appendChild(hint);
+  const engage=()=>{ map.scrollWheelZoom.enable(); hint.classList.add('off'); };
+  const release=()=>{ map.scrollWheelZoom.disable(); hint.classList.remove('off'); };
+  map.on('click',engage);
+  map.on('focus',engage);
+  stage.addEventListener('mouseleave',release);
+  /* Touch has no hover and no wheel: pinch already works, so the badge would
+     only be in the way. */
+  if(window.matchMedia&&window.matchMedia('(hover: none)').matches)hint.remove();
+}
+
 /* ============ MAP ============ */
 /* The map only shows NASA FIRMS fire points now — no satellite/population/HBASE/
    borders overlays — on an OpenStreetMap base layer so town and street names are
@@ -1323,6 +1359,12 @@ const TOWN_FACTS=[
    show either). There's nothing left to toggle, so the old layer control is gone
    too. */
 const map=L.map('map',{minZoom:3,maxZoom:12}).setView([-25.6,134.3],4);
+/* Wrapped so the hint badge has something positioned to sit in. */
+(function(){
+  const el=document.getElementById('map');
+  if(el&&el.parentElement)el.parentElement.style.position='relative';
+  zoomOnEngage(map,el&&el.parentElement);
+})();
 const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:12});
 osm.addTo(map);
 /* Population density (NASA SEDAC GPW v4) as a semi-transparent overlay --
@@ -1999,6 +2041,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     const el=document.getElementById('outageMap');
     if(!el||!window.L)return null;
     oMap=L.map(el,{minZoom:3,maxZoom:12,scrollWheelZoom:false});
+    zoomOnEngage(oMap,el.parentElement);
     oMap.setView([-25.6,134.3],4);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       {attribution:'© OpenStreetMap',maxZoom:12}).addTo(oMap);
