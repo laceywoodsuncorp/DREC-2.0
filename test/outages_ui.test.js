@@ -306,6 +306,12 @@ const check = (n, c, x) => {
     const note = await p.$eval('#outageMapNote', e => e.innerText);
     check('the map says how many towns it mapped', /town/i.test(note), note);
 
+    /* Coverage stated positively when it holds. A bar that only ever warns
+       leaves a quiet day looking the same as a blind one. */
+    const bar = await p.$eval('#outageSummary', e => e.innerText);
+    check('the bar carries the unplanned count', /unplanned/i.test(bar), bar);
+    check('and planned work separately', /planned/i.test(bar), bar);
+
     /* The summary bar sits on the map rather than apart from it. */
     const barInMap = await p.$eval('#outageSummary',
       e => !!e.closest('.outage-mapwrap'));
@@ -316,6 +322,30 @@ const check = (n, c, x) => {
     const pop = await p.$eval('.leaflet-popup-content', e => e.innerText).catch(() => '');
     check('clicking a dot opens its detail', /customers off|Status|Cause/i.test(pop), pop);
     check('and names the operator', /Ausgrid|Endeavour|Essential/i.test(pop), pop);
+    await p.close();
+  }
+
+  console.log('\n== the bar says when the list is complete ==');
+  {
+    /* Every operator answering is a fact the reader needs: it is what makes
+       "no outages" mean no outages rather than no data. */
+    const p = await open('quiet');
+    await p.waitForTimeout(900);
+    const bar = await p.$eval('#outageSummary', e => e.innerText);
+    check('a complete list says so', /reporting/i.test(bar), bar);
+    check('and does not warn about anything', !/not reporting|not connected/i.test(bar), bar);
+    await p.close();
+  }
+
+  {
+    /* And when an operator is missing, the reassurance must disappear -- it
+       would otherwise contradict the warning sitting next to it. */
+    const p = await open('partial');
+    await p.waitForTimeout(900);
+    const bar = await p.$eval('#outageSummary', e => e.innerText);
+    check('an incomplete list warns instead', /not reporting|not connected/i.test(bar), bar);
+    check('and does not also claim everything is reporting',
+      !/all \d+ networks are reporting/i.test(bar), bar);
     await p.close();
   }
 

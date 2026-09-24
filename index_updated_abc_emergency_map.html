@@ -1891,6 +1891,14 @@ window.addEventListener('resize',()=>map.invalidateSize());
       bits.push('<span class="warn">'+pending.length+' of '+nets.length+
         ' networks not connected yet — use their own maps below</span>');
     }
+    /* Said only when it is true, and worth saying: with nothing but warnings
+       to go on, a reader cannot tell a complete list from a silent one. On a
+       quiet day "all 3 networks reporting" is the difference between "no
+       outages" and "no data". */
+    if(nets.length&&!down.length&&!pending.length){
+      bits.push('<span>'+(nets.length===1?'the network is':'all '+nets.length+' networks are')+
+        ' reporting</span>');
+    }
     if(payload.cacheAgeSeconds>1500){
       bits.push('<span class="warn">Data is '+Math.round(payload.cacheAgeSeconds/60)+' minutes old</span>');
     }
