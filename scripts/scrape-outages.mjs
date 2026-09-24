@@ -728,6 +728,65 @@ async function probeArcgisLayers() {
   return out;
 }
 
+/* Three sources were wired from what a page was seen to request, which
+   gives a URL and a list of key names but never a value. A key name is not
+   enough to know a source works: Western Power's `areas` decides whether its
+   own API can carry the town list, and pickOutageField rejects anything that
+   is not a scalar, so an array of objects there would lose every town while
+   still looking like a field that matched. This fetches each one and reports
+   one record with its values, truncated -- for learning the shape, not for
+   copying the data. */
+const DIRECT_PROBES = [
+  ['Evoenergy CSV', 'https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages', 'csv'],
+  ['Western Power own API', 'https://www.westernpower.com.au/api/corp/outage/all-outages', 'json'],
+  ['TasNetworks OData', 'https://www.tasnetworks.com.au/api/odata/GetPowerOutages', 'json']
+];
+
+async function probeDirect() {
+  const out = {};
+  for (const [label, url, kind] of DIRECT_PROBES) {
+    const entry = { url };
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsRadar/1.0)' }
+      });
+      entry.status = res.status;
+      entry.type = res.headers.get('content-type') || '';
+      const text = await res.text();
+      entry.bytes = text.length;
+      if (!res.ok) { entry.head = text.slice(0, 200); out[label] = entry; continue; }
+      if (kind === 'csv') {
+        const lines = text.split(/\r?\n/).filter((l) => l.trim());
+        entry.lines = lines.length;
+        entry.headerRow = lines[0];
+        /* Two rows, because the interesting case is a quoted field with a
+           comma in it and the first row may not have one. */
+        entry.sampleRows = lines.slice(1, 3);
+      } else {
+        const body = JSON.parse(text);
+        const rows = Array.isArray(body) ? body
+          : (Array.isArray(body.value) ? body.value
+            : (Array.isArray(body.features) ? body.features : null));
+        entry.envelope = Array.isArray(body) ? 'array' : Object.keys(body).slice(0, 8).join(',');
+        entry.records = rows ? rows.length : 0;
+        const rec = rows && rows[0];
+        if (rec) {
+          const sample = {};
+          Object.keys(rec).slice(0, 30).forEach((k) => {
+            const v = rec[k];
+            sample[k] = (v && typeof v === 'object')
+              ? 'OBJECT ' + JSON.stringify(v).slice(0, 160)
+              : String(v).slice(0, 120);
+          });
+          entry.sample = sample;
+        }
+      }
+    } catch (err) { entry.error = String(err.message).slice(0, 140); }
+    out[label] = entry;
+  }
+  return out;
+}
+
 (async () => {
   const browser = await chromium.launch();
   const context = await browser.newContext({
@@ -909,8 +968,22 @@ async function probeArcgisLayers() {
     (v.hits || []).forEach((h) => console.log('      ' + (h.org || '') + ' :: ' + h.title));
   });
 
+  console.log('\nsampling the newly wired sources directly...');
+  const direct = await probeDirect();
+  Object.entries(direct).forEach(([k, v]) => {
+    console.log('  ' + k.padEnd(24) + (v.error ? 'ERR ' + v.error
+      : 'HTTP ' + v.status + ', ' + v.bytes + ' bytes'
+        + (v.lines !== undefined ? ', ' + v.lines + ' line(s)' : '')
+        + (v.records !== undefined ? ', ' + v.records + ' record(s)' : '')));
+    if (v.headerRow) console.log('      header: ' + v.headerRow);
+    (v.sampleRows || []).forEach((r) => console.log('      row:    ' + r.slice(0, 220)));
+    if (v.sample) Object.entries(v.sample).forEach(([f, val]) =>
+      console.log('      ' + f.padEnd(22) + val));
+    if (v.head) console.log('      body:   ' + v.head.replace(/\s+/g, ' ').slice(0, 160));
+  });
+
   writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, endpoints,
-    feeds, arcgis, layers, ods, ckan }, null, 2) + '\n');
+    feeds, arcgis, layers, ods, ckan, direct }, null, 2) + '\n');
   console.log('\nwrote ' + OUT + '  (' + summary.join(', ') + ')');
   console.log('wrote ' + DIAG + '  (' + Object.keys(diagnostics).length + ' page(s) needing work)');
 })();
