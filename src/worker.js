@@ -243,7 +243,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-09-24-evoenergy';
+const WORKER_BUILD = '2026-09-24-lifecycle';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -2180,15 +2180,23 @@ function parseOutageCsv(text, opts) {
       if (rec[field] === undefined) rec[field] = cells[idx];
     });
     if (!Object.keys(rec).length) continue;
-    /* An export is not a list of what is out now. Evoenergy's CSV is 45 rows
-       of scheduled, cancelled and finished jobs while its own page says two
-       outages affecting thirteen customers -- publishing the file's length
-       as the outage count would overstate the day by twentyfold. A row whose
-       status says the job was cancelled, or the power is back on, is not a
-       current outage. */
-    if (opts && opts.skipStatus && rec.status && opts.skipStatus.test(rec.status)) {
-      skipped++;
-      continue;
+    /* An export is not a list of what is out now. Evoenergy's file is 44 rows
+       of cancelled, scheduled, in-progress and finished jobs while its own
+       page says two outages affecting thirteen customers -- publishing the
+       file's length would overstate the day twentyfold.
+
+       `keepRow` is given the row by its own column names rather than the
+       normalised fields, because the lifecycle lives in columns the outage
+       vocabulary has no use for. Matching on the status text was the
+       obvious thing and is the weaker one: the statuses here are Cancelled,
+       Scheduled, Restored, Completed and a sentence beginning "Our crews are
+       on their way", and any operator may add a sixth tomorrow that means
+       "not out" and matches nothing. Whether a job has started and not yet
+       ended does not depend on how it is worded. */
+    if (opts && opts.keepRow) {
+      const raw = {};
+      headings.forEach((h, idx) => { raw[h] = cells[idx] === undefined ? '' : cells[idx]; });
+      if (!opts.keepRow(raw)) { skipped++; continue; }
     }
     rows.push(rec);
   }
@@ -2476,10 +2484,18 @@ export const OUTAGE_NETWORKS = {
              than the markup around it. */
           { url: 'https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages',
             format: 'text',
-            /* The export covers the whole schedule, not the present moment.
-               Cancelled jobs and ones already restored are dropped; what is
-               left is what the operator's own page counts. */
-            parse: (t) => parseOutageCsv(t, { skipStatus: /cancel|restored|complete|closed|finish/i }) },
+            /* Out right now means started and not yet finished. A cancelled
+               or scheduled job has no actual start; a restored one has an
+               actual end. This is a deliberate choice to match what
+               Evoenergy itself reports -- "currently 2 outages affecting 13
+               customers" -- which means future planned work is left out.
+               A planned outage that is under way has an actual start like
+               any other and is kept, so this excludes what has not begun,
+               not planned work as a category. */
+            parse: (t) => parseOutageCsv(t, {
+              keepRow: (r) => !!String(r['Actual Start'] || '').trim()
+                && !String(r['Actual End'] || '').trim()
+            }) },
           { url: 'https://www.evoenergy.com.au/Outages', format: 'text', parse: parseOutageTable },
           { url: 'https://www.actewagl.com.au/outages', format: 'text', parse: parseOutageTable },
           /* Last resort: the same data republished by Power Outages

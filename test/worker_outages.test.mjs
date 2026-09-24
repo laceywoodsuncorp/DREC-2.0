@@ -1206,41 +1206,41 @@ console.log('\n== an endpoint the operator\'s own page calls ==');
   check('the rendered table still catches it', c.count === 1, c.outages);
 }
 
-console.log('\n== a CSV download read as a list ==');
+console.log('\n== CSV quoting, on the real columns ==');
 {
   reset();
-  /* Evoenergy publishes no feed and renders its list into a DataTable the
-     extractor cannot read, but its page links a CSV of the same outages. */
+  /* Quoting is the part of a CSV that fails silently, so it gets its own
+     case -- but on Evoenergy's actual column names. An earlier version of
+     this test invented a header, which is the same mistake that had the
+     town list being read as a street: a test built on made-up columns
+     passes while the live file does not. */
   const csv = [
-    'Outage ID,Suburbs affected,Customers affected,Cause,Status,Estimated restoration',
-    'EV-1,Braddon,13,Equipment fault,Crew on site,2026-09-24T21:00:00Z',
-    /* The row that matters: both the town list and the cause carry commas
-       inside quotes. Split naively, every later column shifts by one and the
-       customer count silently becomes a word -- wrong data rather than an
-       error, which is the worse failure. */
-    '"EV-2","Turner, O\'Connor, Lyneham",87,"Fault, under investigation",Assessing,',
-    'EV-3,Dickson,4,Planned maintenance,Planned,'
+    'Outage Id,Type,Status Description,Planned Start,Planned Restoration,Actual Start,Expected Restoration,Actual End,Affected Customer Count,Affected Suburbs,Reason',
+    /* Both the town list and the cause carry commas inside quotes. Split
+       naively, every later column shifts by one and the customer count
+       becomes a word -- wrong data rather than an error. */
+    'UP 1,unplanned,Our crews are on their way,,,9/24/2026 6:05:00 AM,9/24/2026 11:00:00 AM,,87,"TURNER, O\'CONNOR, LYNEHAM","Fault, under investigation"',
+    /* A doubled quote is a literal quote, not the end of the field. */
+    'UP 2,unplanned,Our crews are on their way,,,9/24/2026 7:00:00 AM,,,13,"O""CONNOR",Equipment fault'
   ].join('\n');
-  upstream['ExportOutages'] = () => new Response(csv,
-    { status: 200, headers: { 'Content-Type': 'text/csv' } });
+  upstream['ExportOutages'] = () => new Response(csv, { status: 200, headers: { 'Content-Type': 'text/csv' } });
   upstream['http'] = () => new Response('down', { status: 503 });
 
   const b = await (await call('/api/outages/act')).json();
-  check('every row is read', b.count === 3, [b.count, b.outages.map((o) => o.id)]);
+  check('both rows are read', b.count === 2, [b.count, b.outages]);
 
-  const two = b.outages.find((o) => o.id === 'EV-2');
-  check('a quoted town list is not split into columns',
-    (two.towns || []).length === 3 && two.towns.includes("O'Connor"), two.towns);
-  check('the column after it is still the customer count',
-    two.customers === 87, two.customers);
-  check('and a comma inside the cause survives',
-    /Fault, under investigation/.test(two.cause || ''), two.cause);
-  check('the customer total adds up', b.customers === 104, b.customers);
+  const one = b.outages.find((o) => o.id === 'UP 1');
+  check('a quoted town list is split, not mangled',
+    (one.towns || []).length === 3 && one.towns.includes("O'CONNOR"), one.towns);
+  check('the column after it is still the customer count', one.customers === 87, one.customers);
+  check('a comma inside the cause survives',
+    /Fault, under investigation/.test(one.cause || ''), one.cause);
 
-  /* A trailing empty column is ordinary in these exports. */
-  const three = b.outages.find((o) => o.id === 'EV-3');
-  check('a row with an empty last field still reads', three && three.customers === 4, three);
-  check('this is the operator\'s own figure, not an aggregator\'s',
+  const two = b.outages.find((o) => o.id === 'UP 2');
+  check('a doubled quote is a literal quote',
+    (two.towns || []).join() === 'O"CONNOR', two.towns);
+  check('the customer total adds up', b.customers === 100, b.customers);
+  check('these are the operator\'s own figures, not an aggregator\'s',
     !b.networks.find((n) => n.name === 'Evoenergy').via,
     b.networks.find((n) => n.name === 'Evoenergy').via);
 }
@@ -1255,9 +1255,9 @@ console.log('\n== a CSV download read as a list ==');
   const b = await (await call('/api/outages/act')).json();
   const evo = b.networks.find((n) => n.name === 'Evoenergy');
   /* The Worker's rule for "answered, but we could not read it" is to say so
-     rather than to report the operator as down -- the page renders that as
-     "data not readable", which is the true statement and the one that gets
-     the parser fixed. What must not happen is a silent zero. */
+     rather than report the operator as down -- the page renders that as
+     "data not readable", which is true and is what gets the parser fixed.
+     What must not happen is a silent zero. */
   check('an HTML error page is reported as unreadable, not as no outages',
     evo.count === 0 && !!evo.diagnostics, [evo.count, evo.ok, evo.diagnostics]);
   check('and the reason names what came back instead',
@@ -1266,7 +1266,7 @@ console.log('\n== a CSV download read as a list ==');
   reset();
   /* Headings understood, no rows: nothing is out. That is a result. */
   upstream['ExportOutages'] = () => new Response(
-    'Outage ID,Suburbs affected,Customers affected\n',
+    'Outage Id,Affected Suburbs,Affected Customer Count\n',
     { status: 200, headers: { 'Content-Type': 'text/csv' } });
   const c = await (await call('/api/outages/act')).json();
   const quiet = c.networks.find((n) => n.name === 'Evoenergy');
@@ -1281,22 +1281,36 @@ console.log('\n== the real Evoenergy export ==');
      Evoenergy renames a column. The two Cancelled rows are real ones. */
   const csv = [
     'Outage Id,Type,Status Description,Planned Start,Planned Restoration,Actual Start,Expected Restoration,Actual End,Affected Customer Count,Affected Suburbs,Reason',
+    /* All five statuses the live file actually carries. */
     'SP 151024379,planned,Cancelled,9/23/2026 8:15:00 AM,9/23/2026 12:15:00 PM,,,,34,GIRALANG,',
-    'SP 151024261,planned,Cancelled,9/24/2026 8:00:00 AM,9/24/2026 4:00:00 PM,,,,41,CHISHOLM,',
-    'UP 151030011,unplanned,Crew on site,,,9/24/2026 6:05:00 AM,9/24/2026 11:00:00 AM,,9,"BRADDON, TURNER",Equipment fault',
+    'UP 151030011,unplanned,Our crews are on their way to investigate,,,9/24/2026 6:05:00 AM,9/24/2026 11:00:00 AM,,9,"BRADDON, TURNER",Equipment fault',
     'UP 151030044,unplanned,Restored,,,9/24/2026 1:00:00 AM,,9/24/2026 3:00:00 AM,120,DICKSON,Storm damage',
-    'SP 151024999,planned,Scheduled,9/25/2026 9:00:00 AM,9/25/2026 3:00:00 PM,,,,4,KALEEN,Planned maintenance'
+    'UP 151030077,unplanned,Completed,,,9/23/2026 7:39:00 AM,,9/23/2026 12:38:00 PM,55,LYNEHAM,Equipment fault',
+    /* Scheduled: a planned job that has not started. Matched none of the
+       status words the first filter used, so it would have been counted as
+       a current outage -- and there are dozens of them in the file. */
+    'SP 151024999,planned,Scheduled,9/25/2026 9:00:00 AM,9/25/2026 3:00:00 PM,,,,4,KALEEN,Planned maintenance',
+    /* A planned outage actually under way. Excluding what has not begun
+       must not mean excluding planned work as a category. */
+    'SP 151025100,planned,Scheduled,9/24/2026 8:00:00 AM,9/24/2026 4:00:00 PM,9/24/2026 8:02:00 AM,,,4,HOLT,Essential maintenance'
   ].join('\n');
   upstream['ExportOutages'] = () => new Response(csv, { status: 200, headers: { 'Content-Type': 'text/csv' } });
   upstream['http'] = () => new Response('down', { status: 503 });
 
   const b = await (await call('/api/outages/act')).json();
-  /* Five rows in, two current. The file is a schedule, not a snapshot of
-     now: publishing its length would have said five outages on a day with
-     two, and the customer total would have been 208 instead of 13. */
-  check('cancelled and restored jobs are not current outages', b.count === 2,
+  /* Six rows in, two out right now: the unplanned one crews are attending
+     and the planned one under way. Publishing the file's length would have
+     said six outages on a day with two, and 226 customers instead of 13 --
+     which is the shape of every wrong number this dashboard has had. */
+  check('only what has started and not ended is current', b.count === 2,
     [b.count, b.outages.map((o) => o.id + ':' + o.status)]);
   check('and the customer total is of what is actually out', b.customers === 13, b.customers);
+  check('a job that has not started is not an outage',
+    !b.outages.some((o) => (o.towns || []).includes('KALEEN')), b.outages.map((o) => o.towns));
+  check('but a planned job under way is',
+    b.outages.some((o) => (o.towns || []).includes('HOLT')), b.outages.map((o) => o.towns));
+  check('a restored job is gone even though it ran today',
+    !b.outages.some((o) => (o.towns || []).includes('DICKSON')), b.outages.map((o) => o.towns));
 
   const braddon = b.outages.find((o) => /BRADDON/.test((o.towns || []).join(',')));
   /* "Affected Suburbs" matched none of the towns vocabulary and fell through
@@ -1312,14 +1326,12 @@ console.log('\n== the real Evoenergy export ==');
   check('Type gives planned vs unplanned',
     braddon && braddon.kind === 'unplanned', braddon && braddon.kind);
 
-  const kaleen = b.outages.find((o) => (o.towns || []).includes('KALEEN'));
-  check('a scheduled job is kept and marked planned',
-    !!kaleen && kaleen.kind === 'planned', kaleen);
-  /* Planned Start is filled and Actual Start is empty; the reverse for an
-     unplanned row. The reader must take whichever is there. */
-  check('the time taken is the one the row actually fills',
-    kaleen && /9\/25\/2026/.test(kaleen.start || ''), kaleen && kaleen.start);
-  check('and an unplanned row takes its actual start',
+  const holt = b.outages.find((o) => (o.towns || []).includes('HOLT'));
+  check('the planned job under way is still marked planned',
+    !!holt && holt.kind === 'planned', holt);
+  /* Planned Start and Actual Start are both filled on that row; empty cells
+     are skipped, so the first non-empty column of a pair is what is kept. */
+  check('an unplanned row takes its actual start',
     braddon && /6:05:00 AM/.test(braddon.start || ''), braddon && braddon.start);
 }
 
