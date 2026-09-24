@@ -42,7 +42,9 @@ const check = (n, c, x) => {
     const p = await open('live');
     check('no electricity iframe left in the tile',
       await p.$$eval('#section-outages iframe', els => els.filter(e => !/outage\.report/.test(e.src)).length) === 0);
-    check('state tabs are present', await p.$$eval('#outageTabs .state-tab', e => e.length) === 8);
+    check('the state tabs are gone', await p.$$eval('#outageTabs .state-tab', e => e.length) === 0);
+    check('the heading says it covers Australia',
+      /Australia/.test(await p.$eval('.outage-heading', e => e.innerText)));
     const r = await rows(p);
     check('outage rows render', r.length === 6, r.length);
     check('each row names its operator',
@@ -73,7 +75,12 @@ const check = (n, c, x) => {
   {
     const p = await open('partial');
     const c = await chips(p);
-    check('every operator still has a chip', c.length === 3, c.map(x => x.text));
+    /* Nationally every operator is listed, so the assertion is that the NSW
+       three are all still there -- an exact total would just track how many
+       states the fixture carries. */
+    check('every operator still has a chip',
+      ['Ausgrid', 'Endeavour', 'Essential'].every(n => c.some(x => x.text.includes(n))),
+      c.map(x => x.text));
     const dead = c.filter(x => x.down);
     check('the failing one is marked, not dropped', dead.length === 1 && /Essential/.test(dead[0].text), c);
     check('its reason is on hover', /403/.test(dead[0].title), dead[0].title);
@@ -90,9 +97,13 @@ const check = (n, c, x) => {
     const c = await chips(p);
     /* It must not read as quiet either: "none listed" on an operator whose
        rows were dropped is the most misleading thing this tile could say. */
-    check('the chip says the data was unreadable, not "none listed"',
-      c.some(x => /not readable/i.test(x.text)) && !c.some(x => /none listed/i.test(x.text)),
-      c.map(x => x.text));
+    /* About the drifted operator specifically. Nationally, an operator in a
+       state with nothing out says "none listed" quite correctly -- the point
+       is that the one whose rows were dropped must not. */
+    const drift = c.find(x => /Endeavour/.test(x.text));
+    check('the chip says the data was unreadable, not \"none listed\"',
+      !!drift && /not readable/i.test(drift.text) && !/none listed/i.test(drift.text),
+      drift && drift.text);
     check('and it counts against coverage in the summary',
       /incomplete/i.test(await summary(p)), await summary(p));
     await p.close();
@@ -118,7 +129,12 @@ const check = (n, c, x) => {
   {
     const p = await open('unconnected');
     const c = await chips(p);
-    check('every operator still has a chip', c.length === 3, c.map(x => x.text));
+    /* Nationally every operator is listed, so the assertion is that the NSW
+       three are all still there -- an exact total would just track how many
+       states the fixture carries. */
+    check('every operator still has a chip',
+      ['Ausgrid', 'Endeavour', 'Essential'].every(n => c.some(x => x.text.includes(n))),
+      c.map(x => x.text));
     check('unconnected operators say so, not "unavailable"',
       c.filter(x => /not connected yet/i.test(x.text)).length === 2, c.map(x => x.text));
     check('and are not styled as a failure', c.filter(x => x.down).length === 0, c);
@@ -240,12 +256,12 @@ const check = (n, c, x) => {
     r = await search('Nowheresville');
     check('no match shows none', r.length === 0, r);
     const t = await p.$eval('#outageList', e => e.innerText);
-    /* Not the same claim as "no outages" -- we only know the operators that
-       answered. The message used to say so in general terms; it now names
-       the operator it cannot see and links to it, which is the same point
-       made usefully. */
+    /* Not the same claim as "no outages". For a name the gazetteer does not
+       carry, the honest answer is that we do not recognise the place --
+       naming a distributor for it would be invention. The operator caveat
+       is tested below with a town that does exist. */
     check('and says what it does not cover',
-      /operators we can read/i.test(t) && /Essential Energy/.test(t), t);
+      /don.t recognise it/i.test(t), t);
 
     await p.fill('#outageFilter', '');
     await p.waitForTimeout(250);
@@ -279,18 +295,20 @@ const check = (n, c, x) => {
     await p.close();
   }
 
-  console.log('\n== tabs switch states and carry counts ==');
+  console.log('\n== one national list, not eight tabbed ones ==');
   {
     const p = await open('live');
-    const labels = await p.$$eval('#outageTabs .state-tab', els => els.map(e => e.innerText.trim()));
-    check('tabs show per-state counts', labels.some(l => /\(\d+\)/.test(l)), labels);
-    check('a state with nothing reporting shows "!"', labels.some(l => /\(!\)/.test(l)), labels);
-    await p.click('#outageTabs .state-tab[data-state="VIC"]');
-    await p.waitForTimeout(600);
-    check('clicking a tab activates it',
-      await p.$eval('#outageTabs .state-tab[data-state="VIC"]', e => e.classList.contains('active')));
-    check('and loads that state', /VIC|Victoria/.test(await p.$eval('#outageList', e => e.innerText)) ||
-      (await rows(p)).length === 0);
+    await p.waitForTimeout(1200);
+    /* The fixture gives NSW six rows and every other state none, so the
+       national list is the NSW rows -- but arrived at by merging eight
+       requests rather than by selecting a tab. */
+    const r = await rows(p);
+    check('rows from every state land in one list', r.length === 6, r.length);
+    const chips = await p.$$eval('.outage-net', els => els.map(e => e.innerText.trim()));
+    /* Sixteen operators in one row need to say which state they cover, or
+       the list is a wall of names. */
+    check('operator chips name their state', chips.some(c => /^(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\b/.test(c)), chips.slice(0, 4));
+    check('and every state\'s operators are listed', chips.length > 6, chips.length);
     await p.close();
   }
 
@@ -385,8 +403,8 @@ const check = (n, c, x) => {
     /* SA: one distributor, and it blocks us. Here "we cannot see" is certain
        and has to be said plainly -- the reader must not read silence as
        "your power is on". */
-    await p.click('#outageTabs .state-tab[data-state="SA"]');
-    await p.waitForTimeout(700);
+    /* No tab to select: the gazetteer says Port Augusta is in SA, and that
+       is what decides the answer. */
     await p.fill('#outageFilter', 'Port Augusta');
     await p.waitForTimeout(400);
     v = await p.$eval('#outageList', e => e.innerText);
@@ -401,8 +419,6 @@ const check = (n, c, x) => {
     /* Victoria: every distributor answers, so no warning belongs here at all.
        Telling someone their provider blocks us when their power is simply on
        is the failure this whole verdict exists to avoid. */
-    await p.click('#outageTabs .state-tab[data-state="VIC"]');
-    await p.waitForTimeout(700);
     await p.fill('#outageFilter', 'Ballarat Central');
     await p.waitForTimeout(400);
     v = await p.$eval('#outageList', e => e.innerText);
@@ -412,13 +428,23 @@ const check = (n, c, x) => {
     check('and is styled as an all-clear',
       await p.$eval('#outageList .outage-verdict', e => e.classList.contains('clear')));
 
-    /* A town in another state: answering "no outage in Victoria" for a South
-       Australian town is technically true and completely useless. */
-    await p.fill('#outageFilter', 'Port Augusta');
+    /* A name in two states, neither out. Naming one distributor would mean
+       picking at random, so it names both places instead. */
+    await p.fill('#outageFilter', 'Richmond');
     await p.waitForTimeout(400);
     v = await p.$eval('#outageList', e => e.innerText);
-    check('a town from another state says which state it is in', /\bSA\b/.test(v), v);
-    check('and points at the right tab', /tab/i.test(v), v);
+    check('an ambiguous name lists every state it is in',
+      /VIC/.test(v) && /TAS/.test(v), v);
+    check('and claims nothing about a distributor',
+      !/blocks automated access/i.test(v), v);
+
+    /* A place the gazetteer does not carry. Asserting anything about its
+       provider would be invention. */
+    await p.fill('#outageFilter', 'Nowheresville');
+    await p.waitForTimeout(400);
+    v = await p.$eval('#outageList', e => e.innerText);
+    check('an unknown place says so rather than guessing',
+      /don.t recognise it/i.test(v), v);
     await p.close();
   }
 

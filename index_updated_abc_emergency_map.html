@@ -217,6 +217,10 @@
     font-size:.8rem;color:#4a5a5a}
   .outage-summary b{font-size:1.15rem;color:var(--heritage-green);margin-right:4px}
   .outage-summary .warn{color:#8a5200}
+  /* Sixteen operators in one row, so each carries the state it covers. */
+  .outage-net-st{display:inline-block;margin-right:5px;padding:1px 5px;border-radius:4px;
+    background:#eceff0;color:#5a6a6a;font-size:.64rem;font-weight:700;letter-spacing:.04em;
+    vertical-align:2%}
 
   /* The map and its summary bar read as one panel, so they share a border and
      the bar loses its own bottom rule. */
@@ -459,22 +463,12 @@
   </div>
 
   <div class="outage-headrow">
-    <h3 class="outage-heading">⚡ Electricity Outages by State</h3>
+    <h3 class="outage-heading">⚡ Electricity Outages — Australia</h3>
     <button type="button" class="scrape-btn" id="scrapeBtn" hidden>📷 Refresh capture</button>
   </div>
   <div class="scrape-note" id="scrapeNote" hidden></div>
-  <div class="state-tabs" id="outageTabs">
-    <button class="state-tab active" data-state="NSW">NSW</button>
-    <button class="state-tab" data-state="QLD">QLD</button>
-    <button class="state-tab" data-state="VIC">VIC</button>
-    <button class="state-tab" data-state="SA">SA</button>
-    <button class="state-tab" data-state="WA">WA</button>
-    <button class="state-tab" data-state="TAS">TAS</button>
-    <button class="state-tab" data-state="NT">NT</button>
-    <button class="state-tab" data-state="ACT">ACT</button>
-  </div>
   <div class="outage-search">
-    <input type="search" id="outageFilter" placeholder="Find a town or suburb — e.g. Wyong" autocomplete="off">
+    <input type="search" id="outageFilter" placeholder="Find any town or suburb in Australia — e.g. Wyong" autocomplete="off">
     <span class="outage-search-count" id="outageFilterCount"></span>
   </div>
   <!-- The summary is the bar across the top of the map rather than a line of
@@ -1765,16 +1759,21 @@ window.addEventListener('resize',()=>map.invalidateSize());
 (function(){
   const filterEl=document.getElementById('outageFilter'),
         filterCountEl=document.getElementById('outageFilterCount');
-  const tabsEl=document.getElementById('outageTabs'),
+  const
         summaryEl=document.getElementById('outageSummary'),
         networksEl=document.getElementById('outageNetworks'),
         listEl=document.getElementById('outageList'),
         footEl=document.getElementById('outageFoot');
-  if(!tabsEl||!listEl)return;
+  if(!listEl)return;
 
-  let currentState='NSW',aggregate=null;
-  const stateCache={};   // state -> payload, so re-selecting a tab is instant
-  const inFlight={};
+  /* One national list rather than eight tabbed ones. The Worker still serves
+     a state at a time -- each is cached and refreshed on its own cron shard,
+     so asking for all eight is eight cache reads, not eight scrapes -- and
+     they are merged here. A state that fails to load is named rather than
+     silently missing from the total, because a smaller number is the one
+     failure mode this tile cannot afford to hide. */
+  const STATES=['NSW','QLD','VIC','SA','WA','TAS','NT','ACT'];
+  let national=null,loading=false;
 
   const num=n=>Number(n).toLocaleString('en-AU');
 
@@ -1796,19 +1795,45 @@ window.addEventListener('resize',()=>map.invalidateSize());
     return raw||'';
   }
 
-  function setTabCounts(){
-    tabsEl.querySelectorAll('.state-tab').forEach(tab=>{
-      if(!tab.dataset.label)tab.dataset.label=tab.textContent.trim();
-      let badge='';
-      const st=aggregate&&(aggregate.states||[]).find(s=>s.state===tab.dataset.state);
-      if(st){
-        /* "!" rather than "0" when nothing answered -- zero is a claim about
-           the network, and we would not be entitled to make it. */
-        badge=st.ok?' <span class="n">('+st.count+')</span>'
-                   :' <span class="n" title="No operator reporting">(!)</span>';
+  /* Rows carry the state they came from. Without it the gazetteer cannot be
+     asked the right question -- there is a Richmond in Victoria and another
+     in Tasmania, and a name-only lookup would put one state's outage in the
+     other's suburb. */
+  function mergeStates(results){
+    const outages=[],networks=[],failed=[];
+    let count=0,customers=0,unplannedCount=0,unplannedCustomers=0,
+        plannedCount=0,plannedCustomers=0,cacheAge=0,snapshotAge;
+    results.forEach(({st,payload})=>{
+      if(!payload||payload.error&&!payload.networks){failed.push(st);return;}
+      (payload.outages||[]).forEach(o=>outages.push(Object.assign({},o,{state:st})));
+      (payload.networks||[]).forEach(n=>networks.push(Object.assign({},n,{state:st})));
+      count+=payload.count||0;
+      customers+=payload.customers||0;
+      unplannedCount+=payload.unplannedCount||0;
+      unplannedCustomers+=payload.unplannedCustomers||0;
+      plannedCount+=payload.plannedCount||0;
+      plannedCustomers+=payload.plannedCustomers||0;
+      /* The oldest state is how old the national picture is: a total is only
+         as current as its stalest part. */
+      if(payload.cacheAgeSeconds>cacheAge)cacheAge=payload.cacheAgeSeconds;
+      if(payload.snapshotAgeSeconds!==undefined){
+        snapshotAge=Math.max(snapshotAge||0,payload.snapshotAgeSeconds);
       }
-      tab.innerHTML=tab.dataset.label+badge;
     });
+    /* Biggest first, nationally -- the state route sorted within itself and
+       merging undoes that. */
+    outages.sort((a,b)=>{
+      const ca=a.customers==null?-1:a.customers, cb=b.customers==null?-1:b.customers;
+      return cb-ca;
+    });
+    return {state:'AU',name:'Australia',
+      ok:networks.some(n=>n.ok),
+      complete:!failed.length&&networks.every(n=>n.ok),
+      count:outages.length,customers,
+      unplannedCount,unplannedCustomers,plannedCount,plannedCustomers,
+      outages,networks,failedStates:failed,
+      cacheAgeSeconds:cacheAge,
+      snapshotAgeSeconds:snapshotAge};
   }
 
   function renderNetworks(payload){
@@ -1858,7 +1883,11 @@ window.addEventListener('resize',()=>map.invalidateSize());
                         :(n.unconfirmed
                           ?'This dashboard does not have a working data feed for this operator yet — use their own outage map. ('+(n.error||'')+')'
                           :(n.error||'Unavailable')));
-      return '<span class="'+cls+'" title="'+escapeHtml(title)+'">'+
+      /* Sixteen operators in one row rather than two or three per tab, so
+         each says which state it covers -- otherwise the list is a wall of
+         names with no way to find the one you care about. */
+      const where=n.state?'<span class="outage-net-st">'+escapeHtml(n.state)+'</span> ':'';
+      return '<span class="'+cls+'" title="'+escapeHtml(title)+'">'+where+
         '<a href="'+escapeHtml(n.site||'#')+'" target="_blank" rel="noopener"><b>'+escapeHtml(n.name)+'</b></a>'+
         tail+'</span>';
     }).join('');
@@ -1895,7 +1924,14 @@ window.addEventListener('resize',()=>map.invalidateSize());
        to go on, a reader cannot tell a complete list from a silent one. On a
        quiet day "all 3 networks reporting" is the difference between "no
        outages" and "no data". */
-    if(nets.length&&!down.length&&!pending.length){
+    /* A state that did not load is not a state with no outages. Its absence
+       shrinks every total above, so it has to be said rather than left to be
+       inferred from a number that looks fine. */
+    if((payload.failedStates||[]).length){
+      bits.push('<span class="warn">⚠️ '+payload.failedStates.join(', ')+
+        ' did not load — these totals are short by whatever is out there</span>');
+    }
+    if(nets.length&&!down.length&&!pending.length&&!(payload.failedStates||[]).length){
       bits.push('<span>'+(nets.length===1?'the network is':'all '+nets.length+' networks are')+
         ' reporting</span>');
     }
@@ -2002,8 +2038,11 @@ window.addEventListener('resize',()=>map.invalidateSize());
      four would sit somewhere nobody lives. */
   function outagePoints(payload){
     const pts=[],unplaced=[];
-    const st=payload.state||currentState;
     (payload.outages||[]).forEach(o=>{
+      /* The row's own state, set when the eight were merged. Nationally this
+         has to come from the row: a single "current state" would resolve
+         every Richmond to whichever one happened to be selected. */
+      const st=o.state;
       const towns=(o.towns&&o.towns.length)?o.towns:(o.location?[o.location]:[]);
       let placedAny=false;
       towns.forEach(town=>{
@@ -2059,7 +2098,31 @@ window.addEventListener('resize',()=>map.invalidateSize());
     const m=ensureMap();
     if(!m){if(noteEl)noteEl.textContent='';return;}
     oLayer.clearLayers();
-    const {pts,unplaced}=outagePoints(payload);
+    /* The map follows the search. Nationally there are hundreds of dots, and
+       leaving them all up while the list shows one town makes the reader do
+       the matching by eye. */
+    const q=(filterEl&&filterEl.value||'').trim().toLowerCase();
+    const view=q
+      ? Object.assign({},payload,{outages:(payload.outages||[]).filter(o=>matchesTown(o,q))})
+      : payload;
+    const {pts,unplaced}=outagePoints(view);
+
+    /* Searched a place with no outage: show where it is rather than leaving
+       the map wherever it happened to be. "Nothing is out here" is easier to
+       trust when you can see the here. */
+    if(q&&!pts.length&&gazetteer){
+      const hit=(gazetteer.byName.get(q.trim().toUpperCase())||[])[0];
+      if(hit){
+        m.setView([hit[1],hit[2]],9);
+        L.circleMarker([hit[1],hit[2]],{radius:9,color:'#3f6b4f',weight:2,
+          fillColor:'#8fc0a3',fillOpacity:0.35,className:'outage-dot'})
+          .bindPopup('<div class="outage-pop"><h4>'+escapeHtml(q)+'</h4>'+
+            '<div class="op">No listed outage here</div></div>').addTo(oLayer);
+        if(noteEl){noteEl.className='outage-mapnote';
+          noteEl.textContent='Showing '+q+' — no outage listed at this location.';}
+        return;
+      }
+    }
     pts.forEach(p=>{
       const planned=p.outage.kind==='planned';
       L.circleMarker([p.lat,p.lon],{
@@ -2095,21 +2158,33 @@ window.addEventListener('resize',()=>map.invalidateSize());
      different answers -- collapsing them into one message is how a dashboard
      tells somebody their provider is blocked when their power is simply on. */
   function searchVerdict(q,payload){
-    const st=payload.state||currentState;
-    const info=STATE_BLIND[st]||{all:false,blocked:[]};
     const key=q.trim().toUpperCase();
-    const elsewhere=(gazetteer&&!gazetteer.byKey.get(key+'|'+st))
-      ? (gazetteer.byName.get(key)||[]) : [];
-    if(elsewhere.length&&elsewhere.every(c=>c[0]!==st)){
-      const states=[...new Set(elsewhere.map(c=>c[0]))];
-      return '<div class="outage-verdict elsewhere"><b>'+escapeHtml(q)+'</b> is in '+
-        states.join(' / ')+', not '+escapeHtml(payload.name||st)+
-        '. Switch to the '+states[0]+' tab to see its outages.</div>';
+    /* With no tabs, the state comes from the place itself. This is the
+       better source anyway: it is what the town actually is, rather than
+       what the reader happened to have selected. */
+    const found=(gazetteer&&gazetteer.byName.get(key))||[];
+    const states=[...new Set(found.map(c=>c[0]))];
+    if(!states.length){
+      /* Not in the gazetteer at all -- a misspelling, or a place name the
+         ABS does not carry. Claiming anything about its distributor would
+         be invention. */
+      return '<div class="outage-verdict clear">No current outage listed for <b>'+escapeHtml(q)+
+        '</b>, and we don\u2019t recognise it as an Australian suburb or locality \u2014 '+
+        'check the spelling, or use your distributor\u2019s own map.</div>';
     }
+    if(states.length>1){
+      /* The same name in several states, none of them out. Saying which
+         distributor covers it would mean picking one at random. */
+      return '<div class="outage-verdict clear">No current outage listed for <b>'+escapeHtml(q)+
+        '</b>. There is a '+escapeHtml(q)+' in '+states.join(', ')+
+        ' and none of them has a listed outage.</div>';
+    }
+    const st=states[0];
+    const info=STATE_BLIND[st]||{all:false,blocked:[]};
     if(info.all){
       const op=info.blocked[0],url=OPERATOR_SITES[op];
-      return '<div class="outage-verdict blind">We can\u2019t show outages for '+
-        escapeHtml(payload.name||st)+'. <b>'+escapeHtml(op)+
+      return '<div class="outage-verdict blind">We can\u2019t show outages for <b>'+
+        escapeHtml(q)+'</b> ('+st+'). <b>'+escapeHtml(op)+
         '</b> is the only distributor here and it blocks automated access, so we have no list to search \u2014 '+
         'this is not the same as saying your power is on.'+
         '<br><a class="go" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">Check '+
@@ -2118,7 +2193,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     if(info.blocked.length){
       const op=info.blocked[0],url=OPERATOR_SITES[op];
       return '<div class="outage-verdict clear">No current outage listed for <b>'+escapeHtml(q)+
-        '</b> by the operators we can read in '+escapeHtml(payload.name||st)+'.'+
+        '</b> by the operators we can read in '+st+'.'+
         '<br><span style="opacity:.85">One caveat: <b>'+escapeHtml(op)+
         '</b> blocks automated access, so if it is your distributor we cannot see your area.</span>'+
         '<br><a class="go" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">Check '+
@@ -2127,7 +2202,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     /* Every distributor in this state answers, so "no outage listed" is a
        real answer and gets no warning attached to it. */
     return '<div class="outage-verdict clear">No current outage listed for <b>'+escapeHtml(q)+
-      '</b>. Every distributor in '+escapeHtml(payload.name||st)+' is reporting to us.</div>';
+      '</b>. Every distributor in '+st+' is reporting to us.</div>';
   }
 
   function renderList(payload){
@@ -2147,8 +2222,8 @@ window.addEventListener('resize',()=>map.invalidateSize());
     if(!rows.length){
       const reporting=(payload.networks||[]).filter(n=>n.ok);
       listEl.innerHTML='<div class="inc-empty">'+(reporting.length
-        ?'No current electricity outages listed for '+escapeHtml(payload.name||currentState)+'.'
-        :'No operator in '+escapeHtml(payload.name||currentState)+' is reporting right now — this is not the same as there being no outages.')+
+        ?'No current electricity outages listed anywhere in Australia.'
+        :'No operator is reporting right now — this is not the same as there being no outages.')+
         '</div>';
       return;
     }
@@ -2207,14 +2282,14 @@ window.addEventListener('resize',()=>map.invalidateSize());
       /* Reachable but unreadable is a parser fix, not an outage, and saying
          so is what turns it into a one-line change instead of a mystery. */
       notes.push('⚠️ '+drifted.map(n=>escapeHtml(n.name)).join(', ')+
-        ' answered but in a format this dashboard didn’t recognise — their outages are missing from the list above. Details in /api/outages/'+
-        currentState.toLowerCase()+'.');
+        ' answered but in a format this dashboard didn’t recognise — their outages are missing from the list above.'+
+        ' Details in /api/outages/<state>.');
     }
     footEl.innerHTML=notes.join('<br>');
   }
 
   function render(){
-    const payload=stateCache[currentState];
+    const payload=national;
     if(!payload){
       listEl.innerHTML='<div class="inc-empty" id="outageLoading">Loading current electricity outages…</div>';
       summaryEl.innerHTML='';networksEl.innerHTML='';footEl.innerHTML='';
@@ -2227,34 +2302,24 @@ window.addEventListener('resize',()=>map.invalidateSize());
     renderFoot(payload);
   }
 
-  async function loadState(st){
-    if(stateCache[st]||inFlight[st])return;
-    inFlight[st]=true;
+  async function loadNational(){
+    if(loading)return;
+    loading=true;
     try{
-      const r=await fetch('/api/outages/'+st.toLowerCase(),{cache:'no-store'});
-      stateCache[st]=await r.json();
-    }catch(e){
-      /* The Worker itself is unreachable. Say that, rather than leaving the
-         tab on a spinner -- and keep the operators' own links reachable. */
-      console.warn('Outage request failed for '+st+':',e);
-      const group=(aggregate&&(aggregate.states||[]).find(s=>s.state===st))||null;
-      stateCache[st]={state:st,name:(group&&group.name)||st,ok:false,count:0,outages:[],
-        networks:(group&&group.networks)||[],
-        error:'Could not reach the outage service from this network.'};
+      const results=await Promise.all(STATES.map(async st=>{
+        try{
+          const r=await fetch('/api/outages/'+st.toLowerCase(),{cache:'no-store'});
+          if(!r.ok)throw new Error('HTTP '+r.status);
+          return {st,payload:await r.json()};
+        }catch(e){
+          console.warn('Outage request failed for '+st+':',e);
+          return {st,payload:null};
+        }
+      }));
+      national=mergeStates(results);
     }finally{
-      delete inFlight[st];
-      if(currentState===st)render();
-    }
-  }
-
-  async function loadAggregate(){
-    try{
-      const r=await fetch('/api/outages',{cache:'no-store'});
-      aggregate=await r.json();
-    }catch(e){
-      console.warn('Outage summary request failed:',e);
-    }finally{
-      setTabCounts();
+      loading=false;
+      render();
     }
   }
 
@@ -2323,43 +2388,20 @@ window.addEventListener('resize',()=>map.invalidateSize());
   loadScrapeStatus();
 
   if(filterEl)filterEl.addEventListener('input',()=>{
-    const payload=stateCache[currentState];
-    if(payload){renderList(payload);renderMap(payload);}
+    if(national){renderList(national);renderMap(national);}
   });
 
   /* Fetched once and cached: the map cannot place twelve operators' towns
      without it, and a search cannot tell "in another state" from "nothing
-     out" either. Re-rendering on arrival matters because the first payload
-     usually lands first. */
-  loadGazetteer().then(()=>{
-    const payload=stateCache[currentState];
-    if(payload)render();
-  });
+     out" either. Re-rendering on arrival matters because the rows usually
+     land first. */
+  loadGazetteer().then(()=>{ if(national)render(); });
 
-  tabsEl.querySelectorAll('.state-tab').forEach(tab=>{
-    tab.dataset.label=tab.textContent.trim();
-    tab.addEventListener('click',()=>{
-      tabsEl.querySelectorAll('.state-tab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      currentState=tab.dataset.state;
-      render();
-      loadState(currentState);
-    });
-  });
-  setTabCounts();
-
-  /* The Worker re-reads half the states every 5-minute cron tick, so every
-     state is at most ~10 minutes old. Re-polling on the same cadence keeps
-     the page current and costs only cache reads; dropping the per-state cache
-     is what makes the next render fetch fresh rows. */
-  function refreshAll(){
-    Object.keys(stateCache).forEach(k=>delete stateCache[k]);
-    loadAggregate();
-    loadState(currentState);
-  }
-  loadAggregate();
-  loadState(currentState);
-  setInterval(refreshAll,5*60*1000);
+  /* The Worker re-reads half the states every 5-minute cron tick, so no
+     state is more than ~10 minutes old. Re-polling on the same cadence costs
+     eight cache reads. */
+  loadNational();
+  setInterval(loadNational,5*60*1000);
 })();
 
 /* ============ MOBILE NETWORK OUTAGES ============

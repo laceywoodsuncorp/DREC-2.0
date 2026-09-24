@@ -157,7 +157,28 @@ const server = http.createServer((req, res) => {
   if (u.pathname.startsWith('/api/outages/')) {
     if (sc === 'down') return send(502, 'gateway', 'text/plain');
     const st = u.pathname.split('/')[3].toUpperCase();
-    if (st !== 'NSW') return send(200, { state: st, name: st, ok: true, complete: true, count: 0, customers: 0, networks: [], outages: [] });
+    if (st !== 'NSW') {
+      /* Every state carries its operators even with nothing out, so the
+         national merge is actually exercised -- with empty networks here the
+         page would show three chips and the merge would look like a
+         pass-through of NSW. */
+      const others = {
+        VIC: [{ name: 'Powercor', area: 'Western Victoria', site: 'https://www.powercor.com.au/', ok: true, count: 0, customers: 0 },
+              { name: 'Jemena', area: 'North-western Melbourne', site: 'https://www.jemena.com.au/', ok: true, count: 0, customers: 0 }],
+        /* Reporting, not blocked. Which states are blind is the page's own
+           constant, not something the fixture decides -- baking it in here
+           made every scenario, including the quiet one, carry a warning. */
+        SA:  [{ name: 'SA Power Networks', area: 'All of South Australia', site: 'https://www.sapowernetworks.com.au/outages/', ok: true, count: 0, customers: 0 }],
+        NT:  [{ name: 'Power and Water Corporation', area: 'All of the Northern Territory', site: 'https://www.powerwater.com.au/outages', ok: true, count: 0, customers: 0 }],
+        QLD: [{ name: 'Energex', area: 'South East Queensland', site: 'https://www.energex.com.au/', ok: true, count: 0, customers: 0 }],
+        WA:  [{ name: 'Western Power', area: 'Perth and the south-west', site: 'https://www.westernpower.com.au/', ok: true, count: 0, customers: 0 }],
+        TAS: [{ name: 'TasNetworks', area: 'All of Tasmania', site: 'https://www.tasnetworks.com.au/outages', ok: true, count: 0, customers: 0 }],
+        ACT: [{ name: 'Evoenergy', area: 'All of the ACT', site: 'https://www.evoenergy.com.au/Outages', ok: true, count: 0, customers: 0 }]
+      };
+      return send(200, { state: st, name: st, ok: true, complete: true, count: 0, customers: 0,
+        unplannedCount: 0, unplannedCustomers: 0, plannedCount: 0, plannedCustomers: 0,
+        networks: others[st] || [], outages: [] });
+    }
     return send(200, statePayload(sc));
   }
   /* Everything else the page asks for, answered blandly so one unrelated
