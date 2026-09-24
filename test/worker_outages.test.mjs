@@ -1274,6 +1274,98 @@ console.log('\n== a CSV download read as a list ==');
     quiet.ok === true && quiet.count === 0, [quiet.ok, quiet.count, quiet.error]);
 }
 
+console.log('\n== the real Evoenergy export ==');
+{
+  reset();
+  /* Header and rows taken verbatim from the live file, so this breaks if
+     Evoenergy renames a column. The two Cancelled rows are real ones. */
+  const csv = [
+    'Outage Id,Type,Status Description,Planned Start,Planned Restoration,Actual Start,Expected Restoration,Actual End,Affected Customer Count,Affected Suburbs,Reason',
+    'SP 151024379,planned,Cancelled,9/23/2026 8:15:00 AM,9/23/2026 12:15:00 PM,,,,34,GIRALANG,',
+    'SP 151024261,planned,Cancelled,9/24/2026 8:00:00 AM,9/24/2026 4:00:00 PM,,,,41,CHISHOLM,',
+    'UP 151030011,unplanned,Crew on site,,,9/24/2026 6:05:00 AM,9/24/2026 11:00:00 AM,,9,"BRADDON, TURNER",Equipment fault',
+    'UP 151030044,unplanned,Restored,,,9/24/2026 1:00:00 AM,,9/24/2026 3:00:00 AM,120,DICKSON,Storm damage',
+    'SP 151024999,planned,Scheduled,9/25/2026 9:00:00 AM,9/25/2026 3:00:00 PM,,,,4,KALEEN,Planned maintenance'
+  ].join('\n');
+  upstream['ExportOutages'] = () => new Response(csv, { status: 200, headers: { 'Content-Type': 'text/csv' } });
+  upstream['http'] = () => new Response('down', { status: 503 });
+
+  const b = await (await call('/api/outages/act')).json();
+  /* Five rows in, two current. The file is a schedule, not a snapshot of
+     now: publishing its length would have said five outages on a day with
+     two, and the customer total would have been 208 instead of 13. */
+  check('cancelled and restored jobs are not current outages', b.count === 2,
+    [b.count, b.outages.map((o) => o.id + ':' + o.status)]);
+  check('and the customer total is of what is actually out', b.customers === 13, b.customers);
+
+  const braddon = b.outages.find((o) => /BRADDON/.test((o.towns || []).join(',')));
+  /* "Affected Suburbs" matched none of the towns vocabulary and fell through
+     to location on the word "suburb", so the town list stopped being one. */
+  check('Affected Suburbs is read as the towns', !!braddon && braddon.towns.length === 2,
+    braddon && braddon.towns);
+  check('a quoted two-town cell is split, not mangled',
+    braddon && braddon.towns.includes('TURNER'), braddon && braddon.towns);
+  check('the customer count is the column after it', braddon && braddon.customers === 9,
+    braddon && braddon.customers);
+  check('Reason is the cause', /Equipment fault/.test((braddon || {}).cause || ''),
+    braddon && braddon.cause);
+  check('Type gives planned vs unplanned',
+    braddon && braddon.kind === 'unplanned', braddon && braddon.kind);
+
+  const kaleen = b.outages.find((o) => (o.towns || []).includes('KALEEN'));
+  check('a scheduled job is kept and marked planned',
+    !!kaleen && kaleen.kind === 'planned', kaleen);
+  /* Planned Start is filled and Actual Start is empty; the reverse for an
+     unplanned row. The reader must take whichever is there. */
+  check('the time taken is the one the row actually fills',
+    kaleen && /9\/25\/2026/.test(kaleen.start || ''), kaleen && kaleen.start);
+  check('and an unplanned row takes its actual start',
+    braddon && /6:05:00 AM/.test(braddon.start || ''), braddon && braddon.start);
+}
+
+console.log('\n== an array of towns is a town list ==');
+{
+  reset();
+  /* Western Power's own API sends areas: ["EMBLETON","BAYSWATER"]. The name
+     matches the towns vocabulary, so before this the field was found and
+     then dropped for not being a string -- correctly mapped, yielding
+     nothing, which is the worst of both. */
+  upstream['api/corp/outage/all-outages'] = () => new Response(JSON.stringify([
+    { outageId: 'INCD-202534-X', outageType: 'F', affectedCustomers: 177,
+      areas: ['EMBLETON', 'BAYSWATER'], startTime: '20260925T073000+08:00',
+      restorationTime: '20260925T153000+08:00' }
+  ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  /* The feature service is gone so the fallback is reached. */
+  upstream['http'] = () => new Response('gone', { status: 404 });
+
+  const b = await (await call('/api/outages/wa')).json();
+  const wp = b.networks.find((n) => n.name === 'Western Power');
+  check('the operator\'s own API is read when the layer is gone', wp.count === 1,
+    [wp.count, wp.error]);
+  const row = b.outages[0];
+  check('both towns come out of the array', (row.towns || []).length === 2, row.towns);
+  check('naming them, not stringifying the array',
+    (row.towns || []).includes('BAYSWATER') && !/[\[\]"]/.test((row.towns || []).join('')),
+    row.towns);
+  check('the customer count survives', row.customers === 177, row.customers);
+}
+
+{
+  reset();
+  /* An array of objects is a shape this cannot read. Picking a property to
+     use as the name would be inventing data, so it must refuse rather than
+     guess. */
+  upstream['api/corp/outage/all-outages'] = () => new Response(JSON.stringify([
+    { outageId: 'X', affectedCustomers: 5, areas: [{ name: 'EMBLETON', id: 3 }] }
+  ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  upstream['http'] = () => new Response('gone', { status: 404 });
+  const b = await (await call('/api/outages/wa')).json();
+  const row = (b.outages || [])[0];
+  check('an array of objects yields no town rather than a fake one',
+    !row || !(row.towns || []).some((t) => /\{|object/i.test(t)),
+    row && row.towns);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);

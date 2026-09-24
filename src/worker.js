@@ -243,7 +243,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-09-24-csv';
+const WORKER_BUILD = '2026-09-24-evoenergy';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -1866,7 +1866,21 @@ const OUTAGE_FIELDS = {
 };
 
 function usableScalar(v) {
-  if (v === undefined || v === null || typeof v === 'object') return '';
+  if (v === undefined || v === null) return '';
+  /* An array of plain values is a list, and a list of towns is exactly what
+     this dashboard is for. Western Power's own API sends
+     areas: ["EMBLETON","BAYSWATER"], which matched the towns vocabulary by
+     name and was then discarded for not being a string -- the field looked
+     correctly mapped and yielded nothing, which is worse than not matching
+     at all. Joined here, it goes on to splitTowns like any other list.
+     An array containing objects is still refused: that is a shape this
+     cannot read, and guessing at which property held the name would be
+     inventing data. */
+  if (Array.isArray(v)) {
+    if (!v.length || v.some((x) => x && typeof x === 'object')) return '';
+    return v.map((x) => String(x).trim()).filter(Boolean).join(', ');
+  }
+  if (typeof v === 'object') return '';
   const s = String(v).trim();
   return (s && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'undefined') ? s : '';
 }
@@ -2070,6 +2084,10 @@ const OUTAGE_COLUMN_HINTS = [
   /* Ahead of everything, including the street: an operator that names the
      towns separately has answered the question this list exists for. */
   { field: 'towns', words: ['areasaffected', 'areaaffected', 'affectedarea', 'suburbsaffected',
+    /* Evoenergy's CSV heads this column "Affected Suburbs", which none of
+       the above matched -- it fell through to the location vocabulary on
+       the word "suburb" and the town list stopped being a town list. */
+    'affectedsuburb', 'affectedtown', 'affectedlocalit',
     'townsaffected', 'areas'] },
   /* Ahead of 'cause', which claims anything containing "fault": the
      Victorian sites label the street as "Fault location", and mapping that
@@ -2148,22 +2166,38 @@ function parseOutageCsv(text, opts) {
     return { outages: [], diagnostics: { note: 'CSV headings name no place', envelope: 'csv-unmapped', headings } };
   }
   const rows = [];
+  let skipped = 0;
   for (let i = 1; i < lines.length; i++) {
     const cells = splitCsvLine(lines[i]);
     /* A short row is the file's, not ours: read what is there rather than
-       dropping the row, since a trailing empty column is common. */
+       dropping the row, since a trailing empty column is common. Empty cells
+       are skipped rather than stored, which also means that where a file
+       carries both a planned and an actual time for the same thing, the one
+       that is filled in wins. */
     const rec = {};
     mapped.forEach((field, idx) => {
       if (!field || cells[idx] === undefined || cells[idx] === '') return;
       if (rec[field] === undefined) rec[field] = cells[idx];
     });
-    if (Object.keys(rec).length) rows.push(rec);
+    if (!Object.keys(rec).length) continue;
+    /* An export is not a list of what is out now. Evoenergy's CSV is 45 rows
+       of scheduled, cancelled and finished jobs while its own page says two
+       outages affecting thirteen customers -- publishing the file's length
+       as the outage count would overstate the day by twentyfold. A row whose
+       status says the job was cancelled, or the power is back on, is not a
+       current outage. */
+    if (opts && opts.skipStatus && rec.status && opts.skipStatus.test(rec.status)) {
+      skipped++;
+      continue;
+    }
+    rows.push(rec);
   }
   /* Headings understood and no rows means nothing is out -- a result, not a
      failure, exactly as for a table. */
-  if (!rows.length) return { outages: [], columns: headings };
+  if (!rows.length) return { outages: [], columns: headings, skipped };
   const out = normaliseOutages({ rows }, opts);
   out.columns = headings;
+  if (skipped) out.skipped = skipped;
   return out;
 }
 
@@ -2441,7 +2475,11 @@ export const OUTAGE_NETWORKS = {
              operator publishes for anyone to download is a better source
              than the markup around it. */
           { url: 'https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages',
-            format: 'text', parse: parseOutageCsv },
+            format: 'text',
+            /* The export covers the whole schedule, not the present moment.
+               Cancelled jobs and ones already restored are dropped; what is
+               left is what the operator's own page counts. */
+            parse: (t) => parseOutageCsv(t, { skipStatus: /cancel|restored|complete|closed|finish/i }) },
           { url: 'https://www.evoenergy.com.au/Outages', format: 'text', parse: parseOutageTable },
           { url: 'https://www.actewagl.com.au/outages', format: 'text', parse: parseOutageTable },
           /* Last resort: the same data republished by Power Outages
