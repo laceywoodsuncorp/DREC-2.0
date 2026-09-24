@@ -294,9 +294,15 @@ async function scrapeOperator(page, state, net, target) {
   if (target && target.via) result.via = target.via;
   try {
     const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-    /* Give the list a moment to render; these are client-side apps and there
-       is no single selector that is right for all of them. */
-    await page.waitForTimeout(6000);
+    /* Wait for the requests to stop rather than for a fixed six seconds.
+       These are client-side apps that fetch their list after load, and six
+       seconds was a guess -- one that sites which take longer would fail
+       silently, looking identical to a site with no list at all. Network
+       idle is the actual condition being waited for. The catch matters: a
+       page with a poll or a live socket never goes idle, and giving up on
+       the wait is fine because the list is usually there by then anyway. */
+    await page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(2500);
     const body = await page.evaluate(() => document.body ? document.body.innerText.slice(0, 4000) : '');
 
     if (CHALLENGE.test(body) || (res && res.status() === 403)) {
@@ -484,7 +490,7 @@ async function probeFeeds() {
       networks: networks.map((n) => ({ name: n.name, ok: n.ok, count: n.count, blocked: n.blocked,
         error: n.error, shape: n.shape, labels: n.labels, reported: n.reported,
         mergedInto: n.mergedInto, via: n.via, viaError: n.viaError,
-        diagnostic: n.diagnostic })),
+        diagnostic: n.diagnostic, viaDiagnostic: n.viaDiagnostic })),
       outages
     };
     summary.push(state.toUpperCase() + ': ' + outages.length);
