@@ -1,5 +1,5 @@
 {
-  "capturedAt": 1790212264850,
+  "capturedAt": 1790212896970,
   "states": {
     "nsw": {
       "state": "NSW",
@@ -83,7 +83,7 @@
         },
         {
           "network": "Endeavour Energy",
-          "location": "Outage map",
+          "location": "TYPE",
           "kind": "unplanned",
           "customers": null
         }
@@ -119,17 +119,17 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 2,
+      "count": 4,
       "customers": 0,
-      "unplannedCount": 0,
+      "unplannedCount": 1,
       "unplannedCustomers": 0,
-      "plannedCount": 2,
+      "plannedCount": 3,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "AusNet Services",
           "ok": true,
-          "count": 1,
+          "count": 2,
           "shape": "cards",
           "labels": []
         },
@@ -166,23 +166,33 @@
         {
           "name": "Jemena",
           "ok": true,
-          "count": 1,
+          "count": 2,
           "shape": "cards",
-          "labels": [
-            "Pictured"
-          ]
+          "labels": []
         }
       ],
       "outages": [
         {
           "network": "AusNet Services",
-          "location": "Visit Outage Tracker",
+          "location": "Learn about planned outages",
+          "kind": "planned",
+          "customers": null
+        },
+        {
+          "network": "AusNet Services",
+          "location": "About unplanned outages",
+          "kind": "unplanned",
+          "customers": null
+        },
+        {
+          "network": "Jemena",
+          "location": "Planned Outage Preparation Tips",
           "kind": "planned",
           "customers": null
         },
         {
           "network": "Jemena",
-          "location": "Skip to main",
+          "location": "Planned Outage Notifications",
           "kind": "planned",
           "customers": null
         }
@@ -239,23 +249,29 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 0,
+      "count": 1,
       "customers": 0,
       "unplannedCount": 0,
       "unplannedCustomers": 0,
-      "plannedCount": 0,
+      "plannedCount": 1,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "TasNetworks",
-          "ok": false,
-          "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
+          "ok": true,
+          "count": 1,
+          "shape": "cards",
           "labels": []
         }
       ],
-      "outages": []
+      "outages": [
+        {
+          "network": "TasNetworks",
+          "location": "Filter outages",
+          "kind": "planned",
+          "customers": null
+        }
+      ]
     },
     "nt": {
       "state": "NT",
