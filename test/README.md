@@ -28,6 +28,9 @@ node test/harness/mockserver.js --root "$SCRATCH/testsite" &
 node test/outages_ui.test.js
 ```
 
+The server listens on 8845 and the test looks there; set `MOCK_PORT` on both
+to use another.
+
 `stage.sh` rewrites three things **in the copy only** — Leaflet is pointed at
 the local package, and the API routes gain `location.search` so a test can
 select a scenario per page load. The real page must never contain

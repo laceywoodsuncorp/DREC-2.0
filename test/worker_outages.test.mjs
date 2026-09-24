@@ -7,13 +7,25 @@
    Run: node test/worker_outages.test.mjs */
 
 const store = new Map();
+/* The Worker warms cold states behind the response, so a block's background
+   work can still be in flight when the next block starts. Clearing the store
+   is not enough on its own -- the stale task lands afterwards and the next
+   block reads a snapshot built from the previous block's stubs, which looks
+   exactly like a real failure and moves whenever timing does. Each block gets
+   a generation, and a write from a finished one is dropped. */
+let generation = 0;
 globalThis.caches = {
   default: {
     async match(url) {
       const e = store.get(url);
       return e ? new Response(e.body, { status: 200, headers: e.headers }) : undefined;
     },
-    async put(url, res) { store.set(url, { body: await res.text(), headers: Object.fromEntries(res.headers) }); }
+    async put(url, res) {
+      const born = generation;
+      const body = await res.text();
+      if (born !== generation) return;
+      store.set(url, { body, headers: Object.fromEntries(res.headers) });
+    }
   }
 };
 
@@ -45,7 +57,7 @@ const readSharedCacheAge = async (key) => {
   if (!e) return Infinity;
   return (Date.now() - Number(e.headers['x-fetched-at'] || 0)) / 1000;
 };
-const reset = () => { store.clear(); upstream = {}; fetchLog = []; };
+const reset = () => { generation++; store.clear(); upstream = {}; fetchLog = []; };
 
 console.log('\n== the shapes operators actually publish ==');
 {
@@ -317,7 +329,7 @@ console.log('\n== the routes ==');
     a.states.filter(s => s.outages !== undefined).map(s => s.state));
 
   const one = await call('/api/outages/qld');
-  check('a state route does carry the rows', (await one.json()).outages.length > 0);
+  check('a state route does carry the rows', ((await one.json()).outages || []).length > 0);
 
   const bad = await call('/api/outages/xyz');
   check('an unknown state is a 404, not a crash', bad.status === 404, bad.status);
@@ -976,6 +988,80 @@ console.log('\n== Western Power names its towns in one field ==');
   /* Day-first with a time; no ISO is invented from it. */
   check('a day-first timestamp is left as published',
     one.start === '31/05/2026 12:08 PM' && one.startIso === undefined, [one.start, one.startIso]);
+}
+
+console.log('\n== a whole-network fallback under a combine network ==');
+{
+  reset();
+  /* Energex publishes planned and unplanned separately and its ArcGIS layer
+     carries both. If that layer were merged with the parts, or pinned to one
+     of them, every Energex row would be counted twice on a day when the
+     static files are up. It must be reached only when they are not. */
+  const arcgis = () => new Response(JSON.stringify({ type: 'FeatureCollection', features: [
+    { properties: { SUBURB: 'INALA', CUSTOMERS_AFFECTED: 12, EVENT_ID: 'X1' } }
+  ] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  const geo = (suburb) => () => new Response(JSON.stringify({ type: 'FeatureCollection', features: [
+    { properties: { SUBURB: suburb, CUSTOMERS_AFFECTED: 5, EVENT_ID: suburb } }
+  ] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+  upstream['energex_po_current_unplanned'] = geo('DARRA');
+  upstream['energex_po_current_planned'] = geo('OXLEY');
+  upstream['VwEnergexOutages'] = arcgis;
+  upstream['http'] = () => new Response('nope', { status: 503 });
+
+  const b = await (await call('/api/outages/qld')).json();
+  const energex = b.networks.find((n) => n.name === 'Energex');
+  check('the two parts are read and the fallback is not', energex.count === 2,
+    [energex.count, b.outages.map((o) => o.location)]);
+  check('the ArcGIS layer was never fetched while the parts worked',
+    !fetchLog.some((u) => u.includes('VwEnergexOutages')),
+    fetchLog.filter((u) => u.includes('arcgis')));
+  check('and nothing is tagged as second-hand', !energex.via, energex.via);
+}
+
+{
+  reset();
+  /* The other way round: the operator's own files are gone, so the layer is
+     the only route left and must be taken -- and labelled, because it is a
+     different publisher of the same facts. */
+  upstream['VwEnergexOutages'] = () => new Response(JSON.stringify({ type: 'FeatureCollection', features: [
+    { properties: { SUBURB: 'INALA', CUSTOMERS_AFFECTED: 12, EVENT_ID: 'X1' } },
+    { properties: { SUBURB: 'RICHLANDS', CUSTOMERS_AFFECTED: 3, EVENT_ID: 'X2' } }
+  ] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  upstream['http'] = () => new Response('gone', { status: 404 });
+
+  const b = await (await call('/api/outages/qld')).json();
+  const energex = b.networks.find((n) => n.name === 'Energex');
+  check('the layer is read when both parts fail', energex.count === 2, energex.count);
+  const inala = b.outages.find((o) => (o.towns || []).includes('INALA'));
+  check('the towns come through', !!inala, b.outages);
+  check('and the page is told whose copy this is', energex.via === 'ArcGIS Online', energex.via);
+  check('a fallback that answers does not read as blocked', !energex.blocked, energex.blocked);
+}
+
+{
+  reset();
+  /* A bot challenge on the operator's own site is still a bot challenge even
+     when the open layer saves the day -- but only the operator's own sources
+     decide that, and here one of them answers, so nothing is blocked. */
+  upstream['energex.com.au'] = () => new Response(
+    '<html><title>Just a moment...</title><body>Checking your browser</body></html>',
+    { status: 403, headers: { 'Content-Type': 'text/html' } });
+  upstream['ergon.com.au'] = () => new Response(
+    '<html><title>Just a moment...</title><body>Checking your browser</body></html>',
+    { status: 403, headers: { 'Content-Type': 'text/html' } });
+  upstream['VwErgonOutages'] = () => new Response(JSON.stringify({ type: 'FeatureCollection',
+    features: [{ properties: { SUBURB: 'MOUNT ISA', CUSTOMERS_AFFECTED: 40, EVENT_ID: 'E9' } }] }),
+    { status: 200, headers: { 'Content-Type': 'application/json' } });
+  upstream['http'] = () => new Response('nope', { status: 503 });
+
+  const b = await (await call('/api/outages/qld')).json();
+  const ergon = b.networks.find((n) => n.name === 'Ergon Energy');
+  const energex = b.networks.find((n) => n.name === 'Energex');
+  check('Ergon is recovered through its layer', ergon.count === 1 && ergon.via === 'ArcGIS Online',
+    [ergon.count, ergon.via, ergon.error]);
+  check('Energex, with no route at all, still reports the challenge',
+    energex.blocked === true, [energex.blocked, energex.error]);
 }
 
 console.log('\n----------------------------------------');

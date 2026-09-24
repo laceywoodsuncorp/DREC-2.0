@@ -26,7 +26,7 @@ const check = (n, c, x) => {
     const p = await ctx.newPage();
     const errs = []; p.on('pageerror', e => errs.push(e.message));
     const qs = scenario.includes('=') ? scenario : 'outages=' + scenario;
-    await p.goto('http://localhost:8846/index.html?' + qs, { waitUntil: 'domcontentloaded' });
+    await p.goto('http://localhost:' + (process.env.MOCK_PORT || 8845) + '/index.html?' + qs, { waitUntil: 'domcontentloaded' });
     await p.waitForTimeout(1200);
     p._errs = errs;
     return p;

@@ -464,6 +464,120 @@ async function probeArcgis(names) {
   return out;
 }
 
+/* Where the catalogue has nothing, the other place live operator data is
+   published openly is a data portal: the Opendatasoft platform several
+   distributors run themselves (Endeavour's outage feeds are read that way
+   already), and the CKAN portals the state governments run -- which matters
+   here because Horizon Power, Power and Water and Evoenergy are all
+   government-owned.
+
+   Both are catalogues with a documented search API, so this asks each one
+   what it publishes about outages rather than guessing at URLs. Again:
+   only what is already open to anyone. */
+const ODS_HOSTS = [
+  'data.essentialenergy.com.au', 'data.sapowernetworks.com.au',
+  'data.horizonpower.com.au', 'data.powerwater.com.au', 'data.evoenergy.com.au',
+  'data.jemena.com.au', 'data.ausgrid.com.au', 'data.ausnetservices.com.au',
+  'data.westernpower.com.au', 'data.tasnetworks.com.au', 'data.energyq.com.au'
+];
+const CKAN_HOSTS = [
+  'data.gov.au', 'data.qld.gov.au', 'data.wa.gov.au', 'data.nt.gov.au',
+  'data.sa.gov.au', 'dataportal.act.gov.au', 'data.nsw.gov.au'
+];
+
+async function probeOpendatasoft() {
+  const out = {};
+  for (const host of ODS_HOSTS) {
+    const url = 'https://' + host + '/api/explore/v2.1/catalog/datasets?limit=100&select=dataset_id';
+    try {
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) { out[host] = { status: res.status }; continue; }
+      const body = await res.json();
+      const ids = (body.results || []).map((r) => r.dataset_id).filter(Boolean);
+      out[host] = {
+        status: res.status, total: body.total_count ?? ids.length,
+        /* The whole list is worth keeping only in so far as it names the
+           outage datasets; the rest is network topology and tariffs. */
+        outageDatasets: ids.filter((id) => /outage|interrupt|fault|supply/i.test(id)),
+        sampleIds: ids.slice(0, 25)
+      };
+    } catch (err) { out[host] = { error: String(err.message).slice(0, 120) }; }
+  }
+  return out;
+}
+
+async function probeCkan() {
+  const out = {};
+  for (const host of CKAN_HOSTS) {
+    const url = 'https://' + host + '/api/3/action/package_search?q=' +
+      encodeURIComponent('power outage') + '&rows=10';
+    try {
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) { out[host] = { status: res.status }; continue; }
+      const body = await res.json();
+      const results = (body.result && body.result.results) || [];
+      out[host] = {
+        status: res.status, count: body.result && body.result.count,
+        hits: results.map((r) => ({
+          title: r.title, name: r.name,
+          org: r.organization && r.organization.title,
+          /* A dataset is only useful here if one of its resources is a live
+             API or feed rather than a yearly CSV, so the formats come too. */
+          resources: (r.resources || []).slice(0, 6)
+            .map((x) => ({ format: x.format, name: x.name, url: x.url }))
+        }))
+      };
+    } catch (err) { out[host] = { error: String(err.message).slice(0, 120) }; }
+  }
+  return out;
+}
+
+/* A feature service found in the catalogue still has to be read, and its
+   column names are the thing the Worker matches on. This asks each candidate
+   layer for its own schema and one live record, so the field names go into
+   OUTAGE_FIELDS from the service's own description rather than a guess. */
+const ARCGIS_LAYERS = [
+  ['Energex areas', 'https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0'],
+  ['Energex points', 'https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/1'],
+  ['Ergon areas', 'https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0'],
+  ['Western Power', 'https://services2.arcgis.com/tBLxde4cxSlNUxsM/arcgis/rest/services/WP_Outage_Prod/FeatureServer/0'],
+  ['Jemena NBC', 'https://services7.arcgis.com/si70weKpzPSa0BGV/arcgis/rest/services/NBC_Outages_Jemena/FeatureServer/0'],
+  ['Jemena HCC', 'https://services7.arcgis.com/si70weKpzPSa0BGV/arcgis/rest/services/HCC_Outages_Jemena/FeatureServer/0']
+];
+
+async function probeArcgisLayers() {
+  const out = {};
+  for (const [label, base] of ARCGIS_LAYERS) {
+    const entry = { url: base };
+    try {
+      const mRes = await fetch(base + '?f=json', { headers: { Accept: 'application/json' } });
+      entry.status = mRes.status;
+      if (mRes.ok) {
+        const meta = await mRes.json();
+        if (meta.error) entry.metaError = meta.error.message;
+        entry.name = meta.name;
+        entry.description = (meta.description || '').replace(/<[^>]*>/g, ' ').trim().slice(0, 200);
+        entry.copyright = meta.copyrightText;
+        entry.fields = (meta.fields || []).map((f) => f.name + ':' + f.type);
+      }
+      const qRes = await fetch(base + '/query?where=1%3D1&outFields=*&resultRecordCount=2&f=json',
+        { headers: { Accept: 'application/json' } });
+      entry.queryStatus = qRes.status;
+      if (qRes.ok) {
+        const q = await qRes.json();
+        if (q.error) entry.queryError = q.error.message;
+        entry.records = (q.features || []).length;
+        entry.sample = q.features && q.features[0] && q.features[0].attributes;
+      }
+      const cRes = await fetch(base + '/query?where=1%3D1&returnCountOnly=true&f=json',
+        { headers: { Accept: 'application/json' } });
+      if (cRes.ok) { const c = await cRes.json(); entry.count = c.count; }
+    } catch (err) { entry.error = String(err.message).slice(0, 140); }
+    out[label] = entry;
+  }
+  return out;
+}
+
 (async () => {
   const browser = await chromium.launch();
   const context = await browser.newContext({
@@ -602,7 +716,31 @@ async function probeArcgis(names) {
       : '-- ' + (v.status ? 'HTTP ' + v.status : v.error)));
   });
 
-  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, feeds, arcgis }, null, 2) + '\n');
+  console.log('\nreading the candidate ArcGIS layers...');
+  const layers = await probeArcgisLayers();
+  Object.entries(layers).forEach(([k, v]) => {
+    console.log('  ' + k.padEnd(18) + (v.error ? '-- ' + v.error
+      : 'meta ' + v.status + ', query ' + v.queryStatus + ', rows ' + (v.count ?? '?')
+        + (v.queryError ? ' -- ' + v.queryError : '')));
+    if (v.fields) console.log('      fields: ' + v.fields.join(', ').slice(0, 400));
+  });
+
+  console.log('\nasking the open data portals what they publish...');
+  const ods = await probeOpendatasoft();
+  Object.entries(ods).forEach(([k, v]) => {
+    console.log('  ' + k.padEnd(34) + (v.error ? '-- ' + v.error
+      : v.status + (v.total !== undefined ? ' -- ' + v.total + ' datasets, outage-ish: '
+        + ((v.outageDatasets || []).join(', ') || 'none') : '')));
+  });
+  const ckan = await probeCkan();
+  Object.entries(ckan).forEach(([k, v]) => {
+    console.log('  ' + k.padEnd(34) + (v.error ? '-- ' + v.error
+      : v.status + (v.count !== undefined ? ' -- ' + v.count + ' match(es)' : '')));
+    (v.hits || []).forEach((h) => console.log('      ' + (h.org || '') + ' :: ' + h.title));
+  });
+
+  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, feeds,
+    arcgis, layers, ods, ckan }, null, 2) + '\n');
   console.log('\nwrote ' + OUT + '  (' + summary.join(', ') + ')');
   console.log('wrote ' + DIAG + '  (' + Object.keys(diagnostics).length + ' page(s) needing work)');
 })();

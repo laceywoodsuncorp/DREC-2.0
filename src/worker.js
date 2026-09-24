@@ -243,7 +243,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-09-17-outages';
+const WORKER_BUILD = '2026-09-24-arcgis';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -2171,7 +2171,27 @@ export const OUTAGE_NETWORKS = {
           { part: 'unplanned', url: 'https://www.energex.com.au/static/Energex/energex_po_current_unplanned.geojson',
             format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'unplanned' }) },
           { part: 'planned', url: 'https://www.energex.com.au/static/Energex/energex_po_current_planned.geojson',
-            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) }
+            format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) },
+          /* Energex's own site sits behind a bot challenge. The same outage
+             areas are also published as an open ArcGIS feature service --
+             the layer behind the Queensland Reconstruction Authority's
+             "Energex & Ergon Current Outages" web map and Brisbane City
+             Council's emergency dashboard. Reading a layer anyone may query
+             is not a way around the challenge on the website; it is a
+             second, public address for the same facts. It carries planned
+             and unplanned together, so `whenAllFail` holds it back as a
+             whole-network last resort rather than merging it into a part. */
+          { whenAllFail: true,
+            url: 'https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson',
+            format: 'json', parse: normaliseOutages,
+            via: 'ArcGIS Online', viaUrl: 'https://www.arcgis.com/home/item.html?id=22eb173943984e86a9e03c3e04b64635' },
+          /* Layer 0 is the outage areas; layer 1 is the same events as
+             points. Either answers the question, so the second is only
+             reached if the first has gone too. */
+          { whenAllFail: true,
+            url: 'https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/1/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson',
+            format: 'json', parse: normaliseOutages,
+            via: 'ArcGIS Online', viaUrl: 'https://www.arcgis.com/home/item.html?id=b568ce59af7c4f848705a7b600f66334' }
         ] },
       { name: 'Ergon Energy', area: 'Regional Queensland', confirmed: true, combine: true,
         site: 'https://www.ergon.com.au/network/outages/outage-finder/outage-finder-map',
@@ -2180,11 +2200,20 @@ export const OUTAGE_NETWORKS = {
             format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'unplanned' }) },
           { part: 'planned', url: 'https://www.ergon.com.au/static/Ergon/ergon_po_current_planned.geojson',
             format: 'json', parse: (j) => normaliseOutages(j, { kindHint: 'planned' }) }
-          /* Ergon's outage-finder text view is deliberately NOT listed here.
-             It carries planned and unplanned together, so under `combine` it
-             would be fetched alongside the two GeoJSON files and every row
-             counted twice. A whole-network fallback doesn't fit a per-part
-             merge; if the static files move, the diagnostics will say so. */
+          ,
+          /* Ergon's counterpart to the Energex layer above, from the same
+             QRA web map. Same reasoning: a layer anyone may query, carrying
+             the whole network, so it is held back by `whenAllFail` rather
+             than merged into a part -- alongside the two GeoJSON files it
+             would count every row twice. */
+          { whenAllFail: true,
+            url: 'https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson',
+            format: 'json', parse: normaliseOutages,
+            via: 'ArcGIS Online', viaUrl: 'https://www.arcgis.com/home/item.html?id=bc6a594873cb40208a9f81fdedcfb9c6' },
+          /* Ergon's own outage-finder text view, last of all for the same
+             reason: it carries planned and unplanned together. */
+          { whenAllFail: true, url: 'https://www.ergon.com.au/network/outages/outage-finder/outage-finder-text',
+            format: 'text', parse: parseOutageTable }
         ] }
     ]
   },
@@ -2373,7 +2402,15 @@ async function refreshStateOutages(state) {
        Without that distinction a part's fallback would be fetched even after
        its primary succeeded and every row would be counted twice. */
     const partsDone = new Set();
-    for (const source of net.sources) {
+    /* `whenAllFail` holds a source back until every other one has been tried.
+       A `combine` network's sources are parts of one picture, so a fallback
+       that carries the whole picture cannot sit inside a part -- merged with
+       the parts it would double-count, and pinned to one part it would be
+       skipped whenever that part happened to succeed. Held to the end it is
+       what it actually is: a replacement for the lot. */
+    const primary = net.sources.filter((s) => !s.whenAllFail);
+    const lastResort = net.sources.filter((s) => s.whenAllFail);
+    for (const source of primary) {
       if (budget <= 0) break;
       const part = source.part || source.url;
       if (net.combine && partsDone.has(part)) continue;
@@ -2396,6 +2433,27 @@ async function refreshStateOutages(state) {
       if (source.via) { entry.via = source.via; entry.viaUrl = source.viaUrl; }
       partsDone.add(part);
       if (!net.combine) break;
+    }
+
+    if (!entry.ok) {
+      for (const source of lastResort) {
+        if (budget <= 0) break;
+        budget--;
+        const result = await tryIncidentSource(source);
+        if (!result.ok) { attempts.push({ url: source.url, error: result.error, via: source.via }); continue; }
+        if (result.parsed.diagnostics) {
+          attempts.push({ url: source.url, error: 'Responded, but no recognisable outage fields', via: source.via });
+          if (!drifted) drifted = { source, parsed: result.parsed };
+          continue;
+        }
+        entry.ok = true;
+        entry.outages = result.parsed.outages;
+        entry.count = entry.outages.length;
+        entry.sourceUrl = source.url;
+        if (result.parsed.columns) entry.columns = result.parsed.columns;
+        if (source.via) { entry.via = source.via; entry.viaUrl = source.viaUrl; }
+        break;
+      }
     }
 
     if (!entry.ok && drifted) {
