@@ -243,7 +243,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-09-24-national';
+const WORKER_BUILD = '2026-09-25-alertlevels';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -809,8 +809,16 @@ const INCIDENTS_ALL_CACHE_URL = 'https://newsradar-internal-cache.example/incide
 const FIELD_CANDIDATES = {
   title: ['title', 'name', 'headline', 'webheadline', 'sourcetitle', 'incidentname',
     'location', 'location_name', 'locationname', 'locality', 'place', 'address', 'suburb'],
-  status: ['status', 'currentstatus', 'incidentstatus', 'warninglevel', 'alertlevel',
-    'level', 'category', 'category1'],
+  /* Two different facts, and conflating them was making the dashboard invent
+     warnings. An alert level is what an agency is telling the public to do --
+     Advice, Watch and Act, Emergency Warning, and nothing else. A status is
+     how the incident is behaving: GOING, CONTAINED, Under control, Patrol.
+     Read as one field, SA's "GOING" came out as "Watch and Act", which is a
+     formal instruction to prepare to leave that nobody issued, and every
+     unrecognised status -- SAFE, Contained, All Clear, blank -- came out as
+     "Advice", which is also a warning nobody issued. */
+  alertLevel: ['alertlevel', 'warninglevel', 'alert', 'warning', 'category1'],
+  status: ['status', 'currentstatus', 'incidentstatus', 'level', 'category'],
   type: ['type', 'incidenttype', 'eventtype', 'groupedtype', 'category2',
     'vehicletypedescription', 'subtype', 'class'],
   /* 'when' itself is here because the table reader keys its records by the
@@ -967,6 +975,7 @@ function normaliseRecords(json) {
       {
         title,
         status: pickField(lowered, 'status'),
+        alertLevel: pickField(lowered, 'alertLevel'),
         type: pickField(lowered, 'type') || 'Incident'
       },
       normaliseWhen(pickField(lowered, 'when')),
@@ -1218,7 +1227,12 @@ function parseNsw(json) {
     incidents.push(Object.assign(
       {
         title,
-        status: p.category || field('STATUS') || '',
+        /* NSW RFS puts the alert level in `category` and the fire's own state
+           in the description's STATUS line. They were being read into one
+           field, so "Not Applicable" -- the RFS saying it has issued no
+           warning -- was rendered as "Advice". */
+        alertLevel: p.category || '',
+        status: field('STATUS') || '',
         type: field('TYPE') || 'Fire'
       },
       normaliseWhen(p.pubDate || field('UPDATED')),
@@ -1303,7 +1317,10 @@ function parseTas(html) {
     if (!headerCells.length) continue;
     const indexOfAny = (names) => headerCells.findIndex((h) => names.some((n) => h.includes(n)));
     const iTitle = indexOfAny(['location', 'incident', 'name', 'suburb', 'region']);
-    const iStatus = indexOfAny(['status', 'alert', 'level']);
+    /* Alert level looked for first and separately, so a table with both an
+       "Alert level" and a "Status" column maps each to its own field. */
+    const iAlert = indexOfAny(['alert', 'warning', 'severity']);
+    const iStatus = indexOfAny(['status', 'level']);
     const iType = indexOfAny(['type', 'category']);
     const iWhen = indexOfAny(['updated', 'time', 'date', 'started']);
     if (iTitle < 0) continue; // not the incidents table
@@ -1317,7 +1334,8 @@ function parseTas(html) {
       incidents.push(Object.assign(
         {
           title,
-          status: iStatus >= 0 ? (cells[iStatus] || '') : '',
+          alertLevel: iAlert >= 0 ? (cells[iAlert] || '') : '',
+          status: iStatus >= 0 && iStatus !== iAlert ? (cells[iStatus] || '') : '',
           type: (iType >= 0 ? cells[iType] : '') || 'Incident'
         },
         normaliseWhen(iWhen >= 0 ? cells[iWhen] : '')
@@ -1353,7 +1371,10 @@ function parseTas(html) {
    described, and TABLE_CELL_LIMIT keeps a long one from swamping the row. */
 const INCIDENT_COLUMN_HINTS = [
   { field: 'when', words: ['updated', 'issued', 'published', 'datetime', 'date', 'time', 'reported'] },
-  { field: 'status', words: ['alertlevel', 'alert', 'level', 'status', 'warning', 'severity'] },
+  /* The alert level first, so a table carrying both columns maps each to
+     itself rather than letting whichever comes first win. */
+  { field: 'alertLevel', words: ['alertlevel', 'alert', 'warning', 'severity'] },
+  { field: 'status', words: ['level', 'status'] },
   { field: 'type', words: ['incidenttype', 'type', 'category', 'message', 'description', 'detail'] },
   { field: 'title', words: ['location', 'area', 'place', 'suburb', 'region', 'locality',
     'incident', 'name', 'fire', 'title', 'event'] }
@@ -1388,7 +1409,8 @@ function parseGeoRss(xml) {
     incidents.push(Object.assign(
       {
         title,
-        status: f.status || f['alert level'] || f['warning level'] || f.level || tag('category') || '',
+        alertLevel: f['alert level'] || f['warning level'] || tag('category') || '',
+        status: f.status || f.level || '',
         type: f['incident type'] || f.type || 'Incident'
       },
       normaliseWhen(tag('updated') || tag('pubDate') || tag('published') || f.updated || f['last updated']),
@@ -1439,7 +1461,8 @@ function parseKml(xml) {
     incidents.push(Object.assign(
       {
         title,
-        status: pickField(ext, 'status') || f.status || f['alert level'] || f.level || '',
+        alertLevel: pickField(ext, 'alertLevel') || f['alert level'] || '',
+        status: pickField(ext, 'status') || f.status || f.level || '',
         type: pickField(ext, 'type') || f['incident type'] || f.type || 'Incident'
       },
       normaliseWhen(pickField(ext, 'when') || f.updated || f['last updated'] || tag('TimeStamp')),

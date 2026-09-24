@@ -61,11 +61,16 @@ console.log('\n== the bushfire alerts table is read ==');
 
   const one = b.incidents.find(i => i.title === 'Batchelor');
   check('location becomes the title', !!one, b.incidents.map(i => i.title));
-  check('alert level becomes the status', one && one.status === 'Watch and Act', one);
+  /* The alert level is its own field. It used to be read into `status`
+     alongside how a fire was behaving, and the page then guessed a warning
+     level from whichever it got -- which is how an active SA fire ended up
+     labelled "Watch and Act" by this dashboard rather than by an agency. */
+  check('alert level becomes the alert level', one && one.alertLevel === 'Watch and Act', one);
+  check('and is not mixed into the incident status', one && !one.status, one);
   check('the message carries the detail', one && /Rum Jungle/.test(one.type), one);
   check('the timestamp is parsed for local rendering', one && !!one.whenIso, one);
-  check('a planned burn is not lost', b.incidents.some(i => /Planned Burn/.test(i.status)),
-    b.incidents.map(i => i.status));
+  check('a planned burn is not lost', b.incidents.some(i => /Planned Burn/.test(i.alertLevel)),
+    b.incidents.map(i => i.alertLevel));
 }
 
 console.log('\n== headings it has not seen before ==');
@@ -82,7 +87,7 @@ console.log('\n== headings it has not seen before ==');
   const i = b.incidents[0];
   check('"Area" is the location', i.title === 'Adelaide River', i);
   check('"Incident Type" is a type, not an incident name', i.type === 'Bushfire', i);
-  check('"Alert Level" is still the status', i.status === 'Emergency Warning', i);
+  check('"Alert Level" maps to the alert level', i.alertLevel === 'Emergency Warning', i);
   check('"Issued" is still the time', !!i.whenIso, i);
 }
 

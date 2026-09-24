@@ -236,6 +236,17 @@
     background:rgba(20,28,28,.74);color:#fff;font-size:.68rem;letter-spacing:.01em;
     padding:5px 9px;border-radius:6px;transition:opacity .18s ease}
   .map-zoomhint.off{opacity:0}
+
+  /* The three official levels, and nothing for an incident that carries
+     none -- an unrated row is deliberately plain so it cannot be mistaken
+     for a warning at a glance. */
+  .inc h4 .lvl{display:inline-block;margin-right:6px;padding:1px 6px;border-radius:4px;
+    font-size:.62rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    vertical-align:2px;color:#fff;background:#8a9a9a}
+  .inc h4 .lvl.emergency-warning{background:#c0392b}
+  .inc h4 .lvl.watch-and-act{background:#d98500}
+  .inc h4 .lvl.advice{background:#2e86c1}
+  .inc.unrated .dot{opacity:.5}
   .outage-map{height:620px;width:100%;background:#eef2f2}
   @media(max-width:700px){ .outage-map{height:420px} }
 
@@ -828,7 +839,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-09-24-national';
+  const EXPECTED_WORKER_BUILD='2026-09-25-alertlevels';
   let workerBuildSeen=null;
   const SAME_ORIGIN_ROUTES=['/api/gdelt','/.netlify/functions/gdelt'];
   async function fetchJsonWithTimeout(url,ms){
@@ -1577,13 +1588,47 @@ let feedLoaded=false;
    active) is treated as the Watch and Act tier so it stands out from
    resolved incidents, since that vocabulary has no direct equivalent of
    "Emergency Warning". */
-function statusToCat(s){
-  s=(s||'').toLowerCase();
-  if(s.includes('emergency')||s.includes('evacuat'))return 'Emergency Warning';
-  if(s.includes('watch')||s.includes('going')||s.includes('act now'))return 'Watch and Act';
-  return 'Advice';
+/* An alert level is what an agency is telling the public to do. There are
+   three, they are named the same way nationally, and an agency either issued
+   one or it did not.
+
+   This used to guess a level from whatever the feed put in `status`, which
+   mixed alert levels with how the fire was behaving. SA publishes GOING for
+   an active fire and that matched "going", so it was rendered "Watch and
+   Act" -- a formal instruction to prepare to leave that nobody had issued.
+   Everything else unrecognised -- SAFE, CONTAINED, Under control, All Clear,
+   NSW's "Not Applicable", a blank field -- fell through to "Advice", which
+   is also a warning nobody issued. On a dashboard used to decide where to
+   send people, inventing a warning level is the worst thing it could do, and
+   it was doing it on most rows.
+
+   So: read only the alert level the agency actually published, match it
+   strictly, and return null when there isn't one. Null is not a lesser
+   warning, it is the absence of one, and the page has to show it as such. */
+function alertCat(inc){
+  const s=String((inc&&inc.alertLevel)||'').toLowerCase().trim();
+  if(!s)return null;
+  /* "Not Applicable" is NSW RFS saying explicitly that it has issued no
+     warning. Taking it as one would be reading the opposite of the feed. */
+  if(/^(not applicable|n\/?a|none|nil|no warning)$/.test(s))return null;
+  if(/emergency warning|evacuat/.test(s))return 'Emergency Warning';
+  if(/watch and act|watch & act/.test(s))return 'Watch and Act';
+  if(/^advice$|advice$/.test(s))return 'Advice';
+  /* Something the agency published that isn't one of the three. Reporting it
+     verbatim is honest; mapping it to the nearest level would be the guess
+     this function exists to stop. */
+  return null;
 }
-function severityRank(s){return {'Emergency Warning':0,'Watch and Act':1,'Advice':2}[statusToCat(s)];}
+/* Kept for the map and any caller still passing a raw string. */
+function statusToCat(s){return alertCat({alertLevel:s});}
+/* Unwarned incidents sort last but are not "less severe" -- they are
+   unrated, which is a different thing and is why they get their own rank
+   rather than being lumped in with Advice. */
+function severityRank(inc){
+  const c=typeof inc==='string'?alertCat({alertLevel:inc}):alertCat(inc);
+  return {'Emergency Warning':0,'Watch and Act':1,'Advice':2}[c]!==undefined
+    ?{'Emergency Warning':0,'Watch and Act':1,'Advice':2}[c]:3;
+}
 
 /* The Worker sends `when` (whatever the agency published) plus `whenIso`
    whenever that value could actually be parsed into a real timestamp. Prefer
@@ -1622,7 +1667,7 @@ function renderNational(){
   const downStates=allStates.filter(st=>stateData[st]&&!stateData[st].ok);
   const severe=[];
   liveStates.forEach(st=>{
-    (stateData[st].incidents||[]).forEach(i=>{if(statusToCat(i.status)==='Emergency Warning')severe.push(Object.assign({state:st},i));});
+    (stateData[st].incidents||[]).forEach(i=>{if(alertCat(i)==='Emergency Warning')severe.push(Object.assign({state:st},i));});
   });
 
   if(!feedLoaded){
@@ -1670,7 +1715,7 @@ function renderIncidents(){
     return;
   }
 
-  const sorted=(data.incidents||[]).slice().sort((a,b)=>severityRank(a.status)-severityRank(b.status));
+  const sorted=(data.incidents||[]).slice().sort((a,b)=>severityRank(a)-severityRank(b));
   if(!sorted.length){
     /* A genuinely quiet state. The Worker only attaches `diagnostics` when it
        could see records but recognised no fields in them, so that case is
@@ -1692,10 +1737,15 @@ function renderIncidents(){
     }
   }else{
     sorted.forEach(i=>{
-      const cat=statusToCat(i.status),col=catColour[cat]||'#2e86c1';
-      const el=document.createElement('div');el.className='inc';
+      const cat=alertCat(i),col=catColour[cat]||'#8a9a9a';
+      const el=document.createElement('div');el.className='inc'+(cat?'':' unrated');
+      /* The alert level is shown as a badge only when there is one. An
+         incident with no warning still shows its type and how it is
+         behaving -- which is the useful part -- without a level attached to
+         it that the agency never issued. */
+      const badge=cat?'<span class="lvl '+cat.replace(/\W+/g,'-').toLowerCase()+'">'+escapeHtml(cat)+'</span>':'';
       const detail=[i.type||'',i.status||''].filter(Boolean).join(' · ');
-      el.innerHTML='<div class="dot" style="background:'+col+'"></div><div class="body"><h4>'+escapeHtml(i.title)+'</h4><p>'+escapeHtml(detail)+'</p><div class="foot"><span>'+escapeHtml(formatWhen(i))+'</span></div></div>';
+      el.innerHTML='<div class="dot" style="background:'+col+'"></div><div class="body"><h4>'+badge+escapeHtml(i.title)+'</h4><p>'+escapeHtml(detail)+'</p><div class="foot"><span>'+escapeHtml(formatWhen(i))+'</span></div></div>';
       incidentFeedEl.appendChild(el);
     });
     incCount.textContent=sorted.length;
@@ -1739,7 +1789,7 @@ function updateTabCounts(){
         let count=0;
         Object.keys(STATE_META).forEach(s=>{
           if(stateData[s]&&stateData[s].ok){
-            (stateData[s].incidents||[]).forEach(i=>{if(statusToCat(i.status)==='Emergency Warning')count++;});
+            (stateData[s].incidents||[]).forEach(i=>{if(alertCat(i)==='Emergency Warning')count++;});
           }
         });
         badge=' <span class="n">('+count+')</span>';
