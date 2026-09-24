@@ -20,8 +20,7 @@ const check = (n, c, x) => {
 const src = readFileSync(new URL('../scripts/scrape-outages.mjs', 'file://' + __dirname + '/'), 'utf8');
 const hintsSrc = src.slice(src.indexOf('const HINTS = ['));
 const HINTS = eval(hintsSrc.slice(hintsSrc.indexOf('['), hintsSrc.indexOf('\n];') + 2));
-const fnSrc = src.slice(src.indexOf('function extractInPage('),
-  src.indexOf('\nconst parseCustomers'));
+const fnSrc = src.slice(src.indexOf('function extractInPage('), src.indexOf('/* </extract> */'));
 
 const card = (suburb, ref, kind, etr) =>
   `<div class="c"><h3>${suburb}</h3><p>Reference: ${ref}</p><p>${kind}</p>` +

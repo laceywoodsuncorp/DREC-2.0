@@ -55,10 +55,10 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- data/outages.json; then
+          if git diff --quiet -- data/; then
             echo "No change in the outage snapshot."
             exit 0
           fi
-          git add data/outages.json
+          git add data/
           git commit -m "Update outage snapshot"
           git push

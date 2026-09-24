@@ -27,6 +27,7 @@ const argv = process.argv.slice(2);
 const arg = (name, dflt) => { const i = argv.indexOf('--' + name); return i >= 0 ? argv[i + 1] : dflt; };
 const OUT = arg('out', 'data/outages.json');
 const ARTIFACTS = arg('artifacts', 'artifacts');
+const DIAG = arg('diagnostics', 'data/scrape-diagnostics.json');
 const ONLY = (arg('only', '') || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 const NAV_TIMEOUT = Number(arg('timeout', 45000));
 
@@ -54,6 +55,9 @@ const CHALLENGE = /just a moment|attention required|checking your browser|enable
    Cards are found by looking for the repeated parent whose children each
    carry one of the labels we recognise, which is more robust than guessing
    at class names that change with every redesign. */
+/* <extract> -- test/card_extraction.test.js lifts everything between these
+   markers and runs it in a real page, so the test drives this function rather
+   than a copy of it. Keep the markers if you move it. */
 function extractInPage(hints) {
   const norm = (t) => String(t || '').replace(/\s+/g, ' ').trim();
   const key = (t) => norm(t).toLowerCase().replace(/[^a-z]/g, '');
@@ -148,6 +152,44 @@ function extractInPage(hints) {
   return { records: [], headings: table.headings.concat(cards.headings), shape: 'none' };
 }
 
+/* </extract> */
+
+/* What the page actually looks like, for the cases the extractor could not
+   read or read suspiciously thinly. Artifacts capture this too, but they are
+   a zip nobody can read without downloading it -- a small summary committed
+   beside the data is what actually gets these fixed, because it can be read
+   straight out of the repo. Text only: no markup, no styling, nothing that
+   would make it large. */
+function summariseInPage() {
+  const norm = (t) => String(t || '').replace(/[ \t]+/g, ' ').trim();
+  const LABEL = /(reference|est\.?\s*restoration|estimated restoration|customers|unplanned|planned outage|outage)/i;
+
+  /* The repeated structures on the page, biggest first: what a list looks
+     like from the outside, whether or not our vocabulary matched it. */
+  const candidates = [];
+  document.querySelectorAll('div,ul,ol,section,main,tbody').forEach((el) => {
+    const kids = [...el.children];
+    if (kids.length < 3) return;
+    const labelled = kids.filter((k) => LABEL.test(k.innerText || '')).length;
+    if (!labelled) return;
+    candidates.push({
+      tag: el.tagName.toLowerCase(),
+      cls: String(el.className || '').slice(0, 60),
+      children: kids.length,
+      labelledChildren: labelled,
+      firstChild: norm(kids[0].innerText).slice(0, 180)
+    });
+  });
+  candidates.sort((a, b) => b.labelledChildren - a.labelledChildren);
+
+  return {
+    title: document.title,
+    tables: document.querySelectorAll('table').length,
+    text: norm(document.body ? document.body.innerText : '').slice(0, 3500),
+    candidates: candidates.slice(0, 5)
+  };
+}
+
 const parseCustomers = (raw) => {
   if (raw === undefined || raw === null) return null;
   const m = /^(\d+)/.exec(String(raw).replace(/,/g, '').trim());
@@ -182,8 +224,16 @@ async function scrapeOperator(page, state, net) {
 
     if (!found.records.length) {
       result.error = 'Rendered, but no outage list could be recognised on the page';
+      result.diagnostic = await page.evaluate(summariseInPage).catch(() => null);
       await saveArtifacts(page, state, net);
       return result;
+    }
+
+    /* A list that yields one or two rows is usually the extractor finding
+       something that is not the list, not an operator with one outage. Worth
+       the same look as an outright failure. */
+    if (found.records.length < 3) {
+      result.diagnostic = await page.evaluate(summariseInPage).catch(() => null);
     }
 
     result.ok = true;
@@ -241,7 +291,7 @@ async function saveArtifacts(page, state, net) {
       unplannedCount: unplanned.length, unplannedCustomers: sum(unplanned),
       plannedCount: planned.length, plannedCustomers: sum(planned),
       networks: networks.map((n) => ({ name: n.name, ok: n.ok, count: n.count, blocked: n.blocked,
-        error: n.error, shape: n.shape, labels: n.labels })),
+        error: n.error, shape: n.shape, labels: n.labels, diagnostic: n.diagnostic })),
       outages
     };
     summary.push(state.toUpperCase() + ': ' + outages.length);
@@ -249,6 +299,22 @@ async function saveArtifacts(page, state, net) {
 
   await browser.close();
   mkdirSync(OUT.replace(/\/[^/]*$/, ''), { recursive: true });
-  writeFileSync(OUT, JSON.stringify({ capturedAt: Date.now(), states }, null, 2) + '\n');
+
+  /* The data the dashboard serves, with the diagnostics stripped out -- they
+     are for fixing the scraper, not for the page. */
+  const clean = {};
+  const diagnostics = {};
+  Object.entries(states).forEach(([state, v]) => {
+    clean[state] = Object.assign({}, v, {
+      networks: v.networks.map(({ diagnostic, ...rest }) => rest)
+    });
+    v.networks.forEach((n) => {
+      if (n.diagnostic) diagnostics[state + '/' + n.name] = n.diagnostic;
+    });
+  });
+
+  writeFileSync(OUT, JSON.stringify({ capturedAt: Date.now(), states: clean }, null, 2) + '\n');
+  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics }, null, 2) + '\n');
   console.log('\nwrote ' + OUT + '  (' + summary.join(', ') + ')');
+  console.log('wrote ' + DIAG + '  (' + Object.keys(diagnostics).length + ' page(s) needing work)');
 })();
