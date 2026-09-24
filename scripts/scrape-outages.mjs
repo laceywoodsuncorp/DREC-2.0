@@ -30,6 +30,12 @@ const ARTIFACTS = arg('artifacts', 'artifacts');
 const DIAG = arg('diagnostics', 'data/scrape-diagnostics.json');
 const ONLY = (arg('only', '') || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 const NAV_TIMEOUT = Number(arg('timeout', 45000));
+/* The discovery probes -- catalogue searches, open data portals, third-party
+   trackers, endpoint sampling -- are for finding new routes, not for the
+   daily capture. Left switched on they grew the run past the job's limit and
+   two runs were killed with nothing written. They now need --probe, so the
+   ordinary capture is sixteen operators and nothing else. */
+const PROBE = argv.includes('--probe');
 
 /* The same vocabulary the Worker uses, kept here rather than imported because
    the Worker's copy is scoped to its own parsing. Order is priority: the
@@ -1024,6 +1030,7 @@ async function probeThirdParty(page) {
     } catch (e) { console.log('could not write diagnostics: ' + e.message); }
   };
 
+  if (PROBE) {
   console.log('sampling the wired sources directly...');
   diagParts.direct = await probeDirect().catch((e) => ({ error: String(e.message) }));
   Object.entries(diagParts.direct).forEach(([k, v]) => {
@@ -1047,6 +1054,7 @@ async function probeThirdParty(page) {
   console.log('\nasking the state emergency agencies and their ArcGIS orgs...');
   diagParts.agencies = await probeAgencies().catch((e) => ({ error: String(e.message) }));
   saveDiag();
+  }
 
   const browser = await chromium.launch();
   const context = await browser.newContext({
@@ -1160,8 +1168,12 @@ async function probeThirdParty(page) {
      and the first version of this ran them after close, so every one came
      back "Target page, context or browser has been closed" and would have
      read as seven dead sites rather than one misplaced call. */
-  console.log('\nlooking for anyone else who republishes the blocked operators...');
-  const thirdParty = await probeThirdParty(page).catch((e) => ({ error: String(e.message) }));
+  const thirdParty = PROBE
+    ? await (async () => {
+        console.log('\nlooking for anyone else who republishes the blocked operators...');
+        return probeThirdParty(page).catch((e) => ({ error: String(e.message) }));
+      })()
+    : {};
 
   await browser.close();
   mkdirSync(OUT.replace(/\/[^/]*$/, ''), { recursive: true });
@@ -1199,7 +1211,7 @@ async function probeThirdParty(page) {
     if (!n.ok && stuck.indexOf(n.name) === -1) stuck.push(n.name);
   }));
   let arcgis = {};
-  if (stuck.length) {
+  if (PROBE && stuck.length) {
     console.log('\nsearching ArcGIS Online for: ' + stuck.join(', '));
     arcgis = await probeArcgis(stuck);
     Object.entries(arcgis).forEach(([name, r]) => {
@@ -1213,14 +1225,14 @@ async function probeThirdParty(page) {
   }
 
   console.log('\nprobing the JSON feeds...');
-  const feeds = await probeFeeds();
+  const feeds = PROBE ? await probeFeeds() : {};
   Object.entries(feeds).forEach(([k, v]) => {
     console.log('  ' + k.padEnd(34) + (v.ok ? v.records + ' records (' + v.envelope + ')'
       : '-- ' + (v.status ? 'HTTP ' + v.status : v.error)));
   });
 
   console.log('\nreading the candidate ArcGIS layers...');
-  const layers = await probeArcgisLayers();
+  const layers = PROBE ? await probeArcgisLayers() : {};
   Object.entries(layers).forEach(([k, v]) => {
     console.log('  ' + k.padEnd(18) + (v.error ? '-- ' + v.error
       : 'meta ' + v.status + ', query ' + v.queryStatus + ', rows ' + (v.count ?? '?')
@@ -1229,13 +1241,13 @@ async function probeThirdParty(page) {
   });
 
   console.log('\nasking the open data portals what they publish...');
-  const ods = await probeOpendatasoft();
+  const ods = PROBE ? await probeOpendatasoft() : {};
   Object.entries(ods).forEach(([k, v]) => {
     console.log('  ' + k.padEnd(34) + (v.error ? '-- ' + v.error
       : v.status + (v.total !== undefined ? ' -- ' + v.total + ' datasets, outage-ish: '
         + ((v.outageDatasets || []).join(', ') || 'none') : '')));
   });
-  const ckan = await probeCkan();
+  const ckan = PROBE ? await probeCkan() : {};
   Object.entries(ckan).forEach(([k, v]) => {
     console.log('  ' + k.padEnd(34) + (v.error ? '-- ' + v.error
       : v.status + (v.count !== undefined ? ' -- ' + v.count + ' match(es)' : '')));

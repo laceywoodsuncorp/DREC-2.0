@@ -16,6 +16,11 @@ on:
         description: 'States to scrape, comma separated (blank = all)'
         required: false
         default: ''
+      probe:
+        description: 'Also run the discovery probes (slow: catalogues, portals, third-party trackers)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -37,7 +42,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Scrape
-        run: node scripts/scrape-outages.mjs --only "${{ inputs.only }}"
+        run: node scripts/scrape-outages.mjs --only "${{ inputs.only }}" ${{ inputs.probe && '--probe' || '' }}
 
       # Saved whether or not the run succeeded: a page the scraper could not
       # read is the thing most worth looking at, and the rendered HTML plus a
