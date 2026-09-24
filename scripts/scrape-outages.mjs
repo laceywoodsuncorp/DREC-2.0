@@ -92,20 +92,28 @@ function extractInPage(hints) {
   /* ---- repeated cards ---- */
   const fromCards = () => {
     const LABEL = /(reference|est\.?\s*restoration|estimated restoration|customers|unplanned|planned outage)/i;
-    /* Every element whose own text carries one of the labels, then the most
-       common parent of those -- that parent's children are the cards. */
-    const hits = [...document.querySelectorAll('div,li,article,section')]
-      .filter((el) => el.children.length <= 12 && LABEL.test(el.innerText || ''));
-    const parents = new Map();
-    hits.forEach((el) => {
-      const p = el.closest('li,article') || el.parentElement;
-      if (!p) return;
-      const container = p.parentElement || p;
-      parents.set(container, (parents.get(container) || 0) + 1);
+    /* The list is the element with the most CHILDREN that each carry a label
+       -- not, as this first tried, the most common parent of elements whose
+       text matches. innerText includes descendants, so by that measure every
+       ancestor up to <body> matched and the winner was whichever branch
+       happened to accumulate the most hits, which was rarely the list. The
+       count here is over direct children, so a wrapper holding one list
+       scores 1 and the list itself scores once per card. */
+    let container = null, best = 0, bestDepth = -1;
+    const depthOf = (el) => { let d = 0; for (let n = el; n; n = n.parentElement) d++; return d; };
+    document.querySelectorAll('div,ul,ol,section,main,tbody').forEach((el) => {
+      const kids = [...el.children];
+      if (kids.length < 2) return;
+      const matching = kids.filter((k) => LABEL.test(k.innerText || '')).length;
+      if (matching < 2) return;
+      const depth = depthOf(el);
+      /* Most labelled children wins; on a tie the deeper element, which is
+         the list rather than something wrapping it. */
+      if (matching > best || (matching === best && depth > bestDepth)) {
+        best = matching; bestDepth = depth; container = el;
+      }
     });
-    let container = null, best = 0;
-    parents.forEach((n, el) => { if (n > best) { best = n; container = el; } });
-    if (!container || best < 2) return { records: [], headings: [], shape: 'cards' };
+    if (!container) return { records: [], headings: [], shape: 'cards' };
 
     const records = [];
     const labelsSeen = [];
