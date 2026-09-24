@@ -2219,7 +2219,13 @@ export const OUTAGE_NETWORKS = {
       { name: 'Jemena', area: 'North-western Melbourne',
         site: 'https://jemena.com.au/electricity/outages',
         sources: [
-          { url: 'https://jemena.com.au/electricity/outages', format: 'text', parse: parseOutageTable }
+          { url: 'https://jemena.com.au/electricity/outages', format: 'text', parse: parseOutageTable },
+          /* Last resort: the same data republished by Power Outages
+             Australia. Tagged `via` so the page says whose figures these
+             are -- an aggregator is a second-hand account. */
+          { url: 'https://poweroutagesaustralia.com.au/distributors/jemena/',
+            format: 'text', parse: parseOutageTable,
+            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/jemena/' }
         ] }
     ]
   },
@@ -2235,7 +2241,13 @@ export const OUTAGE_NETWORKS = {
         sources: [
           { url: 'https://outage.apps.sapowernetworks.com.au/OutageReport/OutageList', format: 'text', parse: parseOutageTable },
           { url: 'https://outage.apps.sapowernetworks.com.au/OutageReport/api/outages', format: 'json', parse: normaliseOutages },
-          { url: 'https://www.sapowernetworks.com.au/outages/', format: 'text', parse: parseOutageTable }
+          { url: 'https://www.sapowernetworks.com.au/outages/', format: 'text', parse: parseOutageTable },
+          /* Last resort: the same data republished by Power Outages
+             Australia. Tagged `via` so the page says whose figures these
+             are -- an aggregator is a second-hand account. */
+          { url: 'https://poweroutagesaustralia.com.au/distributors/sa-power-networks/',
+            format: 'text', parse: parseOutageTable,
+            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/sa-power-networks/' }
         ] }
     ]
   },
@@ -2271,7 +2283,13 @@ export const OUTAGE_NETWORKS = {
       { name: 'TasNetworks', area: 'All of Tasmania',
         site: 'https://www.tasnetworks.com.au/current-power-outages',
         sources: [
-          { url: 'https://www.tasnetworks.com.au/current-power-outages', format: 'text', parse: parseOutageTable }
+          { url: 'https://www.tasnetworks.com.au/current-power-outages', format: 'text', parse: parseOutageTable },
+          /* Last resort: the same data republished by Power Outages
+             Australia. Tagged `via` so the page says whose figures these
+             are -- an aggregator is a second-hand account. */
+          { url: 'https://poweroutagesaustralia.com.au/distributors/tasnetworks/',
+            format: 'text', parse: parseOutageTable,
+            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/tasnetworks/' }
         ] }
     ]
   },
@@ -2293,7 +2311,13 @@ export const OUTAGE_NETWORKS = {
         site: 'https://www.evoenergy.com.au/Outages',
         sources: [
           { url: 'https://www.evoenergy.com.au/Outages', format: 'text', parse: parseOutageTable },
-          { url: 'https://www.actewagl.com.au/outages', format: 'text', parse: parseOutageTable }
+          { url: 'https://www.actewagl.com.au/outages', format: 'text', parse: parseOutageTable },
+          /* Last resort: the same data republished by Power Outages
+             Australia. Tagged `via` so the page says whose figures these
+             are -- an aggregator is a second-hand account. */
+          { url: 'https://poweroutagesaustralia.com.au/distributors/evoenergy/',
+            format: 'text', parse: parseOutageTable,
+            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/evoenergy/' }
         ] }
     ]
   }
@@ -2670,7 +2694,7 @@ function applyOutageSnapshot(payload, snapshot, state) {
     if (live.confirmed && live.ok && (taken.count || 0) <= (live.count || 0)) return live;
     return {
       name: live.name, area: live.area, site: live.site, mergedInto: taken.mergedInto,
-      ok: true, count: taken.count || 0,
+      via: taken.via, ok: true, count: taken.count || 0,
       customers: (snap.outages || []).filter((o) => o.network === live.name)
         .reduce((t, o) => t + (o.customers || 0), 0),
       source: 'snapshot', capturedAt, shape: taken.shape

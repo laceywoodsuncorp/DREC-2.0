@@ -281,10 +281,19 @@ const classify = (rec) => {
   return undefined;
 };
 
-async function scrapeOperator(page, state, net) {
+/* Where else this operator's list is published, when its own site won't
+   serve one. The browser can render these where a plain fetch cannot, which
+   is the whole reason the aggregator is worth a second visit. */
+function fallbackUrls(net) {
+  return (net.sources || []).filter((src) => src.via).map((src) => ({ url: src.viaUrl || src.url, via: src.via }));
+}
+
+async function scrapeOperator(page, state, net, target) {
+  const url = (target && target.url) || net.site;
   const result = { name: net.name, ok: false, count: 0, outages: [] };
+  if (target && target.via) result.via = target.via;
   try {
-    const res = await page.goto(net.site, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+    const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
     /* Give the list a moment to render; these are client-side apps and there
        is no single selector that is right for all of them. */
     await page.waitForTimeout(6000);
@@ -409,9 +418,20 @@ async function probeFeeds() {
     const networks = [];
     for (const net of group.networks) {
       process.stdout.write('  ' + state.toUpperCase().padEnd(4) + net.name.padEnd(28));
-      const r = await scrapeOperator(page, state, net);
+      let r = await scrapeOperator(page, state, net);
+      /* An operator that blocks us, or whose page carries no list, is exactly
+         the case the aggregator exists for -- so try it rather than recording
+         a gap and moving on. Its own site is always tried first, and whatever
+         answers is attributed. */
+      if (!r.ok) {
+        for (const alt of fallbackUrls(net)) {
+          const viaResult = await scrapeOperator(page, state, net, alt);
+          if (viaResult.ok) { viaResult.firstError = r.error || (r.blocked ? 'blocked' : ''); r = viaResult; break; }
+        }
+      }
       networks.push(r);
       console.log(r.ok ? String(r.count).padStart(4) + ' outages (' + r.shape + ')'
+        + (r.via ? ' via ' + r.via : '')
         : '  -- ' + (r.blocked ? 'blocked' : r.error));
     }
     /* CitiPower and Powercor publish one combined list on both their sites,
@@ -451,7 +471,7 @@ async function probeFeeds() {
       plannedCount: planned.length, plannedCustomers: sum(planned),
       networks: networks.map((n) => ({ name: n.name, ok: n.ok, count: n.count, blocked: n.blocked,
         error: n.error, shape: n.shape, labels: n.labels, reported: n.reported,
-        mergedInto: n.mergedInto,
+        mergedInto: n.mergedInto, via: n.via,
         diagnostic: n.diagnostic })),
       outages
     };
