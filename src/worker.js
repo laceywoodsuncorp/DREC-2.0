@@ -2323,7 +2323,12 @@ async function refreshStateOutages(state) {
   const seenRows = new Set();
   networks.forEach((net) => {
     (net.outages || []).forEach((o) => {
-      const key = [net.name, o.id || '', o.location || '', o.customers, o.start || '']
+      /* Deliberately not keyed on the operator. CitiPower and Powercor
+         publish one combined list on both their sites, so reading each
+         returned the same events twice with the customer totals doubled to
+         match. Two operators in one state reporting the identical place,
+         count and times is the same event republished, not a coincidence. */
+      const key = [o.id || '', o.location || '', o.customers, o.start || '', o.restore || '']
         .join('|').toLowerCase().replace(/\s+/g, ' ');
       if (seenRows.has(key)) return;
       seenRows.add(key);

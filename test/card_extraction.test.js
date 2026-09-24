@@ -103,6 +103,43 @@ const card = (suburb, ref, kind, etr) =>
       out.reported && out.reported.outages === 3 && out.reported.customers === 155, out.reported);
   }
 
+  console.log('\n== a page\u2019s navigation is not a list of outages ==');
+  {
+    /* What AusNet and Evoenergy actually returned: five "outages" that were
+       the page's own links. A wrong number still looks like an answer, which
+       makes it worse than none. */
+    await p.setContent(`<body><div class="links">
+      <div><a>Manage your notifications</a></div>
+      <div><a>Learn about planned outages</a></div>
+      <div><a>About unplanned outages</a></div>
+      <div><a>Register as a life support customer</a></div>
+      </div></body>`);
+    const out = await p.evaluate(new Function('hints', 'return (' + fnSrc + ')(hints);'), HINTS);
+    check('navigation links are not returned as outages', out.records.length === 0, out.records);
+  }
+
+  console.log('\n== a label and value split across elements ==');
+  {
+    /* Three spellings, all of which appear: colon on the label, colon on
+       neither, and the pair in one element. */
+    await p.setContent(`<body><div class="list">
+      <div><span>Ballarat</span><span>Customers affected</span><span>41</span><span>Est. restoration</span><span>14:00</span></div>
+      <div><span>Bendigo</span><span>Customers affected:</span><span>7</span><span>Est. restoration:</span><span>15:30</span></div>
+      <div><span>Colac</span><span>Planned</span><span>Customers affected: 9</span><span>Est. restoration: 16:00</span></div>
+      </div></body>`);
+    const out = await p.evaluate(new Function('hints', 'return (' + fnSrc + ')(hints);'), HINTS);
+    check('all three label spellings pair up', out.records.length === 3, out.records);
+    const byLoc = Object.fromEntries(out.records.map(r => [r.location, r]));
+    check('colon on neither', byLoc.Ballarat && byLoc.Ballarat.customers === '41', byLoc.Ballarat);
+    check('colon on the label', byLoc.Bendigo && byLoc.Bendigo.customers === '7', byLoc.Bendigo);
+    check('both in one element', byLoc.Colac && byLoc.Colac.customers === '9', byLoc.Colac);
+    /* "Planned" must be read as the type, not as a label claiming the next
+       fragment as its value. */
+    check('an unlabelled type does not swallow the next field',
+      byLoc.Colac && /planned/i.test(byLoc.Colac.kind || '') && byLoc.Colac.customers === '9',
+      byLoc.Colac);
+  }
+
   console.log('\n== a table on the page still wins ==');
   {
     await p.setContent(`<body>

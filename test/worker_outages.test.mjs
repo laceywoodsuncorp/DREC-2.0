@@ -844,6 +844,25 @@ console.log('\n== a thin capture does not beat a verified feed ==');
   check('a fuller capture does replace it', e2.source === 'snapshot', e2);
 }
 
+
+console.log('\n== one list published by two operators is counted once ==');
+{
+  reset();
+  /* CitiPower and Powercor put the same combined list on both their sites.
+     Read separately, that is 56 rows for 28 events with the customer totals
+     doubled -- a plausible-looking number that is wrong by 100%. */
+  const list = '<html><table><tr><th>Suburb</th><th>Customers affected</th><th>Est. restoration</th></tr>' +
+    '<tr><td>South Melbourne</td><td>41</td><td>15:00</td></tr>' +
+    '<tr><td>Heywood</td><td>6</td><td>13:00</td></tr></table></html>';
+  const page = () => new Response(list, { status: 200, headers: { 'Content-Type': 'text/html' } });
+  upstream['powercor.com.au'] = page;
+  upstream['citipower.com.au'] = page;
+
+  const b = await (await call('/api/outages/vic')).json();
+  check('each event appears once', b.count === 2, b.outages.map(o => o.network + ':' + o.location));
+  check('and the customer total is not doubled', b.customers === 47, b.customers);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);

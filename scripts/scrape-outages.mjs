@@ -156,6 +156,7 @@ function extractInPage(hints) {
       const rec = {};
       const frags = fragments(card);
 
+      const isLabel = (t) => !!toField(String(t).replace(/:$/, ''));
       for (let i = 0; i < frags.length; i++) {
         const f = frags[i];
         /* "Customers affected: 1" in one element. */
@@ -166,24 +167,34 @@ function extractInPage(hints) {
           if (fl && !rec[fl]) rec[fl] = norm(inline[2]).slice(0, 200);
           continue;
         }
-        /* "Customers affected:" and its value as separate elements. */
-        const bare = /^([^:]{2,40}):$/.exec(f);
-        if (bare && frags[i + 1]) {
-          if (!labelsSeen.includes(norm(bare[1]))) labelsSeen.push(norm(bare[1]));
-          const fl = toField(bare[1]);
-          if (fl && !rec[fl]) { rec[fl] = frags[i + 1].slice(0, 200); i++; continue; }
-        }
-        /* An unlabelled "Planned" / "Unplanned outage" fragment. */
+        /* Checked before the bare-label rule below, or "Planned" is read as
+           a label for whatever follows it and swallows the next field. */
         if (!rec.kind && /^(un)?planned\b/i.test(f)) { rec.kind = f.slice(0, 60); continue; }
+        /* A label and its value as separate elements, with the colon on
+           either or neither -- all three occur. Only fragments that map to a
+           known field are treated as labels, and a label is never taken as
+           another label's value. */
+        const bare = /^([^:]{2,40}):?$/.exec(f);
+        if (bare && frags[i + 1] && !isLabel(frags[i + 1])) {
+          const fl = toField(bare[1]);
+          if (fl && !rec[fl]) {
+            if (!labelsSeen.includes(norm(bare[1]))) labelsSeen.push(norm(bare[1]));
+            rec[fl] = frags[i + 1].slice(0, 200); i++; continue;
+          }
+        }
         /* The first fragment that is neither a label nor a type is the
            suburb -- it leads every one of these cards. */
         if (!rec.location && !/:$/.test(f)) rec.location = f.slice(0, 200);
       }
 
-      /* A card with only a place is still a row: it is in the outage list,
-         so it is an outage. Requiring a second field is what discarded every
-         card on the pages whose fields did not parse. */
-      if (rec.location) records.push(rec);
+      /* A place and nothing else is not an outage. Without this the reader
+         happily returns a page's navigation -- "Manage your notifications",
+         "Learn about planned outages" -- as five outages, which is worse than
+         returning none: a wrong number still looks like an answer. Anything
+         genuinely in an outage list carries at least a time, a count or a
+         status alongside the place. */
+      const substantive = rec.customers || rec.restore || rec.status || rec.id || rec.start;
+      if (rec.location && substantive) records.push(rec);
     }
     return { records, headings: labelsSeen, shape: 'cards' };
   };
@@ -346,8 +357,21 @@ async function saveArtifacts(page, state, net) {
       console.log(r.ok ? String(r.count).padStart(4) + ' outages (' + r.shape + ')'
         : '  -- ' + (r.blocked ? 'blocked' : r.error));
     }
+    /* CitiPower and Powercor publish one combined list on both their sites,
+       so scraping each returned the same 28 outages twice -- 56 rows for 28
+       events, with the customer totals doubled to match. Two operators in
+       one state reporting the identical place, count and times is the same
+       event republished, not a coincidence, so the first one keeps it. */
     const outages = [];
-    networks.forEach((n) => (n.outages || []).forEach((o) => outages.push(Object.assign({ network: n.name }, o))));
+    const seenRows = new Set();
+    networks.forEach((n) => (n.outages || []).forEach((o) => {
+      const key = [o.location || '', o.customers, o.start || '', o.restore || '']
+        .join('|').toLowerCase().replace(/\s+/g, ' ');
+      if (seenRows.has(key)) return;
+      seenRows.add(key);
+      outages.push(Object.assign({ network: n.name }, o));
+    }));
+    networks.forEach((n) => { n.count = outages.filter((o) => o.network === n.name).length; });
     const sum = (rows) => rows.reduce((t, o) => t + (o.customers || 0), 0);
     const unplanned = outages.filter((o) => o.kind !== 'planned');
     const planned = outages.filter((o) => o.kind === 'planned');
