@@ -1,5 +1,5 @@
 {
-  "capturedAt": 1790222899219,
+  "capturedAt": 1790223782879,
   "states": {
     "nsw": {
       "state": "NSW",
@@ -45,8 +45,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 2830,
-            "customers": 2830
+            "outages": 2760,
+            "customers": 2760
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -148,11 +148,11 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 21,
+      "count": 19,
       "customers": 1300,
-      "unplannedCount": 12,
+      "unplannedCount": 11,
       "unplannedCustomers": 1300,
-      "plannedCount": 9,
+      "plannedCount": 8,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -167,14 +167,14 @@
         {
           "name": "Powercor",
           "ok": true,
-          "count": 18,
+          "count": 16,
           "shape": "cards",
           "labels": [
             "Estimated restoration"
           ],
           "reported": {
             "outages": null,
-            "customers": 1137
+            "customers": 1136
           }
         },
         {
@@ -187,7 +187,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 1137
+            "customers": 1136
           },
           "mergedInto": "Powercor"
         },
@@ -232,13 +232,6 @@
         },
         {
           "network": "Powercor",
-          "location": "Bamawm",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "13:30"
-        },
-        {
-          "network": "Powercor",
           "location": "Hoppers Crossing",
           "kind": "unplanned",
           "customers": null,
@@ -257,13 +250,6 @@
           "kind": "planned",
           "customers": null,
           "restore": "14:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Mount Duneed and surrounds",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:00"
         },
         {
           "network": "Powercor",
@@ -295,13 +281,6 @@
         },
         {
           "network": "Powercor",
-          "location": "St Albans",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "16:00"
-        },
-        {
-          "network": "Powercor",
           "location": "Cremorne",
           "kind": "unplanned",
           "customers": null,
@@ -318,6 +297,13 @@
           "network": "Powercor",
           "location": "Port Melbourne",
           "kind": "planned",
+          "customers": null,
+          "restore": "17:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Bamawm",
+          "kind": "unplanned",
           "customers": null,
           "restore": "17:00"
         },
@@ -379,8 +365,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 1897,
-            "customers": 1897
+            "outages": 1348,
+            "customers": 1348
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -419,73 +405,29 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 6,
-      "customers": 366,
-      "unplannedCount": 1,
-      "unplannedCustomers": 119,
-      "plannedCount": 5,
-      "plannedCustomers": 247,
+      "count": 0,
+      "customers": 0,
+      "unplannedCount": 0,
+      "unplannedCustomers": 0,
+      "plannedCount": 0,
+      "plannedCustomers": 0,
       "networks": [
         {
           "name": "TasNetworks",
-          "ok": true,
-          "count": 6,
-          "shape": "cards",
-          "labels": [
-            "South region affecting",
-            "Estimated restoration",
-            "Customers affected",
-            "Cause of the outage",
-            "North-West region affecting",
-            "North region affecting"
-          ]
+          "ok": false,
+          "count": 0,
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": [],
+          "reported": {
+            "outages": 366,
+            "customers": 366
+          },
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
+          "reportedVia": "Power Outages Australia"
         }
       ],
-      "outages": [
-        {
-          "network": "TasNetworks",
-          "location": "Lutana, Moonah",
-          "cause": "Emergency repairs",
-          "kind": "unplanned",
-          "customers": 119,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Gawler, Ulverstone",
-          "kind": "planned",
-          "customers": 96,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Longford",
-          "kind": "planned",
-          "customers": 78,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Longford",
-          "kind": "planned",
-          "customers": 48,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Taranna",
-          "kind": "planned",
-          "customers": 13,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Taranna",
-          "kind": "planned",
-          "customers": 12,
-          "restore": "Thursday 4:00 PM"
-        }
-      ]
+      "outages": []
     },
     "nt": {
       "state": "NT",
