@@ -1,20 +1,20 @@
 {
-  "capturedAt": 1790221712474,
+  "capturedAt": 1790222899219,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 9,
-      "customers": 2227,
-      "unplannedCount": 9,
-      "unplannedCustomers": 2227,
+      "count": 10,
+      "customers": 2214,
+      "unplannedCount": 10,
+      "unplannedCustomers": 2214,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 8,
+          "count": 9,
           "shape": "table",
           "labels": [
             "Date",
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 13,
-            "customers": 1253
+            "outages": 12,
+            "customers": 1227
           }
         },
         {
@@ -45,8 +45,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 2920,
-            "customers": 2920
+            "outages": 2830,
+            "customers": 2830
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -63,7 +63,7 @@
           "network": "Ausgrid",
           "location": "Cedar Brush Creek, Ravensdale, Wyong, Yarramalong",
           "customers": 155,
-          "start": "12:50 am (Thu 24 Sep) to 4:00 pm (Thu 24 Sep)"
+          "start": "12:50 am (Thu 24 Sep) to 8:30 pm (Thu 24 Sep)"
         },
         {
           "network": "Ausgrid",
@@ -102,11 +102,17 @@
           "start": "12:30 pm (Thu 24 Sep) to 6:30 pm (Thu 24 Sep)"
         },
         {
+          "network": "Ausgrid",
+          "location": "Cromer",
+          "customers": 13,
+          "start": "1:45 pm (Thu 24 Sep) to 7:00 pm (Thu 24 Sep)"
+        },
+        {
           "network": "Endeavour Energy",
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 1253
+          "customers": 1227
         }
       ]
     },
@@ -125,14 +131,16 @@
           "ok": false,
           "count": 0,
           "blocked": true,
-          "error": "Operator blocks automated access (bot challenge); not bypassed"
+          "error": "Operator blocks automated access (bot challenge); not bypassed",
+          "viaError": "ArcGIS Online: Rendered, but no outage list could be recognised on the page"
         },
         {
           "name": "Ergon Energy",
           "ok": false,
           "count": 0,
           "blocked": true,
-          "error": "Operator blocks automated access (bot challenge); not bypassed"
+          "error": "Operator blocks automated access (bot challenge); not bypassed",
+          "viaError": "ArcGIS Online: Rendered, but no outage list could be recognised on the page"
         }
       ],
       "outages": []
@@ -224,13 +232,6 @@
         },
         {
           "network": "Powercor",
-          "location": "Rainbow",
-          "kind": "planned",
-          "customers": null,
-          "restore": "12:58"
-        },
-        {
-          "network": "Powercor",
           "location": "Bamawm",
           "kind": "unplanned",
           "customers": null,
@@ -259,13 +260,6 @@
         },
         {
           "network": "Powercor",
-          "location": "Thornbury",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "15:00"
-        },
-        {
-          "network": "Powercor",
           "location": "Mount Duneed and surrounds",
           "kind": "planned",
           "customers": null,
@@ -280,8 +274,8 @@
         },
         {
           "network": "Powercor",
-          "location": "St Albans",
-          "kind": "unplanned",
+          "location": "Nyah West",
+          "kind": "planned",
           "customers": null,
           "restore": "15:00"
         },
@@ -294,10 +288,17 @@
         },
         {
           "network": "Powercor",
-          "location": "Irrewarra",
+          "location": "Irrewarra and surrounds",
           "kind": "planned",
           "customers": null,
           "restore": "15:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "St Albans",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "16:00"
         },
         {
           "network": "Powercor",
@@ -319,6 +320,13 @@
           "kind": "planned",
           "customers": null,
           "restore": "17:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Thornbury",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "18:00"
         },
         {
           "network": "Powercor",
@@ -371,8 +379,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 1871,
-            "customers": 1871
+            "outages": 1897,
+            "customers": 1897
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -411,17 +419,17 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 7,
-      "customers": 440,
+      "count": 6,
+      "customers": 366,
       "unplannedCount": 1,
       "unplannedCustomers": 119,
-      "plannedCount": 6,
-      "plannedCustomers": 321,
+      "plannedCount": 5,
+      "plannedCustomers": 247,
       "networks": [
         {
           "name": "TasNetworks",
           "ok": true,
-          "count": 7,
+          "count": 6,
           "shape": "cards",
           "labels": [
             "South region affecting",
@@ -454,13 +462,6 @@
           "location": "Longford",
           "kind": "planned",
           "customers": 78,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Somerset, West Mooreville",
-          "kind": "planned",
-          "customers": 74,
           "restore": "Thursday 4:00 PM"
         },
         {
