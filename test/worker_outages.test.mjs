@@ -40,6 +40,11 @@ const check = (n, c, extra) => {
   else { fail++; console.log('  FAIL ' + n + (extra !== undefined ? '  -> ' + JSON.stringify(extra) : '')); }
 };
 const json = (obj) => () => new Response(JSON.stringify(obj), { status: 200, headers: { 'Content-Type': 'application/json' } });
+const readSharedCacheAge = async (key) => {
+  const e = store.get(key);
+  if (!e) return Infinity;
+  return (Date.now() - Number(e.headers['x-fetched-at'] || 0)) / 1000;
+};
 const reset = () => { store.clear(); upstream = {}; fetchLog = []; };
 
 console.log('\n== the shapes operators actually publish ==');
@@ -639,6 +644,56 @@ console.log('\n== an aggregator is used, and said to be an aggregator ==');
     /essentialenergy\.com\.au/.test(ee.site), ee.site);
   check('the operator own page was tried first',
     /essentialenergy\.com\.au/.test((ee.attempts || [])[0].url), ee.attempts);
+}
+
+
+console.log('\n== a state written once does not stay frozen forever ==');
+{
+  /* The failure this reproduces: a datacentre the cron never runs in writes
+     a state once on a cold start, and from then on every request is served
+     that same entry. It keeps answering, so nothing looks broken -- while the
+     figures, and the build that produced them, stay fixed. A payload written
+     before a deploy was still being served after it, old URLs and all. */
+  reset();
+  upstream.http = json([{ suburb: 'Somewhere', customersAffected: 10 }]);
+  let waits = [];
+  const callWarm = async (p) => {
+    const r = await worker.fetch(new Request('https://example.test' + p), env,
+      { waitUntil: (q) => waits.push(q) });
+    await Promise.all(waits); waits = [];
+    return r;
+  };
+  const MARKER = 'https://newsradar-internal-cache.example/outages-warmed-at';
+  const KEY = 'https://newsradar-internal-cache.example/outages/nsw';
+  const nswHits = () => fetchLog.filter(u => /ausgrid|endeavour|essential|poweroutagesaustralia/.test(u)).length;
+
+  const first = await (await callWarm('/api/outages/nsw')).json();
+  check('a cold state populates on request', first.ok === true, first.ok);
+
+  /* Fill the rest, so what follows is about staleness rather than about
+     states that were simply never fetched -- those are warmed first, by
+     design. */
+  for (let i = 0; i < 8; i++) { store.delete(MARKER); await callWarm('/api/outages'); }
+
+  /* Measured in upstream calls rather than timestamps: two builds a
+     millisecond apart carry the same Date.now(), so comparing them proves
+     nothing on a fast machine. */
+  store.delete(MARKER);
+  fetchLog = [];
+  await callWarm('/api/outages/nsw');
+  check('a fresh state is not refetched', nswHits() === 0, fetchLog);
+
+  /* Age it past the threshold, the way a real entry ages. */
+  const aged = store.get(KEY);
+  aged.headers['x-fetched-at'] = String(Date.now() - 30 * 60 * 1000);
+  store.set(KEY, aged);
+  store.delete(MARKER);
+
+  fetchLog = [];
+  await callWarm('/api/outages/nsw');
+  check('a stale state is refetched', nswHits() > 0, fetchLog);
+  check('and its entry is fresh again', (await readSharedCacheAge(KEY)) < 60,
+    await readSharedCacheAge(KEY));
 }
 
 console.log('\n----------------------------------------');

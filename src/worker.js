@@ -2389,21 +2389,35 @@ const OUTAGE_WARM_PER_REQUEST = 2;
 const OUTAGE_WARM_MARKER_URL = 'https://newsradar-internal-cache.example/outages-warmed-at';
 const OUTAGE_WARM_MIN_INTERVAL_S = 60;
 
+/* Missing is not the only thing worth warming. A state written once by a
+   cold start and never touched again is worse than one that was never
+   written: it keeps answering, so nothing looks wrong, while the figures and
+   even the code that produced them go stale -- a payload built before a
+   deploy will still be served after it, with the old build's attempts and
+   URLs inside, in every datacentre the cron does not run in. That is a
+   permanent freeze, not a delay, and it reads exactly like a broken feed
+   that nobody fixed. Anything older than this gets rebuilt, oldest first. */
+const OUTAGE_STALE_S = 15 * 60;
+
 async function warmColdOutages() {
   /* Rate limit per datacentre, so a burst of visitors doesn't each start
      their own sweep of the same operators. */
   const marker = await readSharedCache(OUTAGE_WARM_MARKER_URL);
   if (marker && marker.ageSeconds < OUTAGE_WARM_MIN_INTERVAL_S) return;
 
-  const missing = [];
+  const due = [];
   for (const state of OUTAGE_STATES) {
-    if (!(await readSharedCache(outageCacheUrl(state)))) missing.push(state);
-    if (missing.length >= OUTAGE_WARM_PER_REQUEST) break;
+    const cached = await readSharedCache(outageCacheUrl(state));
+    if (!cached) { due.push({ state, age: Infinity }); continue; }
+    if (cached.ageSeconds >= OUTAGE_STALE_S) due.push({ state, age: cached.ageSeconds });
   }
-  if (!missing.length) return;
+  if (!due.length) return;
+  /* Never fetched first, then the most stale. */
+  due.sort((a, b) => b.age - a.age);
+  const batch = due.slice(0, OUTAGE_WARM_PER_REQUEST).map((d) => d.state);
 
   await writeSharedCache(OUTAGE_WARM_MARKER_URL, String(Date.now()), 'text/plain');
-  await Promise.allSettled(missing.map((s) => refreshStateOutages(s)));
+  await Promise.allSettled(batch.map((s) => refreshStateOutages(s)));
   await rebuildOutagesAggregate();
 }
 
@@ -2421,7 +2435,7 @@ async function refreshOutageShard(shard) {
 }
 
 /* GET /api/outages/<state> -- one state's full list. */
-async function handleOutagesState(state) {
+async function handleOutagesState(state, ctx) {
   const group = OUTAGE_NETWORKS[state];
   if (!group) {
     return new Response(JSON.stringify({ ok: false, error: 'Unknown state: ' + state }), {
@@ -2429,7 +2443,13 @@ async function handleOutagesState(state) {
     });
   }
   const cached = await readSharedCache(outageCacheUrl(state));
-  if (cached) return respondFromCache(cached);
+  if (cached) {
+    /* Serve what is stored, then bring this location up to date behind the
+       response -- the reader waits for none of it, and the state they are
+       actually looking at is the one most worth refreshing. */
+    if (ctx && ctx.waitUntil) ctx.waitUntil(warmColdOutages().catch(() => {}));
+    return respondFromCache(cached);
+  }
 
   const result = await refreshStateOutages(state);
   return new Response(JSON.stringify(result.payload || {
@@ -2468,7 +2488,7 @@ async function handleApi(url, env, ctx) {
 
   if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') return handleOutagesAll(ctx);
   if (url.pathname.startsWith('/api/outages/')) {
-    return handleOutagesState(url.pathname.slice('/api/outages/'.length).replace(/\/+$/, '').toLowerCase());
+    return handleOutagesState(url.pathname.slice('/api/outages/'.length).replace(/\/+$/, '').toLowerCase(), ctx);
   }
   return null;   // not an API route we serve; fall through to the assets
 }
