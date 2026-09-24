@@ -737,6 +737,26 @@ async function probeArcgisLayers() {
    one record with its values, truncated -- for learning the shape, not for
    copying the data. */
 const DIRECT_PROBES = [
+  /* isyourpowerout.com's backend, found by watching what its map fetches.
+     /api/meta/providers reports a shortCode, an apiType and a
+     lastSuccessfulIngestion per distributor, and /api/ingestion/status
+     reports outagesUnplannedCount and outagesPlannedCount -- which is an
+     ingestion pipeline over the operators' own feeds, not a tally of people
+     reporting a problem. Its map lists Outage, Provider, Started, Est.
+     restoration and Customers, so the rows exist; these ask where.
+
+     If it answers, this is the blocked operators' own data at one remove,
+     the same relationship the ArcGIS layers have to Energex and Ergon. It
+     would still be tagged `via` on the page, because second-hand is
+     second-hand however good the plumbing. */
+  ['IYPO providers', 'https://api.isyourpowerout.com/api/meta/providers', 'json'],
+  ['IYPO ingestion status', 'https://api.isyourpowerout.com/api/ingestion/status', 'json'],
+  ['IYPO outages', 'https://api.isyourpowerout.com/api/outages', 'json'],
+  ['IYPO outages unplanned', 'https://api.isyourpowerout.com/api/outages/unplanned', 'json'],
+  ['IYPO outages list', 'https://api.isyourpowerout.com/api/outages/list', 'json'],
+  /* A documented surface would save guessing at paths entirely. */
+  ['IYPO openapi', 'https://api.isyourpowerout.com/swagger/v1/swagger.json', 'json'],
+  ['IYPO openapi alt', 'https://api.isyourpowerout.com/openapi.json', 'json'],
   ['Evoenergy CSV', 'https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages', 'csv'],
   ['Western Power own API', 'https://www.westernpower.com.au/api/corp/outage/all-outages', 'json'],
   ['TasNetworks OData', 'https://www.tasnetworks.com.au/api/odata/GetPowerOutages', 'json']
