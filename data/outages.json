@@ -1,13 +1,13 @@
 {
-  "capturedAt": 1790214516671,
+  "capturedAt": 1790215500943,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
       "count": 8,
-      "customers": 2179,
+      "customers": 2180,
       "unplannedCount": 8,
-      "unplannedCustomers": 2179,
+      "unplannedCustomers": 2180,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 7,
-            "customers": 1267
+            "outages": 8,
+            "customers": 1268
           }
         },
         {
@@ -94,7 +94,7 @@
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 1267
+          "customers": 1268
         }
       ]
     },
@@ -128,11 +128,11 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 30,
-      "customers": 1300,
-      "unplannedCount": 16,
-      "unplannedCustomers": 1300,
-      "plannedCount": 14,
+      "count": 26,
+      "customers": 0,
+      "unplannedCount": 13,
+      "unplannedCustomers": 0,
+      "plannedCount": 13,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -147,14 +147,14 @@
         {
           "name": "Powercor",
           "ok": true,
-          "count": 27,
+          "count": 25,
           "shape": "cards",
           "labels": [
             "Estimated restoration"
           ],
           "reported": {
             "outages": null,
-            "customers": 1573
+            "customers": 1311
           }
         },
         {
@@ -167,19 +167,17 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 1573
-          }
+            "customers": 1311
+          },
+          "mergedInto": "Powercor"
         },
         {
           "name": "United Energy",
-          "ok": true,
-          "count": 2,
-          "shape": "cards",
-          "labels": [
-            "Vulnerable customer assistance program",
-            "Faults & emergencies",
-            "Customer enquiries"
-          ]
+          "ok": false,
+          "count": 0,
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": []
         },
         {
           "name": "Jemena",
@@ -275,13 +273,6 @@
         },
         {
           "network": "Powercor",
-          "location": "Carlton",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "14:30"
-        },
-        {
-          "network": "Powercor",
           "location": "Dooen",
           "kind": "unplanned",
           "customers": null,
@@ -304,13 +295,6 @@
         {
           "network": "Powercor",
           "location": "Mount Duneed and surrounds",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Hamilton",
           "kind": "planned",
           "customers": null,
           "restore": "15:00"
@@ -384,17 +368,6 @@
           "kind": "unplanned",
           "customers": null,
           "restore": "Unknown"
-        },
-        {
-          "network": "United Energy",
-          "location": "<picture><source type=\"image/avif\" srcSet=\"/static/c50341b110a35486f15e1fd4f5e418d5/1fd1a/ue-logo.avif 18w,/static/c50341b110a35486f15e1fd4f5e418d5/436f9/ue-logo.avif 35w,/static/c50341b110a35486f15e1",
-          "customers": null
-        },
-        {
-          "network": "United Energy",
-          "location": "Oops, page not found!",
-          "cause": "132 099",
-          "customers": 1300
         }
       ]
     },
@@ -449,99 +422,21 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 10,
-      "customers": 524,
+      "count": 0,
+      "customers": 0,
       "unplannedCount": 0,
       "unplannedCustomers": 0,
-      "plannedCount": 10,
-      "plannedCustomers": 524,
+      "plannedCount": 0,
+      "plannedCustomers": 0,
       "networks": [
         {
           "name": "TasNetworks",
-          "ok": true,
-          "count": 10,
-          "shape": "cards",
-          "labels": [
-            "North-West region affecting",
-            "Estimated restoration",
-            "Customers affected",
-            "North region affecting",
-            "South region affecting"
-          ]
+          "ok": false,
+          "count": 0,
+          "error": "page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.tasnetworks.com.au/current-power-outages\nCall log:\n  - navigating to \"https://www.tasnetworks.com.au/current-power-outages\", waiting until \"domcontentloaded\"\n"
         }
       ],
-      "outages": [
-        {
-          "network": "TasNetworks",
-          "location": "Gawler, Ulverstone",
-          "kind": "planned",
-          "customers": 96,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Longford",
-          "kind": "planned",
-          "customers": 78,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Somerset, West Mooreville",
-          "kind": "planned",
-          "customers": 74,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "St Helens, Stieglitz",
-          "kind": "planned",
-          "customers": 73,
-          "restore": "Thursday 3:30 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "St Helens, Stieglitz",
-          "kind": "planned",
-          "customers": 61,
-          "restore": "Thursday 3:30 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Devonport",
-          "kind": "planned",
-          "customers": 61,
-          "restore": "Thursday 1:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Longford",
-          "kind": "planned",
-          "customers": 48,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Taranna",
-          "kind": "planned",
-          "customers": 13,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Taranna",
-          "kind": "planned",
-          "customers": 12,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Elliott",
-          "kind": "planned",
-          "customers": 8,
-          "restore": "Thursday 4:30 PM"
-        }
-      ]
+      "outages": []
     },
     "nt": {
       "state": "NT",
@@ -557,8 +452,7 @@
           "name": "Power and Water Corporation",
           "ok": false,
           "count": 0,
-          "blocked": true,
-          "error": "Operator blocks automated access (bot challenge); not bypassed"
+          "error": "page.goto: Navigation to \"https://www.powerwater.com.au/outages\" is interrupted by another navigation to \"chrome-error://chromewebdata/\"\nCall log:\n  - navigating to \"https://www.powerwater.com.au/outages\", waiting until \"domcontentloaded\"\n"
         }
       ],
       "outages": []
@@ -577,16 +471,7 @@
           "name": "Evoenergy",
           "ok": false,
           "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": [
-            "←",
-            "Move left"
-          ],
-          "reported": {
-            "outages": 3,
-            "customers": 155
-          }
+          "error": "page.goto: Navigation to \"https://www.evoenergy.com.au/Outages\" is interrupted by another navigation to \"https://www.powerwater.com.au/outages\"\nCall log:\n  - navigating to \"https://www.evoenergy.com.au/Outages\", waiting until \"domcontentloaded\"\n"
         }
       ],
       "outages": []
