@@ -42,6 +42,14 @@ function rows(now) {
       kind: 'planned', customers: 1205, startIso: new Date(now - 30 * 60000).toISOString() },
     { network: 'Essential Energy', id: 'S1', location: 'Dubbo', cause: 'Vegetation', status: 'Crew assigned',
       kind: 'unplanned', customers: 88, startIso: new Date(now - 45 * 60000).toISOString() },
+    /* One outage across four towns, which is how the operators publish them
+       and the case a town search has to handle. */
+    { network: 'Ausgrid', id: 'A3', location: 'Kulnura, Wyong, Wyong Creek, Yarramalong',
+      towns: ['Kulnura', 'Wyong', 'Wyong Creek', 'Yarramalong'], cause: 'Storm damage',
+      kind: 'unplanned', customers: 286, startIso: new Date(now - 120 * 60000).toISOString() },
+    { network: 'Endeavour Energy', id: 'E9', location: 'Greystanes +4 more',
+      towns: ['Greystanes'], moreTowns: 4, kind: 'unplanned', customers: 120,
+      startIso: new Date(now - 20 * 60000).toISOString() },
     { network: 'Ausgrid', id: 'A2', location: 'Gosford', cause: 'Storm damage', status: 'Assessing',
       kind: 'unplanned', customers: null, start: 'Early this morning' }
   /* Returned in the order the Worker would return them -- biggest first, an

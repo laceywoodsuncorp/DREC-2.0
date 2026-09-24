@@ -36,6 +36,10 @@ const NAV_TIMEOUT = Number(arg('timeout', 45000));
    first word that appears in a heading or label wins, so the specific ones
    come first and "affected" alone is never a customer count. */
 const HINTS = [
+  /* Ahead of everything, including the street: an operator that names the
+     towns separately has answered the question this list exists for. */
+  { field: 'towns', words: ['areasaffected', 'areaaffected', 'affectedarea', 'suburbsaffected',
+    'townsaffected', 'areas'] },
   /* Ahead of 'cause', which claims anything containing "fault": the
      Victorian sites label the street as "Fault location", and mapping that
      to the cause both loses the street and overwrites the real cause, which

@@ -1815,10 +1815,21 @@ const OUTAGES_ALL_CACHE_URL = 'https://newsradar-internal-cache.example/outages-
    in priority order -- the same approach as the incident feeds, for the same
    reason: a dozen operators with no shared schema between them. */
 const OUTAGE_FIELDS = {
-  /* AFFECTED_AREA and NOCUSTOMERSIMPACTED are Western Power's real column
-     names, confirmed from its published feature service; EVENT_ID is Energy
-     Queensland's. The rest stay broad for the operators whose schema still
-     hasn't been seen. */
+  /* The towns an outage covers, kept apart from `location` because the two
+     are not the same thing and the wrong one is actively misleading. The
+     Victorian list carries both "Fault location: Albert Road, South
+     Melbourne" -- a street -- and "Areas affected: South Melbourne". For
+     knowing whether a town is out, the second is the answer and the first is
+     noise, and column order alone was handing it to the street. */
+  /* 'towns' itself is in the list because the table reader keys its records
+     by the normalised field name -- the same reason 'when' and 'restore' are
+     in theirs. Without it an "Areas affected" column is found, mapped, and
+     then dropped on the way out. */
+  towns: ['areasaffected', 'areaaffected', 'affectedarea', 'affectedareas',
+    'suburbsaffected', 'suburbaffected', 'townsaffected', 'localities', 'areas', 'towns'],
+  /* NOCUSTOMERSIMPACTED is Western Power's real column name, confirmed from
+     its published feature service; EVENT_ID is Energy Queensland's. The rest
+     stay broad for the operators whose schema still hasn't been seen. */
   location: ['affected_area', 'affectedarea', 'suburb', 'suburbs', 'locality', 'localities',
     'location', 'locationname', 'location_name', 'area', 'areas', 'town', 'place',
     'street', 'streets', 'address', 'region', 'name', 'title'],
@@ -1887,6 +1898,31 @@ function parseCustomerCount(raw) {
   return isFinite(n) ? n : null;
 }
 
+/* Splits the town list an operator publishes as one string into the towns it
+   actually names, so a single outage covering four of them can be found by
+   any one of them. Kept as a list beside the original text rather than
+   replacing it -- the operator's own wording is what matches their site.
+
+   "+4 more" is counted, not expanded: Endeavour hides the rest behind a
+   control, and inventing names for them would be worse than saying four are
+   missing. */
+function splitTowns(raw) {
+  if (!raw) return { towns: [], more: 0 };
+  const text = String(raw);
+  const m = /\+\s*(\d+)\s*more/i.exec(text);
+  const towns = text.replace(/\+\s*\d+\s*more/i, '')
+    .split(/\s*[,;/]\s*|\s+&\s+|\s+\band\b\s+/i)
+    .map((t) => t.trim().replace(/\s+/g, ' '))
+    /* A street or a sentence is not a town. Length and digits catch most of
+       it; the rest is caught by the word a street name ends in, since
+       "Albert Road" carries no number and would otherwise pass as a place.
+       Matched on the last word only, so St Marys and Bondi Junction survive. */
+    .filter((t) => t && t.length <= 40 && !/\d/.test(t) &&
+      !/\b(road|rd|street|st|avenue|ave|lane|ln|drive|dr|highway|hwy|court|ct|place|pl|parade|pde|crescent|cres|terrace|tce|close|boulevard|blvd|way|esplanade|esp)$/i
+        .test(t));
+  return { towns, more: m ? Number(m[1]) : 0 };
+}
+
 /* Planned works and faults read very differently to someone checking whether
    their power is coming back, so they are separated when the operator says
    which it is -- and left unlabelled when it doesn't, rather than guessed. */
@@ -1919,7 +1955,10 @@ function normaliseOutages(json, opts) {
   const outages = [];
   records.forEach(({ props, geometry }) => {
     const lowered = lowerKeyMap(props);
-    const location = pickOutageField(lowered, 'location', props);
+    const townsRaw = pickOutageField(lowered, 'towns', props);
+    /* The towns win when the operator names them separately: that column is
+       the answer to "is my town out", which is what this list is for. */
+    const location = townsRaw || pickOutageField(lowered, 'location', props);
     const id = pickOutageField(lowered, 'id', props);
     /* A row with neither a place nor an identifier can't be shown or
        de-duplicated, so it isn't a row. */
@@ -1929,9 +1968,12 @@ function normaliseOutages(json, opts) {
     const kindText = pickOutageField(lowered, 'kind', props);
     const start = normaliseWhen(pickOutageField(lowered, 'start', props));
     const restore = normaliseWhen(pickOutageField(lowered, 'restore', props));
+    const split = splitTowns(townsRaw || location);
     outages.push(Object.assign({
       id: id || undefined,
       location: location || 'Outage ' + id,
+      towns: split.towns.length ? split.towns : undefined,
+      moreTowns: split.more || undefined,
       status: status || undefined,
       cause: cause || undefined,
       kind: classifyOutage(kindText, status, cause) || kindHint || undefined,
@@ -1962,6 +2004,10 @@ function normaliseOutages(json, opts) {
    and how it is read. "affected" on its own is deliberately NOT a customer
    word -- "Affected areas" is a heading several of them use for the place. */
 const OUTAGE_COLUMN_HINTS = [
+  /* Ahead of everything, including the street: an operator that names the
+     towns separately has answered the question this list exists for. */
+  { field: 'towns', words: ['areasaffected', 'areaaffected', 'affectedarea', 'suburbsaffected',
+    'townsaffected', 'areas'] },
   /* Ahead of 'cause', which claims anything containing "fault": the
      Victorian sites label the street as "Fault location", and mapping that
      to the cause both loses the street and overwrites the real cause, which
@@ -1979,7 +2025,11 @@ const OUTAGE_COLUMN_HINTS = [
 ];
 
 function parseOutageTable(html, opts) {
-  const read = scrapeTable(html, OUTAGE_COLUMN_HINTS, 'location');
+  /* Either column identifies a row: a table naming the towns and a table
+     naming the street are both outage lists, and normaliseOutages prefers
+     the towns when both are there. */
+  let read = scrapeTable(html, OUTAGE_COLUMN_HINTS, 'towns');
+  if (read.diagnostics) read = scrapeTable(html, OUTAGE_COLUMN_HINTS, 'location');
   if (read.diagnostics) return { outages: [], diagnostics: read.diagnostics };
   /* The table was found and understood. No rows means the operator has
      nothing out -- a result, not a failure -- so it returns a clean empty

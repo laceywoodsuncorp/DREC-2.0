@@ -206,6 +206,13 @@
   .scrape-btn:disabled{opacity:.55;cursor:default}
   .scrape-note{padding:8px 24px 0;font-size:.75rem;color:#5a6a6a;line-height:1.5}
   .scrape-note.bad{color:#8a5200}
+  .outage-search{padding:12px 24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .outage-search input{flex:1;min-width:220px;max-width:420px;padding:8px 12px;border-radius:999px;
+    border:1px solid #d7dee2;font-size:.82rem;font-family:inherit;color:var(--heritage-green)}
+  .outage-search input:focus{outline:2px solid var(--neutral-green);outline-offset:1px}
+  .outage-search-count{font-size:.75rem;color:#7b8a8f}
+  .outage .towns{margin-top:4px;font-size:.72rem;color:#5a6a6a}
+  .outage .towns b{font-weight:700;background:#fff3c4;border-radius:3px;padding:0 2px}
   .outage-summary{padding:12px 24px;display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;
     font-size:.8rem;color:#4a5a5a}
   .outage-summary b{font-size:1.15rem;color:var(--heritage-green);margin-right:4px}
@@ -432,6 +439,10 @@
     <button class="state-tab" data-state="TAS">TAS</button>
     <button class="state-tab" data-state="NT">NT</button>
     <button class="state-tab" data-state="ACT">ACT</button>
+  </div>
+  <div class="outage-search">
+    <input type="search" id="outageFilter" placeholder="Find a town or suburb — e.g. Wyong" autocomplete="off">
+    <span class="outage-search-count" id="outageFilterCount"></span>
   </div>
   <div class="outage-summary" id="outageSummary"></div>
   <div class="outage-networks" id="outageNetworks"></div>
@@ -1712,6 +1723,8 @@ window.addEventListener('resize',()=>map.invalidateSize());
    /api/outages/<state> for the rows), so the browser never talks to an
    operator directly and never waits on one. */
 (function(){
+  const filterEl=document.getElementById('outageFilter'),
+        filterCountEl=document.getElementById('outageFilterCount');
   const tabsEl=document.getElementById('outageTabs'),
         summaryEl=document.getElementById('outageSummary'),
         networksEl=document.getElementById('outageNetworks'),
@@ -1839,8 +1852,35 @@ window.addEventListener('resize',()=>map.invalidateSize());
     summaryEl.innerHTML=bits.join('');
   }
 
+  /* Matching is on the towns an operator named, not on the row's display
+     text: a row reading "Albert Road, South Melbourne" must be found by
+     "South Melbourne" and not by "Albert", and a row covering four towns
+     must be found by any one of them. */
+  function rowTowns(o){
+    if(o.towns&&o.towns.length)return o.towns;
+    return String(o.location||'').split(/\s*[,;/]\s*/).map(t=>t.trim()).filter(Boolean);
+  }
+  function matchesTown(o,q){
+    if(!q)return true;
+    return rowTowns(o).some(t=>t.toLowerCase().includes(q))||
+      String(o.location||'').toLowerCase().includes(q);
+  }
+
   function renderList(payload){
-    const rows=payload.outages||[];
+    const q=(filterEl&&filterEl.value||'').trim().toLowerCase();
+    const all=payload.outages||[];
+    const rows=q?all.filter(o=>matchesTown(o,q)):all;
+    if(filterCountEl){
+      filterCountEl.textContent=q?(rows.length+' of '+all.length+' match \u201c'+q+'\u201d'):'';
+    }
+    if(q&&!rows.length){
+      /* Not the same claim as "no outages": we only know this state's list,
+         and only the operators that answered. */
+      listEl.innerHTML='<div class="inc-empty">No listed outage mentions \u201c'+escapeHtml(q)+
+        '\u201d in '+escapeHtml(payload.name||currentState)+'.<br>'+
+        'This only covers the operators reporting above \u2014 check theirs directly if in doubt.</div>';
+      return;
+    }
     if(!rows.length){
       const reporting=(payload.networks||[]).filter(n=>n.ok);
       listEl.innerHTML='<div class="inc-empty">'+(reporting.length
@@ -1859,10 +1899,20 @@ window.addEventListener('resize',()=>map.invalidateSize());
       if(started)meta.push('<span>Started '+escapeHtml(started)+'</span>');
       const back=when(o.restoreIso,o.restore);
       if(back)meta.push('<span>Est. restored '+escapeHtml(back)+'</span>');
+      /* Every town spelled out, so a four-town outage is readable as such
+         rather than hiding three of them behind a comma. */
+      const towns=rowTowns(o);
+      let townLine='';
+      if(towns.length>1||o.moreTowns){
+        const shown=towns.map(t=>q&&t.toLowerCase().includes(q)?'<b>'+escapeHtml(t)+'</b>':escapeHtml(t));
+        townLine='<div class="towns">'+shown.join(' · ')+
+          (o.moreTowns?' · +'+o.moreTowns+' more not listed by the operator':'')+'</div>';
+      }
       return '<div class="outage'+(planned?' planned':'')+'">'+
         '<div class="bar"></div><div class="body">'+
         '<h4>'+escapeHtml(o.location||'Outage')+(o.kind?' <span class="tag">'+escapeHtml(o.kind)+'</span>':'')+'</h4>'+
         (detail?'<p>'+escapeHtml(detail)+'</p>':'')+
+        townLine+
         '<div class="meta">'+meta.join('')+'</div>'+
         '</div></div>';
     }).join('');
@@ -2007,6 +2057,11 @@ window.addEventListener('resize',()=>map.invalidateSize());
     }
   });
   loadScrapeStatus();
+
+  if(filterEl)filterEl.addEventListener('input',()=>{
+    const payload=stateCache[currentState];
+    if(payload)renderList(payload);
+  });
 
   tabsEl.querySelectorAll('.state-tab').forEach(tab=>{
     tab.dataset.label=tab.textContent.trim();

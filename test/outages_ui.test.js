@@ -44,7 +44,7 @@ const check = (n, c, x) => {
       await p.$$eval('#section-outages iframe', els => els.filter(e => !/outage\.report/.test(e.src)).length) === 0);
     check('state tabs are present', await p.$$eval('#outageTabs .state-tab', e => e.length) === 8);
     const r = await rows(p);
-    check('outage rows render', r.length === 4, r.length);
+    check('outage rows render', r.length === 6, r.length);
     check('each row names its operator',
       r.every(t => /Ausgrid|Endeavour Energy|Essential Energy/.test(t)), r);
     check('customer numbers are formatted', r.some(t => /1,205 customers/.test(t)), r);
@@ -78,7 +78,7 @@ const check = (n, c, x) => {
     check('the failing one is marked, not dropped', dead.length === 1 && /Essential/.test(dead[0].text), c);
     check('its reason is on hover', /403/.test(dead[0].title), dead[0].title);
     check('the summary says the list is incomplete', /incomplete/i.test(await summary(p)), await summary(p));
-    check('the working operators still list outages', (await rows(p)).length === 3, (await rows(p)).length);
+    check('the working operators still list outages', (await rows(p)).length === 5, (await rows(p)).length);
     await p.close();
   }
 
@@ -205,6 +205,49 @@ const check = (n, c, x) => {
     const err = await bad.$eval('#scrapeNote', e => e.innerText);
     check('a refusal is surfaced, not swallowed', /refused|could not/i.test(err), err);
     await bad.close();
+  }
+
+  console.log('\n== finding a town ==');
+  {
+    const p = await open('live');
+    const search = async (q) => {
+      await p.fill('#outageFilter', q);
+      await p.waitForTimeout(250);
+      return rows(p);
+    };
+
+    /* The question this list exists to answer: is my town out. One outage
+       covering four towns has to be findable by any of them. */
+    let r = await search('Wyong Creek');
+    check('a town in the middle of a multi-town outage is found', r.length === 1, r);
+    check('and the row shows the whole outage, not just that town',
+      /Kulnura/.test(r[0]) && /Yarramalong/.test(r[0]), r[0]);
+
+    r = await search('wyong');
+    check('matching is case-insensitive', r.length === 1, r.length);
+
+    /* A street in the row text must not answer for a town. */
+    r = await search('Greystanes');
+    check('a town behind a "+4 more" is still found', r.length === 1, r);
+    check('and the hidden remainder is admitted to',
+      /not listed by the operator/i.test(r[0]), r[0]);
+
+    r = await search('Dubbo');
+    check('a single-town outage is found', r.length === 1, r);
+    check('the count reports the match', /1 of \d+ match/.test(await p.$eval('#outageFilterCount', e => e.textContent)),
+      await p.$eval('#outageFilterCount', e => e.textContent));
+
+    r = await search('Nowheresville');
+    check('no match shows none', r.length === 0, r);
+    const t = await p.$eval('#outageList', e => e.innerText);
+    /* Not the same claim as "no outages" -- we only know the operators that
+       answered. */
+    check('and says what it does not cover', /check theirs directly/i.test(t), t);
+
+    await p.fill('#outageFilter', '');
+    await p.waitForTimeout(250);
+    check('clearing the search restores the list', (await rows(p)).length > 3, (await rows(p)).length);
+    await p.close();
   }
 
   console.log('\n== tabs switch states and carry counts ==');

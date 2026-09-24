@@ -863,6 +863,53 @@ console.log('\n== one list published by two operators is counted once ==');
   check('and the customer total is not doubled', b.customers === 47, b.customers);
 }
 
+
+console.log('\n== towns, because that is the question being asked ==');
+{
+  reset();
+  /* The Victorian list carries a street and a town list in separate columns.
+     Column order alone was handing "location" to the street, which is the
+     one thing that cannot answer "is my town out". */
+  upstream['powercor.com.au'] = () => new Response(
+    '<html><table>' +
+    '<tr><th>Cause</th><th>Fault location</th><th>Areas affected</th><th>Customers</th></tr>' +
+    '<tr><td>Planned outage</td><td>Albert Road, South Melbourne</td>' +
+    '<td>South Melbourne</td><td>41</td></tr>' +
+    '</table></html>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+
+  const b = await (await call('/api/outages/vic')).json();
+  const one = b.outages[0];
+  check('the town wins over the street', one.location === 'South Melbourne', one);
+  check('and is listed as a town', (one.towns || []).includes('South Melbourne'), one);
+}
+
+console.log('\n== an outage across four towns is findable by any of them ==');
+{
+  reset();
+  upstream['ausgrid.com.au'] = () => new Response(
+    '<html><table><tr><th>Suburb</th><th>Customers affected</th></tr>' +
+    '<tr><td>Kulnura, Wyong, Wyong Creek, Yarramalong</td><td>286</td></tr>' +
+    '<tr><td>Greystanes +4 more</td><td>120</td></tr>' +
+    '<tr><td>Albert Road, Gosford 2250</td><td>9</td></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+
+  const b = await (await call('/api/outages/nsw')).json();
+  const multi = b.outages.find(o => /Kulnura/.test(o.location));
+  check('every named town is listed', (multi.towns || []).length === 4, multi.towns);
+  check('including one in the middle of the list', (multi.towns || []).includes('Wyong Creek'), multi.towns);
+  /* One outage covering four towns is still one outage with 286 customers.
+     Splitting the count across them would be inventing figures. */
+  check('the customer count is not divided up', multi.customers === 286, multi.customers);
+
+  const hidden = b.outages.find(o => /Greystanes/.test(o.location));
+  check('a hidden remainder is counted, not invented',
+    hidden.towns.length === 1 && hidden.moreTowns === 4, hidden);
+
+  const street = b.outages.find(o => /Albert Road/.test(o.location));
+  check('an address is not mistaken for a town list',
+    !(street.towns || []).some(t => /Albert Road|2250/.test(t)), street.towns);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);
