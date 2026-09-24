@@ -1,6 +1,7 @@
-# A one-off lookup, kept separate from the outage capture so it costs seconds
-# rather than riding along with a half-hour browser run.
-name: Probe gazetteer sources
+# Builds the suburb/locality gazetteer the outage map plots town names with.
+# Run it when the ABS publishes a new ASGS edition; the data does not change
+# otherwise, so there is no schedule.
+name: Build gazetteer
 
 on:
   workflow_dispatch:
@@ -9,27 +10,25 @@ permissions:
   contents: write
 
 jobs:
-  probe:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Probe
-        run: node scripts/probe-gazetteer.mjs
-      - name: Commit the findings
+      - name: Build
+        run: node scripts/build-gazetteer.mjs
+      - name: Commit
         if: always()
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # --porcelain, not `git diff`: a diff only compares tracked files,
-          # so this run wrote a brand new file and then reported "no change".
           if [ -z "$(git status --porcelain -- data/)" ]; then
             echo "No change."
             exit 0
           fi
           git add data/
-          git commit -m "Record gazetteer source probe"
+          git commit -m "Rebuild the locality gazetteer"
           git push
