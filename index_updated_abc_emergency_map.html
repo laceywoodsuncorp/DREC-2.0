@@ -224,13 +224,28 @@
 
   /* The map and its summary bar read as one panel, so they share a border and
      the bar loses its own bottom rule. */
-  .outage-mapwrap{margin:0 24px 14px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;
-    background:#fff}
-  .outage-mapwrap .outage-summary{padding:10px 14px;margin:0;border-bottom:1px solid var(--rule);
+  /* Full-bleed: the map is the tile now, not an illustration inside it. */
+  .outage-mapwrap{margin:0 0 14px;border-top:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);background:#fff}
+  .outage-mapwrap .outage-summary{padding:10px 24px;margin:0;border-bottom:1px solid var(--rule);
     background:#fbfcfc}
-  .outage-map{height:360px;width:100%;background:#eef2f2}
-  /* Room for the map on a phone without it becoming a letterbox. */
-  @media(max-width:700px){ .outage-map{height:260px} .outage-mapwrap{margin:0 12px 12px} }
+  .outage-mapstage{position:relative}
+  .outage-map{height:620px;width:100%;background:#eef2f2}
+  @media(max-width:700px){ .outage-map{height:420px} }
+
+  /* The searched town's answer, over the map rather than below it, so the
+     dot and the words are in one place. Above Leaflet's popup pane (700) but
+     clear of its controls. */
+  .outage-panel{position:absolute;top:14px;left:14px;z-index:800;width:min(360px,calc(100% - 28px));
+    max-height:calc(100% - 28px);overflow-y:auto;background:rgba(255,255,255,.93);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    border:1px solid rgba(0,0,0,.14);border-radius:11px;
+    box-shadow:0 6px 24px rgba(0,0,0,.16);padding:4px}
+  .outage-panel[hidden]{display:none}
+  .outage-panel .outage-verdict{margin:8px;font-size:.8rem}
+  .outage-panel .outage-row{border:0;border-bottom:1px solid rgba(0,0,0,.07)}
+  .outage-panel .outage-row:last-child{border-bottom:0}
+  .outage-panel .inc-empty{padding:14px;font-size:.82rem}
   .outage-mapnote{padding:7px 14px;font-size:.72rem;color:#6a7878;border-top:1px solid var(--rule);
     background:#fbfcfc}
   .outage-mapnote.warn{color:#8a5200}
@@ -384,7 +399,7 @@
     <section class="tile tile-news" id="section-news">
       <div class="tile-head">
         <h2>📡 Live News Feed</h2>
-        <div class="src">Live from each outlet&rsquo;s own news feed, read server-side and merged &mdash; ABC, SBS, Nine, 7NEWS, news.com.au, The Australian, Guardian Australia, AAP and The Conversation; the capital-city mastheads (SMH, The Age, Brisbane Times, WAtoday, The West Australian); regional papers across NSW, VIC, TAS and the ACT; insuranceNEWS.com.au for trade coverage; and Al Jazeera for world news. Use the Sources menu to pick exactly which outlets you want — individually or by group (national, capital-city, regional, trade, world), with Select all / Deselect all. Outlets that returned nothing are still listed, so you can see what is and isn&rsquo;t coming through. Shows the last 24 hours, or the most recent available if it has been quieter than that.</div>
+        <div class="src">Live from each outlet&rsquo;s own feed, read server-side and merged. Last 24 hours, or the most recent available if quieter. Pick outlets from the Sources menu &mdash; ones that returned nothing stay listed, so you can see what isn&rsquo;t coming through.</div>
         <div class="count">Showing <b id="shown">…</b> of <b id="total">…</b> articles · scroll within the tile to see more</div>
       </div>
       <div class="filters" id="filters">
@@ -459,7 +474,7 @@
 <section class="tile tile-outages" id="section-outages">
   <div class="tile-head">
     <h2>⚡📶 Power &amp; Network Outages</h2>
-    <div class="src">Electricity outages read directly from each state's <b>distribution network operators</b> — Ausgrid, Energex, SA Power Networks, Western Power and the rest — rather than from a third-party aggregator, so each operator's status is reported separately and a network that isn't answering says so instead of quietly disappearing. Mobile network status below is <b>crowdsourced from third-party trackers, not confirmed by the carriers themselves</b> — treat it as indicative, not authoritative.</div>
+    <div class="src">Read directly from each state's <b>distribution network operators</b>, not a third-party aggregator. Search a town for its status. Mobile network status below is <b>crowdsourced, not carrier-confirmed</b>.</div>
   </div>
 
   <div class="outage-headrow">
@@ -476,12 +491,14 @@
        apart makes you hold one in your head while you look at the other. -->
   <div class="outage-mapwrap">
     <div class="outage-summary" id="outageSummary"></div>
-    <div class="outage-map" id="outageMap"></div>
+    <div class="outage-mapstage">
+      <div class="outage-map" id="outageMap"></div>
+      <!-- Only appears once a town has been searched. Until then the map is
+           the answer and a list underneath it is just the same facts again,
+           in a worse form. -->
+      <div class="outage-panel" id="outageList" hidden></div>
+    </div>
     <div class="outage-mapnote" id="outageMapNote"></div>
-  </div>
-  <div class="outage-networks" id="outageNetworks"></div>
-  <div class="outage-list" id="outageList">
-    <div class="inc-empty" id="outageLoading">Loading current electricity outages…</div>
   </div>
   <div class="outage-foot" id="outageFoot"></div>
 
@@ -515,7 +532,7 @@
     <section class="tile tile-firemap" id="section-firemap">
       <div class="tile-head">
         <h2>🛰️ Active Fire Map — Australia</h2>
-        <div class="src">NASA FIRMS active fire detections and NASA SEDAC population density, plotted on an OpenStreetMap street basemap so town and road names stay visible. Colour scales from red (detected in the last few hours) to green (up to 5 days old), and older detections fade so the most recent fires stand out. Satellite passes are processed with a 3&ndash;6 hour lag, so the newest detections available are a few hours old.</div>
+        <div class="src">NASA FIRMS fire detections over population density. Red is the last few hours, fading to green at 5 days. Satellite passes carry a 3&ndash;6 hour lag, so the newest detections are already a few hours old.</div>
       </div>
       <div class="map-tools">
         <input id="firmsKey" type="text" value="04cfe71e54d1492e72d2db48ad74f4d5" placeholder="Paste your free NASA FIRMS MAP_KEY to load live fire detections…">
@@ -541,7 +558,7 @@
     <section class="tile tile-incidents" id="section-incidents">
       <div class="tile-head">
         <h2>🚒 State Fire Department Incidents</h2>
-        <div class="src">Live from each state's own official agency feed — NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES and ACT ESA — fetched server-side, so no state depends on any other. The Severe Alerts tab pulls together Emergency Warning / evacuate-level incidents nationally and names any feed it couldn't reach. Switch tabs below.</div>
+        <div class="src">Live from each state's own agency feed, fetched independently so no state depends on another. <b>Severe Alerts</b> gathers evacuate-level incidents nationally and names any feed it couldn't reach.</div>
         <div class="count"><b id="incCount">…</b> current incidents</div>
       </div>
       <div class="state-tabs" id="stateTabs">
@@ -805,7 +822,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-09-17-outages';
+  const EXPECTED_WORKER_BUILD='2026-09-24-national';
   let workerBuildSeen=null;
   const SAME_ORIGIN_ROUTES=['/api/gdelt','/.netlify/functions/gdelt'];
   async function fetchJsonWithTimeout(url,ms){
@@ -1761,7 +1778,6 @@ window.addEventListener('resize',()=>map.invalidateSize());
         filterCountEl=document.getElementById('outageFilterCount');
   const
         summaryEl=document.getElementById('outageSummary'),
-        networksEl=document.getElementById('outageNetworks'),
         listEl=document.getElementById('outageList'),
         footEl=document.getElementById('outageFoot');
   if(!listEl)return;
@@ -1836,63 +1852,6 @@ window.addEventListener('resize',()=>map.invalidateSize());
       snapshotAgeSeconds:snapshotAge};
   }
 
-  function renderNetworks(payload){
-    const nets=payload.networks||[];
-    networksEl.innerHTML=nets.map(n=>{
-      /* Three states, not two. An operator we have never managed to read is
-         not the same as one that has gone down, and saying "unavailable"
-         for the first would claim we checked something we haven't. */
-      /* Four states, and the one that used to hide was the worst of them:
-         an operator that answered in a shape we couldn't read counted as ok
-         with zero rows, so it said "none listed" -- reading as a quiet
-         network when its outages were actually being dropped on the floor. */
-      const drifted=n.ok&&n.diagnostics;
-      /* An operator we cannot list but whose own total is known. Saying "47
-         outages, no town detail" is true and useful; saying nothing at all
-         about a network covering a whole state is neither. Declared before
-         the class and label below, both of which read it. */
-      const rep=(!n.count&&n.reported&&(n.reported.outages!=null||n.reported.customers!=null))?n.reported:null;
-      const cls=drifted?'outage-net down'
-                :(rep?'outage-net pending'
-                  :(n.ok?(n.count?'outage-net':'outage-net quiet')
-                        :((n.unconfirmed||n.blocked)?'outage-net pending':'outage-net down')));
-      const plain=drifted?' · data not readable'
-        :(rep?' · '+(rep.outages!=null?rep.outages+' outage'+(rep.outages===1?'':'s'):'')+
-            (rep.customers!=null?(rep.outages!=null?', ':' ')+num(rep.customers)+' customers off':'')+
-            ' · no town detail'
-          :(n.ok
-            ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s')
-              :(n.mergedInto?' · listed under '+n.mergedInto:' · none listed'))
-            :(n.blocked?' · blocks automated access'
-              :(n.unconfirmed?' · feed not connected yet':' · unavailable'))));
-      /* Where the figures came from, when it wasn't the operator. An
-         aggregator's numbers are a second-hand account, and on a dashboard
-         people act on that distinction has to be visible on the chip itself,
-         not only in the footnote. */
-      /* A figure captured hours ago and one fetched a minute ago must not
-         look alike on a screen people act on. */
-      const snapTag=n.source==='snapshot'?' <i>snapshot</i>':'';
-      const viaName=(n.ok&&n.via)||(rep&&n.reportedVia)||'';
-      const tail=escapeHtml(plain)+(viaName?' <i>via '+escapeHtml(viaName)+'</i>':'')+snapTag;
-      /* The upstream reason on hover, and a way through to the operator's own
-         map either way -- a failed network must never be a dead end. */
-      const title=rep?('This operator blocks automated access, so only its totals are available'+
-        (n.reportedVia?' (via '+n.reportedVia+')':'')+' — no per-town list. Use their own map.')
-        :n.ok?(n.diagnostics?('Answered, but this dashboard could not read its format — '+((n.diagnostics.note)||'')):(n.area||''))
-                      :(n.blocked?(n.error||'Blocks automated access')
-                        :(n.unconfirmed
-                          ?'This dashboard does not have a working data feed for this operator yet — use their own outage map. ('+(n.error||'')+')'
-                          :(n.error||'Unavailable')));
-      /* Sixteen operators in one row rather than two or three per tab, so
-         each says which state it covers -- otherwise the list is a wall of
-         names with no way to find the one you care about. */
-      const where=n.state?'<span class="outage-net-st">'+escapeHtml(n.state)+'</span> ':'';
-      return '<span class="'+cls+'" title="'+escapeHtml(title)+'">'+where+
-        '<a href="'+escapeHtml(n.site||'#')+'" target="_blank" rel="noopener"><b>'+escapeHtml(n.name)+'</b></a>'+
-        tail+'</span>';
-    }).join('');
-  }
-
   function renderSummary(payload){
     const bits=[];
     /* Faults first and on their own. Planned work is mostly scheduled, often
@@ -1924,6 +1883,20 @@ window.addEventListener('resize',()=>map.invalidateSize());
        to go on, a reader cannot tell a complete list from a silent one. On a
        quiet day "all 3 networks reporting" is the difference between "no
        outages" and "no data". */
+    /* Operators we cannot list but whose totals we know. Their figures used
+       to sit on the per-operator chips; with those gone this is the only
+       place a whole state's customer count appears, and dropping it would
+       quietly shrink the national picture by however many people SA Power
+       Networks and Essential Energy have off. Kept apart from the counted
+       total, because it is a different kind of number -- second-hand, and
+       with no town behind it. */
+    const reportedOnly=nets.filter(n=>!n.count&&n.reported&&n.reported.customers!=null);
+    if(reportedOnly.length){
+      const extra=reportedOnly.reduce((t,n)=>t+n.reported.customers,0);
+      bits.push('<span class="warn">+ '+num(extra)+' customers off reported by '+
+        reportedOnly.length+' operator'+(reportedOnly.length===1?'':'s')+
+        ' we can\u2019t list by town</span>');
+    }
     /* A state that did not load is not a state with no outages. Its absence
        shrinks every total above, so it has to be said rather than left to be
        inferred from a number that looks fine. */
@@ -2261,23 +2234,24 @@ window.addEventListener('resize',()=>map.invalidateSize());
   function renderList(payload){
     const q=(filterEl&&filterEl.value||'').trim().toLowerCase();
     const all=payload.outages||[];
-    const rows=q?all.filter(o=>matchesTown(o,q)):all;
-    if(filterCountEl){
-      filterCountEl.textContent=q?(rows.length+' of '+all.length+' match \u201c'+q+'\u201d'):'';
+    /* Nothing searched, nothing to say. The map already shows every outage;
+       repeating them as a list underneath is the same facts in a worse form,
+       and it pushed the map into a letterbox to make room. */
+    if(!q){
+      listEl.hidden=true;listEl.innerHTML='';
+      if(filterCountEl)filterCountEl.textContent='';
+      return;
     }
-    if(q&&!rows.length){
+    const rows=all.filter(o=>matchesTown(o,q));
+    listEl.hidden=false;
+    if(filterCountEl){
+      filterCountEl.textContent=rows.length+' of '+all.length+' match \u201c'+q+'\u201d';
+    }
+    if(!rows.length){
       /* Three different facts, told apart: the town is in another state, the
          only distributor here blocks us, or nothing is out. The old version
          said one thing for all three. */
       listEl.innerHTML=searchVerdict(q,payload);
-      return;
-    }
-    if(!rows.length){
-      const reporting=(payload.networks||[]).filter(n=>n.ok);
-      listEl.innerHTML='<div class="inc-empty">'+(reporting.length
-        ?'No current electricity outages listed anywhere in Australia.'
-        :'No operator is reporting right now — this is not the same as there being no outages.')+
-        '</div>';
       return;
     }
     listEl.innerHTML=rows.map(o=>{
@@ -2344,12 +2318,12 @@ window.addEventListener('resize',()=>map.invalidateSize());
   function render(){
     const payload=national;
     if(!payload){
-      listEl.innerHTML='<div class="inc-empty" id="outageLoading">Loading current electricity outages…</div>';
-      summaryEl.innerHTML='';networksEl.innerHTML='';footEl.innerHTML='';
+      summaryEl.innerHTML='<span>Loading current electricity outages…</span>';
+      footEl.innerHTML='';
+      listEl.hidden=true;listEl.innerHTML='';
       return;
     }
     renderSummary(payload);
-    renderNetworks(payload);
     renderMap(payload);
     renderList(payload);
     renderFoot(payload);

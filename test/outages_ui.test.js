@@ -32,8 +32,14 @@ const check = (n, c, x) => {
     return p;
   };
   const rows = p => p.$$eval('#outageList .outage', els => els.map(e => e.innerText.replace(/\s+/g, ' ').trim()));
-  const chips = p => p.$$eval('#outageNetworks .outage-net', els =>
-    els.map(e => ({ text: e.innerText.replace(/\s+/g, ' ').trim(), down: e.classList.contains('down'), title: e.title })));
+  /* The panel only exists once a town has been searched -- the map is the
+     answer until then -- so a test that wants rows has to ask for them. A
+     blank term is not a search, so '' would show nothing. */
+  const searchRows = async (p, term) => {
+    await p.fill('#outageFilter', term);
+    await p.waitForTimeout(450);
+    return rows(p);
+  };
   const summary = p => p.$eval('#outageSummary', e => e.innerText.replace(/\s+/g, ' ').trim());
   const foot = p => p.$eval('#outageFoot', e => e.innerText.replace(/\s+/g, ' ').trim());
 
@@ -45,11 +51,18 @@ const check = (n, c, x) => {
     check('the state tabs are gone', await p.$$eval('#outageTabs .state-tab', e => e.length) === 0);
     check('the heading says it covers Australia',
       /Australia/.test(await p.$eval('.outage-heading', e => e.innerText)));
-    const r = await rows(p);
-    check('outage rows render', r.length === 6, r.length);
-    check('each row names its operator',
-      r.every(t => /Ausgrid|Endeavour Energy|Essential Energy/.test(t)), r);
-    check('customer numbers are formatted', r.some(t => /1,205 customers/.test(t)), r);
+    /* No list underneath any more: the map carries every outage and the
+       panel appears only for a searched town. */
+    check('no outage list is shown before a search',
+      await p.$eval('#outageList', e => e.hidden));
+    check('the operator chips are gone',
+      await p.$$eval('#outageNetworks .outage-net', e => e.length) === 0);
+    const dots = await p.$$eval('#outageMap .outage-dot', e => e.length);
+    check('the outages are on the map instead', dots > 0, dots);
+    /* Searching is what opens the panel. */
+    const r = await searchRows(p, 'Wyong');
+    check('searching a town opens the panel', r.length > 0, r);
+    check('the row names its operator', r.some(t => /Ausgrid|Endeavour|Essential/.test(t)), r);
     check('no page errors', p._errs.length === 0, p._errs);
     await p.close();
   }
@@ -57,35 +70,40 @@ const check = (n, c, x) => {
   console.log('\n== biggest outage first, planned work marked as such ==');
   {
     const p = await open('live');
-    const r = await rows(p);
+    /* 'o' matches most of the fixture's towns, which is what makes this a
+       test of ordering rather than of one row. */
+    const r = await searchRows(p, 'o');
+    check('more than one row comes back', r.length > 2, r.length);
     /* Ordering is the Worker's job -- it has the whole list and sorts once.
        What matters here is that the page renders that order rather than
-       quietly imposing its own. */
-    check('server order is preserved', /Penrith/.test(r[0]) && /Gosford/.test(r[r.length - 1]), r);
-    check('planned work carries a tag', /PLANNED/i.test(r.find(t => /Penrith/.test(t)) || ''), r[0]);
+       quietly imposing its own, so the assertion is on the order itself
+       rather than on which towns happen to contain the search letter. */
+    const counts = r.map(t => { const m = /([\d,]+) customers/.exec(t); return m ? Number(m[1].replace(/,/g, '')) : null; });
+    const withCounts = counts.filter(c => c !== null);
+    check('server order is preserved',
+      withCounts.every((c, i) => i === 0 || withCounts[i - 1] >= c), counts);
+    /* An unreported count sorts last and must not be read as zero. */
+    check('a row with no count comes last and shows none',
+      counts[counts.length - 1] === null, counts);
+
+    const pr = await searchRows(p, 'Penrith');
+    check('planned work carries a tag', /PLANNED/i.test(pr[0] || ''), pr);
     const planned = await p.$$eval('#outageList .outage.planned', e => e.length);
     check('and is styled apart from faults', planned === 1, planned);
-    /* A row with no reported count must not invent one. */
-    const gosford = r.find(t => /Gosford/.test(t));
-    check('a row with no count shows none', gosford && !/customers/.test(gosford), gosford);
     await p.close();
   }
 
   console.log('\n== an operator that is down stays visible ==');
   {
     const p = await open('partial');
-    const c = await chips(p);
-    /* Nationally every operator is listed, so the assertion is that the NSW
-       three are all still there -- an exact total would just track how many
-       states the fixture carries. */
-    check('every operator still has a chip',
-      ['Ausgrid', 'Endeavour', 'Essential'].every(n => c.some(x => x.text.includes(n))),
-      c.map(x => x.text));
-    const dead = c.filter(x => x.down);
-    check('the failing one is marked, not dropped', dead.length === 1 && /Essential/.test(dead[0].text), c);
-    check('its reason is on hover', /403/.test(dead[0].title), dead[0].title);
+    /* The per-operator chips are gone, so the coverage warning in the
+       summary bar is now the only thing standing between a short list and a
+       reader who thinks it is complete. It has to carry that weight. */
     check('the summary says the list is incomplete', /incomplete/i.test(await summary(p)), await summary(p));
-    check('the working operators still list outages', (await rows(p)).length === 5, (await rows(p)).length);
+    check('and counts how many are missing', /\d+ of \d+/.test(await summary(p)), await summary(p));
+    /* Four, not five: the partial scenario drops Essential Energy's row. */
+    check('the working operators still have their outages',
+      (await searchRows(p, 'o')).length === 4, (await searchRows(p, 'o')).length);
     await p.close();
   }
 
@@ -94,16 +112,9 @@ const check = (n, c, x) => {
     const p = await open('drift');
     check('the tile explains the gap', /didn.t recognise/i.test(await foot(p)), await foot(p));
     check('and names the operator', /Endeavour/.test(await foot(p)), await foot(p));
-    const c = await chips(p);
-    /* It must not read as quiet either: "none listed" on an operator whose
-       rows were dropped is the most misleading thing this tile could say. */
-    /* About the drifted operator specifically. Nationally, an operator in a
-       state with nothing out says "none listed" quite correctly -- the point
-       is that the one whose rows were dropped must not. */
-    const drift = c.find(x => /Endeavour/.test(x.text));
-    check('the chip says the data was unreadable, not \"none listed\"',
-      !!drift && /not readable/i.test(drift.text) && !/none listed/i.test(drift.text),
-      drift && drift.text);
+    /* It must not read as quiet either: silently dropping an operator's rows
+       is the most misleading thing this tile could do, and with the chips
+       gone the footnote above and the summary below are what prevent it. */
     check('and it counts against coverage in the summary',
       /incomplete/i.test(await summary(p)), await summary(p));
     await p.close();
@@ -112,50 +123,55 @@ const check = (n, c, x) => {
   console.log('\n== quiet and broken do not look the same ==');
   {
     const p = await open('quiet');
-    const t = await p.$eval('#outageList', e => e.innerText);
-    check('quiet says there are no outages', /No current electricity outages/i.test(t), t);
+    /* With nothing searched the panel stays shut, so a quiet day is told by
+       the summary and an empty map -- which is the honest way round: no dots
+       and "all networks reporting" says more than a sentence would. */
+    check('the panel stays shut when nothing is searched',
+      await p.$eval('#outageList', e => e.hidden));
+    check('the map has no dots', await p.$$eval('#outageMap .outage-dot', e => e.length) === 0);
     check('and does not warn about coverage', !/incomplete/i.test(await summary(p)), await summary(p));
+    /* Searching a real town on a quiet day gets the all-clear, not silence. */
+    const v = await (async () => { await p.fill('#outageFilter', 'Ballarat Central');
+      await p.waitForTimeout(450); return p.$eval('#outageList', e => e.innerText); })();
+    check('and a searched town gets an all-clear', /No current outage listed/i.test(v), v);
     await p.close();
 
+    /* Everything unreachable. The distinction that matters is unchanged:
+       a dashboard that cannot see must not render as one that sees nothing.
+       With the list gone, the summary bar is where that gets said. */
     const d = await open('down');
-    const dt = await d.$eval('#outageList', e => e.innerText);
-    check('an unreachable service says so instead',
-      /not reporting|couldn|not the same as there being no outages/i.test(dt), dt);
-    check('and never claims zero outages', !/No current electricity outages/i.test(dt), dt);
+    const ds = await d.$eval('#outageSummary', e => e.innerText.replace(/\s+/g, ' ').trim());
+    check('an unreachable service names the states that failed',
+      /did not load/i.test(ds), ds);
+    check('and does not claim every network is reporting',
+      !/networks are reporting/i.test(ds), ds);
     await d.close();
   }
 
   console.log('\n== "not connected yet" is not "unavailable" ==');
   {
     const p = await open('unconnected');
-    const c = await chips(p);
-    /* Nationally every operator is listed, so the assertion is that the NSW
-       three are all still there -- an exact total would just track how many
-       states the fixture carries. */
-    check('every operator still has a chip',
-      ['Ausgrid', 'Endeavour', 'Essential'].every(n => c.some(x => x.text.includes(n))),
-      c.map(x => x.text));
-    check('unconnected operators say so, not "unavailable"',
-      c.filter(x => /not connected yet/i.test(x.text)).length === 2, c.map(x => x.text));
-    check('and are not styled as a failure', c.filter(x => x.down).length === 0, c);
-    const s = await summary(p);
-    check('the summary distinguishes it from an outage',
-      /not connected yet/i.test(s) && !/not reporting/i.test(s), s);
-    check('their own map is still one click away',
-      await p.$$eval('#outageNetworks .outage-net a', els => els.every(a => /^https:\/\//.test(a.href))));
+    /* An operator we have never managed to read is a different claim from
+       one that has gone down, and the summary has to keep them apart now
+       that the chips are gone -- "not connected yet" says we have not built
+       the feed, "not reporting" says theirs is broken. */
+    const t = await summary(p);
+    check('unconnected operators say so, not "unavailable"', /not connected yet/i.test(t), t);
+    check('and are counted', /\d+ of \d+/.test(t), t);
     await p.close();
   }
 
   console.log('\n== an aggregator figures are labelled as such ==');
   {
     const p = await open('via');
-    const c = await chips(p);
-    const ee = c.find(x => /Essential/.test(x.text));
-    check('the chip names the source', /via Power Outages Australia/i.test(ee.text), c.map(x => x.text));
-    check('the footer explains why it is not the operator',
-      /third-party aggregator/i.test(await foot(p)) && /blocks/i.test(await foot(p)), await foot(p));
-    check('operators read directly carry no such label',
-      !/via /i.test(c.find(x => /Ausgrid/.test(x.text)).text), c.map(x => x.text));
+    /* Whose figures these are is the claim that must survive the chips being
+       removed: an aggregator is a second-hand account and the footnote is
+       now the only place that says so. */
+    const f = await foot(p);
+    check('the footer names the source', /Power Outages Australia/i.test(f), f);
+    check('and explains why it is not the operator',
+      /third-party aggregator/i.test(f) && /blocks/i.test(f), f);
+    check('and names which operator it applies to', /Essential/.test(f), f);
     await p.close();
   }
 
@@ -175,14 +191,13 @@ const check = (n, c, x) => {
   console.log('\n== a saved capture does not masquerade as live ==');
   {
     const p = await open('snapshot');
-    const c = await chips(p);
-    check('the chip marks it as a snapshot',
-      /snapshot/i.test(c.find(x => /Ausgrid/.test(x.text)).text), c.map(x => x.text));
     check('the age of the capture is on screen', /captured/i.test(await summary(p)), await summary(p));
     check('and the footer says how to refresh it',
       /scrape outages/i.test(await foot(p)), await foot(p));
-    check('operators fetched live carry no such mark',
-      !/snapshot/i.test(c.find(x => /Endeavour/.test(x.text)).text), c.map(x => x.text));
+    /* The footnote names only the captured operator; one fetched live must
+       not be swept into the same sentence. */
+    check('operators fetched live are not named as captured',
+      !/Endeavour/.test(await foot(p)), await foot(p));
     await p.close();
   }
 
@@ -265,33 +280,26 @@ const check = (n, c, x) => {
 
     await p.fill('#outageFilter', '');
     await p.waitForTimeout(250);
-    check('clearing the search restores the list', (await rows(p)).length > 3, (await rows(p)).length);
-    await p.close();
-  }
-
-  console.log('\n== an absorbed operator says where its rows went ==');
-  {
-    const p = await open('merged');
-    const c = await chips(p);
-    const ee = c.find(x => /Endeavour/.test(x.text));
-    check('it does not read as "none listed"', !/none listed/i.test(ee.text), ee.text);
-    check('it says which operator lists them', /listed under Ausgrid/i.test(ee.text), ee.text);
+    /* Clearing the box closes the panel and hands the map back -- there is
+       no list to restore. */
+    check('clearing the search closes the panel',
+      await p.$eval('#outageList', e => e.hidden));
     await p.close();
   }
 
   console.log('\n== an operator we cannot list, whose total is known ==');
   {
     const p = await open('totals');
-    const c = await chips(p);
-    const ee = c.find(x => /Essential/.test(x.text));
-    /* Saying "47 outages, no town detail" is true and useful. Saying nothing
-       about a network covering a whole state is neither. */
-    check('the operator total is shown', /47 outages/.test(ee.text), ee.text);
-    check('with the customers off', /3,067 customers off/.test(ee.text), ee.text);
-    check('and the gap named', /no town detail/i.test(ee.text), ee.text);
-    check('attributed to where it came from', /via Power Outages Australia/i.test(ee.text), ee.text);
-    check('it does not read as "blocks automated access"',
-      !/blocks automated access/i.test(ee.text), ee.text);
+    /* These figures used to sit on the per-operator chips. With those gone
+       the summary is the only place a whole state's customer count appears,
+       and losing it would quietly shrink the national picture. It stays
+       apart from the counted total: second-hand, and with no town behind
+       it. */
+    const t = await summary(p);
+    check('the operator total is still shown', /3,067 customers off/.test(t), t);
+    check('and is marked as having no town detail', /can.t list by town/i.test(t), t);
+    check('it is not folded into the counted total',
+      /\+ 3,067/.test(t), t);
     await p.close();
   }
 
@@ -302,13 +310,18 @@ const check = (n, c, x) => {
     /* The fixture gives NSW six rows and every other state none, so the
        national list is the NSW rows -- but arrived at by merging eight
        requests rather than by selecting a tab. */
-    const r = await rows(p);
-    check('rows from every state land in one list', r.length === 6, r.length);
-    const chips = await p.$$eval('.outage-net', els => els.map(e => e.innerText.trim()));
-    /* Sixteen operators in one row need to say which state they cover, or
-       the list is a wall of names. */
-    check('operator chips name their state', chips.some(c => /^(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\b/.test(c)), chips.slice(0, 4));
-    check('and every state\'s operators are listed', chips.length > 6, chips.length);
+    /* Every state's rows reach one map. The fixture gives NSW six outages
+       across nine towns and the rest nothing, so the dots are the NSW towns
+       -- but arrived at by merging eight requests rather than by selecting a
+       tab. */
+    const dots = await p.$$eval('#outageMap .outage-dot', e => e.length);
+    check('rows from every state land on one map', dots > 0, dots);
+    const r = await searchRows(p, 'o');
+    check('and one searchable list', r.length > 2, r.length);
+    /* Coverage is national now, so the summary counts every operator in the
+       country rather than one state's two or three. */
+    const t = await summary(p);
+    check('coverage is counted nationally', /\d+ of (1[0-9]|[89])\b/.test(t) || !/of \d+/.test(t), t);
     await p.close();
   }
 
@@ -411,8 +424,10 @@ const check = (n, c, x) => {
     await p.waitForTimeout(1200);
     const note = await p.$eval('#outageMapNote', e => e.innerText);
     check('the map admits the lookup failed', /unavailable/i.test(note), note);
-    const rowCount = (await rows(p)).length;
-    check('the list still carries every outage', rowCount > 0, rowCount);
+    /* The list is search-scoped now, so the check is that the outages are
+       still reachable -- not that they are sitting on screen. */
+    const rowCount = (await searchRows(p, 'o')).length;
+    check('the outages are still all reachable', rowCount > 0, rowCount);
     await p.close();
   }
 

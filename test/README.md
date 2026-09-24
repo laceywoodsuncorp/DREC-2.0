@@ -10,7 +10,15 @@ happen again.
 node test/worker_outages.test.mjs
 node test/nt_incidents.test.mjs
 node test/scrape_trigger.test.mjs
+node test/build_stamp.test.mjs
 ```
+
+`build_stamp` compares `WORKER_BUILD` in `src/worker.js` with
+`EXPECTED_WORKER_BUILD` in the page. They live in different files that deploy
+together, and bumping one without the other makes the dashboard tell its
+reader to redeploy a Worker that is perfectly current — which is what it did
+for seven builds. A warning that fires when nothing is wrong gets the next
+real one ignored too.
 
 `fetch` and the Cache API are stubbed, so these assert what the Worker does
 with a given response rather than whether any operator is up — which matters,
