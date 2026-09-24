@@ -1,389 +1,654 @@
 {
-  "capturedAt": 1790244549251,
-  "direct": {
-    "IYPO providers": {
-      "url": "https://api.isyourpowerout.com/api/meta/providers",
-      "status": 200,
-      "type": "application/json",
-      "bytes": 1843,
-      "skeleton": {
-        "items": "array[11] of [object Object]"
-      },
-      "envelope": "rows at items",
-      "records": 11,
-      "sample": {
-        "id": "2",
-        "shortCode": "ausgrid",
-        "name": "Ausgrid",
-        "state": "NSW",
-        "apiType": "JSON",
-        "isActive": "true",
-        "lastSuccessfulIngestion": "2026-05-14T10:47:21.4447742Z"
-      }
+  "capturedAt": 1790292992784,
+  "pages": {
+    "nsw/Endeavour Energy": {
+      "title": "Current power outages | Endeavour Energy",
+      "tables": 1,
+      "text": "Skip to main content\nEnable accessibility for low vision\nOpen the accessibility menu\nPower outages\nFor your home\nOur network\nAbout us\nOutage map\nSearch\nReport an outage\nReport a streetlight fault\nOutage list\nTYPE\nUnplanned outages\nCurrent maintenance\nFuture maintenance\nMAP DETAIL\nStreetlight\nPower pole\nElectricity box or site\nHome or business meter (NMI)\nCommunity battery\nOutage Disclaimer\nKeyboard shortcuts\nMap data ©2026 Google\nTerms\n\nActive outages:\n\n4\n\nAffected customers:\n\n1,219\n\nWe're preparing the network for bushfire season\n\nAs part of our ongoing commitment to safety and reliability, our crews are undertaking vegetation management works near powerlines to help reduce bushfire risk and strengthen network resilience. Temporary power outages may be required to carry out this work safely, and affected customers will be notified in advance wherever possible.\n\nFind out more\n\nEmergencies & assistance\n\n131 003\n\nInterpreter services\n\n131 450\n\nContact us\nAcknowledgement of Country\n\nEndeavour Energy respectfully acknowledges the Traditional Custodians on whose lands we live, work, and operate and their Elders past and present.\n\nCopyright © Endeavour Energy 2026. All rights reserved. - \nPrivacy and disclaimer - Sitemap\nMedical needs\nNeed help?",
+      "candidates": [
+        {
+          "tag": "div",
+          "cls": "map-container component-content",
+          "children": 7,
+          "labelledChildren": 4,
+          "firstChild": ""
+        },
+        {
+          "tag": "div",
+          "cls": "",
+          "children": 3,
+          "labelledChildren": 3,
+          "firstChild": "Outage map"
+        },
+        {
+          "tag": "div",
+          "cls": "prod-mode",
+          "children": 5,
+          "labelledChildren": 2,
+          "firstChild": "Power outages\nFor your home\nOur network\nAbout us"
+        },
+        {
+          "tag": "div",
+          "cls": "component navigation",
+          "children": 4,
+          "labelledChildren": 2,
+          "firstChild": ""
+        },
+        {
+          "tag": "div",
+          "cls": "jsx-1f662a9bd1aca108 responsive-modal",
+          "children": 7,
+          "labelledChildren": 2,
+          "firstChild": ""
+        }
+      ]
     },
-    "IYPO ingestion status": {
-      "url": "https://api.isyourpowerout.com/api/ingestion/status",
-      "status": 200,
-      "type": "application/json",
-      "bytes": 4199,
-      "skeleton": {
-        "providers": "array[10] of [object Object]"
-      },
-      "envelope": "rows at providers",
-      "records": 10,
-      "sample": {
-        "key": "energex",
-        "displayName": "Energex",
-        "enabled": "true",
-        "unplannedIntervalMs": "300000",
-        "plannedIntervalMs": "300000",
-        "lastUnplannedRefreshAt": "2026-09-24T10:07:30.850280664Z",
-        "lastPlannedRefreshAt": "2026-09-24T10:07:30.850280664Z",
-        "unplannedLastError": "null",
-        "plannedLastError": "null",
-        "outagesUnplannedCount": "0",
-        "outagesPlannedCount": "5662",
-        "unplannedRefreshedThisSession": "true",
-        "plannedRefreshedThisSession": "true"
-      }
+    "nsw/Essential Energy": {
+      "title": "Just a moment...",
+      "tables": 0,
+      "text": "www.essentialenergy.com.au\nPerforming security verification\n\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.\n\nRay ID: a40598db1d0a28b3\nPerformance and Security by Cloudflare\nPrivacy",
+      "candidates": []
     },
-    "IYPO outages": {
-      "url": "https://api.isyourpowerout.com/api/outages",
-      "status": 200,
-      "type": "application/json",
-      "bytes": 342501,
-      "skeleton": {
-        "items": "array[200] of [object Object]",
-        "total": "number"
-      },
-      "envelope": "rows at items",
-      "paging": {
-        "total": 27408
-      },
-      "records": 200,
-      "sample": {
-        "id": "59e2df4e-0880-376a-871a-07a5b2d0987f",
-        "provider": "OBJECT {\"name\":\"Ergon Energy\",\"id\":4,\"state\":\"QLD\",\"shortCode\":\"ERGON\"}",
-        "state": "QLD",
-        "title": "Ergon outage",
-        "description": "The loss of supply is due to the operating of protective equipment.",
-        "status": "ACTIVE",
-        "type": "UNPLANNED",
-        "customersAffected": "179",
-        "startTime": "2026-09-24T19:20:00Z",
-        "estimatedRestoreTime": "null",
-        "lastUpdated": "2026-09-24T10:08:55.6961661Z",
-        "centroid": "OBJECT {\"lat\":-22.160846,\"lng\":144.590032}",
-        "geometry": "null"
-      }
+    "nsw/Essential Energy (via)": {
+      "title": "Essential Energy power outages — current outage map and status",
+      "tables": 0,
+      "text": "Skip to content\nOutage map\nMy distributor\nSee it work\nContact us\n+61 3 7068 5441\nCheck outages\nMenu\nHome / Outage map / Essential Energy\nEssential Energy power outages\n\nNSW · QLD · 3,738 suburbs covered\n\nEssential Energy has 50 outages right now\n\n50\n\nactive outages\n\n3,091\n\ncustomers off supply\n\n10\n\nplanned jobs ahead\n\nChecked Fri 9:33 am · updates continuously\n\nAbout Essential Energy\n\nEssential Energy is the electricity distribution network for parts of NSW, QLD — it owns and maintains the poles, wires and substations that carry power to roughly 3,738 suburbs we track. It is not an energy retailer: which distributor serves you is decided by your address, not by the company that bills you.\n\nWe collect Essential Energy's publicly published outage information continuously and show it alongside the other connected networks, so you do not have to know whose network you are on before you can find out whether your power is out. Essential Energy remains the authority on its own network.\n\nSuburbs supplied by Essential Energy\n\nEach links to that suburb's current outage status.\n\nAarons Pass\nAbercrombie\nAbercrombie River\nAberfoyle\nAberglasslyn\nAbington\nAcacia Creek\nAcacia Park\nAcacia Plateau\nAdaminaby\nAdelong\nAdjungbilly\nAfterlee\nAkolele\nAlbert\nAlbury\nAldavilla\nAlectown\nAlfredtown\nAlice\nAlice\nAlison\nAllandale\nAlleena\nAllgomera\nAllgomera Creek\nAllworth\nAllynbrook\nAlma Park\nAlstonvale\nAlstonville\nAlumy Creek\nAmaroo\nAmiens\nAmiens\nAmmerdown\nAmosfield\nAnabranch North\nAnabranch South\nAnambah\nAndo\nAnembo\nAngledale\nAngledool\nAngledool\nAnglers Reach\nAngourie\nApple Tree Flat\nAppleby\nApsley\nArable\nArakoon\nAraluen\nAraluen North\nAratula\nArdglen\nArding\nArdlethan\nArgalong\nArgents Hill\nArgoon\nArgyle\nAriah Park\nArkell\nArkstone\nArmatree\nArmatree\nArmidale\nArmidale East\nArrawarra\nArrawarra Headland\nArthurville\nArumpo\nAshby\nAshby Heights\nAshby Island\nAshford\nAshley\nAshmont\nAshville\nAtholwood\nAttunga\nAuburn Vale\nAurville\nAustral Eden\nAvisford\nAvonside\nBaan Baa\nBabinda\nBabyl Creek\nBack Creek\nBack Creek\nBack Creek\nBack Creek\nBack Creek\nBack Creek\nBack Creek\nBack Creek\nBackmede\nBackwater\nBadja\nBagnoo\nBago\nBago\nBagotville\nBakers Creek\nBakers Creek\nBakers Creek\nBakers Creek\nBakers Swamp\nBalala\nBald Blair\nBald Hills\nBald Nob\nBald Ridge\nBaldersleigh\nBaldry\nBalfours Peak\nBalickera\nBalladoran\nBalladoran\nBallalaba\nBallandean\nBallard\nBalldale\nBallengarra\nBallimore\nBallina\nBallyroe\nBalranald\nBanda Banda\nBandon\nBandon Grove\nBangadang\nBangalow\nBangheet\nBango\nBannaby\nBannister\nBanoon\nBanora Point\nBanyabba\nBanyabba\nBapaume\nBara\nBaradine\nBaraimal\nBarbigal\nBarcoongere\nBarellan\nBarham\nBarigan\nBarkers Vale\nBarmedman\nBarneys Reef\nBarooga\nBarraba\nBarraganyatti\nBarragga Bay\nBarratta\nBarren Grounds\nBarrengarry\nBarretts Creek\nBarrington\nBarrington Tops\nBarringun\nBarry\nBarry\nBarwang\nBarwon\nBaryulgil\nBasin Plain\nBassendean\nBatar Creek\nBatehaven\nBatemans Bay\nBathampton\nBathurst\nBathurst West\nBatlow\nBaw Baw\nBawley Point\nBaxters Ridge\nBayldon\nBean Creek\nBearbong\nBeargamil\nBeaumont\nBeaury Creek\nBeauty Point\nBeckom\nBective\nBectric\nBedgerabong\nBedgerebong\nBeebo\nBeechwood\nBeelbangera\nBeemunnel\nBega\nBeggan Beggan\nBegonia\nBeilpajah\nBelanglo\nBelbora\nBelfrayden\nBelgravia\nBellangry\nBellata\nBellbrook\nBellimbopinni\nBellingen\nBellmount Forest\nBelltrees\nBelmore River\nBeloka\nBeloon\nBelowra\nBemboka\nBen Buckley\nBen Bullen\nBen Lomond\nBen Venue\nBenandarah\nBenanee\nBenarca\nBendalong\nBendeela\nBendemeer\nBendick Murrell\nBendolba\nBendoura\nBeneree\nBenerembah\nBeni\nBenolong\nBentley\nBergalia\nBerlang\nBermagui\nBermagui South\nBer",
+      "candidates": [
+        {
+          "tag": "div",
+          "cls": "relative mx-auto flex max-w-6xl items-center justify-between",
+          "children": 4,
+          "labelledChildren": 3,
+          "firstChild": ""
+        },
+        {
+          "tag": "section",
+          "cls": "mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10",
+          "children": 4,
+          "labelledChildren": 3,
+          "firstChild": "Home / Outage map / Essential Energy"
+        },
+        {
+          "tag": "div",
+          "cls": "space-y-8",
+          "children": 4,
+          "labelledChildren": 3,
+          "firstChild": "(()=>{var e=async t=>{await(await t())()};(self.Astro||(self.Astro={})).load=e;window.dispatchEvent(new Event(\"astro:load\"));})();"
+        },
+        {
+          "tag": "div",
+          "cls": "mx-auto max-w-6xl px-4 py-10 sm:px-6",
+          "children": 3,
+          "labelledChildren": 3,
+          "firstChild": "Power Outages Australia\n\nOutage information from Australian electricity distributors in one place — on the web, by chat, or by phone. Always free for customers.\n\nSITE\nHome\nOutage m"
+        },
+        {
+          "tag": "div",
+          "cls": "grid gap-8 sm:grid-cols-2 lg:grid-cols-4",
+          "children": 4,
+          "labelledChildren": 3,
+          "firstChild": "Power Outages Australia\n\nOutage information from Australian electricity distributors in one place — on the web, by chat, or by phone. Always free for customers."
+        }
+      ]
     },
-    "IYPO outages unplanned": {
-      "url": "https://api.isyourpowerout.com/api/outages/unplanned",
-      "status": 400,
-      "type": "application/json",
-      "bytes": 112,
-      "head": "{\"timestamp\":\"2026-09-24T10:09:00.927+00:00\",\"status\":400,\"error\":\"Bad Request\",\"path\":\"/api/outages/unplanned\"}"
+    "qld/Energex": {
+      "title": "Just a moment...",
+      "tables": 0,
+      "text": "www.energex.com.au\nPerforming security verification\n\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.\n\nRay ID: a405998f0e2e1e27\nPerformance and Security by Cloudflare\nPrivacy",
+      "candidates": []
     },
-    "IYPO outages list": {
-      "url": "https://api.isyourpowerout.com/api/outages/list",
-      "status": 400,
-      "type": "application/json",
-      "bytes": 107,
-      "head": "{\"timestamp\":\"2026-09-24T10:09:01.214+00:00\",\"status\":400,\"error\":\"Bad Request\",\"path\":\"/api/outages/list\"}"
+    "qld/Energex (via)": {
+      "title": "EnergexOutagePoint - Overview",
+      "tables": 0,
+      "text": "Skip to content\nOverview\nPricing\nMap\nScene\nHelp\nSign In\nEnergexOutagePoint\nOpen in Map Viewer\n\nLink to Energex outages - points\n\nItem updated: 5 June 2023\n\nAn in-depth description of the item is not available.\n\nNo special restrictions or limitations on using the item's content have been provided.\n\nOpen in Map Viewer\nOpen in Scene Viewer\nView metadata\nOwner\nDetails\nView count\n3,705,969\nSource\nFeature service\nURL\nCategories\nPower\nTags\nFlood\nBrisbane City Council\nBrisbane Flood\nEnergex\nOutage\nPower\nSharing\nAcknowledgments\n\nNo source acknowledged.\n\nHelp\nFeature layers\nFeature layers (developer)\nTrust CenterLegalContact EsriReport Abuse",
+      "candidates": [
+        {
+          "tag": "div",
+          "cls": "flex flex-col w-full bg-background",
+          "children": 5,
+          "labelledChildren": 2,
+          "firstChild": "EnergexOutagePoint"
+        },
+        {
+          "tag": "div",
+          "cls": "flex flex-col min-h-screen h-auto",
+          "children": 6,
+          "labelledChildren": 1,
+          "firstChild": "Skip to content"
+        },
+        {
+          "tag": "div",
+          "cls": "item-pane-container w-full",
+          "children": 4,
+          "labelledChildren": 1,
+          "firstChild": "Open in Map Viewer\n\nLink to Energex outages - points\n\nItem updated: 5 June 2023\n\nAn in-depth description of the item is not available.\n\nNo special restrictions or limitations on us"
+        },
+        {
+          "tag": "div",
+          "cls": "max-w-[20rem] basis-[24vw] p-6 bg-foreground-1",
+          "children": 8,
+          "labelledChildren": 1,
+          "firstChild": "Open in Map Viewer\nOpen in Scene Viewer\nView metadata"
+        },
+        {
+          "tag": "div",
+          "cls": "flex gap-2 flex-wrap text-0 l:text-n1 word-break",
+          "children": 6,
+          "labelledChildren": 1,
+          "firstChild": "Flood"
+        }
+      ]
     },
-    "IYPO openapi": {
-      "url": "https://api.isyourpowerout.com/swagger/v1/swagger.json",
-      "status": 404,
-      "type": "application/json",
-      "bytes": 112,
-      "head": "{\"timestamp\":\"2026-09-24T10:09:01.444+00:00\",\"status\":404,\"error\":\"Not Found\",\"path\":\"/swagger/v1/swagger.json\"}"
+    "qld/Ergon Energy": {
+      "title": "Just a moment...",
+      "tables": 0,
+      "text": "www.ergon.com.au\nPerforming security verification\n\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.\n\nRay ID: a4059a5e6c83619f\nPerformance and Security by Cloudflare\nPrivacy",
+      "candidates": []
     },
-    "IYPO openapi alt": {
-      "url": "https://api.isyourpowerout.com/openapi.json",
-      "status": 404,
-      "type": "application/json",
-      "bytes": 101,
-      "head": "{\"timestamp\":\"2026-09-24T10:09:01.675+00:00\",\"status\":404,\"error\":\"Not Found\",\"path\":\"/openapi.json\"}"
+    "qld/Ergon Energy (via)": {
+      "title": "Energex & Ergon Current Outages - Overview",
+      "tables": 0,
+      "text": "Skip to content\nOverview\nPricing\nMap\nScene\nHelp\nSign In\nEnergex & Ergon Current Outages\nOpen in Map Viewer\n\nEnergex & Ergon Current Outages\n\nItem updated: 8 Mar 2025\n\nAn in-depth description of the item is not available.\n\nContents\nItems used\n\nLayers\n\nQSpatial Queensland Local Government Areas\nFeature layer\nEnergex Current Outage Areas\nFeature layer\nErgon Current Outage Areas\nFeature layer\n\nBasemap\n\nTopographic\nBasemap\nWorld Topographic Map\nVector tile layer\nWorld Hillshade\nTile layer\n\nNo special restrictions or limitations on using the item's content have been provided.\n\nSign in to add a comment.\nOpen in Map Viewer\nView metadata\nOwner\nDetails\nView count\n3,475\nCoordinate system\n\nWGS 1984 Web Mercator (auxiliary sphere)3857\n\nSize\n6.138 KB\nCategories\nUtilities and communication\nTags\nQLD\nEnergex\nErgon\nOutages\nSharing\nAcknowledgments\n\nNo source acknowledged.\n\nHelp\nWeb maps\nWeb maps (developer)\nTrust CenterLegalContact EsriReport Abuse",
+      "candidates": [
+        {
+          "tag": "div",
+          "cls": "flex flex-col w-full bg-background",
+          "children": 5,
+          "labelledChildren": 2,
+          "firstChild": "Energex & Ergon Current Outages"
+        },
+        {
+          "tag": "div",
+          "cls": "flex flex-col min-h-screen h-auto",
+          "children": 6,
+          "labelledChildren": 1,
+          "firstChild": "Skip to content"
+        },
+        {
+          "tag": "div",
+          "cls": "item-pane-container w-full",
+          "children": 4,
+          "labelledChildren": 1,
+          "firstChild": "Open in Map Viewer\n\nEnergex & Ergon Current Outages\n\nItem updated: 8 Mar 2025\n\nAn in-depth description of the item is not available.\n\nContents\nItems used\n\nLayers\n\nQSpatial Queensla"
+        },
+        {
+          "tag": "div",
+          "cls": "max-w-[20rem] basis-[24vw] p-6 bg-foreground-1",
+          "children": 8,
+          "labelledChildren": 1,
+          "firstChild": "Open in Map Viewer\nView metadata"
+        },
+        {
+          "tag": "div",
+          "cls": "flex gap-2 flex-wrap text-0 l:text-n1 word-break",
+          "children": 4,
+          "labelledChildren": 1,
+          "firstChild": "QLD"
+        }
+      ]
     },
-    "Evoenergy CSV": {
-      "url": "https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages",
-      "status": 200,
-      "type": "text/csv",
-      "bytes": 7518,
-      "lines": 45,
-      "headerRow": "Outage Id,Type,Status Description,Planned Start,Planned Restoration,Actual Start,Expected Restoration,Actual End,Affected Customer Count,Affected Suburbs,Reason",
-      "sampleRows": [
-        "SP 151024379,planned,Cancelled,9/23/2026 8:15:00 AM,9/23/2026 12:15:00 PM,,,,34,GIRALANG,",
-        "SP 151024261,planned,Cancelled,9/24/2026 8:00:00 AM,9/24/2026 4:00:00 PM,,,,41,CHISHOLM,"
-      ],
-      "distinct": {
-        "Type": [
-          "planned",
-          "unplanned"
-        ],
-        "Status Description": [
-          "Cancelled",
-          "Scheduled",
-          "Our crews are on their way to investigat",
-          "Restored",
-          "Completed"
-        ],
-        "Actual Start": [
-          "9/18/2026 9:23:00 AM",
-          "9/22/2026 7:33:00 PM",
-          "9/23/2026 7:39:00 AM",
-          "9/23/2026 8:02:00 AM",
-          "9/23/2026 8:55:00 AM",
-          "9/23/2026 9:06:00 AM",
-          "9/23/2026 9:31:00 AM",
-          "9/23/2026 9:47:00 AM",
-          "9/24/2026 8:02:00 AM",
-          "9/24/2026 8:29:00 AM",
-          "9/24/2026 8:43:00 AM",
-          "9/24/2026 8:45:00 AM",
-          "9/24/2026 10:21:00 AM",
-          "9/24/2026 12:32:00 PM"
-        ],
-        "Expected Restoration": [
-          "11/13/2026 4:00:00 PM",
-          "9/22/2026 10:58:00 PM",
-          "9/25/2026 4:00:00 PM",
-          "9/23/2026 1:00:00 PM",
-          "9/23/2026 4:00:00 PM",
-          "9/23/2026 2:00:00 PM",
-          "9/24/2026 4:00:00 PM",
-          "9/24/2026 12:30:00 PM"
-        ],
-        "Actual End": [
-          "9/22/2026 8:45:00 PM",
-          "9/23/2026 12:38:00 PM",
-          "9/23/2026 1:24:00 PM",
-          "9/23/2026 3:27:00 PM",
-          "9/23/2026 1:10:00 PM",
-          "9/23/2026 12:21:00 PM",
-          "9/23/2026 4:43:00 PM",
-          "9/24/2026 10:36:00 AM",
-          "9/24/2026 10:07:00 AM",
-          "9/24/2026 1:24:00 PM",
-          "9/24/2026 9:55:00 AM",
-          "9/24/2026 11:00:00 AM",
-          "9/24/2026 2:25:00 PM"
-        ],
-        "Reason": [
-          "We are carrying out essential maintenanc",
-          "YARRALUMLA\"",
-          "JERRABOMBERRA",
-          "STROMLO\"",
-          "STIRLING\""
-        ]
-      }
-    },
-    "Western Power own API": {
-      "url": "https://www.westernpower.com.au/api/corp/outage/all-outages",
-      "status": 200,
-      "type": "application/json; charset=utf-8",
-      "bytes": 47712,
-      "skeleton": "array[164] of [object Object]",
-      "envelope": "rows at (root)",
-      "records": 164,
-      "sample": {
-        "outageId": "INCD-202534-X",
-        "outageType": "F",
-        "startTime": "20260925T073000+08:00",
-        "restorationTime": "20260925T153000+08:00",
-        "onMap": "true",
-        "outageUpdatedTime": "20260915T160032+00:00",
-        "affectedCustomers": "177",
-        "areas": "OBJECT [\"EMBLETON\",\"BAYSWATER\"]",
-        "latitudeCentroid": "-31.90726",
-        "longitudeCentroid": "115.90907"
-      }
-    },
-    "TasNetworks OData": {
-      "url": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages",
-      "status": 200,
-      "type": "application/json; charset=utf-8",
-      "bytes": 2,
-      "skeleton": "array[0] of empty",
-      "envelope": "rows at (root)",
-      "records": 0
+    "vic/AusNet Services": {
+      "title": "Outages - AusNet",
+      "tables": 0,
+      "text": "About us\nNews\nCareers\nContact\nCommunity Hub\nEnergyConnect\nmyHomeEnergy\nAccessibility tools\nElectricity\nGas\nRenewables\nOutages\nSafety\nProjects and innovation\nHome\nOutages\n\nGet the latest updates on planned and unplanned outages and access support resources.\n\nVisit Outage Tracker\nOutage Tracker\nCheck Outage Tracker for real-time updates, outage locations and when your power is expected to be restored.\nVisit Outage Tracker\nReport a fault\nReport a fault\nIf your power’s out and it’s not listed on Outage Tracker, report the fault online so we can investigate.\nReport a fault\nManage your notifications\nManage your outage notifications\nReceive unplanned outage alerts by SMS, email or both.\nManage your notifications\nPrepare for a power outage\nPrepare for a power outage\nPrepare your home or business for outages with advice on safety and staying informed.\nPrepare for a power outage\nRead our power outage tips\nTips during a power outage\nRead tips for staying safe, managing food and keeping warm or cool during a power outage.\nRead our power outage tips\nLearn about planned outages\nPlanned outages\nLearn why planned outages happen, how we schedule them and what might cause delays.\nLearn about planned outages\nAbout unplanned outages\nUnplanned outages\nLearn how we restore power safely and keep you updated during unplanned outages.\nAbout unplanned outages\nPrepare for a gas outage\nPrepare for a gas outage\nLearn how to prepare for planned and unplanned gas outages and how we restore supply.\nPrepare for a gas outage\nRegister as a life support customer\nLife support customers\nIf you rely on life support equipment, learn how to register, get outage alerts and prepare for power interruptions.\nRegister as a life support customer\nLodge a claim with us\nClaims\nIf a voltage variation damaged your equipment, you may be eligible for compensation.\nLodge a claim with us\nGet in touch\n\nCan’t find what you’re looking for?\nOr want to talk to us?\n\nContact us\nPrivacy\nSitemap\nTerms of use\n\nWe acknowledge Aboriginal people as the Traditional Custodians of the land. We pay respects to Elders past, present and emerging.\n\nFeedback",
+      "candidates": [
+        {
+          "tag": "div",
+          "cls": "article-tiles__grid grid-cols-3",
+          "children": 10,
+          "labelledChildren": 9,
+          "firstChild": "Visit Outage Tracker\nOutage Tracker\nCheck Outage Tracker for real-time updates, outage locations and when your power is expected to be restored.\nVisit Outage Tracker"
+        },
+        {
+          "tag": "div",
+          "cls": "",
+          "children": 3,
+          "labelledChildren": 2,
+          "firstChild": "About us\nNews\nCareers\nContact\nCommunity Hub\nEnergyConnect\nmyHomeEnergy\nAccessibility tools\nElectricity\nGas\nRenewables\nOutages\nSafety\nProjects and innovation\nHome\nOutages\n\nGet the l"
+        },
+        {
+          "tag": "div",
+          "cls": "header-container",
+          "children": 3,
+          "labelledChildren": 2,
+          "firstChild": "About us\nNews\nCareers\nContact\nCommunity Hub\nEnergyConnect\nmyHomeEnergy\nAccessibility tools\nElectricity\nGas\nRenewables\nOutages\nSafety\nProjects and innovation"
+        },
+        {
+          "tag": "div",
+          "cls": "article-tile article-tile--link",
+          "children": 3,
+          "labelledChildren": 2,
+          "firstChild": "Visit Outage Tracker"
+        },
+        {
+          "tag": "div",
+          "cls": "article-tile article-tile--link",
+          "children": 3,
+          "labelledChildren": 2,
+          "firstChild": "Prepare for a power outage"
+        }
+      ]
     }
   },
-  "agencies": {
-    "feeds": {
-      "Emergency WA incidents": {
-        "url": "https://www.emergency.wa.gov.au/data/incident_FCAD.json",
+  "endpoints": {
+    "nsw/Ausgrid": [
+      {
+        "url": "https://siteintercept.qualtrics.com/WRSiteInterceptEngine/Targeting.php?Q_ZoneID=ZN_9pFRxqDdjxXobDD&Q_CLIENTVERSION=2.58.0&Q_CLIENTTYPE=web",
         "status": 200,
-        "bytes": 1810,
-        "mentionsOutage": false
+        "type": "application/json",
+        "method": "POST",
+        "envelope": "wrapped:ClientSideIntercepts",
+        "records": 6,
+        "keys": [
+          "InterceptID",
+          "Name",
+          "Active",
+          "RandomizedActionSets",
+          "InterceptRevision",
+          "PreventRepeatedDisplay",
+          "HideOnLocalStorageDisabled",
+          "HideOnCookiesDisabled",
+          "LogicTree",
+          "ActionSets",
+          "ContactID",
+          "DistributionID",
+          "DirectoryID",
+          "ContactFrequencyRulesEnabled"
+        ]
       },
-      "Emergency WA all": {
-        "url": "https://www.emergency.wa.gov.au/data/all_incidents.json",
+      {
+        "url": "https://www.ausgrid.com.au/outages-list",
         "status": 200,
-        "bytes": 1810,
-        "mentionsOutage": false
+        "type": "text/html; charset=utf-8",
+        "method": "GET"
       },
-      "SecureNT alerts": {
-        "url": "https://securent.nt.gov.au/alerts-warnings",
-        "status": 403,
-        "bytes": 5582,
-        "mentionsOutage": false
-      },
-      "Alert SA": {
-        "url": "https://www.alert.sa.gov.au/",
+      {
+        "url": "https://www.google-analytics.com/j/collect?v=1&_v=j102&a=1697510870&t=pageview&_s=1&dl=https%3A%2F%2Fwww.ausgrid.com.au%2Foutages-list&ul=en-au&dt=Outages%20List%20View&sr=1400x1200&vp=1400x1200&_u=IEBAAEABAAAAACAAI~&jid=1795900291&gjid=1900533426&cid=36029824.1790292807&tid=UA-12538597-1&_gid=524900969.1790292807&_r=1&_slc=1&z=1207031302",
         "status": 200,
-        "bytes": 51600,
-        "mentionsOutage": false
+        "type": "text/plain",
+        "method": "POST"
       },
-      "NSW Reconstruction/Resilience hub": {
-        "url": "https://www.nsw.gov.au/emergency",
+      {
+        "url": "https://aopt-p-001.sitecorecontenthub.cloud/api/public/content/181f2d1dd8384f0e9588997057dad8f2?v=670d6d66",
         "status": 200,
-        "bytes": 173394,
-        "mentionsOutage": false
+        "type": "image/svg+xml",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.ausgrid.com.au/_next/data/soltJlfE17kRXWkFnDvvO/en/outages.json?path=outages",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "GET",
+        "bodyError": "Unterminated string in JSON at position 200000 (line 1 column 200001)"
+      },
+      {
+        "url": "https://edge-platform.sitecorecloud.io/v1/content/api/graphql/v1?sitecoreContextId=9xy9fD03kmWeBAfelx6t0",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "POST",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-1XHXZW1HEK&gtm=45je69n1v898093601za20ozb6840610zd6840610xf1&_p=1790292807165&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=36029824.1790292807&frm=0&ngs=1&pscdl=noapi&rcb=6&sr=1400x1200&uaa=x86&uab=64&uafvl=HeadlessChrome%3B153.0.8010.12%7CNot_A%2520Brand%3B8.0.0.0%7CChromium%3B153.0.8010.12&uam=&uamb=0&uap=Linux&uapv=&uaw=0&ul=en-au&_s=1&tag_exp=115938466~115938468~118897920~118897930~119793973~120213116~120385422~120469145~120469153~121280971&sid=1790292808&sct=1&seg=0&dl=https%3A%2F%2Fwww.ausgrid.com.au%2Foutages-list&dt=Outages%20List%20View&en=page_view&_fv=1&_ss=1&ep.content_group=Power%20Outages&ep.timestamp=9%3A33&tfd=1871",
+        "status": 204,
+        "type": "text/plain",
+        "method": "POST"
+      },
+      {
+        "url": "https://edge-platform.sitecorecloud.io/v1/events/v1.2/browser/create.json?sitecoreContextId=9xy9fD03kmWeBAfelx6t0&client_key=",
+        "status": 201,
+        "type": "application/json",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.ausgrid.com.au/api/search/taxonomies",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "POST",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://www.ausgrid.com.au/api/csp-report",
+        "status": 204,
+        "type": "",
+        "method": "POST"
+      },
+      {
+        "url": "https://siteintercept.qualtrics.com/WRSiteInterceptEngine/Asset.php?Module=CR_2crr9fbZRkfimCW&Version=7&Q_InterceptID=SI_3V6F4mYnmfWEFiC&Q_ORIGIN=https://www.ausgrid.com.au&Q_CLIENTVERSION=2.58.0&Q_CLIENTTYPE=web&Q_BrandTier=RQqcwhV2J1&Q_ARCACHEVERSION=21&Q_BRANDDC=syd1",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://siteintercept.qualtrics.com/WRSiteInterceptEngine/Asset.php?Module=SI_3V6F4mYnmfWEFiC&Version=13&Q_ORIGIN=https://www.ausgrid.com.au&Q_CLIENTVERSION=2.58.0&Q_CLIENTTYPE=web&Q_BrandTier=RQqcwhV2J1&Q_ARCACHEVERSION=21&Q_BRANDDC=syd1",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-1XHXZW1HEK&gtm=45je69n1v898093601z86840610za20gzb6840610zd6840610xf1&_p=1790292807165&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAAQ&cid=36029824.1790292807&frm=0&ngs=1&pscdl=noapi&rcb=6&sr=1400x1200&uaa=x86&uab=64&uafvl=HeadlessChrome%3B153.0.8010.12%7CNot_A%2520Brand%3B8.0.0.0%7CChromium%3B153.0.8010.12&uam=&uamb=0&uap=Linux&uapv=&uaw=0&ul=en-au&tag_exp=115938466~115938468~118897920~118897930~119793973~120213116~120385422~120469145~120469153~121280971&sid=1790292808&sct=1&seg=0&dl=https%3A%2F%2Fwww.ausgrid.com.au%2Foutages-list&dt=Outages%20List%20View&_s=2&tfd=2169",
+        "status": 204,
+        "type": "text/plain",
+        "method": "POST"
+      },
+      {
+        "url": "https://edge-platform.sitecorecloud.io/v1/events/v1.2/events?sitecoreContextId=9xy9fD03kmWeBAfelx6t0&siteId=corporate",
+        "status": 201,
+        "type": "application/json",
+        "method": "POST"
+      },
+      {
+        "url": "https://www.ausgrid.com.au/_next/data/soltJlfE17kRXWkFnDvvO/en.json",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://www.google-analytics.com/g/collect?v=2&tid=G-1XHXZW1HEK&gtm=45je69n1v898093601za20gzb6840610zd6840610xf1&_p=1790292807165&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AEEAAAQ&ae=a&cid=36029824.1790292807&frm=0&ngs=1&pscdl=noapi&rcb=6&sr=1400x1200&uaa=x86&uab=64&uafvl=HeadlessChrome%3B153.0.8010.12%7CNot_A%2520Brand%3B8.0.0.0%7CChromium%3B153.0.8010.12&uam=&uamb=0&uap=Linux&uapv=&uaw=0&ul=en-au&tag_exp=115938466~115938468~118897920~118897930~119793973~120213116~120385422~120469145~120469153~121280971&sid=1790292808&sct=1&seg=0&dl=https%3A%2F%2Fwww.ausgrid.com.au%2Foutages-list&dt=Outages%20List%20View&_s=3&tfd=7170",
+        "status": 204,
+        "type": "text/plain",
+        "method": "POST"
       }
-    },
-    "orgs": {
-      "NSW (ESCAD host)": {
-        "url": "https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services?f=json",
+    ],
+    "nsw/Endeavour Energy": [
+      {
+        "url": "https://cdn.userway.org/remediations/consolidated/3900369/dQHA6sAIFXJXF7L0.json",
         "status": 200,
-        "serviceCount": 187,
-        "outageServices": [
-          "ACCESS_RESUPPLY_State_Controlled_Roads (FeatureServer)",
-          "Queensland_Electricity_Plants (FeatureServer)"
-        ],
-        "sample": [
-          "2_Riverine_Flooding (FeatureServer)",
-          "ACCESS_RESUPPLY_State_Controlled_Roads (FeatureServer)",
-          "ACMA_Sites_RO (FeatureServer)",
-          "AgedCare (FeatureServer)",
-          "AggregatedImpact_000_03267 (FeatureServer)",
-          "All_Fuel_Assessment_Survey_March2018_TOM (FeatureServer)",
-          "Approved_Childcare_Services (FeatureServer)",
-          "BOM_Fire_Danger_Ratings_Public_View_ (FeatureServer)",
-          "BOM_Grid (FeatureServer)",
-          "BOM_Land_Warnings_RO (FeatureServer)",
-          "BOM_Severe_Weather (FeatureServer)",
-          "Brisbane_EvacZones (FeatureServer)",
-          "Bundaberg_EvacZones_wm (FeatureServer)",
-          "Burdekin_EvacZones_0523 (FeatureServer)",
-          "Cairns_EvacZones (FeatureServer)",
-          "Caravan_Park_Locations_and_Analysis (FeatureServer)",
-          "catastrophicwarning (FeatureServer)",
-          "CBR_hotspots (FeatureServer)",
-          "Coastal_LGA_QLD (FeatureServer)",
-          "COMMUNITY_AND_SOCIAL (FeatureServer)",
-          "Community_Facilities (FeatureServer)",
-          "CRC_StudyAreas_Outline (FeatureServer)",
-          "CSIRO_Decadal_FFDI (FeatureServer)",
-          "CycloneIbTracsvSP (FeatureServer)",
-          "Damage_Assessments_Vanuatu (FeatureServer)",
-          "DDMG_websites (FeatureServer)",
-          "DigSum_1_TC_AEP_Grid_Pivoted (FeatureServer)",
-          "DisasterDistrictsFeatures (FeatureServer)",
-          "Douglas_EvacZones_2023 (FeatureServer)",
-          "EML_Proposed__2021_RO (FeatureServer)"
-        ],
-        "folders": []
+        "type": "application/json",
+        "method": "GET",
+        "envelope": "wrapped:Pdfs",
+        "records": 1461,
+        "keys": [
+          "id",
+          "pdf_hash"
+        ]
       },
-      "QLD (Ergon host)": {
-        "url": "https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services?f=json",
+      {
+        "url": "https://www.endeavourenergy.com.au/api/public/community-battery-areas?limit=100",
         "status": 200,
-        "serviceCount": 24,
-        "outageServices": [
-          "VwAreaOfSupply (FeatureServer)",
-          "VwErgonOutages (FeatureServer)",
-          "VwNSOutagesUDMS (FeatureServer)",
-          "VwTestErgonOutages (FeatureServer)",
-          "VwTestNSOutagesUDMS (FeatureServer)"
-        ],
-        "sample": [
-          "DAPR_2016_Map (FeatureServer)",
-          "DAPR_2017_Map (FeatureServer)",
-          "DAPR_2018_Map (FeatureServer)",
-          "DAPR_2019_Map (FeatureServer)",
-          "DAPR_2020_Map (FeatureServer)",
-          "DAPR_2021_Map (FeatureServer)",
-          "DAPR_2022_Map (FeatureServer)",
-          "DAPR_2023_Map (FeatureServer)",
-          "DAPR_2024_Map (FeatureServer)",
-          "DAPR_2025_Map (FeatureServer)",
-          "Energex_Undersea_Exclusion (FeatureServer)",
-          "EnergexUnderseaCable (FeatureServer)",
-          "Ergon_Energy_Sites (FeatureServer)",
-          "Ergon_RFD_Feeders_Map (FeatureServer)",
-          "Maximum_Demand_Remaining_Capacity_Current_Year (FeatureServer)",
-          "Network_Extract (FeatureServer)",
-          "service_265f5be0ed6a498da1ae098c00db09f3 (FeatureServer)",
-          "Structures_Ergon (FeatureServer)",
-          "VwAreaOfSupply (FeatureServer)",
-          "VwErgonOutages (FeatureServer)",
-          "VwNSOutagesUDMS (FeatureServer)",
-          "VwTestErgonOutages (FeatureServer)",
-          "VwTestNSOutagesUDMS (FeatureServer)",
-          "Wholesale_Area_V2 (FeatureServer)"
-        ],
-        "folders": []
+        "type": "application/json; charset=utf-8",
+        "method": "GET",
+        "envelope": "wrapped:data",
+        "records": 17,
+        "keys": [
+          "id",
+          "area_name",
+          "battery_name",
+          "partner",
+          "artist",
+          "image",
+          "video",
+          "link",
+          "status",
+          "created_at",
+          "updated_at",
+          "x",
+          "y",
+          "geometry"
+        ]
       },
-      "QLD (Energex host)": {
-        "url": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services?f=json",
+      {
+        "url": "https://maps.googleapis.com/$rpc/google.internal.maps.mapsjs.v1.MapsJsInternalService/GetViewportInfo",
         "status": 200,
-        "serviceCount": 19,
-        "outageServices": [
-          "VwAreaOfSupply (FeatureServer)",
-          "VwEnergexOutages (FeatureServer)",
-          "VwTestEnergexOutages (FeatureServer)",
-          "VwTestSEOutagesUDMS (FeatureServer)"
-        ],
-        "sample": [
-          "Energex_and_Ergon_Boundaries_WFL1 (FeatureServer)",
-          "energex_dapr (FeatureServer)",
-          "energex_dapr_2018 (FeatureServer)",
-          "energex_dapr_2019 (FeatureServer)",
-          "energex_dapr_2020 (FeatureServer)",
-          "energex_dapr_2021 (FeatureServer)",
-          "energex_dapr_2022 (FeatureServer)",
-          "energex_dapr_2023 (FeatureServer)",
-          "energex_dapr_2024 (FeatureServer)",
-          "energex_dapr_2025 (FeatureServer)",
-          "Energex_RFD_Feeders_Map (FeatureServer)",
-          "Equipment_Energex (FeatureServer)",
-          "Network_Energex (FeatureServer)",
-          "Structures_Energex (FeatureServer)",
-          "VwAreaOfSupply (FeatureServer)",
-          "VwEnergexOutages (FeatureServer)",
-          "VwTestEnergexOutages (FeatureServer)",
-          "VwTestSEOutagesUDMS (FeatureServer)",
-          "Energex_and_Ergon_Boundaries_Tiles (MapServer)"
-        ],
-        "folders": []
+        "type": "application/json+protobuf; charset=utf-8",
+        "method": "POST",
+        "envelope": "array",
+        "records": 10
       },
-      "WA (Western Power host)": {
-        "url": "https://services2.arcgis.com/tBLxde4cxSlNUxsM/arcgis/rest/services?f=json",
+      {
+        "url": "https://siteintercept.qualtrics.com/WRSiteInterceptEngine/Targeting.php?Q_ZoneID=ZN_1GJkttvJJPnxqG5&Q_CLIENTVERSION=2.57.0&Q_CLIENTTYPE=web",
         "status": 200,
-        "serviceCount": 15,
-        "outageServices": [
-          "WP_Outage_Prod (FeatureServer)",
-          "WP_Outage_Test (FeatureServer)"
-        ],
-        "sample": [
-          "Diversity_Index_Cluster (FeatureServer)",
-          "Kelburn_3D_WFL1 (FeatureServer)",
-          "Lamps_Prod (FeatureServer)",
-          "LGA_LAMPS (FeatureServer)",
-          "NCMT_Data_2025_gdb (FeatureServer)",
-          "NSSS_Data_gdb (FeatureServer)",
-          "Obligation_to_Connect_Zones (FeatureServer)",
-          "Obligation_to_Connect_Zones_gdb (FeatureServer)",
-          "Streetlight_LGA (FeatureServer)",
-          "Streetlight_LGA_Test (FeatureServer)",
-          "Streetlight_Prod (FeatureServer)",
-          "Streetlight_Test (FeatureServer)",
-          "WP_Outage_Prod (FeatureServer)",
-          "WP_Outage_Test (FeatureServer)",
-          "Kelburn_3D_WSL1 (SceneServer)"
-        ],
-        "folders": []
+        "type": "application/json",
+        "method": "POST",
+        "envelope": "wrapped:Intercepts",
+        "records": 1,
+        "keys": [
+          "InterceptID",
+          "InterceptRevision",
+          "Decision",
+          "DistributionID",
+          "DirectoryID",
+          "ContactID",
+          "SurveyID"
+        ]
+      },
+      {
+        "url": "https://www.endeavourenergy.com.au/power-outages/outage-map",
+        "status": 200,
+        "type": "text/html; charset=utf-8",
+        "method": "GET"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps/api/js?libraries=places%2Cgeometry&key=AIzaSyAMq3JRY9LMhmfgrld3zXVehhlCmRN8dfU&v=weekly&map_ids=&language=en&region=US&auth_referrer_policy=origin&callback=google.maps.__ib__",
+        "status": 200,
+        "type": "text/javascript; charset=utf-8",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.endeavourenergy.com.au/api/crisis-mode-settings",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/geometry.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/controls.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/places_impl.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/common.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/util.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/places.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/main.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.endeavourenergy.com.au/_next/data/zODn911X4qmqlmwxX6Fg-/en/for-your-home/medical-needs.json?path=for-your-home&path=medical-needs",
+        "status": 200,
+        "type": "application/json",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://maps.googleapis.com/maps/api/mapsjs/gen_204?csp_test=true",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/map.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.endeavourenergy.com.au/api/public/outage-statistics",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/poly.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.endeavourenergy.com.au/api/public/outage-list",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "method": "GET",
+        "bodyError": "Unterminated string in JSON at position 200000 (line 1 column 200001)"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/log.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/onion.js",
+        "status": 200,
+        "type": "text/javascript",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.endeavourenergy.com.au/_next/data/zODn911X4qmqlmwxX6Fg-/en/community/vegetation-management.json?path=community&path=vegetation-management",
+        "status": 200,
+        "type": "application/json",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://www.endeavourenergy.com.au/_next/data/zODn911X4qmqlmwxX6Fg-/en/about-us/contact-us.json?path=about-us&path=contact-us",
+        "status": 200,
+        "type": "application/json",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
+      },
+      {
+        "url": "https://www.endeavourenergy.com.au/_next/data/zODn911X4qmqlmwxX6Fg-/en.json",
+        "status": 200,
+        "type": "application/json",
+        "method": "GET",
+        "envelope": "object",
+        "records": 0
       }
-    }
-  }
+    ],
+    "nsw/Essential Energy": [
+      {
+        "url": "https://www.essentialenergy.com.au/outages-and-faults/power-outages",
+        "status": 307,
+        "type": "",
+        "method": "GET"
+      }
+    ],
+    "qld/Energex": [
+      {
+        "url": "https://www.energex.com.au/outages/outage-finder/outage-finder-map",
+        "status": 307,
+        "type": "",
+        "method": "GET"
+      }
+    ],
+    "qld/Ergon Energy": [
+      {
+        "url": "https://www.ergon.com.au/network/outages/outage-finder/outage-finder-map",
+        "status": 307,
+        "type": "",
+        "method": "GET"
+      }
+    ],
+    "vic/AusNet Services": [
+      {
+        "url": "https://www.ausnetservices.com.au/outages",
+        "status": 200,
+        "type": "text/html; charset=utf-8",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.google-analytics.com/j/collect?v=1&_v=j102&a=1274116768&t=pageview&_s=1&dl=https%3A%2F%2Fwww.ausnetservices.com.au%2Foutages&ul=en-au&dt=Outages%20-%20AusNet&sr=1400x1200&vp=1400x1200&_u=YEBAAEABAAAAACAAI~&jid=1744322829&gjid=199212712&cid=2066209853.1790292932&tid=UA-52063494-1&_gid=1372733002.1790292932&_r=1&_slc=1&gtm=45He69n1n81MXMN9BPv862335193za200zd862335193xf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115938466~115938469~117971173~118897920~118897930~120385422~120469145~120469153&z=1270136284",
+        "status": 200,
+        "type": "text/plain",
+        "method": "POST"
+      },
+      {
+        "url": "https://analytics.google.com/g/collect?v=2&tid=G-XBE0RFMSE0&gtm=45je69n1v874568082z8862335193za20gzb862335193zd862335193xf1&_p=1790292931575&_gaz=1&gcd=13l3l3l3l1l1&npa=0&dma=0&_eu=AAAAAGA&cid=2066209853.1790292932&frm=0&pscdl=noapi&rcb=0&sr=1400x1200&uaa=x86&uab=64&uafvl=HeadlessChrome%3B153.0.8010.12%7CNot_A%2520Brand%3B8.0.0.0%7CChromium%3B153.0.8010.12&uam=&uamb=0&uap=Linux&uapv=&uaw=0&ul=en-au&gaf=2&_s=1&tag_exp=115938466~115938469~118897920~118897930~120213116~120385423~120469145~120469153&sid=1790292932&sct=1&seg=0&dl=https%3A%2F%2Fwww.ausnetservices.com.au%2Foutages&dt=Outages%20-%20AusNet&en=page_view&_fv=1&_ss=1&tfd=4195",
+        "status": 204,
+        "type": "text/plain",
+        "method": "POST"
+      }
+    ],
+    "vic/Powercor": [
+      {
+        "url": "https://www.powercor.com.au/power-outages-and-emergencies/full-outage-list/",
+        "status": 308,
+        "type": "application/json",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.powercor.com.au/power-outages-and-emergencies/full-outage-list",
+        "status": 301,
+        "type": "application/json",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.powercor.com.au/outages/live-outage-map",
+        "status": 200,
+        "type": "text/html; charset=utf-8",
+        "method": "GET"
+      },
+      {
+        "url": "https://maps.googleapis.com/maps/api/js?libraries=maps%2Cmarker&key=AIzaSyAVZ9wrhKwBu74BynP9AxhhH-W7oKnXrwQ&v=weekly&callback=google.maps.__ib__",
+        "status": 200,
+        "type": "text/javascript; charset=utf-8",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.powercor.com.au/outages?_rsc=sj1wy",
+        "status": 200,
+        "type": "text/x-component",
+        "method": "GET"
+      },
+      {
+        "url": "https://www.google.com/ccm/collect?rcb=9&frm=0&apvc=1&ae=g&auid=1713250669.1790292937&dt=Live%20outage%20map%20%7C%20CitiPower%20%26%20Powercor&en=page_view&dl=https%3A%2F%2Fwww.powercor.com.au%2Foutages%2Flive-outage-map&scrsrc=www.googletagmanager.com&rnd=2110610370.1790292937&navt=n&npa=0&ep.ads_data_redaction=0&gtm=45He69n1v72263158za200zd72263158xeaxf1&gcd=13l3l3l3l1l1&dma=0&tag_exp=115938465~115938468~118897920~118897930~120385422~120469145~120469153~121246027~121246035&tft=1790292937364&tfd=1876&fmt=8",
+        "status": 200,
+        "type": "",
+        "method": "POST"
+      }
+    ]
+  },
+  "thirdParty": {},
+  "feeds": {},
+  "arcgis": {},
+  "layers": {},
+  "ods": {},
+  "ckan": {}
 }

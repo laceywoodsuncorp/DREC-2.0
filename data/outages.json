@@ -1,20 +1,20 @@
 {
-  "capturedAt": 1790242221938,
+  "capturedAt": 1790292992783,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 10,
-      "customers": 1971,
-      "unplannedCount": 10,
-      "unplannedCustomers": 1971,
+      "count": 4,
+      "customers": 1238,
+      "unplannedCount": 4,
+      "unplannedCustomers": 1238,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 9,
+          "count": 3,
           "shape": "table",
           "labels": [
             "Date",
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 6,
-            "customers": 1221
+            "outages": 4,
+            "customers": 1219
           }
         },
         {
@@ -45,8 +45,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 31,
-            "customers": 31
+            "outages": 3091,
+            "customers": 3091
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -55,64 +55,28 @@
       "outages": [
         {
           "network": "Ausgrid",
-          "location": "Cedar Brush Creek, Ravensdale, Wyong, Yarramalong",
-          "customers": 155,
-          "start": "12:50 am (Thu 24 Sep) to 8:30 pm (Thu 24 Sep)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Kulnura, Wyong, Wyong Creek, Yarramalong",
-          "customers": 285,
-          "start": "12:50 am (Thu 24 Sep) to 8:35 am (Thu 24 Sep)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Gosford, Point Frederick",
-          "customers": 79,
-          "start": "5:20 am (Thu 24 Sep) to 8:02 am (Thu 24 Sep)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Earlwood",
-          "customers": 56,
-          "start": "8:35 am (Thu 24 Sep) to 3:52 pm (Thu 24 Sep)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Botany",
-          "customers": 62,
-          "start": "12:30 pm (Thu 24 Sep) to 5:35 pm (Thu 24 Sep)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Cromer",
-          "customers": 13,
-          "start": "1:45 pm (Thu 24 Sep) to 2:26 pm (Thu 24 Sep)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Caringbah, Caringbah South",
-          "customers": 71,
-          "start": "2:05 pm (Thu 24 Sep) to 3:18 pm (Thu 24 Sep)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Crows Nest",
+          "location": "Widden",
           "customers": null,
-          "start": "2:25 pm (Thu 24 Sep) to 4:59 pm (Thu 24 Sep)"
+          "start": "6:10 pm (Thu 24 Sep) to 9:42 pm (Thu 24 Sep)"
         },
         {
           "network": "Ausgrid",
-          "location": "Clareville",
-          "customers": 29,
-          "start": "5:35 pm (Thu 24 Sep) to 6:03 pm (Thu 24 Sep)"
+          "location": "Edgeworth",
+          "customers": 19,
+          "start": "4:55 am (Fri 25 Sep) to 10:30 am (Fri 25 Sep)"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Alexandria",
+          "customers": null,
+          "start": "6:40 am (Fri 25 Sep) to 7:41 am (Fri 25 Sep)"
         },
         {
           "network": "Endeavour Energy",
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 1221
+          "customers": 1219
         }
       ]
     },
@@ -148,11 +112,11 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 15,
-      "customers": 1300,
-      "unplannedCount": 12,
-      "unplannedCustomers": 1300,
-      "plannedCount": 3,
+      "count": 1,
+      "customers": 0,
+      "unplannedCount": 1,
+      "unplannedCustomers": 0,
+      "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -166,55 +130,28 @@
         },
         {
           "name": "Powercor",
-          "ok": true,
-          "count": 12,
-          "shape": "cards",
-          "labels": [
-            "Estimated restoration"
-          ],
-          "reported": {
-            "outages": null,
-            "customers": 2727
-          }
+          "ok": false,
+          "count": 0,
+          "error": "page.evaluate: Target crashed "
         },
         {
           "name": "CitiPower",
-          "ok": true,
+          "ok": false,
           "count": 0,
-          "shape": "cards",
-          "labels": [
-            "Estimated restoration"
-          ],
-          "reported": {
-            "outages": null,
-            "customers": 2727
-          },
-          "mergedInto": "Powercor"
+          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.citipower.com.au/power-outages-and-emergencies/full-outage-list/\", waiting until \"domcontentloaded\"\n"
         },
         {
           "name": "United Energy",
-          "ok": true,
-          "count": 2,
-          "shape": "cards",
-          "labels": [
-            "Vulnerable customer assistance program",
-            "Faults & emergencies",
-            "Customer enquiries"
-          ]
+          "ok": false,
+          "count": 0,
+          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/\", waiting until \"domcontentloaded\"\n"
         },
         {
           "name": "Jemena",
           "ok": false,
           "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": [],
-          "reported": {
-            "outages": 0,
-            "customers": 0
-          },
-          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
-          "reportedVia": "Power Outages Australia"
+          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.jemena.com.au/outages/electricity-outages/\", waiting until \"domcontentloaded\"\n",
+          "viaError": "Power Outages Australia: page.goto: Page crashed\nCall log:\n  - navigating to \"https://poweroutagesaustralia.com.au/distributors/jemena/\", waiting until \"domcontentloaded\"\n"
         }
       ],
       "outages": [
@@ -222,101 +159,6 @@
           "network": "AusNet Services",
           "location": "Register as a life support customer",
           "customers": null
-        },
-        {
-          "network": "Powercor",
-          "location": "South Melbourne",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Corio",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "14:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Sailors Gully and surrounds",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "West Melbourne",
-          "kind": "planned",
-          "customers": null,
-          "restore": "17:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Melbourne",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "18:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Hoppers Crossing",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "19:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Anglesea",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "20:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Girgarre East",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "21:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Benjeroop and surrounds",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "22:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Colac",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "22:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Shepparton and surrounds",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "01:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Mildura and surrounds",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "12:00"
-        },
-        {
-          "network": "United Energy",
-          "location": "<picture><source type=\"image/avif\" srcSet=\"/static/c50341b110a35486f15e1fd4f5e418d5/1fd1a/ue-logo.avif 18w,/static/c50341b110a35486f15e1fd4f5e418d5/436f9/ue-logo.avif 35w,/static/c50341b110a35486f15e1",
-          "customers": null
-        },
-        {
-          "network": "United Energy",
-          "location": "Oops, page not found!",
-          "cause": "132 099",
-          "customers": 1300
         }
       ]
     },
@@ -334,14 +176,8 @@
           "name": "SA Power Networks",
           "ok": false,
           "count": 0,
-          "blocked": true,
-          "error": "Operator blocks automated access (bot challenge); not bypassed",
-          "reported": {
-            "outages": 367,
-            "customers": 367
-          },
-          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
-          "reportedVia": "Power Outages Australia"
+          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://outage.apps.sapowernetworks.com.au/OutageReport/OutageMap\", waiting until \"domcontentloaded\"\n",
+          "viaError": "Power Outages Australia: page.goto: Page crashed\nCall log:\n  - navigating to \"https://poweroutagesaustralia.com.au/distributors/sa-power-networks/\", waiting until \"domcontentloaded\"\n"
         }
       ],
       "outages": []
@@ -360,16 +196,13 @@
           "name": "Western Power",
           "ok": false,
           "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": []
+          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.westernpower.com.au/faults-outages/power-outages/\", waiting until \"domcontentloaded\"\n"
         },
         {
           "name": "Horizon Power",
           "ok": false,
           "count": 0,
-          "blocked": true,
-          "error": "Operator blocks automated access (bot challenge); not bypassed"
+          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.horizonpower.com.au/faults-outages/\", waiting until \"domcontentloaded\"\n"
         }
       ],
       "outages": []
@@ -388,15 +221,8 @@
           "name": "TasNetworks",
           "ok": false,
           "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": [],
-          "reported": {
-            "outages": 0,
-            "customers": 0
-          },
-          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
-          "reportedVia": "Power Outages Australia"
+          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.tasnetworks.com.au/outages\", waiting until \"domcontentloaded\"\n",
+          "viaError": "Power Outages Australia: page.goto: Page crashed\nCall log:\n  - navigating to \"https://poweroutagesaustralia.com.au/distributors/tasnetworks/\", waiting until \"domcontentloaded\"\n"
         }
       ],
       "outages": []
@@ -415,8 +241,7 @@
           "name": "Power and Water Corporation",
           "ok": false,
           "count": 0,
-          "blocked": true,
-          "error": "Operator blocks automated access (bot challenge); not bypassed"
+          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.powerwater.com.au/outages\", waiting until \"domcontentloaded\"\n"
         }
       ],
       "outages": []
@@ -435,17 +260,8 @@
           "name": "Evoenergy",
           "ok": false,
           "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": [
-            "←",
-            "Move left"
-          ],
-          "reported": {
-            "outages": 2,
-            "customers": 13
-          },
-          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
+          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.evoenergy.com.au/Outages\", waiting until \"domcontentloaded\"\n",
+          "viaError": "Power Outages Australia: page.goto: Page crashed\nCall log:\n  - navigating to \"https://poweroutagesaustralia.com.au/distributors/evoenergy/\", waiting until \"domcontentloaded\"\n"
         }
       ],
       "outages": []
