@@ -243,7 +243,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-09-24-qld-arcgis';
+const WORKER_BUILD = '2026-09-24-endpoints';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -2255,9 +2255,13 @@ export const OUTAGE_NETWORKS = {
           { url: 'https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable }
         ] },
       { name: 'Jemena', area: 'North-western Melbourne',
-        site: 'https://jemena.com.au/electricity/outages',
+        /* The old path redirects twice -- jemena.com.au/electricity/outages
+           to www, then to this. Each hop is a chance to lose the page, and
+           the capture recorded the whole chain, so the destination is used
+           directly. */
+        site: 'https://www.jemena.com.au/outages/electricity-outages/',
         sources: [
-          { url: 'https://jemena.com.au/electricity/outages', format: 'text', parse: parseOutageTable },
+          { url: 'https://www.jemena.com.au/outages/electricity-outages/', format: 'text', parse: parseOutageTable },
           /* Last resort: the same data republished by Power Outages
              Australia. Tagged `via` so the page says whose figures these
              are -- an aggregator is a second-hand account. */
@@ -2319,9 +2323,18 @@ export const OUTAGE_NETWORKS = {
     name: 'Tasmania',
     networks: [
       { name: 'TasNetworks', area: 'All of Tasmania',
-        site: 'https://www.tasnetworks.com.au/current-power-outages',
+        site: 'https://www.tasnetworks.com.au/outages',
         sources: [
-          { url: 'https://www.tasnetworks.com.au/current-power-outages', format: 'text', parse: parseOutageTable },
+          /* Their own page fetches this on load -- an OData endpoint, found
+             by watching what the site asks for rather than by guessing. A
+             JSON list beats scraping the rendered table, and if its shape
+             is not recognised the reader falls through to that table. */
+          { url: 'https://www.tasnetworks.com.au/api/odata/GetPowerOutages',
+            format: 'json', parse: normaliseOutages },
+          /* /current-power-outages 301s here; following the redirect
+             ourselves saves a hop and stops a future redirect change from
+             looking like an outage. */
+          { url: 'https://www.tasnetworks.com.au/outages', format: 'text', parse: parseOutageTable },
           /* Last resort: the same data republished by Power Outages
              Australia. Tagged `via` so the page says whose figures these
              are -- an aggregator is a second-hand account. */

@@ -306,6 +306,7 @@ function fallbackUrls(net) {
    the correct outcome, not a gap to work around. */
 function recordResponses(page) {
   const seen = new Map();
+  const bodies = [];
   /* One page object is reused for every operator, so the handler has to come
      off again at the end -- otherwise the sixteenth operator is being watched
      by sixteen listeners and inherits the previous fifteen's URLs. */
@@ -318,11 +319,20 @@ function recordResponses(page) {
       const looksData = type.includes('json') || type.includes('xml');
       if (!looksData && !interesting.test(url)) return;
       if (/\.(png|jpe?g|gif|svg|webp|woff2?|css|ico)(\?|$)/i.test(url)) return;
-      seen.set(url, { url, status: res.status(), type, method: res.request().method() });
+      const entry = { url, status: res.status(), type, method: res.request().method() };
+      seen.set(url, entry);
+      /* The body has to be taken now: once the page navigates away Playwright
+         can no longer read it. Failures are expected and ignored -- a
+         redirect or a preflight has no body to give. */
+      if (entry.status === 200 && type.includes('json')) {
+        bodies.push(res.text().then((t) => { entry.body = t.slice(0, 200000); }).catch(() => {}));
+      }
     } catch (e) { /* a response that has gone away is not worth failing over */ }
   };
   page.on('response', handler);
-  return { seen, stop: () => page.removeListener('response', handler) };
+  /* The reads are started as each response arrives and settled before
+     anything is described, so a slow body is not simply missing. */
+  return { seen, bodies, stop: () => page.removeListener('response', handler) };
 }
 
 /* A recorded endpoint is only a lead until we know it carries rows. This
@@ -331,15 +341,17 @@ function recordResponses(page) {
    a copy of the data. */
 async function describeResponses(page, recorder) {
   recorder.stop();
+  await Promise.allSettled(recorder.bodies);
   const out = [];
   for (const entry of recorder.seen.values()) {
     if (entry.status !== 200 || !entry.type.includes('json')) { out.push(entry); continue; }
     try {
-      const body = await page.evaluate(async (u) => {
-        const r = await fetch(u, { credentials: 'same-origin' });
-        const t = await r.text();
-        return t.slice(0, 200000);
-      }, entry.url).catch(() => null);
+      /* Read through the Playwright response we already hold, not by asking
+         the page to fetch the URL again. The re-fetch ran inside the page's
+         origin and so was subject to CORS, which is why the first run came
+         back with a row count for the site's own files and nothing at all
+         for the cross-origin APIs -- exactly the ones worth finding. */
+      const body = entry.body;
       if (!body) { out.push(entry); continue; }
       const parsed = JSON.parse(body);
       let rows = null, envelope = 'object';
@@ -361,6 +373,10 @@ async function describeResponses(page, recorder) {
   }
   /* The ones carrying rows first -- that is what a reader of this file is
      looking for, and there can be sixty entries. */
+  /* The body was a means to reading the shape, not something to keep: this
+     file is committed, and a copy of an operator's live outage list has no
+     business in it. */
+  out.forEach((e) => { delete e.body; });
   return out.sort((a, b) => (b.records || 0) - (a.records || 0)).slice(0, 25);
 }
 
@@ -396,6 +412,15 @@ async function scrapeOperator(page, state, net, target) {
     /* Whatever the DOM pass makes of this page, where its data came from is
        worth knowing -- most of all when the DOM pass fails. */
     result.endpoints = await describeResponses(page, recorder).catch(() => null);
+    /* A file the page offers for download is never requested on load, so the
+       recorder above cannot see it. Evoenergy's page says in so many words
+       that outages can be had as a CSV, and that link is the whole route for
+       an operator we had written off. */
+    result.dataLinks = await page.evaluate(() => Array.from(document.querySelectorAll('a[href]'))
+      .map((a) => ({ href: a.href, text: (a.textContent || '').trim().slice(0, 80) }))
+      .filter((l) => /\.(csv|json|xml|geojson)(\?|$)/i.test(l.href)
+        || /download|export|csv|data feed|open data/i.test(l.text))
+      .slice(0, 20)).catch(() => null);
 
     const found = await page.evaluate(extractInPage, HINTS);
     result.shape = found.shape;
@@ -791,6 +816,7 @@ async function probeArcgisLayers() {
       if (n.diagnostic) diagnostics[state + '/' + n.name] = n.diagnostic;
       if (n.viaDiagnostic) diagnostics[state + '/' + n.name + ' (via)'] = n.viaDiagnostic;
       if (n.endpoints && n.endpoints.length) endpoints[state + '/' + n.name] = n.endpoints;
+      if (n.dataLinks && n.dataLinks.length) endpoints[state + '/' + n.name + ' (links)'] = n.dataLinks;
     });
     const sum = (rows) => rows.reduce((t, o) => t + (o.customers || 0), 0);
     const unplanned = outages.filter((o) => o.kind !== 'planned');
@@ -818,7 +844,7 @@ async function probeArcgisLayers() {
   const clean = {};
   Object.entries(states).forEach(([state, v]) => {
     clean[state] = Object.assign({}, v, {
-      networks: v.networks.map(({ diagnostic, viaDiagnostic, endpoints: _e, ...rest }) => rest)
+      networks: v.networks.map(({ diagnostic, viaDiagnostic, endpoints: _e, dataLinks: _l, ...rest }) => rest)
     });
   });
 

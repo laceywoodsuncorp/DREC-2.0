@@ -1169,6 +1169,42 @@ console.log('\n== one figure read twice is not two figures ==');
     endeavour.reported);
 }
 
+console.log('\n== an endpoint the operator\'s own page calls ==');
+{
+  reset();
+  /* TasNetworks' page fetches this OData endpoint on load. It is listed
+     ahead of the rendered table because a JSON list is steadier than
+     markup, so the ordering is worth pinning: the table must not be read
+     when the API answers. */
+  upstream['api/odata/GetPowerOutages'] = () => new Response(JSON.stringify({
+    value: [
+      { OutageId: 'TN-1', Suburb: 'Sorell', CustomersAffected: 112,
+        Cause: 'Equipment fault', Status: 'Crew on site', OutageType: 'Unplanned' }
+    ]
+  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  upstream['http'] = () => new Response(
+    '<html><table><tr><th>Suburb</th><th>Customers affected</th></tr>' +
+    '<tr><td>Should Not Be Read</td><td>9</td></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+
+  const b = await (await call('/api/outages/tas')).json();
+  check('the API answers and the page is not scraped', b.count === 1, b.outages);
+  check('and it is the API row, not the table row',
+    b.outages[0] && /Sorell/.test(b.outages[0].location || ''), b.outages[0]);
+  check('the customer count comes through', b.customers === 112, b.customers);
+
+  /* The table is still the fallback, so an API that goes away is not an
+     outage in the dashboard. */
+  reset();
+  upstream['api/odata/GetPowerOutages'] = () => new Response('gone', { status: 404 });
+  upstream['http'] = () => new Response(
+    '<html><table><tr><th>Suburb</th><th>Customers affected</th></tr>' +
+    '<tr><td>Sorell</td><td>112</td></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+  const c = await (await call('/api/outages/tas')).json();
+  check('the rendered table still catches it', c.count === 1, c.outages);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);
