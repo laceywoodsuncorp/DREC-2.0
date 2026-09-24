@@ -243,7 +243,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-09-24-endpoints';
+const WORKER_BUILD = '2026-09-24-csv';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -2103,6 +2103,70 @@ function parseOutageTable(html, opts) {
   return out;
 }
 
+/* Evoenergy offers its outages as a CSV download rather than publishing a
+   feed or rendering a list a scraper can read -- its page says so in words.
+   A CSV is a table with different punctuation, so the headings go through
+   the same vocabulary as an HTML table and the rows come out shaped the same
+   way; nothing downstream needs to know which it was.
+
+   Quoted fields matter here and are not optional politeness: a cause like
+   "Fault, under investigation" and a town list like "Braddon, Turner" both
+   carry commas, and splitting naively would shift every later column by one
+   and quietly mis-attribute the data rather than fail. */
+function splitCsvLine(line) {
+  const out = [];
+  let field = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quoted) {
+      /* "" inside a quoted field is a literal quote, not the end of one. */
+      if (c === '"' && line[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ',') { out.push(field); field = ''; }
+    else field += c;
+  }
+  out.push(field);
+  return out.map((f) => f.trim());
+}
+
+function parseOutageCsv(text, opts) {
+  if (!text || typeof text !== 'string') return { outages: [], diagnostics: { note: 'Empty response' } };
+  /* An HTML error page served with a CSV's URL is a common failure and must
+     not be read as a one-column table. */
+  if (/^\s*<(?:!doctype|html)/i.test(text)) {
+    return { outages: [], diagnostics: { note: 'Expected CSV, got an HTML page' } };
+  }
+  const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  if (!lines.length) return { outages: [], diagnostics: { note: 'Empty response' } };
+
+  const headings = splitCsvLine(lines[0]);
+  const mapped = headings.map((h) => headingToField(h, OUTAGE_COLUMN_HINTS));
+  if (!mapped.some((f) => f === 'towns' || f === 'location')) {
+    return { outages: [], diagnostics: { note: 'CSV headings name no place', envelope: 'csv-unmapped', headings } };
+  }
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = splitCsvLine(lines[i]);
+    /* A short row is the file's, not ours: read what is there rather than
+       dropping the row, since a trailing empty column is common. */
+    const rec = {};
+    mapped.forEach((field, idx) => {
+      if (!field || cells[idx] === undefined || cells[idx] === '') return;
+      if (rec[field] === undefined) rec[field] = cells[idx];
+    });
+    if (Object.keys(rec).length) rows.push(rec);
+  }
+  /* Headings understood and no rows means nothing is out -- a result, not a
+     failure, exactly as for a table. */
+  if (!rows.length) return { outages: [], columns: headings };
+  const out = normaliseOutages({ rows }, opts);
+  out.columns = headings;
+  return out;
+}
+
 /* The distribution networks, by state. `area` is what the operator actually
    covers -- worth showing, because "Essential Energy is unavailable" means
    something quite different in Sydney than it does in Dubbo.
@@ -2309,6 +2373,15 @@ export const OUTAGE_NETWORKS = {
           { url: 'https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson',
             format: 'json', parse: normaliseOutages },
           { url: 'https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&resultRecordCount=400&f=json',
+            format: 'json', parse: normaliseOutages },
+          /* Western Power's own API, which its outage page calls on load.
+             First-party and so in principle the better source, but it is
+             listed behind the feature service rather than ahead of it: the
+             service's AFFECTED_AREA is a proven town list and this one's
+             `areas` field has not been seen yet. Promoting it before its
+             shape is known would risk trading town-level accuracy for
+             provenance, which is the wrong way round for this dashboard. */
+          { url: 'https://www.westernpower.com.au/api/corp/outage/all-outages',
             format: 'json', parse: normaliseOutages }
         ] },
       { name: 'Horizon Power', area: 'Regional and remote WA',
@@ -2360,7 +2433,15 @@ export const OUTAGE_NETWORKS = {
     networks: [
       { name: 'Evoenergy', area: 'All of the ACT',
         site: 'https://www.evoenergy.com.au/Outages',
+        confirmed: true,
         sources: [
+          /* Evoenergy's page renders its list into a DataTable the extractor
+             could not read, but the page also offers the same outages as a
+             CSV download, and links to it in as many words. A file the
+             operator publishes for anyone to download is a better source
+             than the markup around it. */
+          { url: 'https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages',
+            format: 'text', parse: parseOutageCsv },
           { url: 'https://www.evoenergy.com.au/Outages', format: 'text', parse: parseOutageTable },
           { url: 'https://www.actewagl.com.au/outages', format: 'text', parse: parseOutageTable },
           /* Last resort: the same data republished by Power Outages

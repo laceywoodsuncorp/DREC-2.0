@@ -1176,12 +1176,13 @@ console.log('\n== an endpoint the operator\'s own page calls ==');
      ahead of the rendered table because a JSON list is steadier than
      markup, so the ordering is worth pinning: the table must not be read
      when the API answers. */
-  upstream['api/odata/GetPowerOutages'] = () => new Response(JSON.stringify({
-    value: [
-      { OutageId: 'TN-1', Suburb: 'Sorell', CustomersAffected: 112,
-        Cause: 'Equipment fault', Status: 'Crew on site', OutageType: 'Unplanned' }
-    ]
-  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  /* A bare array, which is what the endpoint actually returns -- the capture
+     read it as one. OData usually wraps rows in {"value": [...]}, and
+     assuming that would have been a guess dressed as a fact. */
+  upstream['api/odata/GetPowerOutages'] = () => new Response(JSON.stringify([
+    { OutageId: 'TN-1', Suburb: 'Sorell', CustomersAffected: 112,
+      Cause: 'Equipment fault', Status: 'Crew on site', OutageType: 'Unplanned' }
+  ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
   upstream['http'] = () => new Response(
     '<html><table><tr><th>Suburb</th><th>Customers affected</th></tr>' +
     '<tr><td>Should Not Be Read</td><td>9</td></tr></table></html>',
@@ -1203,6 +1204,74 @@ console.log('\n== an endpoint the operator\'s own page calls ==');
     { status: 200, headers: { 'Content-Type': 'text/html' } });
   const c = await (await call('/api/outages/tas')).json();
   check('the rendered table still catches it', c.count === 1, c.outages);
+}
+
+console.log('\n== a CSV download read as a list ==');
+{
+  reset();
+  /* Evoenergy publishes no feed and renders its list into a DataTable the
+     extractor cannot read, but its page links a CSV of the same outages. */
+  const csv = [
+    'Outage ID,Suburbs affected,Customers affected,Cause,Status,Estimated restoration',
+    'EV-1,Braddon,13,Equipment fault,Crew on site,2026-09-24T21:00:00Z',
+    /* The row that matters: both the town list and the cause carry commas
+       inside quotes. Split naively, every later column shifts by one and the
+       customer count silently becomes a word -- wrong data rather than an
+       error, which is the worse failure. */
+    '"EV-2","Turner, O\'Connor, Lyneham",87,"Fault, under investigation",Assessing,',
+    'EV-3,Dickson,4,Planned maintenance,Planned,'
+  ].join('\n');
+  upstream['ExportOutages'] = () => new Response(csv,
+    { status: 200, headers: { 'Content-Type': 'text/csv' } });
+  upstream['http'] = () => new Response('down', { status: 503 });
+
+  const b = await (await call('/api/outages/act')).json();
+  check('every row is read', b.count === 3, [b.count, b.outages.map((o) => o.id)]);
+
+  const two = b.outages.find((o) => o.id === 'EV-2');
+  check('a quoted town list is not split into columns',
+    (two.towns || []).length === 3 && two.towns.includes("O'Connor"), two.towns);
+  check('the column after it is still the customer count',
+    two.customers === 87, two.customers);
+  check('and a comma inside the cause survives',
+    /Fault, under investigation/.test(two.cause || ''), two.cause);
+  check('the customer total adds up', b.customers === 104, b.customers);
+
+  /* A trailing empty column is ordinary in these exports. */
+  const three = b.outages.find((o) => o.id === 'EV-3');
+  check('a row with an empty last field still reads', three && three.customers === 4, three);
+  check('this is the operator\'s own figure, not an aggregator\'s',
+    !b.networks.find((n) => n.name === 'Evoenergy').via,
+    b.networks.find((n) => n.name === 'Evoenergy').via);
+}
+
+{
+  reset();
+  /* The two ways a CSV URL disappoints. Neither may read as "no outages". */
+  upstream['ExportOutages'] = () => new Response(
+    '<!doctype html><html><body>Sorry, something went wrong</body></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+  upstream['http'] = () => new Response('down', { status: 503 });
+  const b = await (await call('/api/outages/act')).json();
+  const evo = b.networks.find((n) => n.name === 'Evoenergy');
+  /* The Worker's rule for "answered, but we could not read it" is to say so
+     rather than to report the operator as down -- the page renders that as
+     "data not readable", which is the true statement and the one that gets
+     the parser fixed. What must not happen is a silent zero. */
+  check('an HTML error page is reported as unreadable, not as no outages',
+    evo.count === 0 && !!evo.diagnostics, [evo.count, evo.ok, evo.diagnostics]);
+  check('and the reason names what came back instead',
+    /HTML/i.test((evo.diagnostics || {}).note || ''), evo.diagnostics);
+
+  reset();
+  /* Headings understood, no rows: nothing is out. That is a result. */
+  upstream['ExportOutages'] = () => new Response(
+    'Outage ID,Suburbs affected,Customers affected\n',
+    { status: 200, headers: { 'Content-Type': 'text/csv' } });
+  const c = await (await call('/api/outages/act')).json();
+  const quiet = c.networks.find((n) => n.name === 'Evoenergy');
+  check('an empty export is a quiet network, not a broken one',
+    quiet.ok === true && quiet.count === 0, [quiet.ok, quiet.count, quiet.error]);
 }
 
 console.log('\n----------------------------------------');
