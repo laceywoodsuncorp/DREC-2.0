@@ -2392,6 +2392,18 @@ async function refreshStateOutages(state) {
     return (Date.parse(b.startIso || 0) || 0) - (Date.parse(a.startIso || 0) || 0);
   });
 
+  /* Same reasoning as the scraper: an operator whose rows were all claimed
+     by another must not read as "none listed". */
+  networks.forEach((n) => {
+    const before = (n.outages || []).length;
+    const kept = outages.filter((o) => o.network === n.name).length;
+    if (before && !kept) {
+      const owner = outages.find((o) => (n.outages || []).some((x) =>
+        x.location === o.location && x.customers === o.customers));
+      if (owner) { n.mergedInto = owner.network; n.count = 0; }
+    }
+  });
+
   const reporting = networks.filter((n) => n.ok);
   const customers = outages.reduce((sum, o) => sum + (o.customers || 0), 0);
   /* "Customers affected" has to mean people without power now. Planned work
@@ -2425,7 +2437,8 @@ async function refreshStateOutages(state) {
       customers: (n.outages || []).reduce((s, o) => s + (o.customers || 0), 0),
       confirmed: n.confirmed,
       error: n.error, unconfirmed: n.unconfirmed, blocked: n.blocked,
-      via: n.via, viaUrl: n.viaUrl, sourceUrl: n.sourceUrl, columns: n.columns,
+      via: n.via, viaUrl: n.viaUrl, mergedInto: n.mergedInto,
+      sourceUrl: n.sourceUrl, columns: n.columns,
       diagnostics: n.diagnostics, attempts: n.attempts
     })),
     fetchedAt: Date.now()
@@ -2602,7 +2615,7 @@ function applyOutageSnapshot(payload, snapshot, state) {
        data with worse. A capture that genuinely reads more still wins. */
     if (live.confirmed && live.ok && (taken.count || 0) <= (live.count || 0)) return live;
     return {
-      name: live.name, area: live.area, site: live.site,
+      name: live.name, area: live.area, site: live.site, mergedInto: taken.mergedInto,
       ok: true, count: taken.count || 0,
       customers: (snap.outages || []).filter((o) => o.network === live.name)
         .reduce((t, o) => t + (o.customers || 0), 0),

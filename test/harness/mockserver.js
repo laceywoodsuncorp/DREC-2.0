@@ -76,6 +76,11 @@ function statePayload(scenario) {
     nets[0].source = 'snapshot';
     nets[0].shape = 'cards';
   }
+  /* An operator whose rows were all published by another. */
+  if (scenario === 'merged') {
+    nets[1].count = 0; nets[1].customers = 0; nets[1].mergedInto = 'Ausgrid';
+    outages = outages.filter(o => o.network !== 'Endeavour Energy');
+  }
   if (scenario === 'via') {
     nets[2].via = 'Power Outages Australia';
     nets[2].viaUrl = 'https://poweroutagesaustralia.com.au/distributors/essential-energy/';

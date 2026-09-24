@@ -861,6 +861,12 @@ console.log('\n== one list published by two operators is counted once ==');
   const b = await (await call('/api/outages/vic')).json();
   check('each event appears once', b.count === 2, b.outages.map(o => o.network + ':' + o.location));
   check('and the customer total is not doubled', b.customers === 47, b.customers);
+
+  /* Whoever lost the tie must not read as "none listed" -- on a dashboard
+     that means "inner Melbourne is fine", and it is not. */
+  const merged = b.networks.find(n => n.count === 0 && n.mergedInto);
+  check('the operator whose rows were absorbed says where they went',
+    !!merged && /Powercor|CitiPower/.test(merged.mergedInto), b.networks.map(n => [n.name, n.count, n.mergedInto]));
 }
 
 

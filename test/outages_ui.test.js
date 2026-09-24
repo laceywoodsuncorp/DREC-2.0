@@ -250,6 +250,16 @@ const check = (n, c, x) => {
     await p.close();
   }
 
+  console.log('\n== an absorbed operator says where its rows went ==');
+  {
+    const p = await open('merged');
+    const c = await chips(p);
+    const ee = c.find(x => /Endeavour/.test(x.text));
+    check('it does not read as "none listed"', !/none listed/i.test(ee.text), ee.text);
+    check('it says which operator lists them', /listed under Ausgrid/i.test(ee.text), ee.text);
+    await p.close();
+  }
+
   console.log('\n== tabs switch states and carry counts ==');
   {
     const p = await open('live');

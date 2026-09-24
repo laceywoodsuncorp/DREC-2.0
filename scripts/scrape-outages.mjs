@@ -375,7 +375,19 @@ async function saveArtifacts(page, state, net) {
       seenRows.add(key);
       outages.push(Object.assign({ network: n.name }, o));
     }));
-    networks.forEach((n) => { n.count = outages.filter((o) => o.network === n.name).length; });
+    networks.forEach((n) => {
+      const before = (n.outages || []).length;
+      n.count = outages.filter((o) => o.network === n.name).length;
+      /* An operator whose every row was already published by another reads
+         as "0 outages", which on a dashboard means "inner Melbourne is
+         fine". It is not: the outages are there, listed under whoever
+         reported them first. Say that instead. */
+      if (before && !n.count) {
+        const owner = outages.find((o) => (n.outages || []).some((x) =>
+          x.location === o.location && x.customers === o.customers));
+        if (owner) n.mergedInto = owner.network;
+      }
+    });
     const sum = (rows) => rows.reduce((t, o) => t + (o.customers || 0), 0);
     const unplanned = outages.filter((o) => o.kind !== 'planned');
     const planned = outages.filter((o) => o.kind === 'planned');
@@ -386,6 +398,7 @@ async function saveArtifacts(page, state, net) {
       plannedCount: planned.length, plannedCustomers: sum(planned),
       networks: networks.map((n) => ({ name: n.name, ok: n.ok, count: n.count, blocked: n.blocked,
         error: n.error, shape: n.shape, labels: n.labels, reported: n.reported,
+        mergedInto: n.mergedInto,
         diagnostic: n.diagnostic })),
       outages
     };

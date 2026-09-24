@@ -1787,7 +1787,8 @@ window.addEventListener('resize',()=>map.invalidateSize());
                       :((n.unconfirmed||n.blocked)?'outage-net pending':'outage-net down'));
       const plain=drifted?' · data not readable'
         :(n.ok
-          ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s'):' · none listed')
+          ?(n.count?' · '+n.count+' outage'+(n.count===1?'':'s')
+            :(n.mergedInto?' · listed under '+n.mergedInto:' · none listed'))
           :(n.blocked?' · blocks automated access'
             :(n.unconfirmed?' · feed not connected yet':' · unavailable')));
       /* Where the figures came from, when it wasn't the operator. An
