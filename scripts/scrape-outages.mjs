@@ -340,6 +340,59 @@ async function saveArtifacts(page, state, net) {
   } catch (e) { /* artifacts are a convenience, never the job */ }
 }
 
+/* The JSON feeds, probed from the runner rather than the browser.
+   The Worker reads these in production but this build environment cannot
+   reach any of the hosts, so their real field names have never been seen --
+   which is why Endeavour's suburb list is still guesswork. One record from
+   each, with its keys and a trimmed sample, is enough to map them properly.
+   Values are cut short: this is for learning the shape, not copying data. */
+async function probeFeeds() {
+  const out = {};
+  for (const [state, group] of Object.entries(OUTAGE_NETWORKS)) {
+    if (ONLY.length && !ONLY.includes(state)) continue;
+    for (const net of group.networks) {
+      const jsonSources = (net.sources || []).filter((src) => src.format === 'json').slice(0, 2);
+      for (const src of jsonSources) {
+        const key = state + '/' + net.name;
+        if (out[key] && out[key].ok) continue;
+        try {
+          const res = await fetch(src.url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsRadar/1.0)', 'Accept': 'application/json' }
+          });
+          if (!res.ok) { out[key] = { url: src.url, status: res.status }; continue; }
+          const body = await res.json();
+          /* Whichever envelope it uses -- a FeatureCollection, an
+             Opendatasoft results page, or a bare array. */
+          let rec = null, envelope = 'unknown', total = null;
+          if (Array.isArray(body.features)) {
+            envelope = 'geojson'; total = body.features.length;
+            rec = body.features[0] && body.features[0].properties;
+          } else if (Array.isArray(body.results)) {
+            envelope = 'results'; total = body.total_count ?? body.results.length; rec = body.results[0];
+          } else if (Array.isArray(body)) {
+            envelope = 'array'; total = body.length; rec = body[0];
+          } else {
+            const best = Object.entries(body).filter(([, v]) => Array.isArray(v) && v.length)
+              .sort((a, b) => b[1].length - a[1].length)[0];
+            if (best) { envelope = 'wrapped:' + best[0]; total = best[1].length; rec = best[1][0]; }
+          }
+          const sample = {};
+          Object.keys(rec || {}).slice(0, 40).forEach((k) => {
+            const v = rec[k];
+            sample[k] = (v && typeof v === 'object') ? JSON.stringify(v).slice(0, 80)
+              : String(v === null || v === undefined ? v : v).slice(0, 80);
+          });
+          out[key] = { url: src.url, status: res.status, ok: true, envelope, records: total,
+            keys: Object.keys(rec || {}), sample };
+        } catch (err) {
+          out[key] = { url: src.url, error: String(err.message).slice(0, 140) };
+        }
+      }
+    }
+  }
+  return out;
+}
+
 (async () => {
   const browser = await chromium.launch();
   const context = await browser.newContext({
@@ -422,7 +475,14 @@ async function saveArtifacts(page, state, net) {
   });
 
   writeFileSync(OUT, JSON.stringify({ capturedAt: Date.now(), states: clean }, null, 2) + '\n');
-  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics }, null, 2) + '\n');
+  console.log('\nprobing the JSON feeds...');
+  const feeds = await probeFeeds();
+  Object.entries(feeds).forEach(([k, v]) => {
+    console.log('  ' + k.padEnd(34) + (v.ok ? v.records + ' records (' + v.envelope + ')'
+      : '-- ' + (v.status ? 'HTTP ' + v.status : v.error)));
+  });
+
+  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, feeds }, null, 2) + '\n');
   console.log('\nwrote ' + OUT + '  (' + summary.join(', ') + ')');
   console.log('wrote ' + DIAG + '  (' + Object.keys(diagnostics).length + ' page(s) needing work)');
 })();
