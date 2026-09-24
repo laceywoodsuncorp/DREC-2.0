@@ -805,10 +805,28 @@ async function probeDirect() {
         });
       } else {
         const body = JSON.parse(text);
-        const rows = Array.isArray(body) ? body
-          : (Array.isArray(body.value) ? body.value
-            : (Array.isArray(body.features) ? body.features : null));
-        entry.envelope = Array.isArray(body) ? 'array' : Object.keys(body).slice(0, 8).join(',');
+        /* The same envelope hunt probeFeeds does. The narrow version here
+           checked only array/value/features and reported /api/outages as
+           zero records against 341KB of body -- a publisher whose rows sit
+           under any other key read as an empty feed, which is the failure
+           this whole exercise keeps running into. The error shape these
+           endpoints return is Spring Boot's, so `content` was always the
+           likely answer; taking the largest array under any key covers that
+           without needing to guess which. */
+        let rows = null;
+        if (Array.isArray(body)) { rows = body; entry.envelope = 'array'; }
+        else {
+          entry.envelope = Object.keys(body).slice(0, 10).join(',');
+          const best = Object.entries(body).filter(([, v]) => Array.isArray(v) && v.length)
+            .sort((a, b) => b[1].length - a[1].length)[0];
+          if (best) { rows = best[1]; entry.envelope = 'wrapped:' + best[0]; }
+        }
+        /* Pagination matters: a first page is not the list. */
+        ['totalElements', 'totalPages', 'total', 'count', 'size', 'number'].forEach((k) => {
+          if (body && body[k] !== undefined && typeof body[k] !== 'object') {
+            entry.paging = Object.assign(entry.paging || {}, { [k]: body[k] });
+          }
+        });
         entry.records = rows ? rows.length : 0;
         const rec = rows && rows[0];
         if (rec) {
@@ -1184,6 +1202,8 @@ async function probeThirdParty(page) {
     if (v.distinct) Object.entries(v.distinct).forEach(([h, vals]) =>
       console.log('      values of ' + h + ': ' + vals.join(' | ').slice(0, 200)));
     (v.sampleRows || []).forEach((r) => console.log('      row:    ' + r.slice(0, 220)));
+    if (v.envelope) console.log('      envelope: ' + v.envelope
+      + (v.paging ? '   paging ' + JSON.stringify(v.paging) : ''));
     if (v.sample) Object.entries(v.sample).forEach(([f, val]) =>
       console.log('      ' + f.padEnd(22) + val));
     if (v.head) console.log('      body:   ' + v.head.replace(/\s+/g, ' ').slice(0, 160));
