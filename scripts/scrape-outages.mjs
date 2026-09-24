@@ -428,6 +428,12 @@ async function scrapeOperator(page, state, net, target) {
     result.error = err.name === 'TimeoutError' ? 'Timed out loading the page' : err.message;
     await saveArtifacts(page, state, net).catch(() => {});
   } finally {
+    /* Also on the failure paths. A page that timed out or threw is exactly
+       where knowing what it managed to fetch is most useful, and the happy
+       path above is the only one that had been recording it. */
+    if (!result.endpoints) {
+      result.endpoints = await describeResponses(page, recorder).catch(() => null);
+    }
     recorder.stop();
   }
   return result;
@@ -708,6 +714,14 @@ async function probeArcgisLayers() {
 
   const states = {};
   const summary = [];
+  /* Collected from the raw operator results inside the loop below, not from
+     the page payload afterwards. The payload is an explicit list of fields,
+     and twice now a diagnostic has been gathered, dropped by that list, and
+     then read as "the scraper found nothing" -- viaDiagnostic, and then
+     these endpoints. Taking them off the raw result means a new diagnostic
+     cannot be lost by forgetting to add it in a second place. */
+  const diagnostics = {};
+  const endpoints = {};
   for (const [state, group] of Object.entries(OUTAGE_NETWORKS)) {
     if (ONLY.length && !ONLY.includes(state)) continue;
     const networks = [];
@@ -773,6 +787,11 @@ async function probeArcgisLayers() {
         if (owner) n.mergedInto = owner.network;
       }
     });
+    networks.forEach((n) => {
+      if (n.diagnostic) diagnostics[state + '/' + n.name] = n.diagnostic;
+      if (n.viaDiagnostic) diagnostics[state + '/' + n.name + ' (via)'] = n.viaDiagnostic;
+      if (n.endpoints && n.endpoints.length) endpoints[state + '/' + n.name] = n.endpoints;
+    });
     const sum = (rows) => rows.reduce((t, o) => t + (o.customers || 0), 0);
     const unplanned = outages.filter((o) => o.kind !== 'planned');
     const planned = outages.filter((o) => o.kind === 'planned');
@@ -797,16 +816,9 @@ async function probeArcgisLayers() {
   /* The data the dashboard serves, with the diagnostics stripped out -- they
      are for fixing the scraper, not for the page. */
   const clean = {};
-  const diagnostics = {};
-  const endpoints = {};
   Object.entries(states).forEach(([state, v]) => {
     clean[state] = Object.assign({}, v, {
-      networks: v.networks.map(({ diagnostic, viaDiagnostic, ...rest }) => rest)
-    });
-    v.networks.forEach((n) => {
-      if (n.diagnostic) diagnostics[state + '/' + n.name] = n.diagnostic;
-      if (n.viaDiagnostic) diagnostics[state + '/' + n.name + ' (via)'] = n.viaDiagnostic;
-      if (n.endpoints && n.endpoints.length) endpoints[state + '/' + n.name] = n.endpoints;
+      networks: v.networks.map(({ diagnostic, viaDiagnostic, endpoints: _e, ...rest }) => rest)
     });
   });
 
