@@ -1064,6 +1064,65 @@ console.log('\n== a whole-network fallback under a combine network ==');
     energex.blocked === true, [energex.blocked, energex.error]);
 }
 
+console.log('\n== the Queensland layers, read with their own field names ==');
+{
+  reset();
+  /* Verbatim from the services' own schema and two live records, so this
+     fails if either publisher renames a column. With f=geojson the Esri
+     date fields come back as ISO strings. */
+  const feature = (props) => ({ type: 'Feature', geometry: null, properties: props });
+  upstream['VwEnergexOutages'] = () => new Response(JSON.stringify({
+    type: 'FeatureCollection',
+    features: [feature({
+      OBJECTID: 412874, EVENT_ID: 'INCD-974591-g', TYPE: 'PLANNED', STATUS: 'In Progress',
+      CUSTOMERS_AFFECTED: 2, SUBURBS: 'YARRABILBA', STREETS: 'WOODWARD AVE',
+      START: '2026-09-18T05:00:00Z', FINISH: null, EST_FIX_TIME: '2026-09-18T12:30:00Z',
+      REASON: 'Planned Maintenance', CRC: 'D86F31ED'
+    })]
+  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  upstream['VwErgonOutages'] = () => new Response(JSON.stringify({
+    type: 'FeatureCollection',
+    features: [feature({
+      OBJECTID: 910002, EVENT_ID: '26SW8151', TYPE: 'PLANNED', STATUS: 'Crews working on-site',
+      CUSTOMERS_AFFECTED: 32, SUBURBS: 'BOWENVILLE, BRYMAROO, IRVINGDALE, QUINALOW',
+      STREETS: 'BRYMAROO-WOODLEIGH RD, DALBY NUNGIL RD, MIRTSCHINS RD',
+      START: '2026-09-22T04:53:00Z', FINISH: null, EST_FIX_TIME: '2026-09-22T12:40:00Z',
+      REASON: 'The loss of supply is to connect new customers to the electricity network',
+      CRC: 'F3984D3A'
+    })]
+  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  /* Both operators' own files stay unreachable, which is the situation these
+     layers exist for. */
+  upstream['http'] = () => new Response(
+    '<html><title>Just a moment...</title><body>Checking your browser</body></html>',
+    { status: 403, headers: { 'Content-Type': 'text/html' } });
+
+  const b = await (await call('/api/outages/qld')).json();
+  check('both Queensland networks come back', b.count === 2,
+    [b.count, b.networks.map((n) => [n.name, n.count, n.error])]);
+
+  const ergon = b.outages.find((o) => o.id === '26SW8151');
+  /* The question this list exists to answer is which towns are out. SUBURBS
+     is where these two put them; STREETS is the road, and a dashboard that
+     says "BRYMAROO-WOODLEIGH RD" has not answered it. */
+  check('all four towns are read from SUBURBS',
+    (ergon.towns || []).length === 4 && ergon.towns.includes('QUINALOW'), ergon.towns);
+  check('and not the street', !/RD\b/.test((ergon.towns || []).join(' ')), ergon.towns);
+  check('the customer count is the incident total', ergon.customers === 32, ergon.customers);
+  check('TYPE is read as the kind', ergon.kind === 'planned', ergon.kind);
+  check('REASON is the cause', /connect new customers/.test(ergon.cause || ''), ergon.cause);
+  check('STATUS survives', ergon.status === 'Crews working on-site', ergon.status);
+  /* EST_FIX_TIME matched nothing in either pass before this, so the estimate
+     was silently dropped rather than reported wrong. */
+  check('EST_FIX_TIME is the restoration estimate', !!ergon.restore, ergon);
+
+  const energex = b.outages.find((o) => o.id === 'INCD-974591-g');
+  check('a single-town row still yields that town',
+    (energex.towns || []).join() === 'YARRABILBA', energex.towns);
+  check('both are tagged as the ArcGIS copy',
+    b.networks.every((n) => n.via === 'ArcGIS Online'), b.networks.map((n) => n.via));
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);

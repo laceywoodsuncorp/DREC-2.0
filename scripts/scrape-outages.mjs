@@ -429,14 +429,39 @@ async function probeFeeds() {
    guessed at. Nothing here reads anything that is not published for anyone
    to query; it is a catalogue lookup, not a way around a block. */
 const ARCGIS_SEARCH = 'https://www.arcgis.com/sharing/rest/search';
+/* The first pass matched the operator's full name and found Energex only
+   because a council had published a layer with "Energex" in its title. An
+   operator whose layer is titled "SAPN Outages" or simply "Power Outages",
+   under a state government's account, was invisible to that. So each
+   operator also gets its short names, and each state a query scoped to the
+   place rather than the company. */
+const ARCGIS_ALIASES = {
+  'Essential Energy': ['Essential Energy', 'EssentialEnergy'],
+  'SA Power Networks': ['SA Power Networks', 'SAPN', 'SA Power'],
+  'Horizon Power': ['Horizon Power', 'Horizon'],
+  'Power and Water Corporation': ['Power and Water', 'PowerWater', 'PWC Northern Territory'],
+  'Evoenergy': ['Evoenergy', 'ActewAGL', 'ACT electricity'],
+  'Jemena': ['Jemena'],
+  'Ausgrid': ['Ausgrid'],
+  'AusNet Services': ['AusNet', 'AusNet Services'],
+  'TasNetworks': ['TasNetworks', 'Tasmanian Networks']
+};
+const ARCGIS_PLACES = ['South Australia', 'Western Australia', 'Northern Territory',
+  'Australian Capital Territory', 'New South Wales'];
+
 async function probeArcgis(names) {
   const out = {};
-  for (const name of names) {
-    const q = '(' + JSON.stringify(name) + ') AND (outage OR outages)';
+  const queries = [];
+  names.forEach((name) => (ARCGIS_ALIASES[name] || [name])
+    .forEach((alias) => queries.push([name + ' :: ' + alias, alias])));
+  ARCGIS_PLACES.forEach((place) => queries.push(['place :: ' + place, place]));
+  for (const [label, name] of queries) {
+    const q = '(' + JSON.stringify(name) + ') AND (outage OR outages) AND ' +
+      '(type:"Feature Service" OR type:"Web Map")';
     try {
       const res = await fetch(ARCGIS_SEARCH + '?q=' + encodeURIComponent(q) +
         '&f=json&num=8&sortField=numviews&sortOrder=desc');
-      if (!res.ok) { out[name] = { error: 'HTTP ' + res.status }; continue; }
+      if (!res.ok) { out[label] = { error: 'HTTP ' + res.status }; continue; }
       const body = await res.json();
       const hits = [];
       for (const item of (body.results || [])) {
@@ -456,9 +481,9 @@ async function probeArcgis(names) {
         }
         hits.push(hit);
       }
-      out[name] = { total: body.total, hits };
+      out[label] = { total: body.total, hits };
     } catch (err) {
-      out[name] = { error: String(err.message).slice(0, 120) };
+      out[label] = { error: String(err.message).slice(0, 120) };
     }
   }
   return out;
@@ -474,11 +499,27 @@ async function probeArcgis(names) {
    Both are catalogues with a documented search API, so this asks each one
    what it publishes about outages rather than guessing at URLs. Again:
    only what is already open to anyone. */
+/* Endeavour's portal is data.endeavourenergy.com.au, and the first pass
+   assumed every other operator used that exact shape. All eleven guesses
+   failed DNS, which says nothing about whether a portal exists -- only that
+   it is not at the name I invented. These are the other shapes Opendatasoft
+   customers actually use, including the platform's own subdomains, where a
+   portal exists whatever the operator points its DNS at. */
 const ODS_HOSTS = [
-  'data.essentialenergy.com.au', 'data.sapowernetworks.com.au',
-  'data.horizonpower.com.au', 'data.powerwater.com.au', 'data.evoenergy.com.au',
-  'data.jemena.com.au', 'data.ausgrid.com.au', 'data.ausnetservices.com.au',
-  'data.westernpower.com.au', 'data.tasnetworks.com.au', 'data.energyq.com.au'
+  'data.essentialenergy.com.au', 'opendata.essentialenergy.com.au',
+  'essentialenergy.opendatasoft.com',
+  'data.sapowernetworks.com.au', 'opendata.sapowernetworks.com.au',
+  'sapowernetworks.opendatasoft.com',
+  'data.horizonpower.com.au', 'horizonpower.opendatasoft.com',
+  'data.powerwater.com.au', 'powerwater.opendatasoft.com',
+  'data.evoenergy.com.au', 'evoenergy.opendatasoft.com',
+  'data.jemena.com.au', 'jemena.opendatasoft.com',
+  'data.ausgrid.com.au', 'ausgrid.opendatasoft.com',
+  'data.ausnetservices.com.au', 'ausnetservices.opendatasoft.com',
+  'data.westernpower.com.au', 'data.tasnetworks.com.au',
+  /* The one that is known to work, as a control: if this fails too, the
+     probe is broken rather than the portals being absent. */
+  'data.endeavourenergy.com.au'
 ];
 const CKAN_HOSTS = [
   'data.gov.au', 'data.qld.gov.au', 'data.wa.gov.au', 'data.nt.gov.au',

@@ -1830,7 +1830,12 @@ const OUTAGE_FIELDS = {
     /* Endeavour calls it cityname, and its street_name sits earlier in the
        record -- both contain "name", so without this the row's place came
        out as "230-234 CLIFTON AVE" rather than KEMPS CREEK. */
-    'cityname', 'city', 'suburbname', 'localityname', 'town'],
+    'cityname', 'city', 'suburbname', 'localityname', 'town',
+    /* Last, so an explicit "areas affected" still wins where a feed has
+       both: Energex and Ergon name the towns in SUBURBS and the street
+       detail in STREETS, and with only the latter matched their rows came
+       out addressed to a road. */
+    'suburbs', 'suburb'],
   /* NOCUSTOMERSIMPACTED is Western Power's real column name, confirmed from
      its published feature service; EVENT_ID is Energy Queensland's. The rest
      stay broad for the operators whose schema still hasn't been seen. */
@@ -1849,7 +1854,11 @@ const OUTAGE_FIELDS = {
     'reported', 'firstreported', 'datereported', 'created', 'createddate', 'timeoff', 'timeadded'],
   restore: ['estimatedrestorationtime', 'estimatedrestoretime', 'estimatedrestoration',
     'expectedrestoration', 'restorationtime', 'restoretime', 'etr', 'eta', 'timeon',
-    'estimatedtimeofrestoration', 'estrestoretime', 'estimatedon', 'restore'],
+    'estimatedtimeofrestoration', 'estrestoretime', 'estimatedon', 'restore',
+    /* Energex and Ergon's name for it. Nothing in the hint vocabulary below
+       matches "EST_FIX_TIME" either, so without this the estimate was read
+       by neither pass and simply disappeared. */
+    'estfixtime', 'fixtime'],
   kind: ['plannedoutage', 'outagetype', 'type', 'plannedtype', 'worktype', 'jobtype',
     'category', 'classification', 'kind'],
   id: ['incidentref', 'event_id', 'outageid', 'jobid', 'eventid', 'incidentid', 'enarnumber',
@@ -2067,7 +2076,7 @@ const OUTAGE_COLUMN_HINTS = [
      to the cause both loses the street and overwrites the real cause, which
      appears later in the same card. */
   { field: 'location', words: ['faultlocation'] },
-  { field: 'restore', words: ['restor', 'estimat', 'etr', 'expected', 'backon'] },
+  { field: 'restore', words: ['restor', 'estimat', 'etr', 'expected', 'backon', 'fixtime'] },
   { field: 'start', words: ['start', 'began', 'begun', 'reported', 'commenc', 'since', 'timeoff'] },
   { field: 'customers', words: ['customer', 'premises', 'properties', 'impacted', 'supplies'] },
   { field: 'kind', words: ['planned', 'unplanned', 'outagetype', 'type', 'category'] },
