@@ -20,6 +20,7 @@ sed -e 's#https://unpkg.com/leaflet@[^/]*/dist/#/leaflet-pkg/dist/#g' \
     -e "s#'/api/incidents'#'/api/incidents'+location.search#g" \
     -e "s#'/api/outages'#'/api/outages'+location.search#g" \
     -e "s#'/api/scrape'#'/api/scrape'+location.search#g" \
+    -e "s#'/data/gazetteer.json'#'/data/gazetteer.json'+location.search#g" \
     -e "s#'/api/outages/'+st.toLowerCase()#'/api/outages/'+st.toLowerCase()+location.search#g" \
     "$SRC" > "$OUT/index.html"
 echo "staged $OUT/index.html"

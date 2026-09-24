@@ -241,8 +241,11 @@ const check = (n, c, x) => {
     check('no match shows none', r.length === 0, r);
     const t = await p.$eval('#outageList', e => e.innerText);
     /* Not the same claim as "no outages" -- we only know the operators that
-       answered. */
-    check('and says what it does not cover', /check theirs directly/i.test(t), t);
+       answered. The message used to say so in general terms; it now names
+       the operator it cannot see and links to it, which is the same point
+       made usefully. */
+    check('and says what it does not cover',
+      /operators we can read/i.test(t) && /Essential Energy/.test(t), t);
 
     await p.fill('#outageFilter', '');
     await p.waitForTimeout(250);
@@ -288,6 +291,104 @@ const check = (n, c, x) => {
       await p.$eval('#outageTabs .state-tab[data-state="VIC"]', e => e.classList.contains('active')));
     check('and loads that state', /VIC|Victoria/.test(await p.$eval('#outageList', e => e.innerText)) ||
       (await rows(p)).length === 0);
+    await p.close();
+  }
+
+  console.log('\n== the map ==');
+  {
+    const p = await open('live');
+    await p.waitForTimeout(1200);
+    const dots = await p.$$eval('#outageMap .outage-dot', els => els.length);
+    /* The fixture's towns are all in the gazetteer, so every one should be a
+       dot. Plotting only rows that carry their own coordinate would leave
+       most operators off the map entirely. */
+    check('towns are plotted as dots', dots > 0, dots);
+    const note = await p.$eval('#outageMapNote', e => e.innerText);
+    check('the map says how many towns it mapped', /town/i.test(note), note);
+
+    /* The summary bar sits on the map rather than apart from it. */
+    const barInMap = await p.$eval('#outageSummary',
+      e => !!e.closest('.outage-mapwrap'));
+    check('the summary is the bar on top of the map', barInMap);
+
+    await p.click('#outageMap .outage-dot');
+    await p.waitForTimeout(400);
+    const pop = await p.$eval('.leaflet-popup-content', e => e.innerText).catch(() => '');
+    check('clicking a dot opens its detail', /customers off|Status|Cause/i.test(pop), pop);
+    check('and names the operator', /Ausgrid|Endeavour|Essential/i.test(pop), pop);
+    await p.close();
+  }
+
+  console.log('\n== a town we cannot place is counted, not dropped ==');
+  {
+    /* With no gazetteer the page can still plot operators that publish
+       coordinates, but it must say what is missing rather than draw a
+       thinner map and let the reader believe it. */
+    const p = await open('live&gaz=off');
+    await p.waitForTimeout(1200);
+    const note = await p.$eval('#outageMapNote', e => e.innerText);
+    check('the map admits the lookup failed', /unavailable/i.test(note), note);
+    const rowCount = (await rows(p)).length;
+    check('the list still carries every outage', rowCount > 0, rowCount);
+    await p.close();
+  }
+
+  console.log('\n== what a search says when it finds nothing ==');
+  {
+    const p = await open('live');
+    await p.waitForTimeout(1200);
+
+    /* NSW: Ausgrid and Endeavour answer, Essential Energy does not. "No
+       outage listed" is true, but it cannot be the whole answer. */
+    /* Tamworth: in the gazetteer, deliberately absent from the outage rows.
+       Dubbo and Gosford both match real fixture outages and would have
+       tested nothing. */
+    await p.fill('#outageFilter', 'Tamworth');
+    await p.waitForTimeout(400);
+    let v = await p.$eval('#outageList', e => e.innerText);
+    const cls = await p.$eval('#outageList .outage-verdict', e => e.className).catch(() => '');
+    check('NSW says no outage is listed', /No current outage listed/i.test(v), v);
+    check('and names the operator it cannot see', /Essential Energy/.test(v), v);
+    check('with a link to that operator',
+      await p.$eval('#outageList .outage-verdict a', a => /essentialenergy\.com\.au/.test(a.href)));
+
+    /* SA: one distributor, and it blocks us. Here "we cannot see" is certain
+       and has to be said plainly -- the reader must not read silence as
+       "your power is on". */
+    await p.click('#outageTabs .state-tab[data-state="SA"]');
+    await p.waitForTimeout(700);
+    await p.fill('#outageFilter', 'Port Augusta');
+    await p.waitForTimeout(400);
+    v = await p.$eval('#outageList', e => e.innerText);
+    check('SA says the provider blocks us', /blocks automated access/i.test(v), v);
+    check('and does not let that be read as "no outage"',
+      /not the same as saying your power is on/i.test(v), v);
+    check('with a link to SA Power Networks',
+      await p.$eval('#outageList .outage-verdict a', a => /sapowernetworks\.com\.au/.test(a.href)));
+    check('and is styled as a gap, not an all-clear',
+      await p.$eval('#outageList .outage-verdict', e => e.classList.contains('blind')));
+
+    /* Victoria: every distributor answers, so no warning belongs here at all.
+       Telling someone their provider blocks us when their power is simply on
+       is the failure this whole verdict exists to avoid. */
+    await p.click('#outageTabs .state-tab[data-state="VIC"]');
+    await p.waitForTimeout(700);
+    await p.fill('#outageFilter', 'Ballarat Central');
+    await p.waitForTimeout(400);
+    v = await p.$eval('#outageList', e => e.innerText);
+    check('VIC says no outage is listed', /No current outage listed/i.test(v), v);
+    check('and warns about nobody, because nobody is blocked',
+      !/blocks automated access/i.test(v), v);
+    check('and is styled as an all-clear',
+      await p.$eval('#outageList .outage-verdict', e => e.classList.contains('clear')));
+
+    /* A town in another state: answering "no outage in Victoria" for a South
+       Australian town is technically true and completely useless. */
+    await p.fill('#outageFilter', 'Port Augusta');
+    await p.waitForTimeout(400);
+    v = await p.$eval('#outageList', e => e.innerText);
+    check('a town from another state says which state it is in', /\bSA\b/.test(v), v);
+    check('and points at the right tab', /tab/i.test(v), v);
     await p.close();
   }
 

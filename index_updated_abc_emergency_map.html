@@ -217,6 +217,39 @@
     font-size:.8rem;color:#4a5a5a}
   .outage-summary b{font-size:1.15rem;color:var(--heritage-green);margin-right:4px}
   .outage-summary .warn{color:#8a5200}
+
+  /* The map and its summary bar read as one panel, so they share a border and
+     the bar loses its own bottom rule. */
+  .outage-mapwrap{margin:0 24px 14px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;
+    background:#fff}
+  .outage-mapwrap .outage-summary{padding:10px 14px;margin:0;border-bottom:1px solid var(--rule);
+    background:#fbfcfc}
+  .outage-map{height:360px;width:100%;background:#eef2f2}
+  /* Room for the map on a phone without it becoming a letterbox. */
+  @media(max-width:700px){ .outage-map{height:260px} .outage-mapwrap{margin:0 12px 12px} }
+  .outage-mapnote{padding:7px 14px;font-size:.72rem;color:#6a7878;border-top:1px solid var(--rule);
+    background:#fbfcfc}
+  .outage-mapnote.warn{color:#8a5200}
+  .outage-mapnote:empty{display:none}
+  /* A dot is a place with customers off, so it is sized by how many and
+     coloured by whether the outage was planned. Planned work is not an
+     emergency and must not draw the eye the same way. */
+  .outage-dot{cursor:pointer}
+  .outage-pop{font-size:.78rem;line-height:1.45;max-width:250px}
+  .outage-pop h4{margin:0 0 4px;font-size:.82rem;color:var(--heritage-green)}
+  .outage-pop .op{color:#6a7878;font-size:.72rem}
+  .outage-pop dl{margin:6px 0 0;display:grid;grid-template-columns:auto 1fr;gap:2px 8px}
+  .outage-pop dt{color:#6a7878}
+  .outage-pop dd{margin:0}
+  /* The answer to "is my town out" when the answer is no, or when we cannot
+     see. These two must never look alike. */
+  .outage-verdict{margin:10px 24px;padding:11px 13px;border-radius:9px;font-size:.82rem;line-height:1.5}
+  .outage-verdict.clear{background:#f2f7f4;border:1px solid #cfe2d6;color:#2c4636}
+  .outage-verdict.blind{background:#fdf5e8;border:1px solid #e8d3a8;color:#6d4c12}
+  .outage-verdict.elsewhere{background:#eef4f8;border:1px solid #c9dced;color:#274a63}
+  .outage-verdict a{color:inherit;font-weight:600}
+  .outage-verdict .go{display:inline-block;margin-top:7px;padding:5px 10px;border-radius:6px;
+    background:#fff;border:1px solid currentColor;text-decoration:none;font-size:.78rem}
   /* One chip per distribution network, always all of them: a network that
      isn't answering has to stay visible, because "no outages listed" and
      "we couldn't reach Essential Energy" look identical in a list. */
@@ -444,7 +477,14 @@
     <input type="search" id="outageFilter" placeholder="Find a town or suburb — e.g. Wyong" autocomplete="off">
     <span class="outage-search-count" id="outageFilterCount"></span>
   </div>
-  <div class="outage-summary" id="outageSummary"></div>
+  <!-- The summary is the bar across the top of the map rather than a line of
+       its own: the totals and the dots are the same fact, and reading them
+       apart makes you hold one in your head while you look at the other. -->
+  <div class="outage-mapwrap">
+    <div class="outage-summary" id="outageSummary"></div>
+    <div class="outage-map" id="outageMap"></div>
+    <div class="outage-mapnote" id="outageMapNote"></div>
+  </div>
   <div class="outage-networks" id="outageNetworks"></div>
   <div class="outage-list" id="outageList">
     <div class="inc-empty" id="outageLoading">Loading current electricity outages…</div>
@@ -1879,6 +1919,209 @@ window.addEventListener('resize',()=>map.invalidateSize());
       String(o.location||'').toLowerCase().includes(q);
   }
 
+  /* ---- the map ----
+     Only four of the sixteen operators publish a coordinate: Energex, Ergon,
+     Western Power and Endeavour send geometry, the other twelve send a town
+     name. Plotting only what carries coordinates would draw Queensland,
+     Western Australia and part of western Sydney and leave Victoria empty --
+     and an empty map reads as "nothing is out", which is the one thing this
+     must never say when it simply cannot place a row. So town names are
+     resolved through the ABS gazetteer, and anything that resolves to
+     neither is counted out loud under the map rather than quietly dropped. */
+  const OPERATOR_SITES={
+    'SA Power Networks':'https://www.sapowernetworks.com.au/outages/',
+    'Essential Energy':'https://www.essentialenergy.com.au/outages-and-faults/power-outages',
+    'Horizon Power':'https://www.horizonpower.com.au/faults-outages/',
+    'Power and Water Corporation':'https://www.powerwater.com.au/outages'
+  };
+  /* Which distributors a state has, and whether we can read them. This drives
+     the message for a town with no listed outage, and the distinction is the
+     whole point: in SA and NT there is exactly one distributor and it blocks
+     us, so "we cannot see your area" is certain. In NSW and WA some
+     distributors answer and one does not, so the same words would be a guess
+     -- and wrong every time somebody searches a town whose power is simply
+     on. */
+  const STATE_BLIND={
+    SA:{all:true,blocked:['SA Power Networks']},
+    NT:{all:true,blocked:['Power and Water Corporation']},
+    NSW:{all:false,blocked:['Essential Energy']},
+    WA:{all:false,blocked:['Horizon Power']},
+    VIC:{all:false,blocked:[]},QLD:{all:false,blocked:[]},
+    TAS:{all:false,blocked:[]},ACT:{all:false,blocked:[]}
+  };
+
+  let gazetteer=null,gazetteerState='idle';
+  async function loadGazetteer(){
+    if(gazetteerState!=='idle')return gazetteer;
+    gazetteerState='loading';
+    try{
+      const r=await fetch('/data/gazetteer.json',{cache:'force-cache'});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const j=await r.json();
+      const byKey=new Map(),byName=new Map();
+      (j.items||[]).forEach(([name,st,lat,lon])=>{
+        byKey.set(name+'|'+st,[lat,lon]);
+        /* A name alone is ambiguous -- there is a Richmond in five states --
+           so the name index keeps every state it occurs in and the caller
+           decides. */
+        if(!byName.has(name))byName.set(name,[]);
+        byName.get(name).push([st,lat,lon]);
+      });
+      gazetteer={byKey,byName,attribution:j.attribution||''};
+      gazetteerState='ready';
+    }catch(e){
+      console.warn('Gazetteer unavailable:',e);
+      gazetteerState='failed';
+    }
+    return gazetteer;
+  }
+
+  let oMap=null,oLayer=null;
+  function ensureMap(){
+    if(oMap)return oMap;
+    const el=document.getElementById('outageMap');
+    if(!el||!window.L)return null;
+    oMap=L.map(el,{minZoom:3,maxZoom:12,scrollWheelZoom:false});
+    oMap.setView([-25.6,134.3],4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {attribution:'© OpenStreetMap',maxZoom:12}).addTo(oMap);
+    oLayer=L.layerGroup().addTo(oMap);
+    return oMap;
+  }
+
+  /* One dot per town, not per outage: an event covering four towns is four
+     places where the power is off, and a single dot on the centroid of the
+     four would sit somewhere nobody lives. */
+  function outagePoints(payload){
+    const pts=[],unplaced=[];
+    const st=payload.state||currentState;
+    (payload.outages||[]).forEach(o=>{
+      const towns=(o.towns&&o.towns.length)?o.towns:(o.location?[o.location]:[]);
+      let placedAny=false;
+      towns.forEach(town=>{
+        const key=String(town).trim().toUpperCase();
+        let pos=null;
+        if(gazetteer)pos=gazetteer.byKey.get(key+'|'+st)||null;
+        if(!pos&&gazetteer){
+          /* Some operators name a town just over the border from the state
+             whose tab you are on. Accept a unique match elsewhere rather than
+             dropping the row. */
+          const cands=gazetteer.byName.get(key);
+          if(cands&&cands.length===1)pos=[cands[0][1],cands[0][2]];
+        }
+        if(pos){pts.push({lat:pos[0],lon:pos[1],town:town,outage:o});placedAny=true;}
+        else unplaced.push(town);
+      });
+      /* The operator's own coordinate is the fallback, not the first choice:
+         it is one point for the whole event, so it is used only when no town
+         in it could be placed. */
+      if(!placedAny&&isFinite(o.lat)&&isFinite(o.lon)){
+        pts.push({lat:o.lat,lon:o.lon,town:towns[0]||o.location||'',outage:o});
+        if(towns.length)unplaced.splice(unplaced.length-towns.length,towns.length);
+      }
+    });
+    return {pts,unplaced};
+  }
+
+  function dotRadius(c){
+    if(!c||c<1)return 5;
+    /* Square-rooted so a 2,000-customer outage is a bigger dot than a
+       20-customer one without being a hundred times the area. */
+    return Math.max(5,Math.min(22,4+Math.sqrt(c)*0.9));
+  }
+
+  function popupHtml(p){
+    const o=p.outage;
+    const rows=[];
+    if(o.customers!=null)rows.push(['Customers off',num(o.customers)]);
+    if(o.status)rows.push(['Status',escapeHtml(o.status)]);
+    if(o.cause)rows.push(['Cause',escapeHtml(o.cause)]);
+    const started=when(o.startIso,o.start);if(started)rows.push(['Started',escapeHtml(started)]);
+    const back=when(o.restoreIso,o.restore);if(back)rows.push(['Estimated back',escapeHtml(back)]);
+    if(o.towns&&o.towns.length>1)rows.push(['Also affects',escapeHtml(o.towns.filter(t=>t!==p.town).join(', '))]);
+    return '<div class="outage-pop"><h4>'+escapeHtml(p.town||'Outage')+'</h4>'+
+      '<div class="op">'+escapeHtml(o.network||'')+
+      (o.kind==='planned'?' · planned work':'')+'</div>'+
+      (rows.length?'<dl>'+rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('')+'</dl>':'')+
+      '</div>';
+  }
+
+  function renderMap(payload){
+    const noteEl=document.getElementById('outageMapNote');
+    const m=ensureMap();
+    if(!m){if(noteEl)noteEl.textContent='';return;}
+    oLayer.clearLayers();
+    const {pts,unplaced}=outagePoints(payload);
+    pts.forEach(p=>{
+      const planned=p.outage.kind==='planned';
+      L.circleMarker([p.lat,p.lon],{
+        radius:dotRadius(p.outage.customers),className:'outage-dot',
+        color:planned?'#6a7d8c':'#8a2f14',weight:1,
+        fillColor:planned?'#9fb3c2':'#d9522c',fillOpacity:planned?0.45:0.62
+      }).bindPopup(popupHtml(p)).addTo(oLayer);
+    });
+    if(pts.length){
+      const b=L.latLngBounds(pts.map(p=>[p.lat,p.lon]));
+      m.fitBounds(b.pad(0.25),{maxZoom:10});
+    }else{
+      m.setView([-25.6,134.3],4);
+    }
+    if(noteEl){
+      const bits=[];
+      if(pts.length)bits.push(pts.length+' town'+(pts.length===1?'':'s')+' mapped');
+      /* Said out loud, because a town we could not place is missing from the
+         map while its power is still off -- and a reader counting dots would
+         otherwise undercount without knowing. */
+      if(unplaced.length){
+        const uniq=[...new Set(unplaced)];
+        bits.push(uniq.length+' could not be placed on the map ('+
+          escapeHtml(uniq.slice(0,4).join(', '))+(uniq.length>4?'…':'')+') — they are in the list below');
+      }
+      if(gazetteerState==='failed')bits.push('place lookup unavailable, so only operators that publish coordinates are shown');
+      noteEl.className='outage-mapnote'+((unplaced.length||gazetteerState==='failed')?' warn':'');
+      noteEl.textContent=bits.join(' · ');
+    }
+  }
+
+  /* What to say when a search finds nothing. Three different facts, three
+     different answers -- collapsing them into one message is how a dashboard
+     tells somebody their provider is blocked when their power is simply on. */
+  function searchVerdict(q,payload){
+    const st=payload.state||currentState;
+    const info=STATE_BLIND[st]||{all:false,blocked:[]};
+    const key=q.trim().toUpperCase();
+    const elsewhere=(gazetteer&&!gazetteer.byKey.get(key+'|'+st))
+      ? (gazetteer.byName.get(key)||[]) : [];
+    if(elsewhere.length&&elsewhere.every(c=>c[0]!==st)){
+      const states=[...new Set(elsewhere.map(c=>c[0]))];
+      return '<div class="outage-verdict elsewhere"><b>'+escapeHtml(q)+'</b> is in '+
+        states.join(' / ')+', not '+escapeHtml(payload.name||st)+
+        '. Switch to the '+states[0]+' tab to see its outages.</div>';
+    }
+    if(info.all){
+      const op=info.blocked[0],url=OPERATOR_SITES[op];
+      return '<div class="outage-verdict blind">We can\u2019t show outages for '+
+        escapeHtml(payload.name||st)+'. <b>'+escapeHtml(op)+
+        '</b> is the only distributor here and it blocks automated access, so we have no list to search \u2014 '+
+        'this is not the same as saying your power is on.'+
+        '<br><a class="go" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">Check '+
+        escapeHtml(op)+'\u2019s own outage map \u2192</a></div>';
+    }
+    if(info.blocked.length){
+      const op=info.blocked[0],url=OPERATOR_SITES[op];
+      return '<div class="outage-verdict clear">No current outage listed for <b>'+escapeHtml(q)+
+        '</b> by the operators we can read in '+escapeHtml(payload.name||st)+'.'+
+        '<br><span style="opacity:.85">One caveat: <b>'+escapeHtml(op)+
+        '</b> blocks automated access, so if it is your distributor we cannot see your area.</span>'+
+        '<br><a class="go" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">Check '+
+        escapeHtml(op)+'\u2019s map \u2192</a></div>';
+    }
+    /* Every distributor in this state answers, so "no outage listed" is a
+       real answer and gets no warning attached to it. */
+    return '<div class="outage-verdict clear">No current outage listed for <b>'+escapeHtml(q)+
+      '</b>. Every distributor in '+escapeHtml(payload.name||st)+' is reporting to us.</div>';
+  }
+
   function renderList(payload){
     const q=(filterEl&&filterEl.value||'').trim().toLowerCase();
     const all=payload.outages||[];
@@ -1887,11 +2130,10 @@ window.addEventListener('resize',()=>map.invalidateSize());
       filterCountEl.textContent=q?(rows.length+' of '+all.length+' match \u201c'+q+'\u201d'):'';
     }
     if(q&&!rows.length){
-      /* Not the same claim as "no outages": we only know this state's list,
-         and only the operators that answered. */
-      listEl.innerHTML='<div class="inc-empty">No listed outage mentions \u201c'+escapeHtml(q)+
-        '\u201d in '+escapeHtml(payload.name||currentState)+'.<br>'+
-        'This only covers the operators reporting above \u2014 check theirs directly if in doubt.</div>';
+      /* Three different facts, told apart: the town is in another state, the
+         only distributor here blocks us, or nothing is out. The old version
+         said one thing for all three. */
+      listEl.innerHTML=searchVerdict(q,payload);
       return;
     }
     if(!rows.length){
@@ -1972,6 +2214,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     }
     renderSummary(payload);
     renderNetworks(payload);
+    renderMap(payload);
     renderList(payload);
     renderFoot(payload);
   }
@@ -2073,7 +2316,16 @@ window.addEventListener('resize',()=>map.invalidateSize());
 
   if(filterEl)filterEl.addEventListener('input',()=>{
     const payload=stateCache[currentState];
-    if(payload)renderList(payload);
+    if(payload){renderList(payload);renderMap(payload);}
+  });
+
+  /* Fetched once and cached: the map cannot place twelve operators' towns
+     without it, and a search cannot tell "in another state" from "nothing
+     out" either. Re-rendering on arrival matters because the first payload
+     usually lands first. */
+  loadGazetteer().then(()=>{
+    const payload=stateCache[currentState];
+    if(payload)render();
   });
 
   tabsEl.querySelectorAll('.state-tab').forEach(tab=>{

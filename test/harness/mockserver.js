@@ -162,6 +162,35 @@ const server = http.createServer((req, res) => {
   }
   /* Everything else the page asks for, answered blandly so one unrelated
      route can't be what makes an outage test fail. */
+  /* The gazetteer the map plots town names with. A fixture rather than the
+     real 15,000-entry file: the tests need particular towns in particular
+     states, and the cases that matter are a town in the state you are on, a
+     town in another state, and one in a state whose only distributor blocks
+     us. */
+  if (u.pathname === '/data/gazetteer.json') {
+    if (u.searchParams.get('gaz') === 'off') return send(404, 'no gazetteer', 'text/plain');
+    return send(200, {
+      attribution: 'Test fixture',
+      fields: ['name', 'state', 'lat', 'lon'],
+      items: [
+        ['WYONG', 'NSW', -33.283, 151.425],
+        ['GOSFORD', 'NSW', -33.427, 151.342],
+        ['PENRITH', 'NSW', -33.751, 150.694],
+        ['DUBBO', 'NSW', -32.243, 148.601],
+        /* A NSW town deliberately absent from the outage rows, so a search
+           for it exercises the "nothing listed" path rather than matching. */
+        ['TAMWORTH', 'NSW', -31.092, 150.929],
+        /* SA and NT: the only distributor in each blocks us. */
+        ['PORT AUGUSTA', 'SA', -32.492, 137.766],
+        ['KATHERINE', 'NT', -14.465, 132.263],
+        /* Victoria: every distributor answers, so a miss here is a real "no". */
+        ['BALLARAT CENTRAL', 'VIC', -37.562, 143.855],
+        /* The same name in two states, which must not be resolved silently. */
+        ['RICHMOND', 'VIC', -37.819, 145.000],
+        ['RICHMOND', 'TAS', -42.736, 147.437]
+      ]
+    });
+  }
   if (u.pathname === '/api/news') return send(200, { build: 'test', articles: [], feeds: [], warming: true });
   if (u.pathname.startsWith('/api/incidents')) return send(200, { states: [], builtAt: Date.now() });
   if (u.pathname === '/api/gdelt') return send(200, { articles: [] });
