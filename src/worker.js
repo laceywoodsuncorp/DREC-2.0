@@ -243,7 +243,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-09-24-arcgis';
+const WORKER_BUILD = '2026-09-24-qld-arcgis';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -2739,6 +2739,28 @@ async function readOutageSnapshot(env) {
 
 /* Overlays the snapshot onto a state's live payload: snapshot first for any
    operator it has, live underneath for the rest. */
+/* Power Outages Australia's per-distributor page puts one figure where the
+   capture expects two, and it lands in both slots. TasNetworks settles which
+   figure it is: its own live list is 6 outages and 366 customers, and the
+   aggregator's page for it comes back "366 outages, 366 customers". So the
+   number being read is the customer count, and the outage count beside it is
+   an artefact of reading it twice.
+
+   Quoting it would tell a reader there are 2,760 separate outages across
+   Essential Energy's network when the fact is 2,760 customers off -- a
+   two-orders-of-magnitude overstatement of how bad the day is, on the number
+   a dashboard is read for. The customer figure is corroborated, so it stays;
+   the count does not. `> 1` leaves alone the one case where the pair is
+   honestly equal, a single outage affecting a single customer. */
+function sanitiseReported(reported) {
+  if (!reported) return reported;
+  const { outages, customers } = reported;
+  if (outages !== null && outages !== undefined && outages === customers && outages > 1) {
+    return Object.assign({}, reported, { outages: null });
+  }
+  return reported;
+}
+
 function applyOutageSnapshot(payload, snapshot, state) {
   const snap = snapshot && snapshot.states && snapshot.states[state];
   if (!snap) return payload;
@@ -2761,7 +2783,7 @@ function applyOutageSnapshot(payload, snapshot, state) {
     if (!taken) {
       const totals = totalsOnly.get(live.name);
       if (totals && !live.count) {
-        return Object.assign({}, live, { reported: totals.reported, reportedVia: totals.reportedVia });
+        return Object.assign({}, live, { reported: sanitiseReported(totals.reported), reportedVia: totals.reportedVia });
       }
       return live;
     }

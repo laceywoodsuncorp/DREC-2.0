@@ -1123,6 +1123,52 @@ console.log('\n== the Queensland layers, read with their own field names ==');
     b.networks.every((n) => n.via === 'ArcGIS Online'), b.networks.map((n) => n.via));
 }
 
+console.log('\n== one figure read twice is not two figures ==');
+{
+  reset();
+  /* The aggregator's per-distributor page is the only thing left for the
+     operators that block us, and the capture reads a single number into both
+     of its slots. TasNetworks is the control that proves it: its own list is
+     6 outages and 366 customers, and the aggregator page for it says
+     "366 and 366". */
+  const snapshot = {
+    capturedAt: Date.now(),
+    states: {
+      nsw: {
+        networks: [
+          { name: 'Essential Energy', ok: false,
+            reported: { outages: 2760, customers: 2760 }, reportedVia: 'Power Outages Australia' },
+          { name: 'Endeavour Energy', ok: false,
+            reported: { outages: 12, customers: 1227 }, reportedVia: 'Power Outages Australia' }
+        ],
+        outages: []
+      }
+    }
+  };
+  const snapEnv = { ASSETS: { fetch: async (req) => (String(req.url || req).includes('outages.json')
+    ? new Response(JSON.stringify(snapshot), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    : new Response('asset', { status: 200 })) } };
+  upstream.http = () => new Response('down', { status: 503 });
+
+  const b = await (await worker.fetch(new Request('https://example.test/api/outages/nsw'),
+    snapEnv, { waitUntil: () => {} })).json();
+  const essential = b.networks.find((n) => n.name === 'Essential Energy');
+  const endeavour = b.networks.find((n) => n.name === 'Endeavour Energy');
+
+  /* 2,760 customers off is a bad day. "2,760 outages" is a different claim
+     by two orders of magnitude, and it is the one that isn't true. */
+  check('the duplicated outage count is dropped',
+    essential.reported && essential.reported.outages === null, essential.reported);
+  check('the customer figure it was copied from is kept',
+    essential.reported.customers === 2760, essential.reported);
+  check('and it still says whose figure it is',
+    essential.reportedVia === 'Power Outages Australia', essential.reportedVia);
+  /* A pair that differs was read properly and must survive untouched. */
+  check('a genuine pair is left alone',
+    endeavour.reported.outages === 12 && endeavour.reported.customers === 1227,
+    endeavour.reported);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);
