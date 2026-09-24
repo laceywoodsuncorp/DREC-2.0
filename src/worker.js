@@ -1993,7 +1993,10 @@ function parseOutageTable(html, opts) {
    answers with recognisable rows wins and the rest aren't tried. `site` is
    the operator's own outage page, always shown so there is a way through even
    when every candidate fails. */
-const OUTAGE_NETWORKS = {
+/* Exported so the scraper agent (scripts/scrape-outages.mjs) works from the
+   same list as the Worker. Two copies of "who the operators are and where
+   their page lives" would drift the first time one changed. */
+export const OUTAGE_NETWORKS = {
   nsw: {
     name: 'New South Wales',
     networks: [
@@ -2476,28 +2479,133 @@ async function refreshOutageShard(shard) {
   await rebuildOutagesAggregate();
 }
 
+/* ---------- the scraped snapshot ----------
+   data/outages.json is written by scripts/scrape-outages.mjs, run by hand
+   from the Actions tab. It drives a real browser, so it can read the lists
+   that only exist after JavaScript runs -- which a Worker fetch never sees.
+
+   It is the primary source for every operator it covers. The live feeds stay
+   underneath rather than being deleted, and are used for an operator the
+   snapshot has nothing for: the snapshot is only as current as the last time
+   someone ran it, and a dashboard that shows nothing at all until somebody
+   remembers to click a button is worse than one showing a feed. Which of the
+   two answered is carried on every network, and the page says so, because a
+   figure captured three hours ago and one fetched a minute ago should not
+   look alike on a screen people act on. */
+const SNAPSHOT_URL = 'https://assets.local/data/outages.json';
+/* Keyed on the binding rather than held in a module variable: the parse is
+   worth caching for a minute, but a plain global would outlive whatever it
+   was read from and hand one caller another's answer. */
+const snapshotMemo = new WeakMap();
+
+async function readOutageSnapshot(env) {
+  const memo = env && snapshotMemo.get(env);
+  if (memo && Date.now() - memo.at < 60000) return memo.value;
+  let value = null;
+  try {
+    if (env && env.ASSETS) {
+      const res = await env.ASSETS.fetch(new Request(SNAPSHOT_URL));
+      if (res && res.ok) {
+        const parsed = await res.json();
+        /* capturedAt 0 is the placeholder committed with the workflow -- the
+           scraper has never run, which is not the same as an empty result. */
+        if (parsed && parsed.capturedAt) value = parsed;
+      }
+    }
+  } catch (e) { /* no snapshot is a normal state, not an error */ }
+  if (env) snapshotMemo.set(env, { at: Date.now(), value });
+  return value;
+}
+
+/* Overlays the snapshot onto a state's live payload: snapshot first for any
+   operator it has, live underneath for the rest. */
+function applyOutageSnapshot(payload, snapshot, state) {
+  const snap = snapshot && snapshot.states && snapshot.states[state];
+  if (!snap) return payload;
+  const capturedAt = snapshot.capturedAt;
+  const ageSeconds = Math.round((Date.now() - capturedAt) / 1000);
+
+  const fromSnap = new Map();
+  (snap.networks || []).forEach((n) => { if (n.ok) fromSnap.set(n.name, n); });
+  if (!fromSnap.size) return payload;
+
+  const networks = (payload.networks || []).map((live) => {
+    const taken = fromSnap.get(live.name);
+    if (!taken) return live;
+    return {
+      name: live.name, area: live.area, site: live.site,
+      ok: true, count: taken.count || 0,
+      customers: (snap.outages || []).filter((o) => o.network === live.name)
+        .reduce((t, o) => t + (o.customers || 0), 0),
+      source: 'snapshot', capturedAt, shape: taken.shape
+    };
+  });
+
+  const outages = [];
+  networks.forEach((n) => {
+    if (n.source === 'snapshot') {
+      (snap.outages || []).filter((o) => o.network === n.name).forEach((o) => outages.push(o));
+    } else {
+      (payload.outages || []).filter((o) => o.network === n.name).forEach((o) => outages.push(o));
+    }
+  });
+  outages.sort((a, b) => {
+    const ca = a.customers === null || a.customers === undefined ? -1 : a.customers;
+    const cb = b.customers === null || b.customers === undefined ? -1 : b.customers;
+    return cb - ca;
+  });
+
+  const sum = (rows) => rows.reduce((t, o) => t + (o.customers || 0), 0);
+  const unplanned = outages.filter((o) => o.kind !== 'planned');
+  const planned = outages.filter((o) => o.kind === 'planned');
+  return Object.assign({}, payload, {
+    ok: networks.some((n) => n.ok),
+    complete: networks.every((n) => n.ok),
+    count: outages.length,
+    customers: sum(outages),
+    unplannedCount: unplanned.length, unplannedCustomers: sum(unplanned),
+    plannedCount: planned.length, plannedCustomers: sum(planned),
+    outages: outages.slice(0, 400),
+    networks,
+    snapshotAgeSeconds: ageSeconds,
+    snapshotCapturedAt: capturedAt
+  });
+}
+
 /* GET /api/outages/<state> -- one state's full list. */
-async function handleOutagesState(state, ctx) {
+async function handleOutagesState(state, ctx, env) {
   const group = OUTAGE_NETWORKS[state];
   if (!group) {
     return new Response(JSON.stringify({ ok: false, error: 'Unknown state: ' + state }), {
       status: 404, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
     });
   }
+  const snapshot = await readOutageSnapshot(env);
+  const send = (payload, extraHeaders) => new Response(
+    JSON.stringify(applyOutageSnapshot(payload, snapshot, state)),
+    { status: 200, headers: Object.assign({
+      'Content-Type': 'application/json', 'Cache-Control': 'no-store',
+      'X-Worker-Build': WORKER_BUILD }, extraHeaders || {}) });
+
   const cached = await readSharedCache(outageCacheUrl(state));
   if (cached) {
     /* Serve what is stored, then bring this location up to date behind the
        response -- the reader waits for none of it, and the state they are
        actually looking at is the one most worth refreshing. */
     if (ctx && ctx.waitUntil) ctx.waitUntil(warmColdOutages().catch(() => {}));
-    return respondFromCache(cached);
+    let payload;
+    try { payload = await cached.response.json(); } catch (e) { payload = null; }
+    if (payload) {
+      payload.cacheAgeSeconds = Math.round(cached.ageSeconds);
+      return send(payload, { 'X-Cache-Age': String(Math.round(cached.ageSeconds)) });
+    }
   }
 
   const result = await refreshStateOutages(state);
-  return new Response(JSON.stringify(result.payload || {
+  return send(result.payload || {
     state: state.toUpperCase(), name: group.name, ok: false, count: 0, outages: [],
     error: result.error || 'Refresh failed'
-  }), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  });
 }
 
 /* GET /api/outages -- every state's totals and per-network status, no rows.
@@ -2530,7 +2638,7 @@ async function handleApi(url, env, ctx) {
 
   if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') return handleOutagesAll(ctx);
   if (url.pathname.startsWith('/api/outages/')) {
-    return handleOutagesState(url.pathname.slice('/api/outages/'.length).replace(/\/+$/, '').toLowerCase(), ctx);
+    return handleOutagesState(url.pathname.slice('/api/outages/'.length).replace(/\/+$/, '').toLowerCase(), ctx, env);
   }
   return null;   // not an API route we serve; fall through to the assets
 }

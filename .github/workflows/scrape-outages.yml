@@ -1,0 +1,64 @@
+# Manually triggered: Actions -> "Scrape outages" -> Run workflow.
+#
+# Visits each distributor's own outage page in a real browser, because most of
+# these lists only exist after JavaScript runs and a Worker fetch sees an empty
+# shell. Commits what it finds to data/outages.json, which the Worker serves.
+#
+# Deliberately manual. A schedule would keep the dashboard current but consumes
+# Actions minutes on a private repo; add a `schedule:` trigger here if that
+# trade becomes worth making.
+name: Scrape outages
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'States to scrape, comma separated (blank = all)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Scrape
+        run: node scripts/scrape-outages.mjs --only "${{ inputs.only }}"
+
+      # Saved whether or not the run succeeded: a page the scraper could not
+      # read is the thing most worth looking at, and the rendered HTML plus a
+      # screenshot are what turn that into a fix.
+      - name: Upload artifacts for anything unparsed
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unparsed-pages
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Commit the snapshot
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/outages.json; then
+            echo "No change in the outage snapshot."
+            exit 0
+          fi
+          git add data/outages.json
+          git commit -m "Update outage snapshot"
+          git push

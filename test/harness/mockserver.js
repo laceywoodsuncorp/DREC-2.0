@@ -13,6 +13,7 @@
      partial    one operator down
      drift      an operator answers in an unrecognised shape
      quiet      everyone reporting, nothing out
+     snapshot   one operator read from a saved browser capture
      via        one operator read through a third-party aggregator
      unconnected  operators whose feed has not been found yet
      down       the outage service itself is unreachable
@@ -62,6 +63,11 @@ function statePayload(scenario) {
   }
   /* An operator read through a third-party aggregator rather than its own
      site, which the page has to say out loud. */
+  /* Figures read from a saved browser capture rather than fetched live. */
+  if (scenario === 'snapshot') {
+    nets[0].source = 'snapshot';
+    nets[0].shape = 'cards';
+  }
   if (scenario === 'via') {
     nets[2].via = 'Power Outages Australia';
     nets[2].viaUrl = 'https://poweroutagesaustralia.com.au/distributors/essential-energy/';
@@ -91,7 +97,8 @@ function statePayload(scenario) {
     customers: sum(outages),
     unplannedCount: unplanned.length, unplannedCustomers: sum(unplanned),
     plannedCount: planned.length, plannedCustomers: sum(planned),
-    networks: nets, outages, fetchedAt: now, cacheAgeSeconds: 40
+    networks: nets, outages, fetchedAt: now, cacheAgeSeconds: 40,
+    snapshotAgeSeconds: scenario === 'snapshot' ? 3 * 3600 : undefined
   };
 }
 

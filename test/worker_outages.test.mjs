@@ -739,6 +739,71 @@ console.log('\n== the same row twice is still one row ==');
   check('and the total is not doubled', ag.customers === 158, ag.customers);
 }
 
+
+console.log('\n== the scraped snapshot is the primary source ==');
+{
+  const withSnapshot = (snap) => ({
+    ASSETS: { fetch: async (req) => (String(req.url).includes('data/outages.json')
+      ? new Response(JSON.stringify(snap), { status: 200 })
+      : new Response('asset', { status: 200 })) }
+  });
+  const callEnv = (p, e) => worker.fetch(new Request('https://example.test' + p), e, { waitUntil: () => {} });
+
+  reset();
+  /* Live feeds answer for everyone, but the snapshot covers Ausgrid. */
+  upstream.http = () => new Response(
+    '<html><table><tr><th>Suburb</th><th>Customers affected</th></tr>' +
+    '<tr><td>Live Suburb</td><td>5</td></tr></table></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html' } });
+
+  const snap = { capturedAt: Date.now() - 3600 * 1000, states: { nsw: {
+    state: 'NSW', name: 'New South Wales',
+    networks: [{ name: 'Ausgrid', ok: true, count: 2, shape: 'cards' }],
+    outages: [
+      { network: 'Ausgrid', location: 'Greystanes', customers: 120, kind: 'unplanned' },
+      { network: 'Ausgrid', location: 'Vineyard', customers: 30, kind: 'planned' }
+    ] } } };
+
+  const b = await (await callEnv('/api/outages/nsw', withSnapshot(snap))).json();
+  const ag = b.networks.find(n => n.name === 'Ausgrid');
+  check('the snapshot replaces that operator', ag.source === 'snapshot', ag);
+  check('its rows are the ones shown', b.outages.some(o => o.location === 'Greystanes'),
+    b.outages.map(o => o.location));
+  check('and the live rows for it are not also included',
+    !b.outages.some(o => o.location === 'Live Suburb' && o.network === 'Ausgrid'),
+    b.outages);
+
+  /* The other operators have nothing in the snapshot, so they keep their
+     feed -- a manual scrape that nobody has run must not blank the page. */
+  const other = b.networks.find(n => n.name === 'Endeavour Energy');
+  check('an operator the snapshot misses keeps its feed', other.source !== 'snapshot', other);
+
+  /* The snapshot's own split survives the overlay. The unplanned total also
+     picks up rows from operators still on their live feed, which is correct
+     -- it is a state total, not a per-source one. */
+  check('faults and planned work stay counted apart',
+    b.plannedCount === 1 && b.unplannedCount >= 1, [b.unplannedCount, b.plannedCount]);
+  check('a planned row from the snapshot is labelled planned',
+    b.outages.find(o => o.location === 'Vineyard').kind === 'planned',
+    b.outages.find(o => o.location === 'Vineyard'));
+  check('the age of the capture is reported', b.snapshotAgeSeconds >= 3500, b.snapshotAgeSeconds);
+}
+
+console.log('\n== a snapshot that has never been run changes nothing ==');
+{
+  reset();
+  upstream.http = json([{ suburb: 'Feedville', customersAffected: 9 }]);
+  const placeholder = { ASSETS: { fetch: async () => new Response(
+    JSON.stringify({ capturedAt: 0, states: {} }), { status: 200 }) } };
+  const b = await worker.fetch(new Request('https://example.test/api/outages/qld'), placeholder,
+    { waitUntil: () => {} }).then(r => r.json());
+  /* capturedAt 0 is the file committed with the workflow. Treating it as a
+     real capture would wipe every operator off the page before anyone had
+     run the scraper once. */
+  check('the placeholder is ignored', b.snapshotAgeSeconds === undefined, b.snapshotAgeSeconds);
+  check('and the feeds still answer', b.ok === true, b.ok);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);

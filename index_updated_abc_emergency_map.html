@@ -1769,7 +1769,10 @@ window.addEventListener('resize',()=>map.invalidateSize());
          aggregator's numbers are a second-hand account, and on a dashboard
          people act on that distinction has to be visible on the chip itself,
          not only in the footnote. */
-      const tail=escapeHtml(plain)+(n.ok&&n.via?' <i>via '+escapeHtml(n.via)+'</i>':'');
+      /* A figure captured hours ago and one fetched a minute ago must not
+         look alike on a screen people act on. */
+      const snapTag=n.source==='snapshot'?' <i>snapshot</i>':'';
+      const tail=escapeHtml(plain)+(n.ok&&n.via?' <i>via '+escapeHtml(n.via)+'</i>':'')+snapTag;
       /* The upstream reason on hover, and a way through to the operator's own
          map either way -- a failed network must never be a dead end. */
       const title=n.ok?(n.diagnostics?('Answered, but this dashboard could not read its format — '+((n.diagnostics.note)||'')):(n.area||''))
@@ -1813,6 +1816,14 @@ window.addEventListener('resize',()=>map.invalidateSize());
     if(payload.cacheAgeSeconds>1500){
       bits.push('<span class="warn">Data is '+Math.round(payload.cacheAgeSeconds/60)+' minutes old</span>');
     }
+    /* The scraped snapshot only moves when someone runs the scraper, so its
+       age is the number that matters and it gets said plainly rather than
+       being left to look live. */
+    if(payload.snapshotAgeSeconds!==undefined){
+      const mins=Math.round(payload.snapshotAgeSeconds/60);
+      const label=mins<90?mins+' minutes':Math.round(mins/60)+' hours';
+      bits.push('<span'+(mins>180?' class="warn"':'')+'>\uD83D\uDCF7 Captured '+label+' ago</span>');
+    }
     summaryEl.innerHTML=bits.join('');
   }
 
@@ -1850,6 +1861,14 @@ window.addEventListener('resize',()=>map.invalidateSize());
     /* Whose figures these are, said plainly. An aggregator is a second-hand
        account of the operator's data and the distinction matters on a
        dashboard people act on. */
+    const snapNets=(payload.networks||[]).filter(n=>n.source==='snapshot');
+    if(snapNets.length){
+      const mins=Math.round((payload.snapshotAgeSeconds||0)/60);
+      notes.push('\uD83D\uDCF7 '+snapNets.map(n=>escapeHtml(n.name)).join(', ')+
+        (snapNets.length===1?' is':' are')+' read from a saved capture taken '+
+        (mins<90?mins+' minutes':Math.round(mins/60)+' hours')+' ago, not fetched live. '+
+        'Run the "Scrape outages" action to refresh it.');
+    }
     const viaNets=(payload.networks||[]).filter(n=>n.ok&&n.via);
     if(viaNets.length){
       notes.push('ℹ️ '+viaNets.map(n=>escapeHtml(n.name)+' figures come via '+escapeHtml(n.via)).join('; ')+

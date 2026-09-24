@@ -155,6 +155,20 @@ const check = (n, c, x) => {
     await p.close();
   }
 
+  console.log('\n== a saved capture does not masquerade as live ==');
+  {
+    const p = await open('snapshot');
+    const c = await chips(p);
+    check('the chip marks it as a snapshot',
+      /snapshot/i.test(c.find(x => /Ausgrid/.test(x.text)).text), c.map(x => x.text));
+    check('the age of the capture is on screen', /captured/i.test(await summary(p)), await summary(p));
+    check('and the footer says how to refresh it',
+      /scrape outages/i.test(await foot(p)), await foot(p));
+    check('operators fetched live carry no such mark',
+      !/snapshot/i.test(c.find(x => /Endeavour/.test(x.text)).text), c.map(x => x.text));
+    await p.close();
+  }
+
   console.log('\n== tabs switch states and carry counts ==');
   {
     const p = await open('live');

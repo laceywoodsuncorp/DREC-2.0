@@ -39,3 +39,30 @@ grep -c "unpkg.com/leaflet" index_updated_abc_emergency_map.html # must be 2
 
 Chromium and Playwright are found at the paths in `CHROME_PATH` /
 `PLAYWRIGHT_PATH`, defaulting to this image's locations.
+
+## The outage scraper agent
+
+`scripts/scrape-outages.mjs` drives a real browser over each distributor's own
+outage page and writes `data/outages.json`, which the Worker then serves as the
+primary source for any operator it covers. It exists because most of these
+lists only render after JavaScript runs, so a Worker `fetch` sees an empty
+shell.
+
+Run it from GitHub: **Actions → Scrape outages → Run workflow** (optionally
+naming states, e.g. `nsw,vic`). It commits the snapshot itself.
+
+Locally:
+
+```sh
+npm install --no-save playwright
+npx playwright install chromium
+node scripts/scrape-outages.mjs --only nsw
+```
+
+Pages it cannot read are saved to `artifacts/` as rendered HTML plus a
+screenshot, and uploaded by the workflow. That is the fastest way to add a
+missing site: the artifact shows what the list actually looks like once
+rendered.
+
+It does not attempt to get past bot challenges. An operator that blocks
+automated access is recorded as blocked and skipped.
