@@ -293,10 +293,82 @@ function fallbackUrls(net) {
   return (net.sources || []).filter((src) => src.via).map((src) => ({ url: src.viaUrl || src.url, via: src.via }));
 }
 
+/* Every one of these outage maps is a client-side app that fetches its list
+   from an endpoint. Reading the rendered DOM guesses at what the app did
+   with that data; watching the requests the page makes of its own accord
+   tells us where the data came from, which is the thing actually worth
+   having -- an address the Worker can fetch directly, with no browser and no
+   guessing at markup.
+
+   This records only what the page requests on a normal load. It does not
+   probe, enumerate or retry anything, and a page that never loads (a bot
+   challenge) makes no such requests and so yields nothing here -- which is
+   the correct outcome, not a gap to work around. */
+function recordResponses(page) {
+  const seen = new Map();
+  /* One page object is reused for every operator, so the handler has to come
+     off again at the end -- otherwise the sixteenth operator is being watched
+     by sixteen listeners and inherits the previous fifteen's URLs. */
+  const interesting = /\.json|\/api\/|\/rest\/services|graphql|outage|query\?|feature/i;
+  const handler = (res) => {
+    try {
+      const url = res.url();
+      if (seen.has(url) || seen.size > 60) return;
+      const type = (res.headers()['content-type'] || '').toLowerCase();
+      const looksData = type.includes('json') || type.includes('xml');
+      if (!looksData && !interesting.test(url)) return;
+      if (/\.(png|jpe?g|gif|svg|webp|woff2?|css|ico)(\?|$)/i.test(url)) return;
+      seen.set(url, { url, status: res.status(), type, method: res.request().method() });
+    } catch (e) { /* a response that has gone away is not worth failing over */ }
+  };
+  page.on('response', handler);
+  return { seen, stop: () => page.removeListener('response', handler) };
+}
+
+/* A recorded endpoint is only a lead until we know it carries rows. This
+   reads the bodies the browser already has, and reports each one's shape and
+   first record's keys -- enough to wire it up, deliberately not enough to be
+   a copy of the data. */
+async function describeResponses(page, recorder) {
+  recorder.stop();
+  const out = [];
+  for (const entry of recorder.seen.values()) {
+    if (entry.status !== 200 || !entry.type.includes('json')) { out.push(entry); continue; }
+    try {
+      const body = await page.evaluate(async (u) => {
+        const r = await fetch(u, { credentials: 'same-origin' });
+        const t = await r.text();
+        return t.slice(0, 200000);
+      }, entry.url).catch(() => null);
+      if (!body) { out.push(entry); continue; }
+      const parsed = JSON.parse(body);
+      let rows = null, envelope = 'object';
+      if (Array.isArray(parsed)) { rows = parsed; envelope = 'array'; }
+      else if (Array.isArray(parsed.features)) { rows = parsed.features.map((f) => f.properties || f.attributes || f); envelope = 'geojson'; }
+      else if (Array.isArray(parsed.results)) { rows = parsed.results; envelope = 'results'; }
+      else {
+        const best = Object.entries(parsed).filter(([, v]) => Array.isArray(v) && v.length)
+          .sort((a, b) => b[1].length - a[1].length)[0];
+        if (best) { rows = best[1]; envelope = 'wrapped:' + best[0]; }
+      }
+      entry.envelope = envelope;
+      entry.records = rows ? rows.length : 0;
+      if (rows && rows.length && rows[0] && typeof rows[0] === 'object') {
+        entry.keys = Object.keys(rows[0]).slice(0, 40);
+      }
+    } catch (e) { entry.bodyError = String(e.message).slice(0, 80); }
+    out.push(entry);
+  }
+  /* The ones carrying rows first -- that is what a reader of this file is
+     looking for, and there can be sixty entries. */
+  return out.sort((a, b) => (b.records || 0) - (a.records || 0)).slice(0, 25);
+}
+
 async function scrapeOperator(page, state, net, target) {
   const url = (target && target.url) || net.site;
   const result = { name: net.name, ok: false, count: 0, outages: [] };
   if (target && target.via) result.via = target.via;
+  const recorder = recordResponses(page);
   try {
     const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
     /* Wait for the requests to stop rather than for a fixed six seconds.
@@ -320,6 +392,10 @@ async function scrapeOperator(page, state, net, target) {
       result.diagnostic = await page.evaluate(summariseInPage).catch(() => null);
       return result;
     }
+
+    /* Whatever the DOM pass makes of this page, where its data came from is
+       worth knowing -- most of all when the DOM pass fails. */
+    result.endpoints = await describeResponses(page, recorder).catch(() => null);
 
     const found = await page.evaluate(extractInPage, HINTS);
     result.shape = found.shape;
@@ -351,6 +427,8 @@ async function scrapeOperator(page, state, net, target) {
   } catch (err) {
     result.error = err.name === 'TimeoutError' ? 'Timed out loading the page' : err.message;
     await saveArtifacts(page, state, net).catch(() => {});
+  } finally {
+    recorder.stop();
   }
   return result;
 }
@@ -720,6 +798,7 @@ async function probeArcgisLayers() {
      are for fixing the scraper, not for the page. */
   const clean = {};
   const diagnostics = {};
+  const endpoints = {};
   Object.entries(states).forEach(([state, v]) => {
     clean[state] = Object.assign({}, v, {
       networks: v.networks.map(({ diagnostic, viaDiagnostic, ...rest }) => rest)
@@ -727,11 +806,23 @@ async function probeArcgisLayers() {
     v.networks.forEach((n) => {
       if (n.diagnostic) diagnostics[state + '/' + n.name] = n.diagnostic;
       if (n.viaDiagnostic) diagnostics[state + '/' + n.name + ' (via)'] = n.viaDiagnostic;
+      if (n.endpoints && n.endpoints.length) endpoints[state + '/' + n.name] = n.endpoints;
     });
   });
 
   writeFileSync(OUT, JSON.stringify({ capturedAt: Date.now(), states: clean }, null, 2) + '\n');
   /* Anything that could not be listed is worth looking for in the catalogue. */
+  console.log('\nwhat each page fetched for itself:');
+  Object.entries(endpoints).forEach(([k, list]) => {
+    const withRows = list.filter((e) => e.records);
+    console.log('  ' + k.padEnd(30) + list.length + ' data request(s)'
+      + (withRows.length ? ', ' + withRows.length + ' carrying rows' : ''));
+    withRows.slice(0, 4).forEach((e) => {
+      console.log('      ' + String(e.records).padStart(5) + ' rows  ' + e.url.slice(0, 130));
+      if (e.keys) console.log('             keys: ' + e.keys.join(', ').slice(0, 220));
+    });
+  });
+
   const stuck = [];
   Object.values(states).forEach((v) => v.networks.forEach((n) => {
     if (!n.ok && stuck.indexOf(n.name) === -1) stuck.push(n.name);
@@ -780,8 +871,8 @@ async function probeArcgisLayers() {
     (v.hits || []).forEach((h) => console.log('      ' + (h.org || '') + ' :: ' + h.title));
   });
 
-  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, feeds,
-    arcgis, layers, ods, ckan }, null, 2) + '\n');
+  writeFileSync(DIAG, JSON.stringify({ capturedAt: Date.now(), pages: diagnostics, endpoints,
+    feeds, arcgis, layers, ods, ckan }, null, 2) + '\n');
   console.log('\nwrote ' + OUT + '  (' + summary.join(', ') + ')');
   console.log('wrote ' + DIAG + '  (' + Object.keys(diagnostics).length + ' page(s) needing work)');
 })();
