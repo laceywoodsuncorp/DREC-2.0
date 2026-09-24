@@ -1,0 +1,33 @@
+# A one-off lookup, kept separate from the outage capture so it costs seconds
+# rather than riding along with a half-hour browser run.
+name: Probe gazetteer sources
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Probe
+        run: node scripts/probe-gazetteer.mjs
+      - name: Commit the findings
+        if: always()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/; then
+            echo "No change."
+            exit 0
+          fi
+          git add data/
+          git commit -m "Record gazetteer source probe"
+          git push
