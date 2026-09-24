@@ -1044,6 +1044,14 @@ async function probeThirdParty(page) {
     summary.push(state.toUpperCase() + ': ' + outages.length);
   }
 
+  /* Before the browser is closed, not after. These candidates need a real
+     browser -- they are client-side apps like the operators' own pages --
+     and the first version of this ran them after close, so every one came
+     back "Target page, context or browser has been closed" and would have
+     read as seven dead sites rather than one misplaced call. */
+  console.log('\nlooking for anyone else who republishes the blocked operators...');
+  const thirdParty = await probeThirdParty(page).catch((e) => ({ error: String(e.message) }));
+
   await browser.close();
   mkdirSync(OUT.replace(/\/[^/]*$/, ''), { recursive: true });
 
@@ -1132,8 +1140,6 @@ async function probeThirdParty(page) {
     if (v.folders && v.folders.length) console.log('      folders: ' + v.folders.join(', ').slice(0, 160));
   });
 
-  console.log('\nlooking for anyone else who republishes the blocked operators...');
-  const thirdParty = await probeThirdParty(page).catch((e) => ({ error: String(e.message) }));
   Object.entries(thirdParty).forEach(([k, v]) => {
     console.log('  ' + k.padEnd(32) + (v.error ? 'ERR ' + v.error
       : (v.blocked ? 'challenged'
