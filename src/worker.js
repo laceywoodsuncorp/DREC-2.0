@@ -1962,6 +1962,11 @@ function normaliseOutages(json, opts) {
    and how it is read. "affected" on its own is deliberately NOT a customer
    word -- "Affected areas" is a heading several of them use for the place. */
 const OUTAGE_COLUMN_HINTS = [
+  /* Ahead of 'cause', which claims anything containing "fault": the
+     Victorian sites label the street as "Fault location", and mapping that
+     to the cause both loses the street and overwrites the real cause, which
+     appears later in the same card. */
+  { field: 'location', words: ['faultlocation'] },
   { field: 'restore', words: ['restor', 'estimat', 'etr', 'expected', 'backon'] },
   { field: 'start', words: ['start', 'began', 'begun', 'reported', 'commenc', 'since', 'timeoff'] },
   { field: 'customers', words: ['customer', 'premises', 'properties', 'impacted', 'supplies'] },
@@ -2228,7 +2233,8 @@ async function refreshStateOutages(state) {
   const networks = [];
 
   for (const net of group.networks) {
-    const entry = { name: net.name, area: net.area, site: net.site, ok: false, count: 0, outages: [] };
+    const entry = { name: net.name, area: net.area, site: net.site, confirmed: net.confirmed,
+      ok: false, count: 0, outages: [] };
     const attempts = [];
     let drifted = null;
 
@@ -2362,6 +2368,7 @@ async function refreshStateOutages(state) {
     networks: networks.map((n) => ({
       name: n.name, area: n.area, site: n.site, ok: n.ok, count: n.count,
       customers: (n.outages || []).reduce((s, o) => s + (o.customers || 0), 0),
+      confirmed: n.confirmed,
       error: n.error, unconfirmed: n.unconfirmed, blocked: n.blocked,
       via: n.via, viaUrl: n.viaUrl, sourceUrl: n.sourceUrl, columns: n.columns,
       diagnostics: n.diagnostics, attempts: n.attempts
@@ -2532,6 +2539,13 @@ function applyOutageSnapshot(payload, snapshot, state) {
   const networks = (payload.networks || []).map((live) => {
     const taken = fromSnap.get(live.name);
     if (!taken) return live;
+    /* A verified machine-readable feed is not replaced by a capture that read
+       less than it did. Endeavour publishes an open data API and keeps its
+       list behind a panel the scraper never opens; Western Power's map is an
+       Esri widget with no list in the page at all. In both cases the browser
+       comes back with almost nothing, and letting that win would replace good
+       data with worse. A capture that genuinely reads more still wins. */
+    if (live.confirmed && live.ok && (taken.count || 0) <= (live.count || 0)) return live;
     return {
       name: live.name, area: live.area, site: live.site,
       ok: true, count: taken.count || 0,

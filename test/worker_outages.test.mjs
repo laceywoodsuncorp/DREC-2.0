@@ -804,6 +804,46 @@ console.log('\n== a snapshot that has never been run changes nothing ==');
   check('and the feeds still answer', b.ok === true, b.ok);
 }
 
+
+console.log('\n== a thin capture does not beat a verified feed ==');
+{
+  const withSnapshot = (snap) => ({
+    ASSETS: { fetch: async (req) => (String(req.url).includes('data/outages.json')
+      ? new Response(JSON.stringify(snap), { status: 200 })
+      : new Response('asset', { status: 200 })) }
+  });
+  const callEnv = (p, e) => worker.fetch(new Request('https://example.test' + p), e, { waitUntil: () => {} });
+
+  reset();
+  /* Endeavour's open data API answers with three outages. */
+  upstream['outagecustomerlive/exports/geojson'] = json({ type: 'FeatureCollection', features: [
+    { properties: { reference: 'A', suburb: 'Greystanes', customers_affected: 120 } },
+    { properties: { reference: 'B', suburb: 'Penrith', customers_affected: 40 } },
+    { properties: { reference: 'C', suburb: 'Katoomba', customers_affected: 12 } }] });
+
+  /* The browser capture reached the page but its list is behind a panel the
+     scraper never opens, so it came back with one row. */
+  const thin = { capturedAt: Date.now(), states: { nsw: {
+    networks: [{ name: 'Endeavour Energy', ok: true, count: 1, shape: 'cards' }],
+    outages: [{ network: 'Endeavour Energy', location: 'Somewhere', customers: 3 }] } } };
+
+  const b = await (await callEnv('/api/outages/nsw', withSnapshot(thin))).json();
+  const e = b.networks.find(n => n.name === 'Endeavour Energy');
+  check('the verified feed is kept', e.source !== 'snapshot', e);
+  check('and its rows are the ones shown', b.outages.some(o => o.location === 'Greystanes'),
+    b.outages.map(o => o.location));
+
+  /* A capture that genuinely reads more still wins -- the rule is "not
+     worse", not "never". */
+  const fuller = { capturedAt: Date.now(), states: { nsw: {
+    networks: [{ name: 'Endeavour Energy', ok: true, count: 9, shape: 'cards' }],
+    outages: Array.from({ length: 9 }, (_, i) => ({ network: 'Endeavour Energy',
+      location: 'Suburb ' + i, customers: 10 })) } } };
+  const b2 = await (await callEnv('/api/outages/nsw', withSnapshot(fuller))).json();
+  const e2 = b2.networks.find(n => n.name === 'Endeavour Energy');
+  check('a fuller capture does replace it', e2.source === 'snapshot', e2);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);

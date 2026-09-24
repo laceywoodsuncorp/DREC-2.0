@@ -57,6 +57,52 @@ const card = (suburb, ref, kind, etr) =>
       out.records[3]);
   }
 
+  console.log('\n== a card laid out as inline spans ==');
+  {
+    /* The Victorian sites, verbatim from what the scraper actually saw:
+       innerText comes back as one run-on string with no line to split on,
+       which is why 28 outages a page were being read as none. */
+    const vicCard = (suburb, kind, status, etr, custs, loc) =>
+      `<div class="card"><span>${suburb}</span><span>${kind}</span><span>${status}</span>` +
+      `<span>Estimated restoration:</span><span>${etr}</span>` +
+      `<span>Customers affected: ${custs}</span><span>Fault location: ${loc}</span></div>`;
+    await p.setContent(`<body><div class="flex flex-col gap-3 w-full">
+      ${vicCard('South Melbourne', 'Planned', 'Partially restored', '15:00 19 Sept', '1', 'Albert Road')}
+      ${vicCard('Balwyn', 'Planned', 'Partially restored', '14:00 24 Sept', '41', 'Winmalee Road')}
+      ${vicCard('Carlton', 'Unplanned', 'Investigating', '14:30 24 Sept', '110', 'Lygon Street')}
+      </div></body>`);
+    const out = await p.evaluate(new Function('hints', 'return (' + fnSrc + ')(hints);'), HINTS);
+    check('every card is read', out.records.length === 3, out.records.length);
+    const carlton = out.records.find(r => r.location === 'Carlton');
+    check('the suburb leads the card', !!carlton, out.records.map(r => r.location));
+    check('a value in its own element is paired with its label',
+      carlton && /14:30/.test(carlton.restore || ''), carlton);
+    check('a label and value in one element are split',
+      carlton && carlton.customers === '110', carlton);
+    check('an unlabelled type fragment is read',
+      carlton && /unplanned/i.test(carlton.kind || ''), carlton);
+  }
+
+  console.log('\n== the page\u2019s own totals are read even with no list ==');
+  {
+    await p.setContent('<body><div id="root"></div>' +
+      '<p>Active outages:</p><p>9</p><p>Affected customers:</p><p>1,269</p></body>');
+    const out = await p.evaluate(new Function('hints', 'return (' + fnSrc + ')(hints);'), HINTS);
+    /* The list is behind a panel this never opens, but the operator states
+       its own totals -- and those are exactly the dashboard's headline. */
+    check('no rows are invented', out.records.length === 0, out.records);
+    check('the stated outage count is read', out.reported && out.reported.outages === 9, out.reported);
+    check('and the stated customer count', out.reported && out.reported.customers === 1269, out.reported);
+  }
+
+  console.log('\n== a sentence form is read too ==');
+  {
+    await p.setContent('<body><p>Across Canberra there are currently 3 outages affecting 155 customers.</p></body>');
+    const out = await p.evaluate(new Function('hints', 'return (' + fnSrc + ')(hints);'), HINTS);
+    check('outages and customers both come out of one sentence',
+      out.reported && out.reported.outages === 3 && out.reported.customers === 155, out.reported);
+  }
+
   console.log('\n== a table on the page still wins ==');
   {
     await p.setContent(`<body>

@@ -36,6 +36,11 @@ const NAV_TIMEOUT = Number(arg('timeout', 45000));
    first word that appears in a heading or label wins, so the specific ones
    come first and "affected" alone is never a customer count. */
 const HINTS = [
+  /* Ahead of 'cause', which claims anything containing "fault": the
+     Victorian sites label the street as "Fault location", and mapping that
+     to the cause both loses the street and overwrites the real cause, which
+     appears later in the same card. */
+  { field: 'location', words: ['faultlocation'] },
   { field: 'restore', words: ['restor', 'estimat', 'etr', 'expected', 'backon'] },
   { field: 'start', words: ['start', 'began', 'begun', 'reported', 'commenc', 'since', 'timeoff'] },
   { field: 'customers', words: ['customer', 'premises', 'properties', 'impacted', 'supplies'] },
@@ -103,21 +108,45 @@ function extractInPage(hints) {
        happened to accumulate the most hits, which was rarely the list. The
        count here is over direct children, so a wrapper holding one list
        scores 1 and the list itself scores once per card. */
-    let container = null, best = 0, bestDepth = -1;
+    let container = null, best = 0, bestDepth = Infinity;
     const depthOf = (el) => { let d = 0; for (let n = el; n; n = n.parentElement) d++; return d; };
     document.querySelectorAll('div,ul,ol,section,main,tbody').forEach((el) => {
       const kids = [...el.children];
       if (kids.length < 2) return;
       const matching = kids.filter((k) => LABEL.test(k.innerText || '')).length;
       if (matching < 2) return;
+      /* A list is mostly outages; a card is mostly fields. Without this a
+         single card wins whenever the number of its fields that mention a
+         label happens to match the number of cards in the list -- which is
+         how three cards were read as none. */
+      if (matching < kids.length / 2) return;
       const depth = depthOf(el);
-      /* Most labelled children wins; on a tie the deeper element, which is
-         the list rather than something wrapping it. */
-      if (matching > best || (matching === best && depth > bestDepth)) {
+      /* Most labelled children wins. On a tie take the shallower element:
+         a list wraps cards, so the outer of two tied candidates is the list. */
+      if (matching > best || (matching === best && depth < bestDepth)) {
         best = matching; bestDepth = depth; container = el;
       }
     });
     if (!container) return { records: [], headings: [], shape: 'cards' };
+
+    /* Read the card's leaf elements rather than splitting its innerText on
+       newlines. The Victorian sites lay a card out as inline spans, so
+       innerText comes back as one run-on string --
+       "South MelbournePlannedPartially restoredEstimated restoration:15:00..."
+       -- with no line to split on and no label to match, which is why 28
+       outages a page were being read as none. The leaves are the fields. */
+    const fragments = (el) => {
+      const out = [];
+      const walk = (n) => {
+        for (const c of n.children) {
+          if (!c.children.length) { const t = norm(c.innerText); if (t) out.push(t); }
+          else walk(c);
+        }
+      };
+      walk(el);
+      if (!out.length) String(el.innerText || '').split('\n').map(norm).filter(Boolean).forEach((t) => out.push(t));
+      return out;
+    };
 
     const records = [];
     const labelsSeen = [];
@@ -125,31 +154,66 @@ function extractInPage(hints) {
       const text = norm(card.innerText);
       if (!text || !LABEL.test(text)) continue;
       const rec = {};
-      /* The first line of a card is its heading -- the suburb, on every one
-         of these that has been seen. */
-      const lines = String(card.innerText || '').split('\n').map(norm).filter(Boolean);
-      if (lines.length) rec.location = lines[0].slice(0, 200);
-      /* Then "Label: value" pairs anywhere in the card. */
-      for (const line of lines) {
-        const m = /^([^:]{2,40}):\s*(.+)$/.exec(line);
-        if (!m) continue;
-        if (!labelsSeen.includes(norm(m[1]))) labelsSeen.push(norm(m[1]));
-        const f = toField(m[1]);
-        if (f && !rec[f]) rec[f] = norm(m[2]).slice(0, 200);
+      const frags = fragments(card);
+
+      for (let i = 0; i < frags.length; i++) {
+        const f = frags[i];
+        /* "Customers affected: 1" in one element. */
+        const inline = /^([^:]{2,40}):\s*(.+)$/.exec(f);
+        if (inline) {
+          if (!labelsSeen.includes(norm(inline[1]))) labelsSeen.push(norm(inline[1]));
+          const fl = toField(inline[1]);
+          if (fl && !rec[fl]) rec[fl] = norm(inline[2]).slice(0, 200);
+          continue;
+        }
+        /* "Customers affected:" and its value as separate elements. */
+        const bare = /^([^:]{2,40}):$/.exec(f);
+        if (bare && frags[i + 1]) {
+          if (!labelsSeen.includes(norm(bare[1]))) labelsSeen.push(norm(bare[1]));
+          const fl = toField(bare[1]);
+          if (fl && !rec[fl]) { rec[fl] = frags[i + 1].slice(0, 200); i++; continue; }
+        }
+        /* An unlabelled "Planned" / "Unplanned outage" fragment. */
+        if (!rec.kind && /^(un)?planned\b/i.test(f)) { rec.kind = f.slice(0, 60); continue; }
+        /* The first fragment that is neither a label nor a type is the
+           suburb -- it leads every one of these cards. */
+        if (!rec.location && !/:$/.test(f)) rec.location = f.slice(0, 200);
       }
-      /* A bare "Unplanned outage" line carries the type with no label. */
-      const kindLine = lines.find((l) => /^(un)?planned\b/i.test(l));
-      if (kindLine && !rec.kind) rec.kind = kindLine.slice(0, 60);
-      if (rec.location && Object.keys(rec).length > 1) records.push(rec);
+
+      /* A card with only a place is still a row: it is in the outage list,
+         so it is an outage. Requiring a second field is what discarded every
+         card on the pages whose fields did not parse. */
+      if (rec.location) records.push(rec);
     }
     return { records, headings: labelsSeen, shape: 'cards' };
   };
 
+  /* Most of these pages state their own totals in a sentence, whether or not
+     the list itself can be read: "Active outages: 9 / Affected customers:
+     1,269", "1,573 Total customers off supply", "currently 3 outages
+     affecting 155 customers". For a dashboard whose headline is exactly
+     those two numbers, the operator's own figure is worth more than a list
+     we failed to parse -- and it is the one number we can be sure of. */
+  const readReported = () => {
+    const t = String(document.body ? document.body.innerText : '').replace(/\s+/g, ' ');
+    const num = (m) => (m ? Number(String(m[1]).replace(/,/g, '')) : null);
+    const outages = num(/active outages:?\s*([\d,]+)/i.exec(t))
+      ?? num(/currently\s+([\d,]+)\s+outages?/i.exec(t))
+      ?? num(/([\d,]+)\s+outages?\s+(?:are\s+)?(?:currently\s+)?affecting/i.exec(t));
+    const customers = num(/affected customers:?\s*([\d,]+)/i.exec(t))
+      ?? num(/affecting\s+([\d,]+)\s+customers/i.exec(t))
+      ?? num(/([\d,]+)\s+total customers off supply/i.exec(t))
+      ?? num(/customers affected:?\s*([\d,]+)\s*$/i.exec(t));
+    if (outages === null && customers === null) return undefined;
+    return { outages, customers };
+  };
+
+  const reported = readReported();
   const table = fromTables();
-  if (table.records.length) return table;
+  if (table.records.length) return Object.assign(table, { reported });
   const cards = fromCards();
-  if (cards.records.length) return cards;
-  return { records: [], headings: table.headings.concat(cards.headings), shape: 'none' };
+  if (cards.records.length) return Object.assign(cards, { reported });
+  return { records: [], headings: table.headings.concat(cards.headings), shape: 'none', reported };
 }
 
 /* </extract> */
@@ -222,6 +286,8 @@ async function scrapeOperator(page, state, net) {
     result.shape = found.shape;
     result.labels = found.headings.slice(0, 30);
 
+    if (found.reported) result.reported = found.reported;
+
     if (!found.records.length) {
       result.error = 'Rendered, but no outage list could be recognised on the page';
       result.diagnostic = await page.evaluate(summariseInPage).catch(() => null);
@@ -291,7 +357,8 @@ async function saveArtifacts(page, state, net) {
       unplannedCount: unplanned.length, unplannedCustomers: sum(unplanned),
       plannedCount: planned.length, plannedCustomers: sum(planned),
       networks: networks.map((n) => ({ name: n.name, ok: n.ok, count: n.count, blocked: n.blocked,
-        error: n.error, shape: n.shape, labels: n.labels, diagnostic: n.diagnostic })),
+        error: n.error, shape: n.shape, labels: n.labels, reported: n.reported,
+        diagnostic: n.diagnostic })),
       outages
     };
     summary.push(state.toUpperCase() + ': ' + outages.length);
