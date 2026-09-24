@@ -1,20 +1,20 @@
 {
-  "capturedAt": 1790233739127,
+  "capturedAt": 1790234639206,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 11,
-      "customers": 2180,
-      "unplannedCount": 11,
-      "unplannedCustomers": 2180,
+      "count": 10,
+      "customers": 2101,
+      "unplannedCount": 10,
+      "unplannedCustomers": 2101,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 10,
+          "count": 9,
           "shape": "table",
           "labels": [
             "Date",
@@ -45,8 +45,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 1894,
-            "customers": 1894
+            "outages": 1837,
+            "customers": 1837
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -70,12 +70,6 @@
           "location": "Kulnura, Wyong, Wyong Creek, Yarramalong",
           "customers": 284,
           "start": "12:50 am (Thu 24 Sep) to 8:35 am (Thu 24 Sep)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Gosford, Point Frederick",
-          "customers": 79,
-          "start": "1:45 am (Thu 24 Sep) to 5:05 am (Thu 24 Sep)"
         },
         {
           "network": "Ausgrid",
@@ -111,7 +105,7 @@
           "network": "Ausgrid",
           "location": "Crows Nest",
           "customers": null,
-          "start": "2:25 pm (Thu 24 Sep) to 8:00 pm (Thu 24 Sep)"
+          "start": "2:25 pm (Thu 24 Sep) to 4:59 pm (Thu 24 Sep)"
         },
         {
           "network": "Endeavour Energy",
@@ -154,9 +148,9 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 14,
+      "count": 15,
       "customers": 1300,
-      "unplannedCount": 10,
+      "unplannedCount": 11,
       "unplannedCustomers": 1300,
       "plannedCount": 4,
       "plannedCustomers": 0,
@@ -173,14 +167,14 @@
         {
           "name": "Powercor",
           "ok": true,
-          "count": 11,
+          "count": 12,
           "shape": "cards",
           "labels": [
             "Estimated restoration"
           ],
           "reported": {
             "outages": null,
-            "customers": 3111
+            "customers": 3107
           }
         },
         {
@@ -193,7 +187,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 3111
+            "customers": 3107
           },
           "mergedInto": "Powercor"
         },
@@ -301,6 +295,13 @@
         },
         {
           "network": "Powercor",
+          "location": "Anglesea",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "20:30"
+        },
+        {
+          "network": "Powercor",
           "location": "Mildura and surrounds",
           "kind": "unplanned",
           "customers": null,
@@ -348,26 +349,20 @@
     "wa": {
       "state": "WA",
       "name": "Western Australia",
-      "count": 7,
+      "count": 0,
       "customers": 0,
-      "unplannedCount": 1,
+      "unplannedCount": 0,
       "unplannedCustomers": 0,
-      "plannedCount": 6,
+      "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Western Power",
-          "ok": true,
-          "count": 7,
-          "shape": "cards",
-          "labels": [
-            "Estimated restoration time is 5",
-            "Estimated restoration time is 4"
-          ],
-          "reported": {
-            "outages": 99,
-            "customers": null
-          }
+          "ok": false,
+          "count": 0,
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": []
         },
         {
           "name": "Horizon Power",
@@ -377,57 +372,7 @@
           "error": "Operator blocks automated access (bot challenge); not bypassed"
         }
       ],
-      "outages": [
-        {
-          "network": "Western Power",
-          "location": "Bridgetown",
-          "kind": "planned",
-          "customers": null,
-          "restore": "00 pm today"
-        },
-        {
-          "network": "Western Power",
-          "location": "Yoongarillup, Abba River, Capel, Tutunup, Ludlow, Hithergreen, Ruabon and Yoganup",
-          "kind": "planned",
-          "customers": null,
-          "restore": "00 pm today"
-        },
-        {
-          "network": "Western Power",
-          "location": "Wanneroo",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "00 pm today"
-        },
-        {
-          "network": "Western Power",
-          "location": "Duncraig",
-          "kind": "planned",
-          "customers": null,
-          "restore": "00 pm today"
-        },
-        {
-          "network": "Western Power",
-          "location": "Parkerville",
-          "kind": "planned",
-          "customers": null,
-          "restore": "00 pm today"
-        },
-        {
-          "network": "Western Power",
-          "location": "Kanowna, Brown Hill, Parkeston and Bulong",
-          "kind": "planned",
-          "customers": null,
-          "restore": "00 pm today"
-        },
-        {
-          "network": "Western Power",
-          "location": "Kensington",
-          "kind": "planned",
-          "customers": null,
-          "restore": "00 pm today"
-        }
-      ]
+      "outages": []
     },
     "tas": {
       "state": "TAS",
