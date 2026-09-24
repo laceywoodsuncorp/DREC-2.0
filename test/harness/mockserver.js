@@ -155,6 +155,23 @@ const server = http.createServer((req, res) => {
     });
   }
   if (u.pathname.startsWith('/api/outages/')) {
+    /* Town names as operators really write them, including a row whose
+       location is scraped rubbish from a 404 page. */
+    if (sc === 'towns') {
+      const st = u.pathname.split('/')[3].toUpperCase();
+      if (st !== 'NSW') return send(200, { state: st, name: st, ok: true, complete: true,
+        count: 0, customers: 0, networks: [], outages: [] });
+      return send(200, { state: 'NSW', name: 'New South Wales', ok: true, complete: true,
+        count: 4, customers: 40, unplannedCount: 4, unplannedCustomers: 40,
+        plannedCount: 0, plannedCustomers: 0,
+        networks: [{ name: 'Ausgrid', area: 'Sydney', site: 'https://www.ausgrid.com.au/', ok: true, count: 4, customers: 40 }],
+        outages: [
+          { network: 'Ausgrid', id: 'T1', location: 'Cedar Brush Creek, Ravensdale', customers: 10, kind: 'unplanned' },
+          { network: 'Ausgrid', id: 'T2', location: 'Shepparton and surrounds', customers: 10, kind: 'unplanned' },
+          { network: 'Ausgrid', id: 'T3', location: 'Cromer', customers: 10, kind: 'unplanned' },
+          { network: 'Ausgrid', id: 'T4', location: 'Oops, page not found!', customers: 10, kind: 'unplanned' }
+        ] });
+    }
     if (sc === 'down') return send(502, 'gateway', 'text/plain');
     const st = u.pathname.split('/')[3].toUpperCase();
     if (st !== 'NSW') {
@@ -208,7 +225,14 @@ const server = http.createServer((req, res) => {
         ['BALLARAT CENTRAL', 'VIC', -37.562, 143.855],
         /* The same name in two states, which must not be resolved silently. */
         ['RICHMOND', 'VIC', -37.819, 145.000],
-        ['RICHMOND', 'TAS', -42.736, 147.437]
+        ['RICHMOND', 'TAS', -42.736, 147.437],
+        /* The three shapes an operator actually writes a town in: a
+           comma-joined list, a "and surrounds" suffix, and a name the ABS
+           disambiguates with a state the gazetteer already carries. */
+        ['CEDAR BRUSH CREEK', 'NSW', -33.133, 151.183],
+        ['RAVENSDALE', 'NSW', -33.183, 151.200],
+        ['SHEPPARTON', 'VIC', -36.383, 145.400],
+        ['CROMER', 'NSW', -33.733, 151.267]
       ]
     });
   }

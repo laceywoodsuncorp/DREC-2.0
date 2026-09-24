@@ -367,6 +367,41 @@ const check = (n, c, x) => {
     await p.close();
   }
 
+  console.log('\n== town names as operators actually write them ==');
+  {
+    const p = await open('towns');
+    await p.waitForTimeout(1400);
+    const dots = await p.$$eval('#outageMap .outage-dot', els => els.length);
+    /* Four rows: a comma-joined pair, an "and surrounds", a name the ABS
+       disambiguates with a state suffix, and one piece of scraped rubbish.
+       That is four real towns. An audit of the live data found these three
+       shapes accounted for every failure but two. */
+    check('a comma-joined list becomes one dot per town', dots === 4, dots);
+
+    const note = await p.$eval('#outageMapNote', e => e.innerText);
+    check('nothing real is left unplaced', !/could not be placed/i.test(note), note);
+    /* The 404 row is not a town we failed to find, and must not be counted
+       as one -- that would overstate what is missing and hide the bad
+       scrape behind it. */
+    check('the unreadable row is reported separately',
+      /no readable place name/i.test(note), note);
+
+    /* Each shape individually, so a regression names itself. */
+    await p.fill('#outageFilter', 'Ravensdale');
+    await p.waitForTimeout(400);
+    check('the second town of a joined pair is searchable',
+      (await rows(p)).length === 1, await rows(p));
+    await p.fill('#outageFilter', 'Shepparton');
+    await p.waitForTimeout(400);
+    check('"and surrounds" still finds the town',
+      (await rows(p)).length === 1, await rows(p));
+    await p.fill('#outageFilter', 'Cromer');
+    await p.waitForTimeout(400);
+    check('a state-disambiguated ABS name is found',
+      (await rows(p)).length === 1, await rows(p));
+    await p.close();
+  }
+
   console.log('\n== a town we cannot place is counted, not dropped ==');
   {
     /* With no gazetteer the page can still plot operators that publish

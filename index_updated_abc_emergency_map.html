@@ -2036,14 +2036,58 @@ window.addEventListener('resize',()=>map.invalidateSize());
   /* One dot per town, not per outage: an event covering four towns is four
      places where the power is off, and a single dot on the centroid of the
      four would sit somewhere nobody lives. */
+  /* Operators do not write town names the way a gazetteer holds them. An
+     audit of the live rows found only two genuinely missing places; every
+     other failure was one of these three, which is to say a reading problem
+     rather than a data one. */
+  function looksLikePlace(t){
+    if(!t||t.length<2||t.length>60)return false;
+    if(/[<>{}|]|https?:|srcset|\.(?:avif|png|jpe?g|webp)\b/i.test(t))return false;
+    /* A path, not a place. */
+    if(/^\/|\/\S/.test(t))return false;
+    if(/\boops\b/i.test(t))return false;
+    if(/\b(search|register|login|sign in|page not found|life support|cookie|menu|skip to)\b/i.test(t))return false;
+    return /[A-Za-z]/.test(t);
+  }
+
+  function townCandidates(raw){
+    /* Judged whole, before splitting. A scraped <picture> element or a
+       "Oops, page not found!" contains commas, so splitting first turns one
+       obvious piece of junk into several unrecognisable fragments -- and a
+       fragment like "/STATIC/C50341B1" then looks like a town we merely
+       failed to find. */
+    if(!looksLikePlace(String(raw||'')))return [];
+    return String(raw||'')
+      /* "Cedar Brush Creek, Ravensdale, Wyong" arrives as one string when the
+         operator publishes a list in a single field. */
+      .split(/\s*(?:,|;|\band\b(?!\s+surrounds))\s*/i)
+      .map(t=>t
+        /* Victorian operators append this to a locality: "Shepparton and
+           surrounds" is Shepparton, plus an admission that the edges are
+           fuzzy. */
+        .replace(/\s+and\s+surrounds?$/i,'')
+        .replace(/\s+\((?:NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\)$/i,'')
+        .trim())
+      .filter(Boolean);
+  }
+  /* A scrape that went wrong puts things in the location field that were
+     never place names -- nav labels, a cookie notice, once an entire
+     <picture> element. Counting those as "towns we could not place" would
+     bury the real misses in noise and overstate how much is missing. */
   function outagePoints(payload){
-    const pts=[],unplaced=[];
+    const pts=[],unplaced=[],notPlaces=[];
     (payload.outages||[]).forEach(o=>{
       /* The row's own state, set when the eight were merged. Nationally this
          has to come from the row: a single "current state" would resolve
          every Richmond to whichever one happened to be selected. */
       const st=o.state;
-      const towns=(o.towns&&o.towns.length)?o.towns:(o.location?[o.location]:[]);
+      const rawTowns=(o.towns&&o.towns.length)?o.towns:(o.location?[o.location]:[]);
+      const towns=rawTowns.reduce((acc,t)=>acc.concat(townCandidates(t)),[]);
+      /* A row whose location yielded no candidate at all had something in it
+         -- it just wasn't a place. Recorded here rather than in the loop
+         below, which never runs for it: otherwise the bad scrape disappears
+         without trace, which is the failure this note exists to prevent. */
+      if(rawTowns.length&&!towns.length)notPlaces.push(String(rawTowns[0]).slice(0,40));
       let placedAny=false;
       towns.forEach(town=>{
         const key=String(town).trim().toUpperCase();
@@ -2057,7 +2101,8 @@ window.addEventListener('resize',()=>map.invalidateSize());
           if(cands&&cands.length===1)pos=[cands[0][1],cands[0][2]];
         }
         if(pos){pts.push({lat:pos[0],lon:pos[1],town:town,outage:o});placedAny=true;}
-        else unplaced.push(town);
+        else if(looksLikePlace(town))unplaced.push(town);
+        else notPlaces.push(town);
       });
       /* The operator's own coordinate is the fallback, not the first choice:
          it is one point for the whole event, so it is used only when no town
@@ -2067,7 +2112,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
         if(towns.length)unplaced.splice(unplaced.length-towns.length,towns.length);
       }
     });
-    return {pts,unplaced};
+    return {pts,unplaced,notPlaces};
   }
 
   function dotRadius(c){
@@ -2105,7 +2150,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     const view=q
       ? Object.assign({},payload,{outages:(payload.outages||[]).filter(o=>matchesTown(o,q))})
       : payload;
-    const {pts,unplaced}=outagePoints(view);
+    const {pts,unplaced,notPlaces}=outagePoints(view);
 
     /* Searched a place with no outage: show where it is rather than leaving
        the map wherever it happened to be. "Nothing is out here" is easier to
@@ -2148,8 +2193,16 @@ window.addEventListener('resize',()=>map.invalidateSize());
         bits.push(uniq.length+' could not be placed on the map ('+
           escapeHtml(uniq.slice(0,4).join(', '))+(uniq.length>4?'…':'')+') — they are in the list below');
       }
+      /* Kept separate from the unplaced towns: these are not places we
+         failed to find, they are rows an operator's page gave us that were
+         never place names. Lumping them together would make the map look
+         less complete than it is and hide the scrape that needs fixing. */
+      if(notPlaces.length){
+        const u=[...new Set(notPlaces)];
+        bits.push(u.length+' row'+(u.length===1?'':'s')+' had no readable place name');
+      }
       if(gazetteerState==='failed')bits.push('place lookup unavailable, so only operators that publish coordinates are shown');
-      noteEl.className='outage-mapnote'+((unplaced.length||gazetteerState==='failed')?' warn':'');
+      noteEl.className='outage-mapnote'+((unplaced.length||notPlaces.length||gazetteerState==='failed')?' warn':'');
       noteEl.textContent=bits.join(' · ');
     }
   }

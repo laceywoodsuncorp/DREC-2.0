@@ -106,7 +106,15 @@ const STATE_CODES = {
     const page = await get(url);
     (page.features || []).forEach((feat) => {
       const a = feat.attributes || {};
-      const name = String(a[f.name] || '').trim().toUpperCase();
+      /* The ABS disambiguates a repeated name by appending the state:
+         "CROMER (NSW)" and "CROMER (SA)", "CROWS NEST (NSW)" and
+         "CROWS NEST (QLD)". The state is already its own column here, so the
+         suffix is noise that makes an exact lookup miss -- which is what it
+         did, leaving two perfectly ordinary Sydney suburbs unplaceable while
+         the data for them sat in the file. Only a recognised state code is
+         stripped, so a name that genuinely ends in brackets survives. */
+      const rawName = String(a[f.name] || '').trim().toUpperCase();
+      const name = rawName.replace(/\s*\((NSW|VIC|QLD|SA|WA|TAS|NT|ACT|OT)\)$/, '').trim();
       const stateName = String(a[f.state] || '').trim().toUpperCase();
       const state = STATE_CODES[stateName] || stateName.slice(0, 3);
       const c = feat.centroid;
