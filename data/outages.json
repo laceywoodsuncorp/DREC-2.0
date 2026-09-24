@@ -1,13 +1,13 @@
 {
-  "capturedAt": 1790220063423,
+  "capturedAt": 1790220744238,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
       "count": 8,
-      "customers": 2164,
+      "customers": 2165,
       "unplannedCount": 8,
-      "unplannedCustomers": 2164,
+      "unplannedCustomers": 2165,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 12,
-            "customers": 1252
+            "outages": 13,
+            "customers": 1253
           }
         },
         {
@@ -95,7 +95,7 @@
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 1252
+          "customers": 1253
         }
       ]
     },
@@ -129,11 +129,11 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 24,
+      "count": 21,
       "customers": 1300,
-      "unplannedCount": 12,
+      "unplannedCount": 11,
       "unplannedCustomers": 1300,
-      "plannedCount": 12,
+      "plannedCount": 10,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -148,14 +148,14 @@
         {
           "name": "Powercor",
           "ok": true,
-          "count": 21,
+          "count": 18,
           "shape": "cards",
           "labels": [
             "Estimated restoration"
           ],
           "reported": {
             "outages": null,
-            "customers": 1180
+            "customers": 1179
           }
         },
         {
@@ -168,7 +168,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 1180
+            "customers": 1179
           },
           "mergedInto": "Powercor"
         },
@@ -215,13 +215,6 @@
         },
         {
           "network": "Powercor",
-          "location": "Cosgrove and surrounds",
-          "kind": "planned",
-          "customers": null,
-          "restore": "13:00"
-        },
-        {
-          "network": "Powercor",
           "location": "Bamawm",
           "kind": "unplanned",
           "customers": null,
@@ -257,22 +250,8 @@
         },
         {
           "network": "Powercor",
-          "location": "Fitzroy",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "14:30"
-        },
-        {
-          "network": "Powercor",
           "location": "Thornbury",
           "kind": "unplanned",
-          "customers": null,
-          "restore": "15:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Windsor",
-          "kind": "planned",
           "customers": null,
           "restore": "15:00"
         },
@@ -411,28 +390,37 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 6,
-      "customers": 321,
-      "unplannedCount": 0,
-      "unplannedCustomers": 0,
+      "count": 7,
+      "customers": 440,
+      "unplannedCount": 1,
+      "unplannedCustomers": 119,
       "plannedCount": 6,
       "plannedCustomers": 321,
       "networks": [
         {
           "name": "TasNetworks",
           "ok": true,
-          "count": 6,
+          "count": 7,
           "shape": "cards",
           "labels": [
-            "North-West region affecting",
+            "South region affecting",
             "Estimated restoration",
             "Customers affected",
-            "North region affecting",
-            "South region affecting"
+            "Cause of the outage",
+            "North-West region affecting",
+            "North region affecting"
           ]
         }
       ],
       "outages": [
+        {
+          "network": "TasNetworks",
+          "location": "Lutana, Moonah",
+          "cause": "Emergency repairs",
+          "kind": "unplanned",
+          "customers": 119,
+          "restore": "Thursday 4:00 PM"
+        },
         {
           "network": "TasNetworks",
           "location": "Gawler, Ulverstone",
@@ -518,8 +506,8 @@
             "Move left"
           ],
           "reported": {
-            "outages": 4,
-            "customers": 203
+            "outages": 3,
+            "customers": 61
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
         }
