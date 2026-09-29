@@ -1,20 +1,20 @@
 {
-  "capturedAt": 1790292992783,
+  "capturedAt": 1790722142346,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 4,
-      "customers": 1238,
-      "unplannedCount": 4,
-      "unplannedCustomers": 1238,
+      "count": 8,
+      "customers": 251,
+      "unplannedCount": 8,
+      "unplannedCustomers": 251,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 3,
+          "count": 7,
           "shape": "table",
           "labels": [
             "Date",
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 4,
-            "customers": 1219
+            "outages": 3,
+            "customers": 3
           }
         },
         {
@@ -45,8 +45,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 3091,
-            "customers": 3091
+            "outages": 1516,
+            "customers": 1516
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -55,28 +55,52 @@
       "outages": [
         {
           "network": "Ausgrid",
-          "location": "Widden",
+          "location": "Croydon Park",
           "customers": null,
-          "start": "6:10 pm (Thu 24 Sep) to 9:42 pm (Thu 24 Sep)"
+          "start": "9:00 am (Tue 29 Sep) to 1:05 am (Wed 30 Sep)"
         },
         {
           "network": "Ausgrid",
-          "location": "Edgeworth",
-          "customers": 19,
-          "start": "4:55 am (Fri 25 Sep) to 10:30 am (Fri 25 Sep)"
+          "location": "Croydon Park",
+          "customers": 41,
+          "start": "9:10 am (Tue 29 Sep) to 1:05 am (Wed 30 Sep)"
         },
         {
           "network": "Ausgrid",
-          "location": "Alexandria",
+          "location": "Punchbowl",
           "customers": null,
-          "start": "6:40 am (Fri 25 Sep) to 7:41 am (Fri 25 Sep)"
+          "start": "8:10 pm (Tue 29 Sep) to 10:53 pm (Tue 29 Sep)"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Hurstville",
+          "customers": 23,
+          "start": "8:20 pm (Tue 29 Sep) Est. restore time expired"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Punchbowl",
+          "customers": 89,
+          "start": "9:45 pm (Tue 29 Sep) to 10:46 pm (Tue 29 Sep)"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Punchbowl",
+          "customers": 68,
+          "start": "9:45 pm (Tue 29 Sep) to 10:18 pm (Tue 29 Sep)"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Bass Hill",
+          "customers": 27,
+          "start": "4:35 am (Wed 30 Sep) to 10:00 am (Wed 30 Sep)"
         },
         {
           "network": "Endeavour Energy",
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 1219
+          "customers": 3
         }
       ]
     },
@@ -112,11 +136,11 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 1,
-      "customers": 0,
-      "unplannedCount": 1,
-      "unplannedCustomers": 0,
-      "plannedCount": 0,
+      "count": 11,
+      "customers": 1300,
+      "unplannedCount": 9,
+      "unplannedCustomers": 1300,
+      "plannedCount": 2,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -130,28 +154,55 @@
         },
         {
           "name": "Powercor",
-          "ok": false,
-          "count": 0,
-          "error": "page.evaluate: Target crashed "
+          "ok": true,
+          "count": 8,
+          "shape": "cards",
+          "labels": [
+            "Estimated restoration"
+          ],
+          "reported": {
+            "outages": null,
+            "customers": 28
+          }
         },
         {
           "name": "CitiPower",
-          "ok": false,
+          "ok": true,
           "count": 0,
-          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.citipower.com.au/power-outages-and-emergencies/full-outage-list/\", waiting until \"domcontentloaded\"\n"
+          "shape": "cards",
+          "labels": [
+            "Estimated restoration"
+          ],
+          "reported": {
+            "outages": null,
+            "customers": 28
+          },
+          "mergedInto": "Powercor"
         },
         {
           "name": "United Energy",
-          "ok": false,
-          "count": 0,
-          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/\", waiting until \"domcontentloaded\"\n"
+          "ok": true,
+          "count": 2,
+          "shape": "cards",
+          "labels": [
+            "Vulnerable customer assistance program",
+            "Faults & emergencies",
+            "Customer enquiries"
+          ]
         },
         {
           "name": "Jemena",
           "ok": false,
           "count": 0,
-          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.jemena.com.au/outages/electricity-outages/\", waiting until \"domcontentloaded\"\n",
-          "viaError": "Power Outages Australia: page.goto: Page crashed\nCall log:\n  - navigating to \"https://poweroutagesaustralia.com.au/distributors/jemena/\", waiting until \"domcontentloaded\"\n"
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": [],
+          "reported": {
+            "outages": 122,
+            "customers": 122
+          },
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
+          "reportedVia": "Power Outages Australia"
         }
       ],
       "outages": [
@@ -159,6 +210,73 @@
           "network": "AusNet Services",
           "location": "Register as a life support customer",
           "customers": null
+        },
+        {
+          "network": "Powercor",
+          "location": "South Melbourne",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Yangery",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "22:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Inverleigh",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "09:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Murchison and surrounds",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "09:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Tarneit",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "10:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Hoppers Crossing",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "10:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Rupanyup",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "12:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Wychitella North",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
+        },
+        {
+          "network": "United Energy",
+          "location": "<picture><source type=\"image/avif\" srcSet=\"/static/c50341b110a35486f15e1fd4f5e418d5/1fd1a/ue-logo.avif 18w,/static/c50341b110a35486f15e1fd4f5e418d5/436f9/ue-logo.avif 35w,/static/c50341b110a35486f15e1",
+          "customers": null
+        },
+        {
+          "network": "United Energy",
+          "location": "Oops, page not found!",
+          "cause": "132 099",
+          "customers": 1300
         }
       ]
     },
@@ -176,8 +294,14 @@
           "name": "SA Power Networks",
           "ok": false,
           "count": 0,
-          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://outage.apps.sapowernetworks.com.au/OutageReport/OutageMap\", waiting until \"domcontentloaded\"\n",
-          "viaError": "Power Outages Australia: page.goto: Page crashed\nCall log:\n  - navigating to \"https://poweroutagesaustralia.com.au/distributors/sa-power-networks/\", waiting until \"domcontentloaded\"\n"
+          "blocked": true,
+          "error": "Operator blocks automated access (bot challenge); not bypassed",
+          "reported": {
+            "outages": 1563,
+            "customers": 1563
+          },
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
+          "reportedVia": "Power Outages Australia"
         }
       ],
       "outages": []
@@ -196,13 +320,16 @@
           "name": "Western Power",
           "ok": false,
           "count": 0,
-          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.westernpower.com.au/faults-outages/power-outages/\", waiting until \"domcontentloaded\"\n"
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": []
         },
         {
           "name": "Horizon Power",
           "ok": false,
           "count": 0,
-          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.horizonpower.com.au/faults-outages/\", waiting until \"domcontentloaded\"\n"
+          "blocked": true,
+          "error": "Operator blocks automated access (bot challenge); not bypassed"
         }
       ],
       "outages": []
@@ -210,22 +337,85 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 0,
-      "customers": 0,
+      "count": 8,
+      "customers": 462,
       "unplannedCount": 0,
       "unplannedCustomers": 0,
-      "plannedCount": 0,
-      "plannedCustomers": 0,
+      "plannedCount": 8,
+      "plannedCustomers": 462,
       "networks": [
         {
           "name": "TasNetworks",
-          "ok": false,
-          "count": 0,
-          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.tasnetworks.com.au/outages\", waiting until \"domcontentloaded\"\n",
-          "viaError": "Power Outages Australia: page.goto: Page crashed\nCall log:\n  - navigating to \"https://poweroutagesaustralia.com.au/distributors/tasnetworks/\", waiting until \"domcontentloaded\"\n"
+          "ok": true,
+          "count": 8,
+          "shape": "cards",
+          "labels": [
+            "North-West region affecting",
+            "Estimated restoration",
+            "Customers affected",
+            "North region affecting",
+            "South region affecting"
+          ]
         }
       ],
-      "outages": []
+      "outages": [
+        {
+          "network": "TasNetworks",
+          "location": "Boat Harbour, Calder, Flowerdale, Lapoinya, Moorleah, Preolenna, Table Cape, Wynyard",
+          "kind": "planned",
+          "customers": 254,
+          "restore": "Wednesday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Cressy, Longford",
+          "kind": "planned",
+          "customers": 92,
+          "restore": "Wednesday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Newnham",
+          "kind": "planned",
+          "customers": 40,
+          "restore": "Wednesday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Bridport, Jetsonville, Scottsdale",
+          "kind": "planned",
+          "customers": 30,
+          "restore": "Wednesday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Austins Ferry",
+          "kind": "planned",
+          "customers": 24,
+          "restore": "Wednesday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Rosegarland",
+          "kind": "planned",
+          "customers": 11,
+          "restore": "Wednesday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Bronte Park",
+          "kind": "planned",
+          "customers": 7,
+          "restore": "Wednesday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Rosegarland",
+          "kind": "planned",
+          "customers": 4,
+          "restore": "Wednesday 4:00 PM"
+        }
+      ]
     },
     "nt": {
       "state": "NT",
@@ -241,7 +431,8 @@
           "name": "Power and Water Corporation",
           "ok": false,
           "count": 0,
-          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.powerwater.com.au/outages\", waiting until \"domcontentloaded\"\n"
+          "blocked": true,
+          "error": "Operator blocks automated access (bot challenge); not bypassed"
         }
       ],
       "outages": []
@@ -260,8 +451,17 @@
           "name": "Evoenergy",
           "ok": false,
           "count": 0,
-          "error": "page.goto: Page crashed\nCall log:\n  - navigating to \"https://www.evoenergy.com.au/Outages\", waiting until \"domcontentloaded\"\n",
-          "viaError": "Power Outages Australia: page.goto: Page crashed\nCall log:\n  - navigating to \"https://poweroutagesaustralia.com.au/distributors/evoenergy/\", waiting until \"domcontentloaded\"\n"
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": [
+            "←",
+            "Move left"
+          ],
+          "reported": {
+            "outages": 4,
+            "customers": 88
+          },
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
         }
       ],
       "outages": []
