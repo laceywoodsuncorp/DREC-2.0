@@ -229,9 +229,16 @@ const NEWS_FEEDS = [
   { name: 'The Land (rural NSW)', domain: 'theland.com.au', group: 'regional', url: 'https://www.theland.com.au/rss.xml' },
 
   /* --- trade press for the insurance category --- */
-  /* UNVERIFIED: insuranceNEWS publishes RSS but lists the real addresses on a
-     page unreachable from here (insurancenews.com.au/rss-channels). */
-  { name: 'insuranceNEWS', domain: 'insurancenews.com.au', group: 'trade', url: 'https://www.insurancenews.com.au/rss/all-news' },
+  /* Confirmed by autodiscovery: the site declares
+     <link rel="alternate" type="application/rss+xml"> pointing at /rss/all,
+     which returns 20 items. The address shipped here before was /rss/all-news,
+     invented because the channel list could not be reached from the build
+     environment -- it 404s, which is why this source has never once loaded.
+     Eleven per-channel feeds exist alongside it (local, daily, breaking-news,
+     corporate, regulatory-government, life-insurance, insurtech,
+     international, analysis, the-broker, the-professional) if a narrower cut
+     is ever wanted; /rss/all is their union. */
+  { name: 'insuranceNEWS', domain: 'insurancenews.com.au', group: 'trade', url: 'https://www.insurancenews.com.au/rss/all' },
 
   /* --- world --- */
   /* Exempt from the client's AU-relevance filter, same as under GDELT. */
@@ -243,7 +250,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-09-25-alertlevels';
+const WORKER_BUILD = '2026-10-01-feeds';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -1517,8 +1524,31 @@ const INCIDENT_FEEDS = {
   },
   sa: {
     name: 'South Australia', agency: 'SA CFS',
+    /* SA was the only state on a single source, so when that one URL went it
+       had nothing. Worse, the whole of data.eso.sa.gov.au currently answers
+       every path with an HTTP 200 page titled "SA ESS - File Unavailable" --
+       including the two addresses the CFS website itself declares -- so there
+       is no URL here that can be assumed good. Everything is listed, the
+       declared ones first, and looksUnavailable() keeps a soft-404 from being
+       read as a quiet fire season. */
     sources: [
-      { url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json', format: 'json', parse: parseSa }
+      /* Declared by cfs.sa.gov.au via <link rel="alternate">. These are the
+         addresses the CFS intends to be used, so they lead even while the
+         host is down -- when it comes back, this works again untouched. */
+      { url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/CFS_Current_Incidents.xml', format: 'text', parse: parseGeoRss },
+      /* The warnings feed, which is where an actual alert level for SA lives.
+         The incidents feed carries GOING/SAFE/CONTAINED -- how a fire is
+         behaving -- and no warning level at all, which is why SA incidents
+         have never shown one. */
+      { url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/CFS_Fire_Warnings.xml', format: 'text', parse: parseGeoRss, partial: 'warnings only' },
+      /* The JSON endpoint this used to rely on, kept because it is the one
+         with a confirmed schema (IncidentNo/Location_name/Type/Status) and
+         may well return before the others do. */
+      { url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json', format: 'json', parse: parseSa },
+      /* Last resort: the CFS's own warnings page, read as a table. A scrape
+         is worse than a feed, but it is on a different host from the one that
+         is down. */
+      { url: 'https://www.cfs.sa.gov.au/warnings-restrictions/warnings/', format: 'text', parse: parseIncidentTable }
     ]
   },
   /* Tasmania was originally pointed at a TFS web page and scraped, because
@@ -1566,6 +1596,28 @@ const INCIDENT_FEEDS = {
 /* Tries one source and reports precisely what happened. Never throws -- an
    unreachable host is a result, not an exception, because the caller needs to
    move on to the next source either way. */
+/* A 200 that means "gone". SA's emergency data host answers every path --
+   including the two the CFS website itself declares -- with an HTML page
+   titled "SA ESS - File Unavailable", under HTTP 200. A JSON source catches
+   that by failing to parse, but an XML or scraped source would hand the page
+   to a parser, find no incidents in it, and report that South Australia has
+   none. On this dashboard that is the worst available outcome: a dead feed
+   rendering as a quiet state during a fire season.
+
+   The title is the right place to look. A soft-404 says so there, while a
+   real incidents page or feed is titled after its contents, so this does not
+   reject the HTML that parseIncidentTable is meant to scrape. */
+function looksUnavailable(body) {
+  if (!body || !/^\s*</.test(body)) return '';
+  const title = ((/<title[^>]*>([\s\S]{0,160}?)<\/title>/i.exec(body) || [])[1] || '')
+    .replace(/<!\[CDATA\[|\]\]>/g, '').replace(/\s+/g, ' ').trim();
+  if (!title) return '';
+  if (/file unavailable|not found|404|40[39]|service unavailable|temporarily unavailable|under maintenance|no longer available|access denied/i.test(title)) {
+    return title;
+  }
+  return '';
+}
+
 async function tryIncidentSource(source) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 15000);
@@ -1582,6 +1634,10 @@ async function tryIncidentSource(source) {
     }
 
     const bodyText = await upstream.text();
+    /* Checked before anything parses it, for every format: the whole hazard
+       is that this body looks parseable and yields nothing. */
+    const gone = looksUnavailable(bodyText);
+    if (gone) return { ok: false, error: 'Answered HTTP 200 with “' + gone + '” — the feed is gone, not empty' };
     if (source.format === 'text') return { ok: true, parsed: source.parse(bodyText) };
 
     let json;
