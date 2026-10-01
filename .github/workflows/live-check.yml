@@ -48,3 +48,53 @@ jobs:
           echo
           echo "--- is the gazetteer served?"
           curl -sS -m 25 -o /dev/null -w "  /data/gazetteer.json -> HTTP %{http_code}, %{size_download} bytes\n" "$base/data/gazetteer.json" || true
+
+      # Which feeds is the live Worker actually getting, and what does it say
+      # about the ones it is not?
+      #
+      # This exists because a dead feed is invisible from the outside: the
+      # Worker records the failure against that one entry and serves the rest,
+      # so the page looks normal and simply never shows that outlet. The
+      # Worker already knows why. This just asks it.
+      - name: Feed health, as the live Worker sees it
+        run: |
+          set -e
+          base=https://drec-oncall-updates-site.lacey-wood.workers.dev
+          curl -sS -m 30 "$base/api/news" -o /tmp/news.json || true
+          node -e '
+            const fs = require("fs");
+            let d; try { d = JSON.parse(fs.readFileSync("/tmp/news.json", "utf8")); }
+            catch (e) { console.log("could not parse /api/news: " + e.message); process.exit(0); }
+            const feeds = d.feeds || [];
+            console.log("build:    " + d.build);
+            console.log("articles: " + (d.articles ? d.articles.length : 0));
+            console.log("feeds:    " + feeds.length + " configured, "
+              + feeds.filter(f => f.ok).length + " ok, "
+              + feeds.filter(f => f.pending).length + " never fetched here");
+            const bad = feeds.filter(f => !f.ok);
+            if (!bad.length) { console.log("\nevery configured feed is loading."); }
+            else {
+              console.log("\nnot loading:");
+              bad.forEach(f => console.log("  " + (f.name || "?").padEnd(34)
+                + (f.pending ? "never fetched in this location" : String(f.error || "no error recorded"))
+                + "\n" + " ".repeat(36) + (f.resolvedUrl || f.url)));
+            }
+            const ins = feeds.find(f => /insurancenews/i.test(f.url || ""));
+            console.log("\ninsuranceNEWS entry as the Worker holds it:");
+            console.log(ins ? JSON.stringify(ins, null, 2) : "  not in the configured list");
+          '
+
+      # The same URL, fetched from here. A runner and a Cloudflare Worker are
+      # different egress networks, so a feed can answer one and refuse the
+      # other -- and the probe that chose this address ran HERE, not there.
+      # If this says 200 and the Worker above says otherwise, that gap is the
+      # whole answer and no amount of changing the URL will fix it.
+      - name: The same feed, fetched from this runner
+        run: |
+          set -e
+          for u in https://www.insurancenews.com.au/rss/all \
+                   https://www.insurancenews.com.au/rss/all-news; do
+            code=$(curl -sS -m 25 -o /tmp/f.xml -w '%{http_code}' "$u" || echo 000)
+            items=$(grep -c "<item" /tmp/f.xml 2>/dev/null || echo 0)
+            echo "  $u -> HTTP $code, $items items"
+          done
