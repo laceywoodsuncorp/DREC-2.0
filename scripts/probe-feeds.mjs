@@ -23,13 +23,48 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 
 const UA = 'Mozilla/5.0 (compatible; NewsRadar/1.0; +https://drec-oncall-updates-site.lacey-wood.workers.dev)';
 
-/* Pages to ask for their feeds. */
+/* Pages to ask for their feeds.
+
+   The news list has no source at all for the Northern Territory, for Far
+   North Queensland, or for South Australia -- a whole capital and state. For
+   a dashboard about disasters that is the wrong set to be blind in: the Top
+   End and the far north are cyclone country.
+
+   ABC leads the list because it is the most promising route. The feed list
+   already reads two ABC feeds by numeric id, and the ABC publishes a feed per
+   region on the same infrastructure -- same publisher, open RSS, no paywall.
+   The News Corp mastheads that own Cairns, Townsville and Darwin are tried
+   too, but they rarely offer an open feed, and the independents alongside
+   them often do. */
 const DISCOVER = [
   ['insuranceNEWS home', 'https://www.insurancenews.com.au/'],
   ['insuranceNEWS rss-channels', 'https://www.insurancenews.com.au/rss-channels'],
   ['SA CFS', 'https://www.cfs.sa.gov.au/'],
   ['SA CFS warnings', 'https://www.cfs.sa.gov.au/warnings-restrictions/'],
-  ['Alert SA', 'https://www.alert.sa.gov.au/']
+  ['Alert SA', 'https://www.alert.sa.gov.au/'],
+
+  /* ABC's own index of its feeds, which is the thing worth finding. */
+  ['ABC news feeds index', 'https://www.abc.net.au/news/feeds/rss/'],
+  ['ABC Far North', 'https://www.abc.net.au/news/far-north/'],
+  ['ABC Darwin', 'https://www.abc.net.au/news/darwin/'],
+  ['ABC Adelaide', 'https://www.abc.net.au/news/adelaide/'],
+  ['ABC North Qld', 'https://www.abc.net.au/news/north-qld/'],
+
+  /* Far North Queensland. */
+  ['Cairns Post', 'https://www.cairnspost.com.au/'],
+  ['Townsville Bulletin', 'https://www.townsvillebulletin.com.au/'],
+  ['Cairns Local News', 'https://cairnslocalnews.com.au/'],
+
+  /* Northern Territory. */
+  ['NT News', 'https://www.ntnews.com.au/'],
+  ['NT Independent', 'https://ntindependent.com.au/'],
+
+  /* South Australia. */
+  ['The Advertiser', 'https://www.adelaidenow.com.au/'],
+  ['InDaily', 'https://indaily.com.au/'],
+
+  /* ACT beyond the Canberra Times. */
+  ['Riot ACT', 'https://the-riotact.com/']
 ];
 
 /* Feeds and endpoints to test directly: the one the Worker uses now, plus the
