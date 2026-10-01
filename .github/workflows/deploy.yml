@@ -65,7 +65,6 @@ jobs:
             echo "--- $t"
             node "$t"
           done
-          node test/card_extraction.test.js
 
       # Browser tests need Playwright and a staged copy, so they are a
       # separate step that can fail the deploy without slowing the common
@@ -86,6 +85,10 @@ jobs:
             sleep 1
           done
           node test/outages_ui.test.js
+          # Needs playwright too, so it belongs here rather than in the fast
+          # gate -- it was in the gate and failed with MODULE_NOT_FOUND
+          # before anything had installed playwright.
+          node test/card_extraction.test.js
 
       # Checked here as well as in the suite: these two are what keep the
       # deployed page pointing at CDN Leaflet and free of the test harness's

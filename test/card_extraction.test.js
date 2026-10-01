@@ -5,8 +5,28 @@
 
    Run: node test/card_extraction.test.js   (needs playwright + chromium)
 */
-const CHROME = process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
-const { chromium } = require(process.env.PLAYWRIGHT_PATH || '/opt/node22/lib/node_modules/playwright');
+/* Resolved rather than hardcoded. This image ships Chromium at a fixed path
+   and Playwright is told about it via PLAYWRIGHT_BROWSERS_PATH, but a CI
+   runner installs its own copy and Playwright finds that one itself -- so
+   passing an executablePath that does not exist there is worse than passing
+   none. Only used when it is actually there. */
+const { existsSync } = require('node:fs');
+const CHROME_CANDIDATES = [
+  process.env.CHROME_PATH,
+  '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+  '/opt/pw-browsers/chromium/chrome-linux/chrome'
+].filter(Boolean);
+const CHROME = CHROME_CANDIDATES.find((p) => existsSync(p)) || null;
+const LAUNCH = CHROME ? { executablePath: CHROME } : {};
+/* Same reasoning: this image has playwright installed globally, a runner has
+   it in the local node_modules. Try each and say which failed rather than
+   dying on a MODULE_NOT_FOUND stack. */
+const { chromium } = (() => {
+  const tries = [process.env.PLAYWRIGHT_PATH, 'playwright',
+    '/opt/node22/lib/node_modules/playwright'].filter(Boolean);
+  for (const t of tries) { try { return require(t); } catch (e) { /* next */ } }
+  throw new Error('playwright not found; tried: ' + tries.join(', '));
+})();
 const { readFileSync } = require('node:fs');
 
 let pass = 0, fail = 0;
@@ -27,7 +47,7 @@ const card = (suburb, ref, kind, etr) =>
   (etr ? `<p>Est. restoration time: ${etr}</p>` : '') + `</div>`;
 
 (async () => {
-  const b = await chromium.launch({ executablePath: CHROME });
+  const b = await chromium.launch(LAUNCH);
   const p = await b.newPage();
 
   console.log('\n== an outage list panel of repeated cards ==');
