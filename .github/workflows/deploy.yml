@@ -1,0 +1,129 @@
+# Deploys the Worker and the static page to Cloudflare.
+#
+# Manual on purpose. This dashboard is read during severe weather, and a push
+# that happens to be mid-thought should not become the thing someone is
+# looking at. Run it from Actions -> "Deploy" -> Run workflow.
+#
+# Needs one repository secret:
+#
+#   CLOUDFLARE_API_TOKEN   an API token with "Edit Cloudflare Workers"
+#                          permission on the account that owns
+#                          drec-oncall-updates-site. Create it at
+#                          dash.cloudflare.com -> My Profile -> API Tokens,
+#                          using the "Edit Cloudflare Workers" template.
+#
+# And, only if that token can see more than one account:
+#
+#   CLOUDFLARE_ACCOUNT_ID  from the Workers & Pages overview page.
+#
+# Add them under Settings -> Secrets and variables -> Actions.
+#
+# `wrangler deploy` does NOT touch secrets already set on the Worker with
+# `wrangler secret put`, so SCRAPE_TOKEN survives a deploy. It is not in this
+# repo and must never be.
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Deploy without running the test suite (emergency only)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The gate. This dashboard is used to decide where to send people, so
+      # shipping it untested is the wrong trade -- and the suite is seconds,
+      # not minutes. `skip_tests` exists for the case where the live site is
+      # already wrong and a fix matters more than the check, which is a
+      # judgement for whoever is running it, not a default.
+      - name: Test
+        if: ${{ !inputs.skip_tests }}
+        run: |
+          set -e
+          for t in test/build_stamp.test.mjs \
+                   test/feed_health.test.mjs \
+                   test/classify.test.mjs \
+                   test/alert_levels.test.mjs \
+                   test/nt_incidents.test.mjs \
+                   test/scrape_trigger.test.mjs \
+                   test/worker_outages.test.mjs; do
+            echo "--- $t"
+            node "$t"
+          done
+          node test/card_extraction.test.js
+
+      # Browser tests need Playwright and a staged copy, so they are a
+      # separate step that can fail the deploy without slowing the common
+      # path when it is skipped.
+      - name: Browser tests
+        if: ${{ !inputs.skip_tests }}
+        run: |
+          set -e
+          npm install --no-save playwright leaflet
+          npx playwright install --with-deps chromium
+          SCRATCH="$(mktemp -d)"
+          mkdir -p "$SCRATCH/node_modules"
+          cp -r node_modules/leaflet "$SCRATCH/node_modules/leaflet"
+          test/harness/stage.sh "$SCRATCH"
+          node test/harness/mockserver.js --root "$SCRATCH/testsite" &
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:8845/index.html >/dev/null && break
+            sleep 1
+          done
+          node test/outages_ui.test.js
+
+      # Checked here as well as in the suite: these two are what keep the
+      # deployed page pointing at CDN Leaflet and free of the test harness's
+      # query-string rewrites. A staged copy reaching production would look
+      # fine and quietly read its data from the wrong place.
+      - name: Page integrity
+        run: |
+          set -e
+          page=index_updated_abc_emergency_map.html
+          n=$(grep -c "location.search" "$page" || true)
+          [ "$n" = "0" ] || { echo "page contains location.search ($n) — staged copy?"; exit 1; }
+          n=$(grep -c "unpkg.com/leaflet" "$page" || true)
+          [ "$n" = "2" ] || { echo "expected 2 unpkg Leaflet refs, found $n"; exit 1; }
+          echo "page integrity ok"
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # The Worker reports its own build stamp in a header, so this confirms
+      # what is actually serving rather than trusting that the deploy call
+      # returned cleanly. The page warns when the two disagree, and that
+      # warning was wrong for seven builds because nobody checked.
+      - name: Confirm what is live
+        run: |
+          set -e
+          url=https://drec-oncall-updates-site.lacey-wood.workers.dev/api/outages/nsw
+          expected=$(grep -o "WORKER_BUILD = '[^']*'" src/worker.js | sed "s/.*'\(.*\)'/\1/")
+          echo "expecting build: $expected"
+          for i in $(seq 1 10); do
+            live=$(curl -sS -o /dev/null -D - "$url" | tr -d '\r' \
+              | awk -F': ' 'tolower($1)=="x-worker-build"{print $2}')
+            echo "  attempt $i: live reports '${live:-none}'"
+            [ "$live" = "$expected" ] && { echo "live build matches"; exit 0; }
+            sleep 6
+          done
+          echo "deployed, but the live build stamp did not match within a minute."
+          echo "Cloudflare can take a little longer to propagate; re-check before assuming failure."
+          exit 1
