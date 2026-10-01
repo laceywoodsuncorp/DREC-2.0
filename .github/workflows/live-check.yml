@@ -1,0 +1,50 @@
+# What is actually serving right now, and does it match this branch?
+#
+# Read-only: deploys nothing, needs no credential. Exists because the page
+# compares its own build stamp against the Worker's and warns when they
+# differ -- and that warning was wrong for seven builds because nothing ever
+# checked which was true. This answers it in ten seconds.
+name: Live check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare live build against this branch
+        run: |
+          set -e
+          base=https://drec-oncall-updates-site.lacey-wood.workers.dev
+          expected=$(grep -o "WORKER_BUILD = '[^']*'" src/worker.js | sed "s/.*'\(.*\)'/\1/")
+          page=$(grep -o "EXPECTED_WORKER_BUILD='[^']*'" index_updated_abc_emergency_map.html | sed "s/.*'\(.*\)'/\1/")
+          echo "this branch: worker=$expected  page=$page"
+
+          hdrs=$(curl -sS -m 25 -o /tmp/body -D - "$base/api/outages/nsw" || true)
+          status=$(echo "$hdrs" | head -1 | tr -d '\r')
+          live=$(echo "$hdrs" | tr -d '\r' | awk -F': ' 'tolower($1)=="x-worker-build"{print $2}')
+          echo "live response: $status"
+          echo "live build:    ${live:-<no X-Worker-Build header>}"
+
+          # Said plainly either way. "Deployed" and "deployed but stale" are
+          # different facts and a green tick for both would hide the second.
+          if [ -z "$live" ]; then
+            echo "::warning::No build header — the Worker may be an older version that did not send one, or the request did not reach it."
+          elif [ "$live" = "$expected" ]; then
+            echo "::notice::Live matches this branch ($live). Nothing to deploy."
+          else
+            echo "::warning::Live is $live but this branch is $expected — the branch is NOT deployed."
+          fi
+
+          # A couple of things worth seeing while we are here.
+          echo "--- what the live outage API returns"
+          head -c 400 /tmp/body || true
+          echo
+          echo "--- is the gazetteer served?"
+          curl -sS -m 25 -o /dev/null -w "  /data/gazetteer.json -> HTTP %{http_code}, %{size_download} bytes\n" "$base/data/gazetteer.json" || true
