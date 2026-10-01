@@ -648,22 +648,114 @@
      AU-relevance gate applied to everyone else's world/uncategorised
      stories, so genuine global news still has a reliable home here. */
   const WORLD_DOMAIN='aljazeera.com';
-  const CAT_KEYWORDS={
-    insurance:['insur','claim','afca','premium','policyholder','underwrit','icaustralia','insurance council'],
-    fire:['house fire','home fire','building fire','structure fire','fire kills','blaze kills','fireplace',
-      'property fire','residential fire','unit fire','townhouse fire','duplex fire','granny flat fire',
-      'garage fire','shed fire','caravan fire','fire destroys','fire guts','blaze destroys','blaze guts',
-      'razed by fire','gutted by fire','fire rips through','fire tears through','house blaze','home blaze'],
-    flood:['flood','storm','cyclone','deluge','rainfall warning','severe weather','hail'],
-    bushfire:['bushfire','wildfire','grassfire','hazard reduction','fire ban','fire danger'],
-    politics:['politic','parliament','minister','senator',' mp ','election','federal government','prime minister','premier',
-      'strike','walkout','industrial action','protest','union','ferry','train delay','bus strike','commuter'],
-    economy:['econom','inflation','rba','interest rate','fuel price','cost of living','super fund','budget','market'],
-    crime:['polic','stabb','arrest','court','charged','shooting','crime','jail','sentenc'],
-    health:['health','hospital','virus','flu','disease','medicine','vaccine','bird flu','pbs'],
-    sport:['sport','cricket',' afl ','nrl','rugby','olympic','commonwealth games','tennis','swim','golf'],
-    world:['iran','ukraine','gaza','israel','china','white house','united nations','trump','war']
+  /* Categories are matched by explicit regexes with both boundaries, and in
+     two strengths.
+
+     The old list matched a bare prefix with a word boundary only on the left,
+     which is why almost nothing landed in the right chip. "war" matched
+     "warning", so every severe weather warning was World news. "hail" matched
+     "hailed", so a firefighter hailed a hero was a hailstorm. "polic" matched
+     "policy", so housing policy was Crime. "insur" matched "insurrection".
+     "swim" matched "swimmer drowns". And "storm" matched the Melbourne Storm,
+     so an NRL result was a weather event.
+
+     Some words genuinely are ambiguous and no boundary fixes them: a claim
+     can be an insurance claim or a study's claim. Those are `weak` -- one on
+     its own means nothing, two together mean something, and a `strong` match
+     settles it alone. `veto` handles the cases where another subject owns the
+     word outright, which is how the Storm stops being weather. */
+  const CAT_RULES={
+    insurance:{
+      strong:[/\binsur(?:ance|er|ers|ed|ing)\b/,/\breinsur\w*/,/\bunderwrit\w*/,/\bafca\b/,
+        /\bpolicyholders?\b/,/\binsurance council\b/,/\bicaustralia\b/,/\bpremiums?\b/,
+        /\b(?:home|car|motor|travel|flood|storm|strata|landlord) insurance\b/,
+        /\bclaims? (?:payout|cost|surge|lodg\w*|experience)\b/,/\bcatastrophe declar/],
+      /* "claims" alone is the single biggest source of wrong Insurance tags:
+         studies claim, police claim, groups claim responsibility. */
+      weak:[/\bclaims?\b/,/\bpayouts?\b/,/\bexcess\b/,/\bloss(?:es)?\b/,/\bactuar\w*/]
+    },
+    fire:{ strong:[], weak:[] },   /* handled by FIRE_REGEX and FIRE_PHRASES below */
+    flood:{
+      strong:[/\bfloods?\b/,/\bflooding\b/,/\bflooded\b/,/\bflash flood\w*/,/\bcyclones?\b/,
+        /\bdeluge\b/,/\bhailstorms?\b/,/\bhailstones?\b/,/\bsevere (?:weather|thunderstorm)\w*/,
+        /\brainfall warning\b/,/\b(?:thunder|wind|rain|dust|hail|snow)storms?\b/,
+        /\bstorm (?:damage|surge|cell|front|system|warning|chaos|clean-?up)\b/,
+        /\bdamaging winds?\b/,/\bking tide\b/,/\briver(?:s)? (?:rise|rising|peak\w*)\b/],
+      weak:[/\bstorms?\b/,/\bhail\b(?!ed)/,/\bdamaging\b/,/\bevacuat\w*/,/\bses\b/],
+      /* The Melbourne Storm is a football team. Without this, every result it
+         posts is a weather event. */
+      veto:[/\bmelbourne storm\b/,/\bstorm(?:'s)? (?:coach|captain|player|skipper|win|loss|defeat)\b/,
+        /\bstorms? (?:beat|thrash\w*|defeat\w*|lost to|edge\w*)\b/,/\bbrainstorm\w*/]
+    },
+    bushfire:{
+      strong:[/\bbush ?fires?\b/,/\bwildfires?\b/,/\bgrass ?fires?\b/,/\bhazard reduction\b/,
+        /\b(?:total )?fire bans?\b/,/\bfire danger\b/,/\bfire weather\b/,/\bscrub ?fire\b/,
+        /\bback ?burn\w*/,/\bember attack\b/],
+      weak:[]
+    },
+    politics:{
+      strong:[/\bpolitic\w*/,/\bparliament\w*/,/\bministers?\b/,/\bsenators?\b/,/\bMPs?\b/,
+        /\belections?\b/,/\bby-?election\b/,/\bfederal government\b/,/\bprime minister\b/,
+        /\bpremiers?\b/,/\bcabinet\b/,/\blegislation\b/,/\bparliamentary\b/,/\bopposition leader\b/,
+        /\bindustrial action\b/,/\bstrike action\b/,
+        /\b(?:workers?|staff|nurses|teachers|drivers?|unions?) (?:strike|walk ?out|walked out)\b/,
+        /\b(?:housing|climate|energy|tax|immigration) policy\b/],
+      weak:[/\bunions?\b/,/\bprotests?\b/,/\bpolicy\b/,/\breforms?\b/]
+    },
+    economy:{
+      strong:[/\beconom\w*/,/\binflation\b/,/\brba\b/,/\binterest rates?\b/,/\bfuel prices?\b/,
+        /\bcost of living\b/,/\bsuper(?:annuation)? fund\b/,/\bbudget\b/,/\bgdp\b/,
+        /\bunemployment\b/,/\bprofits?\b/,/\bshare (?:price|market)\b/,/\basx\b/,/\brecession\b/,
+        /\bearnings\b/,/\bhalf-?year result/],
+      weak:[/\bmarkets?\b/,/\bpricing\b/,/\brevenue\b/,/\bgrowth\b/]
+    },
+    crime:{
+      strong:[/\bpolice\b/,/\bstabb\w*/,/\barrest\w*/,/\bcharged (?:with|over)\b/,/\bshootings?\b/,
+        /\bmurder\w*/,/\bcrimes?\b/,/\bjailed\b/,/\bsentenc\w*/,/\bassault\w*/,/\bhomicide\b/,
+        /\bfraud\b/,/\bmanslaughter\b/,/\bdetectives?\b/,
+        /\b(?:supreme|district|magistrates|local|federal|county) court\b/,
+        /\bcourt (?:hears?|heard|told|case|appearance|documents)\b/,/\b(?:faces?|faced|in) court\b/,
+        /\bpleaded (?:not )?guilty\b/],
+      /* "charges laid in US court" is plainly crime but matches no single
+         strong term -- neither "charged with" nor a named court. Two weak
+         signals corroborating is exactly the case the scoring is for. */
+      weak:[/\bcharges?\b/,/\ballegedly\b/,/\binvestigation\b/,/\bcourt\b/,/\baccused\b/,/\btrial\b/]
+    },
+    health:{
+      strong:[/\bhealth\w*/,/\bhospitals?\b/,/\bvirus(?:es)?\b/,/\bflu\b/,/\binfluenza\b/,
+        /\bdiseases?\b/,/\bmedicines?\b/,/\bvaccin\w*/,/\bbird flu\b/,/\bpbs\b/,/\bdoctors?\b/,
+        /\bambulances?\b/,/\bmental health\b/,/\boutbreaks?\b/,/\bmedicare\b/],
+      weak:[/\bpatients?\b/,/\bnurses?\b/,/\bsymptoms?\b/]
+    },
+    sport:{
+      strong:[/\bsports?\b/,/\bcricket\b/,/\bafl\w*\b/,/\bnrl\b/,/\brugby\b/,/\bolympics?\b/,
+        /\bcommonwealth games\b/,/\btennis\b/,/\bswimming\b/,/\bgolf\b/,/\bgrand final\b/,
+        /\bpremiership\b/,/\bwallabies\b/,/\bmatildas\b/,/\bsocceroos\b/,/\bopals\b/,
+        /\btest match\b/,/\bashes\b/,/\bfinals? series\b/,/\bleague\b/,
+        /* The same patterns that stop the Melbourne Storm being weather are
+           positive evidence of sport: a story that beat, thrashed or lost to
+           somebody is a result. Stating it once in each place would let the
+           two drift apart, but the alternative -- a veto that silently knows
+           something the categories do not -- is worse. */
+        /\bmelbourne storm\b/,/\bstorms? (?:beat|thrash\w*|defeat\w*|lost to|edge\w*)\b/,
+        /\b(?:beat|thrash\w*|defeat\w*|edged?) \w+ to (?:seal|claim|win|clinch)\b/,
+        /\bto (?:seal|clinch) (?:top spot|the (?:title|premiership|series))\b/],
+      weak:[/\bcoach\b/,/\bsquad\b/,/\bseasons?\b/]
+    },
+    world:{
+      strong:[/\biran\b/,/\bukraine\b/,/\bgaza\b/,/\bisrael\b/,/\bchina\b/,/\bwhite house\b/,
+        /\bunited nations\b/,/\btrump\b/,/\bwars?\b/,/\bwarfare\b/,/\bair ?strikes?\b/,/\bnato\b/,
+        /\brussia\w*/,/\bbeijing\b/,/\bwashington\b/],
+      weak:[]
+    }
   };
+  /* Kept as a flat list for the one category whose wording is too varied for
+     a term list -- see FIRE_REGEX. */
+  const FIRE_PHRASES=['house fire','home fire','building fire','structure fire','fire kills',
+    'blaze kills','fireplace','property fire','residential fire','unit fire','townhouse fire',
+    'duplex fire','granny flat fire','garage fire','shed fire','caravan fire','fire destroys',
+    'fire guts','blaze destroys','blaze guts','razed by fire','gutted by fire',
+    'fire rips through','fire tears through','house blaze','home blaze'];
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
     politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
   const AU_RELEVANCE=/australia|australian|aussie|sydney|melbourne|brisbane|perth|adelaide|canberra|hobart|darwin|queensland|tasmania|\bnsw\b|\bqld\b|\bnt\b/i;
@@ -678,11 +770,11 @@
      Melbourne fire" mentions neither a dwelling word nor "blaze", only a
      rescue verb next to "fire". This regex catches "fire"/"blaze" appearing
      near either a dwelling/structure word OR a rescue/casualty/damage verb,
-     in either order, as a fallback alongside the CAT_KEYWORDS.fire phrase
-     list. It's checked after CAT_KEYWORDS.bushfire in classify() below so a
+     in either order, as a fallback alongside the FIRE_PHRASES list. It's
+     checked after the bushfire rules in classify() below so a
      genuine bushfire/wildfire story (which often also mentions evacuations
      or deaths) doesn't get double-tagged as a house fire too. */
-  const FIRE_REGEX=/\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure|garage|shed|caravan)s?\b[^.]{0,25}\bfires?\b|\bfires?\b[^.]{0,25}\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure)s?\b|\b(fire|blaze)\b[^.]{0,40}\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescue\w*|escape\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke|contain\w*|under control|alight|crews)\b|\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescue\w*|escape\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke|contain\w*|under control|alight|crews)\b[^.]{0,40}\b(fire|blaze)\b/i;
+  const FIRE_REGEX=/\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure|garage|shed|caravan)s?\b[^.]{0,25}\bfires?\b|\bfires?\b[^.]{0,25}\b(house|home|unit|apartment|townhouse|duplex|granny flat|residential|property|building|structure)s?\b|\b(fire|blaze)\b[^.]{0,40}\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescu\w*|escap\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke|contain\w*|under control|alight|crews)\b|\b(kill|destroy|gutt?ed|razed|damag\w*|injur\w*|die[sd]?|dead|rescu\w*|escap\w*|trapped|evacuat\w*|firefighter\w*|extinguish\w*|smoke|contain\w*|under control|alight|crews)\b[^.]{0,40}\b(fire|blaze)\b|\bfirefighters?\b[^.]{0,40}\b(rescu\w*|escap\w*|trapped|pulled|saved|revive\w*|carried)\b|\b(rescu\w*|escap\w*|trapped|pulled|saved|revive\w*)\b[^.]{0,40}\bfirefighters?\b/i;
 
   const feed=document.getElementById('feed'),empty=document.getElementById('empty'),
         shown=document.getElementById('shown'),total=document.getElementById('total'),
@@ -813,10 +905,41 @@
     if(!re){re=new RegExp('\\b'+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');kwMatchers[kw]=re;}
     return re.test(text);
   }
-  function classify(title){
-    const t=title.toLowerCase();const cats=[];
-    Object.keys(CAT_KEYWORDS).forEach(k=>{if(CAT_KEYWORDS[k].some(kw=>keywordHit(t,kw)))cats.push(k);});
-    if(!cats.includes('fire')&&!cats.includes('bushfire')&&FIRE_REGEX.test(t))cats.push('fire');
+  /* A strong match is enough on its own. Two weak ones together are enough.
+     One weak one is not -- that is the difference between "insurance claims
+     surge after storms" and "study claims coffee is good for you", and the
+     old matcher could not tell them apart.
+
+     The summary is read as well as the title, because a headline is written
+     to intrigue rather than to classify and the subject is often only named
+     in the standfirst. It contributes weak signals only: a strong term in a
+     summary is usually an aside, and promoting on it put half the feed in
+     World. */
+  function classify(title,summary){
+    const t=String(title||'').toLowerCase();
+    const body=(t+' '+String(summary||'').toLowerCase()).trim();
+    const cats=[];
+    Object.keys(CAT_RULES).forEach(k=>{
+      const r=CAT_RULES[k];
+      if((r.veto||[]).some(re=>re.test(body)))return;
+      if((r.strong||[]).some(re=>re.test(t))){cats.push(k);return;}
+      /* Weak signals are counted across title and summary together, and must
+         corroborate each other. */
+      const weak=(r.weak||[]).filter(re=>re.test(body)).length;
+      const strongInSummary=(r.strong||[]).some(re=>re.test(body))?1:0;
+      if(weak+strongInSummary>=2)cats.push(k);
+    });
+    /* House fires are worded too many ways for a term list, so they keep
+       their phrase list plus the regex. Checked after bushfire so a genuine
+       bushfire story that mentions evacuations isn't also a house fire. */
+    /* FIRE_PHRASES are specific enough to trust in a summary -- "house fire"
+       means one thing. FIRE_REGEX is deliberately loose, matching "fire" near
+       any rescue or damage verb, so it is held to the title: across a long
+       summary it would catch almost any story that mentions a fire at all. */
+    if(!cats.includes('bushfire')&&!cats.includes('fire')&&
+       (FIRE_PHRASES.some(ph=>body.includes(ph))||FIRE_REGEX.test(t))){
+      cats.push('fire');
+    }
     return cats;
   }
   function readCache(){try{const raw=localStorage.getItem(CACHE_KEY_PREFIX);return raw?JSON.parse(raw):null;}catch(e){return null;}}
@@ -879,7 +1002,7 @@
          headlines remain available as a fallback when nothing recent is. */
       if(a.pubMs>Date.now()+3600000)return;
       if(EXCLUDE_KEYWORDS.test(a.title))return; // recipes, celebrity gossip, horoscopes etc -- not news
-      const cats=classify(a.title);
+      const cats=classify(a.title,a.summary);
       if(a.world||(a.domain||'').includes(WORLD_DOMAIN)){
         /* The dedicated World source -- always keep and tag it World
            regardless of keyword matches, exempt from the AU-relevance gate
@@ -975,7 +1098,7 @@
     feed.querySelectorAll('.item').forEach(el=>el.remove());
     visible.forEach(a=>{
       const el=document.createElement('div');el.className='item';el.dataset.cat=a.cats.join(' ');
-      /* Articles that match none of CAT_KEYWORDS fall back to a "General"
+      /* Articles that match no category fall back to a "General"
          display tag -- they used to default to "World", which visually
          inflated the World tag on cards that had nothing to do with it and
          didn't match the World chip's actual count. */
