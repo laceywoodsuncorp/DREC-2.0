@@ -39,7 +39,7 @@ jobs:
           elif [ "$live" = "$expected" ]; then
             echo "::notice::Live matches this branch ($live). Nothing to deploy."
           else
-            echo "::warning::Live is $live but this branch is $expected — the branch is NOT deployed."
+            echo "::warning::Live is $live but this branch is $expected — the live Worker is behind. Cloudflare deploys from this branch automatically (see docs/deployment.md), so either the push has not propagated yet or the deploy failed on their side."
           fi
 
           # A couple of things worth seeing while we are here.

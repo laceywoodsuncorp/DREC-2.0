@@ -1,0 +1,75 @@
+# Runs the tests on every push. Deploys nothing and needs no credential.
+#
+# This exists because deployment is NOT done from here. The live Worker
+# already serves whatever is on this branch, which means a push goes to
+# production without passing through anything -- the "Live check" workflow
+# confirmed the branch and the live build matching while no deploy workflow
+# had ever succeeded.
+#
+# That cannot gate the deploy, so it does the next best thing: it fails
+# loudly and immediately, so a broken push is known about rather than
+# discovered on the dashboard during a storm.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Worker and logic tests
+        run: |
+          set -e
+          for t in test/build_stamp.test.mjs \
+                   test/feed_health.test.mjs \
+                   test/classify.test.mjs \
+                   test/alert_levels.test.mjs \
+                   test/nt_incidents.test.mjs \
+                   test/scrape_trigger.test.mjs \
+                   test/worker_outages.test.mjs; do
+            echo "--- $t"
+            node "$t"
+          done
+
+      # These two keep the deployed page on CDN Leaflet and free of the test
+      # harness's query-string rewrites. A staged copy reaching production
+      # would look entirely normal and quietly read its data from the wrong
+      # place, so it is checked before anything slower runs.
+      - name: Page integrity
+        run: |
+          set -e
+          page=index_updated_abc_emergency_map.html
+          n=$(grep -c "location.search" "$page" || true)
+          [ "$n" = "0" ] || { echo "page contains location.search ($n) — staged copy?"; exit 1; }
+          n=$(grep -c "unpkg.com/leaflet" "$page" || true)
+          [ "$n" = "2" ] || { echo "expected 2 unpkg Leaflet refs, found $n"; exit 1; }
+          echo "page integrity ok"
+
+      - name: Browser tests
+        run: |
+          set -e
+          npm install --no-save playwright leaflet
+          npx playwright install --with-deps chromium
+          SCRATCH="$(mktemp -d)"
+          mkdir -p "$SCRATCH/node_modules"
+          cp -r node_modules/leaflet "$SCRATCH/node_modules/leaflet"
+          test/harness/stage.sh "$SCRATCH"
+          node test/harness/mockserver.js --root "$SCRATCH/testsite" &
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:8845/index.html >/dev/null && break
+            sleep 1
+          done
+          node test/outages_ui.test.js
+          node test/card_extraction.test.js
