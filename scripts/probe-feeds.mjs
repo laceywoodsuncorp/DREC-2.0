@@ -70,6 +70,41 @@ const DISCOVER = [
 /* Feeds and endpoints to test directly: the one the Worker uses now, plus the
    shapes these two publishers are known to use elsewhere. */
 const DIRECT = [
+  /* Autodiscovery found nothing on most of these: the ABC's pages declare no
+     feeds, and the News Corp mastheads that own Cairns, Townsville, Darwin
+     and Adelaide answer 403. So the conventional paths get tested directly --
+     /feed/ for anything on WordPress, and /rss.xml, which is the pattern
+     every one of the twelve regional papers already in the feed list uses,
+     because Australian Community Media runs them all on one platform and
+     owns titles in the north too.
+     Testing a path and reading its item count is not the same as guessing
+     one and shipping it: nothing goes in the feed list until it is seen to
+     return articles. */
+
+  /* Far North and regional Queensland. */
+  ['Tropic Now (Cairns)', 'https://www.tropicnow.com.au/feed'],
+  ['Cairns Local News', 'https://cairnslocalnews.com.au/feed/'],
+  ['Cairns Post', 'https://www.cairnspost.com.au/feed/'],
+  ['North West Star (Mount Isa)', 'https://www.northweststar.com.au/rss.xml'],
+  ['Queensland Country Life', 'https://www.queenslandcountrylife.com.au/rss.xml'],
+  ['Townsville Bulletin', 'https://www.townsvillebulletin.com.au/feed/'],
+
+  /* Northern Territory. */
+  ['NT Independent', 'https://ntindependent.com.au/feed/'],
+  ['Katherine Times', 'https://www.katherinetimes.com.au/rss.xml'],
+  ['National Indigenous Times', 'https://nit.com.au/feed/'],
+
+  /* South Australia. */
+  ['InDaily', 'https://indaily.com.au/feed/'],
+  ['Stock Journal (rural SA)', 'https://www.stockjournal.com.au/rss.xml'],
+  ['Port Lincoln Times', 'https://www.portlincolntimes.com.au/rss.xml'],
+
+  /* ACT beyond the Canberra Times. */
+  ['Riot ACT', 'https://the-riotact.com/feed/'],
+
+  /* ABC's main feed id, to confirm the pattern the config already uses. */
+  ['ABC Just In', 'https://www.abc.net.au/news/feed/51120/rss.xml'],
+
   ['SA CFS current (in use)', 'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json'],
   ['SA CFS current (no prod)', 'https://data.eso.sa.gov.au/cfs/criimson/cfs_current_incidents.json'],
   ['SA CFS GeoRSS', 'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.xml'],
