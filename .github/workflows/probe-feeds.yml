@@ -1,0 +1,33 @@
+# Finds the real feed addresses for a publisher, by autodiscovery rather than
+# by guessing paths. Seconds to run; not part of the outage capture.
+name: Probe feeds
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Probe
+        run: node scripts/probe-feeds.mjs
+      - name: Commit the findings
+        if: always()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -z "$(git status --porcelain -- data/)" ]; then
+            echo "No change."
+            exit 0
+          fi
+          git add data/
+          git commit -m "Record feed discovery probe"
+          git push
