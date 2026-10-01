@@ -69,7 +69,31 @@
   // KV below makes it global.
   //
   // ---------------------------------------------------------------------
-  // OPTIONAL, but recommended: a KV namespace for the news record.
+  // NOT OPTIONAL IN PRACTICE: a KV namespace for the news record.
+  //
+  // MEASURED IN PRODUCTION, 2026-10-01, by the "Feed health" step of the
+  // Live check workflow reading /api/news:
+  //
+  //     feeds: 30 configured, 3 ok, 26 never fetched here
+  //     articles: 40
+  //
+  // Twenty-six of thirty outlets had never been fetched in the location
+  // serving that request. Not failing -- never attempted. The dashboard
+  // showed them as unavailable sources and showed none of their stories,
+  // and had been doing so for as long as anyone had been looking.
+  //
+  // This was misread twice as a broken feed URL, and insuranceNEWS had its
+  // address "fixed" twice on that theory. The address was genuinely wrong
+  // (/rss/all-news 404s, /rss/all does not) but it was never why the source
+  // read as unavailable -- the other twenty-five were in the same state with
+  // perfectly good URLs. Re-run the Live check workflow to see the current
+  // numbers before concluding anything about any single feed.
+  //
+  // Binding KV is the fix. Without it this is not a slow start that settles;
+  // on an internal dashboard with a handful of readers it never finishes.
+  //
+  // ---------------------------------------------------------------------
+  // What it does.
   //
   // Without it the news article list is held in the Cloudflare Cache API,
   // which is PER DATACENTRE. The cron warms whichever location it runs in, so
