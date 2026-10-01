@@ -935,13 +935,26 @@
      "Suncorp says it's not in takeover discussions" -- because a trade
      reader already knows the context. Inferring the subject from the words
      while ignoring the masthead was reading past the easiest fact available. */
+  /* Two ways of knowing, because they cover different paths.
+
+     `group` is the authoritative one: the feed list declares insuranceNEWS as
+     group 'trade', so every article it publishes is insurance by definition
+     and nothing in the headline needs to say so. Adding another insurance
+     trade title to that group makes it work with no change here.
+
+     The domain regex is the fallback for article paths that carry no group --
+     the GDELT backup sets `domain` and nothing else -- so the same story
+     arriving that way is still tagged. */
+  const TRADE_GROUP_CATS={ trade:'insurance' };
   const SOURCE_CATS=[
     [/insurancenews\.com\.au|insurancebusinessmag|anziif\.com|insuranceandrisk/i,'insurance']
   ];
-  function classify(title,summary,source){
+  function classify(title,summary,source,group){
     const t=String(title||'').toLowerCase();
     const body=(t+' '+String(summary||'').toLowerCase()).trim();
     const cats=[];
+    const byGroup=TRADE_GROUP_CATS[String(group||'').toLowerCase()];
+    if(byGroup)cats.push(byGroup);
     const from=String(source||'').toLowerCase();
     SOURCE_CATS.forEach(([re,cat])=>{ if(re.test(from)&&cats.indexOf(cat)===-1)cats.push(cat); });
     Object.keys(CAT_RULES).forEach(k=>{
@@ -1028,7 +1041,7 @@
          headlines remain available as a fallback when nothing recent is. */
       if(a.pubMs>Date.now()+3600000)return;
       if(EXCLUDE_KEYWORDS.test(a.title))return; // recipes, celebrity gossip, horoscopes etc -- not news
-      const cats=classify(a.title,a.summary,a.domain||a.source);
+      const cats=classify(a.title,a.summary,a.domain||a.source,a.group);
       if(a.world||(a.domain||'').includes(WORLD_DOMAIN)){
         /* The dedicated World source -- always keep and tag it World
            regardless of keyword matches, exempt from the AU-relevance gate

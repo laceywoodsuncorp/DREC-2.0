@@ -29,7 +29,7 @@ const slice = (from, to) => {
 };
 const src = slice('const CAT_RULES={', 'const CAT_LABEL=')
   + slice('const FIRE_REGEX=', '\n\n')
-  + slice('const SOURCE_CATS=[', 'function readCache')
+  + slice('const TRADE_GROUP_CATS=', 'function readCache')
   + '; return classify;';
 const classify = new Function(src)();
 
@@ -39,8 +39,8 @@ const check = (n, c, extra) => {
   else { fail++; console.log('  FAIL ' + n + (extra !== undefined ? '  -> ' + JSON.stringify(extra) : '')); }
 };
 /* `want` must all be present; `notWant` must all be absent. */
-const tag = (headline, want, notWant, summary, source) => {
-  const got = classify(headline, summary, source);
+const tag = (headline, want, notWant, summary, source, group) => {
+  const got = classify(headline, summary, source, group);
   const missing = (want || []).filter(c => !got.includes(c));
   const wrong = (notWant || []).filter(c => got.includes(c));
   check(headline.slice(0, 62), !missing.length && !wrong.length,
@@ -116,6 +116,24 @@ const TRADE = 'insurancenews.com.au';
  ['INsight podcast: what\'s the deal with ACCC, IAG and RAC?']].forEach(([h]) => {
   tag(h, ['insurance'], [], '', TRADE);
 });
+
+console.log('\n== every path an insuranceNEWS article can arrive by ==');
+/* The feed list declares insuranceNEWS as group "trade", which is the
+   authoritative statement that everything it publishes is insurance. The
+   GDELT backup path sets only `domain`, so the same story arriving that way
+   has to be caught by the domain instead -- both are checked because they
+   cover different paths, not because either is redundant. */
+tag('QBE promotes Groves to Australia Pacific head', ['insurance'], [],
+  '', 'insurancenews.com.au', 'trade');
+tag('QBE promotes Groves to Australia Pacific head', ['insurance'], [],
+  '', 'insurancenews.com.au', undefined);
+/* A trade title whose domain is not in the regex still works, which is the
+   point of keying on the group: adding another one needs no change here. */
+tag('Some trade headline with no industry words', ['insurance'], [],
+  '', 'someothertrade.com.au', 'trade');
+/* And a general outlet must not be swept in. */
+tag('Council approves new childcare centre', [], ['insurance'],
+  '', 'abc.net.au', 'national');
 
 console.log('\n== the industry by name, even in a general outlet ==');
 /* A trade headline names the insurer instead of the industry. These have to
