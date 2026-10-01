@@ -229,9 +229,18 @@ const NEWS_FEEDS = [
   { name: 'The Land (rural NSW)', domain: 'theland.com.au', group: 'regional', url: 'https://www.theland.com.au/rss.xml' },
 
   /* --- trade press for the insurance category --- */
-  /* UNVERIFIED: insuranceNEWS publishes RSS but lists the real addresses on a
-     page unreachable from here (insurancenews.com.au/rss-channels). */
-  { name: 'insuranceNEWS', domain: 'insurancenews.com.au', group: 'trade', url: 'https://www.insurancenews.com.au/rss/all-news' },
+  /* VERIFIED by autodiscovery, not guessed. The site's homepage declares
+       <link rel="alternate" type="application/rss+xml"
+             title="Insurance News" href="/rss/all">
+     and fetching it returns 200 with 20 items. The probe output is in
+     data/feed-probe.json.
+
+     It was '/rss/all-news' for a long time, which 404s. A feed that 404s
+     does not announce itself -- the source simply contributes nothing and
+     the list looks a little thin -- so this was invisible until someone
+     noticed insurance stories had stopped appearing. Twice now. Hence
+     test/feed_url.test.mjs, which fails if it ever goes back. */
+  { name: 'insuranceNEWS', domain: 'insurancenews.com.au', group: 'trade', url: 'https://www.insurancenews.com.au/rss/all' },
 
   /* --- world --- */
   /* Exempt from the client's AU-relevance filter, same as under GDELT. */
@@ -243,7 +252,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-09-25-alertlevels';
+const WORKER_BUILD = '2026-10-01-insnews';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
