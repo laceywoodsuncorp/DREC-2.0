@@ -134,6 +134,35 @@ console.log('\n== the insuranceNEWS address is the declared one ==');
     urls.filter((u) => /insurancenews/.test(u)));
 }
 
+console.log('\n== the regions that had no source at all ==');
+{
+  const src = (await import('node:fs')).readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8');
+  const feeds = src.match(/\{ name: '[^']+', domain: '[^']+', group: '[^']+', url: '[^']+'/g) || [];
+  const has = (re) => feeds.some((f) => re.test(f));
+  /* The Northern Territory, northern Queensland and South Australia had
+     nothing. Each of these was fetched and seen to return articles before
+     being added -- the counts are in data/feed-probe.json. */
+  check('the Northern Territory is covered',
+    has(/katherinetimes/) && has(/ntindependent/), feeds.filter((f) => /nt|katherine/i.test(f)));
+  check('northern Queensland is covered',
+    has(/northweststar/) || has(/queenslandcountrylife/));
+  check('South Australia is covered', has(/stockjournal/));
+  check('the ACT has more than one source',
+    has(/canberratimes/) && has(/the-riotact/));
+
+  /* Nothing unverified gets in. These were all probed and all failed --
+     Cairns and Townsville serve an empty feed, and the Adelaide Advertiser,
+     InDaily and Port Lincoln Times answer 403. Adding any of them would put
+     a source in the list that can never load, which is what insuranceNEWS
+     did for however long. */
+  ['cairnspost', 'townsvillebulletin', 'adelaidenow', 'indaily.com.au',
+   'portlincolntimes', 'tropicnow', 'cairnslocalnews', 'nit.com.au']
+    .forEach((dead) => {
+      check('no feed configured for ' + dead + ' (probed, does not work)',
+        !feeds.some((f) => f.includes(dead)));
+    });
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);

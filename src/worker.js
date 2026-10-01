@@ -228,6 +228,32 @@ const NEWS_FEEDS = [
   { name: 'Central Western Daily (Orange)', domain: 'centralwesterndaily.com.au', group: 'regional', url: 'https://www.centralwesterndaily.com.au/rss.xml' },
   { name: 'The Land (rural NSW)', domain: 'theland.com.au', group: 'regional', url: 'https://www.theland.com.au/rss.xml' },
 
+  /* The north, the Territory and South Australia, which had nothing at all.
+     Every one of these was fetched and seen to return articles before being
+     added -- the item count is in data/feed-probe.json.
+
+     What is still missing, and why: Cairns and Townsville are News Corp
+     mastheads that serve an empty feed, and the Adelaide Advertiser, InDaily
+     and Port Lincoln Times answer 403. The ABC's regional pages declare no
+     feeds and its regional feed ids are not published anywhere findable, so
+     the only ABC route is the national ones already in this list. These are
+     the Australian Community Media titles, which work because every regional
+     paper above is on the same platform. */
+  /* NT -- the Territory had no source whatsoever. */
+  { name: 'Katherine Times (NT)', domain: 'katherinetimes.com.au', group: 'regional', url: 'https://www.katherinetimes.com.au/rss.xml' },
+  { name: 'NT Independent', domain: 'ntindependent.com.au', group: 'regional', url: 'https://ntindependent.com.au/feed/' },
+  /* Northern and regional Queensland. Not Cairns itself -- no Far North
+     masthead publishes a readable feed -- but Mount Isa and the rural title
+     cover the north and west, where there was previously nothing above
+     Brisbane. */
+  { name: 'North West Star (Mount Isa)', domain: 'northweststar.com.au', group: 'regional', url: 'https://www.northweststar.com.au/rss.xml' },
+  { name: 'Queensland Country Life', domain: 'queenslandcountrylife.com.au', group: 'regional', url: 'https://www.queenslandcountrylife.com.au/rss.xml' },
+  /* SA had no source at all, metro or rural. This is the rural one; Adelaide
+     is still uncovered. */
+  { name: 'Stock Journal (rural SA)', domain: 'stockjournal.com.au', group: 'regional', url: 'https://www.stockjournal.com.au/rss.xml' },
+  /* ACT, alongside the Canberra Times. */
+  { name: 'Riot ACT', domain: 'the-riotact.com', group: 'regional', url: 'https://the-riotact.com/feed/' },
+
   /* --- trade press for the insurance category --- */
   /* Confirmed by autodiscovery: the site declares
      <link rel="alternate" type="application/rss+xml"> pointing at /rss/all,
@@ -250,7 +276,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-01-feeds';
+const WORKER_BUILD = '2026-10-01-regions';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
