@@ -29,7 +29,7 @@ const slice = (from, to) => {
 };
 const src = slice('const CAT_RULES={', 'const CAT_LABEL=')
   + slice('const FIRE_REGEX=', '\n\n')
-  + slice('function classify(title,summary){', 'function readCache')
+  + slice('const SOURCE_CATS=[', 'function readCache')
   + '; return classify;';
 const classify = new Function(src)();
 
@@ -39,8 +39,8 @@ const check = (n, c, extra) => {
   else { fail++; console.log('  FAIL ' + n + (extra !== undefined ? '  -> ' + JSON.stringify(extra) : '')); }
 };
 /* `want` must all be present; `notWant` must all be absent. */
-const tag = (headline, want, notWant, summary) => {
-  const got = classify(headline, summary);
+const tag = (headline, want, notWant, summary, source) => {
+  const got = classify(headline, summary, source);
   const missing = (want || []).filter(c => !got.includes(c));
   const wrong = (notWant || []).filter(c => got.includes(c));
   check(headline.slice(0, 62), !missing.length && !wrong.length,
@@ -99,6 +99,41 @@ tag('“We lost everything in minutes”', ['fire'],
    China in paragraph one does not make a local story World news. */
 tag('Council approves new childcare centre', [], ['world'],
   'The mayor said the design was inspired by a visit to China last year.');
+
+console.log('\n== a trade masthead is the subject ==');
+/* Real insuranceNEWS headlines. Eight of these ten carry no insurance word,
+   because a trade reader already knows the context -- so inferring the
+   subject from the words while ignoring the masthead missed most of the
+   feed. The source is both stronger evidence and certain. */
+const TRADE = 'insurancenews.com.au';
+[['Market conditions ‘not seen for more than a decade’'],
+ ['Data centre race leaves frameworks behind'],
+ ['Suncorp says it\'s not in takeover discussions'],
+ ['QBE promotes Groves to Australia Pacific head'],
+ ['Industry profits strong as challenges loom'],
+ ['Resonate innovation summit returns for third year'],
+ ['ACT scheme encourages defect cover'],
+ ['INsight podcast: what\'s the deal with ACCC, IAG and RAC?']].forEach(([h]) => {
+  tag(h, ['insurance'], [], '', TRADE);
+});
+
+console.log('\n== the industry by name, even in a general outlet ==');
+/* A trade headline names the insurer instead of the industry. These have to
+   work from a general masthead too, or the same story in the ABC's feed
+   lands in General. */
+tag('QBE promotes Groves to Australia Pacific head', ['insurance'], [], '', 'abc.net.au');
+tag('Suncorp says it is not in takeover discussions', ['insurance'], [], '', 'abc.net.au');
+tag('IAG and RACQ face questions over claims handling', ['insurance'], [], '', 'abc.net.au');
+tag('NIBA finalising code after extensive feedback', ['insurance'], [], '', 'abc.net.au');
+
+console.log('\n== one ambiguous word still is not enough ==');
+/* /\bcover\b/ and /\bcovers?\b/ both matched the same word, so a single
+   mention counted twice and cleared the bar on its own. */
+tag('Undercover officer gives evidence in court', ['crime'], ['insurance'], '', 'abc.net.au');
+tag('Cloud cover to clear by Friday', [], ['insurance'], '', 'abc.net.au');
+tag('Snow cover deepest in a decade', [], ['insurance'], '', 'abc.net.au');
+/* Two of them together still corroborate. */
+tag('Claims and payouts under review', ['insurance'], [], '', 'abc.net.au');
 
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);

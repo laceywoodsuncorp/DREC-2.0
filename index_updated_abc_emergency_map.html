@@ -669,10 +669,23 @@
       strong:[/\binsur(?:ance|er|ers|ed|ing)\b/,/\breinsur\w*/,/\bunderwrit\w*/,/\bafca\b/,
         /\bpolicyholders?\b/,/\binsurance council\b/,/\bicaustralia\b/,/\bpremiums?\b/,
         /\b(?:home|car|motor|travel|flood|storm|strata|landlord) insurance\b/,
-        /\bclaims? (?:payout|cost|surge|lodg\w*|experience)\b/,/\bcatastrophe declar/],
+        /\bclaims? (?:payout|cost|surge|lodg\w*|experience)\b/,/\bcatastrophe declar/,
+        /* The industry by name. A trade headline says "QBE promotes Groves"
+           and never says insurance, because its reader already knows what
+           QBE is. Without these, the story reads as general news. */
+        /\b(?:qbe|iag|suncorp|allianz|zurich|chubb|hollard|youi|aami|nrma|cgu|gio|apia|racq|racv|budget direct)\b/i,
+        /\b(?:niba|anziif|apra|steadfast|aub group|honan|gallagher|aon|marsh|lloyd'?s)\b/i,
+        /\b(?:broker|brokers|broking|underwriting agency|loss adjust\w*|claims? manager)\b/i,
+        /\b(?:general insurance|life insurance|life insurers?|ctp|lmi|strata) (?:code|scheme|sector|market)\b/],
       /* "claims" alone is the single biggest source of wrong Insurance tags:
          studies claim, police claim, groups claim responsibility. */
-      weak:[/\bclaims?\b/,/\bpayouts?\b/,/\bexcess\b/,/\bloss(?:es)?\b/,/\bactuar\w*/]
+      /* One term per word. /\bcover\b/ and /\bcovers?\b/ both matched the
+         same "cover", so a single mention counted as two weak signals and
+         cleared the bar on its own -- which is a strong match wearing a weak
+         match's clothes, and would have tagged anything mentioning cloud
+         cover or an undercover officer as insurance. */
+      weak:[/\bclaims?\b/,/\bpayouts?\b/,/\bexcess\b/,/\bloss(?:es)?\b/,/\bactuar\w*/,
+        /\bcovers?\b/,/\bliabilit\w*/,/\bindemnit\w*/,/\bsolvenc\w*/]
     },
     fire:{ strong:[], weak:[] },   /* handled by FIRE_REGEX and FIRE_PHRASES below */
     flood:{
@@ -915,11 +928,24 @@
      in the standfirst. It contributes weak signals only: a strong term in a
      summary is usually an aside, and promoting on it put half the feed in
      World. */
-  function classify(title,summary){
+  /* Some outlets only publish one subject, and that is a stronger and more
+     certain signal than anything in a headline. Eight of ten real
+     insuranceNEWS headlines carry no insurance word at all -- "QBE promotes
+     Groves to Australia Pacific head", "ACT scheme encourages defect cover",
+     "Suncorp says it's not in takeover discussions" -- because a trade
+     reader already knows the context. Inferring the subject from the words
+     while ignoring the masthead was reading past the easiest fact available. */
+  const SOURCE_CATS=[
+    [/insurancenews\.com\.au|insurancebusinessmag|anziif\.com|insuranceandrisk/i,'insurance']
+  ];
+  function classify(title,summary,source){
     const t=String(title||'').toLowerCase();
     const body=(t+' '+String(summary||'').toLowerCase()).trim();
     const cats=[];
+    const from=String(source||'').toLowerCase();
+    SOURCE_CATS.forEach(([re,cat])=>{ if(re.test(from)&&cats.indexOf(cat)===-1)cats.push(cat); });
     Object.keys(CAT_RULES).forEach(k=>{
+      if(cats.indexOf(k)!==-1)return;
       const r=CAT_RULES[k];
       if((r.veto||[]).some(re=>re.test(body)))return;
       if((r.strong||[]).some(re=>re.test(t))){cats.push(k);return;}
@@ -1002,7 +1028,7 @@
          headlines remain available as a fallback when nothing recent is. */
       if(a.pubMs>Date.now()+3600000)return;
       if(EXCLUDE_KEYWORDS.test(a.title))return; // recipes, celebrity gossip, horoscopes etc -- not news
-      const cats=classify(a.title,a.summary);
+      const cats=classify(a.title,a.summary,a.domain||a.source);
       if(a.world||(a.domain||'').includes(WORLD_DOMAIN)){
         /* The dedicated World source -- always keep and tag it World
            regardless of keyword matches, exempt from the AU-relevance gate
