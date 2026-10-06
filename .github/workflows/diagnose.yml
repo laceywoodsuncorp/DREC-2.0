@@ -62,16 +62,10 @@ jobs:
         if: always()
         run: |
           set -e
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add data/state-health.json data/nt-power-probe.json data/warnings-probe.json data/shape-probe.json 2>/dev/null || true
-          # --quiet does not notice a new file, which has silently discarded
-          # probe results here before.
-          if [ -n "$(git status --porcelain data/state-health.json data/nt-power-probe.json data/warnings-probe.json data/shape-probe.json)" ]; then
-            git commit -m 'Record live state health, the NT outage probe and the warnings probe'
-            for i in 1 2 3 4; do
-              git push origin HEAD:${{ github.ref_name }} && break || sleep $((2 ** i))
-            done
-          else
-            echo 'nothing changed'
-          fi
+          # The retry loop that used to be here retried the push alone, which
+          # cannot fix a non-fast-forward: it is still one five seconds later.
+          # commit-data.sh rebases onto the remote between attempts.
+          BRANCH="${{ github.ref_name }}" \
+            scripts/commit-data.sh 'Record live state health and the feed probes' \
+              data/state-health.json data/nt-power-probe.json \
+              data/warnings-probe.json data/shape-probe.json

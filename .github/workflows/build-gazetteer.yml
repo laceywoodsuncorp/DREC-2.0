@@ -23,12 +23,5 @@ jobs:
       - name: Commit
         if: always()
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -z "$(git status --porcelain -- data/)" ]; then
-            echo "No change."
-            exit 0
-          fi
-          git add data/
-          git commit -m "Rebuild the locality gazetteer"
-          git push
+          BRANCH="${{ github.ref_name }}" \
+            scripts/commit-data.sh "Rebuild the locality gazetteer" data/

@@ -62,15 +62,9 @@ jobs:
       - name: Commit the snapshot
         if: always()
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # --porcelain, not `git diff`: a diff only compares tracked files,
-          # so the first run of a new probe wrote its findings and this step
-          # reported "no change" and threw them away.
-          if [ -z "$(git status --porcelain -- data/)" ]; then
-            echo "No change in the outage snapshot."
-            exit 0
-          fi
-          git add data/
-          git commit -m "Update outage snapshot"
-          git push
+          # Survives a push race. This step used to end in a bare `git push`,
+          # and run 32 fetched every operator, wrote the snapshot, uploaded
+          # its artifacts, committed -- and discarded all of it when the push
+          # was rejected as a non-fast-forward.
+          BRANCH="${{ github.ref_name }}" \
+            scripts/commit-data.sh "Update outage snapshot" data/
