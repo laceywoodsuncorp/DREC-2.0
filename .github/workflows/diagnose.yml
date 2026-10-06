@@ -50,6 +50,11 @@ jobs:
       - name: Find each state's warnings feed
         run: node scripts/probe-warnings.mjs
 
+      # The field names of the feeds the step above found. Parsers get written
+      # against this output, not against a guess at what a column is called.
+      - name: Dump the shape of the usable warnings feeds
+        run: node scripts/probe-shapes.mjs
+
       # Committed because a probe whose findings are not written down gets run
       # again from scratch next time the question comes up -- which has
       # happened on this project more than once.
@@ -59,10 +64,10 @@ jobs:
           set -e
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add data/state-health.json data/nt-power-probe.json data/warnings-probe.json 2>/dev/null || true
+          git add data/state-health.json data/nt-power-probe.json data/warnings-probe.json data/shape-probe.json 2>/dev/null || true
           # --quiet does not notice a new file, which has silently discarded
           # probe results here before.
-          if [ -n "$(git status --porcelain data/state-health.json data/nt-power-probe.json data/warnings-probe.json)" ]; then
+          if [ -n "$(git status --porcelain data/state-health.json data/nt-power-probe.json data/warnings-probe.json data/shape-probe.json)" ]; then
             git commit -m 'Record live state health, the NT outage probe and the warnings probe'
             for i in 1 2 3 4; do
               git push origin HEAD:${{ github.ref_name }} && break || sleep $((2 ** i))
