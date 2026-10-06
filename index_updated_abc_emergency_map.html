@@ -925,7 +925,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-06-tagging';
+  const EXPECTED_WORKER_BUILD='2026-10-06-townlookup';
   let workerBuildSeen=null;
   const SAME_ORIGIN_ROUTES=['/api/gdelt','/.netlify/functions/gdelt'];
   async function fetchJsonWithTimeout(url,ms){
@@ -2145,6 +2145,58 @@ window.addEventListener('resize',()=>map.invalidateSize());
     TAS:{all:false,blocked:[]},ACT:{all:false,blocked:[]}
   };
 
+  /* Strips the ABS disambiguator from a locality name: "(TAS.)",
+     "(BRISBANE - QLD)". Only a recognised state code is accepted at the end
+     of the bracket, so a name that genuinely ends in brackets survives. */
+  const GAZ_STATE='(?:NSW|VIC|QLD|SA|WA|TAS|NT|ACT|OT)';
+  const GAZ_LGA_RE=new RegExp('\\s*\\([^()]*-\\s*'+GAZ_STATE+'\\.?\\)$');
+  const GAZ_ST_RE=new RegExp('\\s*\\('+GAZ_STATE+'\\.?\\)$');
+  function gazBase(name){
+    return String(name||'').replace(GAZ_LGA_RE,'').replace(GAZ_ST_RE,'').trim();
+  }
+  /* Operators abbreviate where the gazetteer spells out. */
+  function gazNorm(name){
+    return String(name||'').toUpperCase()
+      .replace(/\bMT\.?\b/g,'MOUNT').replace(/\bST\.?\b/g,'SAINT')
+      .replace(/\bNTH\.?\b/g,'NORTH').replace(/\bSTH\.?\b/g,'SOUTH')
+      .replace(/\bPT\.?\b/g,'PORT').replace(/\bUPR\.?\b/g,'UPPER')
+      .replace(/[^A-Z0-9]+/g,'');
+  }
+  /* Resolves one operator-written town name to a point, in order of how much
+     is being assumed. Exact first, then the same name with abbreviations
+     expanded, then the city case, then a unique match in another state.
+
+     The order is the point: each step assumes more than the one above it, so
+     a cheap certain answer is never passed over for an expensive guess. */
+  function gazLookup(gaz,rawTown,st){
+    if(!gaz)return null;
+    const town=gazBase(String(rawTown||'').trim().toUpperCase());
+    if(!town)return null;
+    const exact=gaz.byKey.get(town+'|'+st);
+    if(exact)return exact;
+    const norm=gaz.byNorm.get(gazNorm(town)+'|'+st);
+    if(norm)return norm;
+    /* The city case. "TOOWOOMBA" is not a locality; "TOOWOOMBA CITY" is.
+       Prefer the central suburb by name, because that is the part of a city
+       a reader means. Failing that, average the group -- a point somewhere in
+       Cairns is right, and picking one suburb arbitrarily would be a
+       different kind of wrong. */
+    const group=gaz.byPrefix.get(town+'|'+st);
+    if(group&&group.length){
+      const central=group.find(g=>/\b(CITY|CENTRAL|CBD)$/.test(g[0]));
+      if(central)return [central[1],central[2]];
+      if(group.length===1)return [group[0][1],group[0][2]];
+      const lat=group.reduce((a,g)=>a+g[1],0)/group.length;
+      const lon=group.reduce((a,g)=>a+g[2],0)/group.length;
+      return [lat,lon];
+    }
+    /* Some operators name a town just over the border. A unique match
+       elsewhere is better than dropping the row; an ambiguous one is not. */
+    const cands=gaz.byName.get(town);
+    if(cands&&cands.length===1)return [cands[0][1],cands[0][2]];
+    return null;
+  }
+
   let gazetteer=null,gazetteerState='idle';
   async function loadGazetteer(){
     if(gazetteerState!=='idle')return gazetteer;
@@ -2153,7 +2205,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       const r=await fetch('/data/gazetteer.json',{cache:'force-cache'});
       if(!r.ok)throw new Error('HTTP '+r.status);
       const j=await r.json();
-      const byKey=new Map(),byName=new Map();
+      const byKey=new Map(),byName=new Map(),byNorm=new Map(),byPrefix=new Map();
       (j.items||[]).forEach(([name,st,lat,lon])=>{
         byKey.set(name+'|'+st,[lat,lon]);
         /* A name alone is ambiguous -- there is a Richmond in five states --
@@ -2161,8 +2213,34 @@ window.addEventListener('resize',()=>map.invalidateSize());
            decides. */
         if(!byName.has(name))byName.set(name,[]);
         byName.get(name).push([st,lat,lon]);
+        /* The ABS suffixes a repeated name with its state or its LGA:
+           "LONGFORD (TAS.)", "RED HILL (BRISBANE - QLD)". The builder strips
+           those now, but a gazetteer file built before that fix still has
+           them, and indexing the base name here means the map works against
+           either -- rather than waiting on a rebuild to stop losing Longford
+           and Red Hill. */
+        const base=gazBase(name);
+        if(base!==name){
+          if(!byKey.has(base+'|'+st))byKey.set(base+'|'+st,[lat,lon]);
+          if(!byName.has(base))byName.set(base,[]);
+          byName.get(base).push([st,lat,lon]);
+        }
+        /* Abbreviation-insensitive index, so an operator writing "MT MORT"
+           finds "MOUNT MORT". */
+        const nk=gazNorm(base)+'|'+st;
+        if(!byNorm.has(nk))byNorm.set(nk,[lat,lon]);
+        /* First word of a multi-word locality, which is how a city gets
+           found. The ABS holds suburbs, not cities: there is no TOOWOOMBA,
+           only TOOWOOMBA CITY, and no CAIRNS, only CAIRNS CITY and CAIRNS
+           NORTH. Operators name the city. */
+        const sp=base.indexOf(' ');
+        if(sp>1){
+          const pk=base.slice(0,sp)+'|'+st;
+          if(!byPrefix.has(pk))byPrefix.set(pk,[]);
+          byPrefix.get(pk).push([base,lat,lon]);
+        }
       });
-      gazetteer={byKey,byName,attribution:j.attribution||''};
+      gazetteer={byKey,byName,byNorm,byPrefix,attribution:j.attribution||''};
       gazetteerState='ready';
     }catch(e){
       console.warn('Gazetteer unavailable:',e);
@@ -2199,6 +2277,11 @@ window.addEventListener('resize',()=>map.invalidateSize());
     if(/^\/|\/\S/.test(t))return false;
     if(/\boops\b/i.test(t))return false;
     if(/\b(search|register|login|sign in|page not found|life support|cookie|menu|skip to)\b/i.test(t))return false;
+    /* A description of a region, not a place in it. TasNetworks publishes
+       "South region affecting ..." in the field a locality would normally
+       occupy, and counting that as a town we failed to find overstates what
+       is missing. */
+    if(/\bregion affecting\b|^(north|south|east|west|central)\s+region\b/i.test(t))return false;
     return /[A-Za-z]/.test(t);
   }
 
@@ -2242,16 +2325,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       if(rawTowns.length&&!towns.length)notPlaces.push(String(rawTowns[0]).slice(0,40));
       let placedAny=false;
       towns.forEach(town=>{
-        const key=String(town).trim().toUpperCase();
-        let pos=null;
-        if(gazetteer)pos=gazetteer.byKey.get(key+'|'+st)||null;
-        if(!pos&&gazetteer){
-          /* Some operators name a town just over the border from the state
-             whose tab you are on. Accept a unique match elsewhere rather than
-             dropping the row. */
-          const cands=gazetteer.byName.get(key);
-          if(cands&&cands.length===1)pos=[cands[0][1],cands[0][2]];
-        }
+        const pos=gazLookup(gazetteer,town,st);
         if(pos){pts.push({lat:pos[0],lon:pos[1],town:town,outage:o});placedAny=true;}
         else if(looksLikePlace(town))unplaced.push(town);
         else notPlaces.push(town);

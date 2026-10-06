@@ -114,7 +114,25 @@ const STATE_CODES = {
          the data for them sat in the file. Only a recognised state code is
          stripped, so a name that genuinely ends in brackets survives. */
       const rawName = String(a[f.name] || '').trim().toUpperCase();
-      const name = rawName.replace(/\s*\((NSW|VIC|QLD|SA|WA|TAS|NT|ACT|OT)\)$/, '').trim();
+      /* The ABS uses THREE disambiguator forms, and the first version of this
+         only stripped one of them. The others left perfectly ordinary towns
+         unreachable, which showed up as outages that never appeared on the
+         map -- Longford in Tasmania, Colo and Red Hill and Preston on the
+         mainland:
+      
+           "CROMER (NSW)"                  bare state, already handled
+           "LONGFORD (TAS.)"               state with a full stop
+           "RED HILL (BRISBANE - QLD)"     LGA, a dash, then the state
+      
+         The state is its own column here, so every one of these suffixes is
+         noise that makes an exact lookup miss. Only a recognised state code
+         is accepted at the end of the bracket, so a name that genuinely ends
+         in brackets survives. */
+      const STATE_SUFFIX = '(?:NSW|VIC|QLD|SA|WA|TAS|NT|ACT|OT)';
+      const name = rawName
+        .replace(new RegExp('\\s*\\([^()]*-\\s*' + STATE_SUFFIX + '\\.?\\)$'), '')
+        .replace(new RegExp('\\s*\\(' + STATE_SUFFIX + '\\.?\\)$'), '')
+        .trim();
       const stateName = String(a[f.state] || '').trim().toUpperCase();
       const state = STATE_CODES[stateName] || stateName.slice(0, 3);
       const c = feat.centroid;
