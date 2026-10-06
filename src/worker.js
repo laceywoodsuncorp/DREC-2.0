@@ -44,6 +44,23 @@ function buildGdeltUrl() {
    on-demand request just serves whatever's cached, however old, rather than
    comparing its age against a threshold. */
 const CACHE_ENTRY_LIFETIME_SECONDS = 7200; // 2h -- generous outer bound, not a freshness check
+/* How old an incident payload may be before a reader's request triggers a
+   rebuild behind their response.
+
+   This is needed because caches.default is PER DATACENTRE and the cron warms
+   only the one it happens to run in. Every other Cloudflare location serves
+   whatever it last cached, and the read path accepted anything inside the 2h
+   outer bound -- so a reader could be shown a two-hour-old incident list with
+   nothing but an X-Cache-Age header to say so. On a dashboard used during a
+   fire that is the difference between a current warning and a stale one.
+
+   Found while trying to verify four parser fixes: every state served an old
+   body while the X-Worker-Build header correctly reported the new code, since
+   that header is set when the response is written and not when the body was
+   built. Only South Australia showed the new build, because SA fails and a
+   failure is never cached. The verification problem and the freshness problem
+   turned out to be the same problem. */
+const INCIDENT_FRESH_SECONDS = 600; // 10 min
 
 async function readSharedCache(cacheUrl) {
   const cached = await caches.default.match(cacheUrl);
@@ -252,7 +269,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-06-buildstamp';
+const WORKER_BUILD = '2026-10-06-staleread';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -2150,7 +2167,7 @@ async function refreshAllIncidents() {
    there is one (the normal path); only a genuine cold start does a live
    fetch. Always returns a JSON body, including on failure, so the client can
    render a specific per-state reason instead of a generic error. */
-async function handleIncidentsState(state) {
+async function handleIncidentsState(state, ctx) {
   const feed = INCIDENT_FEEDS[state];
   if (!feed) {
     return new Response(JSON.stringify({ ok: false, error: 'Unknown state: ' + state }), {
@@ -2160,7 +2177,21 @@ async function handleIncidentsState(state) {
   }
 
   const cached = await readSharedCache(incidentCacheUrl(state));
-  if (cached) return respondFromCache(cached);
+  if (cached) {
+    /* Stale-while-revalidate. The reader gets the cached answer immediately
+       -- a slow agency feed must never hold up the page, and a stale list
+       beats a blank one -- and a rebuild runs after the response has gone
+       out, so the next reader in this location gets fresh data.
+
+       Serving stale and refreshing is the right order round. Refreshing
+       first would put an upstream government feed's latency, and its
+       failures, in front of every visitor whose datacentre happened to be
+       cold. */
+    if (cached.ageSeconds > INCIDENT_FRESH_SECONDS && ctx && ctx.waitUntil) {
+      ctx.waitUntil(refreshStateIncidents(state).catch(() => {}));
+    }
+    return respondFromCache(cached);
+  }
 
   const result = await refreshStateIncidents(state);
   if (result.ok) {
@@ -3615,7 +3646,7 @@ async function handleApi(url, env, ctx, request) {
 
   if (url.pathname === '/api/incidents' || url.pathname === '/api/incidents/') return handleIncidentsAll();
   if (url.pathname.startsWith('/api/incidents/')) {
-    return handleIncidentsState(url.pathname.slice('/api/incidents/'.length).replace(/\/+$/, '').toLowerCase());
+    return handleIncidentsState(url.pathname.slice('/api/incidents/'.length).replace(/\/+$/, '').toLowerCase(), ctx);
   }
 
   if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') return handleOutagesAll(ctx);
