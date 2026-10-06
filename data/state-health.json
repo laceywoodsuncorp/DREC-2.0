@@ -1,14 +1,14 @@
 {
   "base": "https://drec-oncall-updates-site.lacey-wood.workers.dev",
-  "at": "2026-10-06T01:46:08.919Z",
+  "at": "2026-10-06T01:50:48.972Z",
   "incidents": {
     "nsw": {
       "httpStatus": 200,
       "ok": true,
       "build": "2026-10-06-tagging",
       "sourceUrl": "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json",
-      "count": 23,
-      "withAlertLevel": 23,
+      "count": 22,
+      "withAlertLevel": 22,
       "alertLevels": [
         "Advice",
         "Planned Burn",
@@ -34,7 +34,7 @@
       "ok": true,
       "build": "2026-10-06-tagging",
       "sourceUrl": "https://emergency.vic.gov.au/public/events-geojson.json",
-      "count": 19,
+      "count": 20,
       "withAlertLevel": 4,
       "alertLevels": [
         "Watch and Act",
@@ -44,22 +44,23 @@
         "Moderate",
         "Minor",
         "Under Control",
-        "Complete",
         "Responding",
-        "Warning",
+        "Request For Assistance",
         "Safe",
+        "Warning",
+        "Not Yet Under Control",
         "On Scene",
-        "Request For Assistance"
+        "Complete"
       ],
       "types": [
         "Riverine Flood",
         "Earthquake",
         "Bushfire",
-        "Building Damage",
+        "Building Fire",
+        "Tree Down",
         "Other",
-        "Road Accident",
-        "Gale Wind",
-        "Strong Wind"
+        "Structure Fire",
+        "Gale Wind"
       ],
       "attempts": []
     },
@@ -80,6 +81,7 @@
         "FIRE PERMITTED BURN",
         "FIRE OTHER",
         "FIRE STRUCTURE",
+        "POWER / GAS ELECTRICAL / POWER",
         "RESCUE ROAD CRASH"
       ],
       "attempts": []
@@ -156,12 +158,27 @@
     "nt": {
       "httpStatus": 200,
       "ok": true,
+      "build": "2026-10-06-tagging",
       "sourceUrl": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
-      "count": 0,
-      "withAlertLevel": 0,
-      "alertLevels": [],
-      "statuses": [],
-      "types": [],
+      "count": 24,
+      "withAlertLevel": 24,
+      "alertLevels": [
+        "Advice"
+      ],
+      "statuses": [
+        "Closed",
+        "Going"
+      ],
+      "types": [
+        "Grass and Scrub Fire",
+        "Automatic Fire Alarm",
+        "Road Crash",
+        "Vehicle Fire",
+        "Structure Fire",
+        "Alarm Bells Ringing",
+        "Non Structure Fire",
+        "Bushfire"
+      ],
       "attempts": [
         {
           "url": "https://securent.nt.gov.au/respond/bushfire-alerts",
@@ -170,10 +187,6 @@
         {
           "url": "https://securent.nt.gov.au/alerts-warnings",
           "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
-        },
-        {
-          "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
-          "error": "Responded, but no recognisable incident fields"
         }
       ]
     },
@@ -182,7 +195,7 @@
       "ok": true,
       "build": "2026-10-06-tagging",
       "sourceUrl": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
-      "count": 13,
+      "count": 12,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
@@ -200,22 +213,22 @@
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 2785,
-      "count": 208,
-      "customers": 10633,
+      "cacheAgeSeconds": 5185,
+      "count": 210,
+      "customers": 10579,
       "complete": true,
-      "rows": 208,
+      "rows": 210,
       "networks": [
         "Endeavour Energy",
         "Ausgrid"
       ],
-      "withTowns": 201,
+      "withTowns": 203,
       "sources": []
     },
     "vic": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 2780,
+      "cacheAgeSeconds": 5175,
       "count": 23,
       "customers": 1300,
       "complete": true,
@@ -231,9 +244,9 @@
     "qld": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 2068,
+      "cacheAgeSeconds": 5172,
       "count": 370,
-      "customers": 14825,
+      "customers": 15561,
       "complete": true,
       "rows": 370,
       "networks": [
@@ -246,21 +259,21 @@
     "wa": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 2068,
-      "count": 239,
-      "customers": 24127,
+      "cacheAgeSeconds": 5171,
+      "count": 235,
+      "customers": 23640,
       "complete": false,
-      "rows": 239,
+      "rows": 235,
       "networks": [
         "Western Power"
       ],
-      "withTowns": 239,
+      "withTowns": 235,
       "sources": []
     },
     "sa": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 1,
+      "cacheAgeSeconds": 5171,
       "count": 0,
       "customers": 0,
       "complete": true,
@@ -272,7 +285,7 @@
     "tas": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 1,
+      "cacheAgeSeconds": 5170,
       "count": 10,
       "customers": 467,
       "complete": true,
@@ -286,7 +299,7 @@
     "nt": {
       "httpStatus": 200,
       "ok": false,
-      "cacheAgeSeconds": 3822,
+      "cacheAgeSeconds": 5169,
       "count": 0,
       "customers": 0,
       "complete": false,
@@ -298,7 +311,7 @@
     "act": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 3820,
+      "cacheAgeSeconds": 5168,
       "count": 2,
       "customers": 88,
       "complete": true,
