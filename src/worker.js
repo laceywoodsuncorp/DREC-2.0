@@ -252,7 +252,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-01-insnews';
+const WORKER_BUILD = '2026-10-06-striptags';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -1061,15 +1061,31 @@ function labelledFields(text) {
   return out;
 }
 
+/* Order matters here, and getting it wrong put markup on the dashboard.
+   Tags were stripped first and entities decoded second, so a feed that
+   encodes its markup -- "Informational&lt;br&gt;" -- had nothing to strip on
+   the first pass and then had a live <br> built for it on the second. That
+   is exactly how Tasmania's alert level arrived from alert.tas.gov.au: the
+   live value was the string "Informational<br>".
+
+   So decode first, then strip, then strip once more. The second strip is
+   what catches markup that only existed as entities, and two passes is
+   enough: stripping cannot create a new entity, so there is nothing for a
+   third pass to find and no way for this to loop. */
 function stripTags(html) {
-  return String(html)
-    .replace(/<[^>]*>/g, ' ')
+  const decoded = String(html)
     .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
     .replace(/&#3[49];/g, "'")
+    /* &amp; last of the named entities, so "&amp;lt;" becomes "&lt;" and not
+       a tag bracket -- decoding it earlier would turn an escaped entity into
+       real markup. */
+    .replace(/&amp;/gi, '&');
+  return decoded
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
