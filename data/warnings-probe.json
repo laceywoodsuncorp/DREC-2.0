@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-06T00:34:16.343Z",
+  "at": "2026-10-06T00:42:49.139Z",
   "states": {
     "qld": [
       {
@@ -200,9 +200,9 @@
         "url": "https://api.emergency.wa.gov.au/v1/rss/warnings",
         "status": 200,
         "type": "application/xml",
-        "bytes": 129966,
+        "bytes": 142873,
         "shape": "xml",
-        "items": 15,
+        "items": 16,
         "fields": {},
         "verdict": "no level-like field found"
       },
@@ -210,7 +210,7 @@
         "url": "https://api.emergency.wa.gov.au/v1/warnings",
         "status": 200,
         "type": "application/json",
-        "bytes": 42573,
+        "bytes": 45302,
         "shape": "object",
         "fields": {
           "icon-name": [
@@ -221,6 +221,7 @@
           ],
           "cap-urgency": [
             "Future - act in near future",
+            "Past - no action required",
             "Immediate - act now"
           ],
           "publishing-status": [
@@ -231,7 +232,8 @@
             "<p>A Bushfire Advice is in place for people travelling along",
             "<p>A Bushfire Advice is in place for people in a southern ar",
             "<p>A Bushfire Advice is in place for people in Malaburra, Wu",
-            "<p>A Bushfire Advice is in place for people south of Gibb Ri"
+            "<p>A Bushfire Advice is in place for people south of Gibb Ri",
+            "<p>A Bushfire Advice is in place for people east of Djarindj"
           ],
           "cap-severity": [
             "Minor - minimal threat"
@@ -273,7 +275,7 @@
         "url": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
         "status": 200,
         "type": "text/xml",
-        "bytes": 54368,
+        "bytes": 54351,
         "shape": "xml",
         "items": 14,
         "fields": {
@@ -328,9 +330,9 @@
         "url": "https://emergency.vic.gov.au/public/events-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 71462,
+        "bytes": 73573,
         "shape": "object",
-        "items": 22,
+        "items": 26,
         "fields": {
           "category": [
             "Met"
@@ -354,9 +356,9 @@
             "Earthquake",
             "Fire",
             "Tree Down",
-            "Rescue",
-            "Other",
             "Accident / Rescue",
+            "Other",
+            "Rescue",
             "Building Damage"
           ],
           "category2": [
@@ -364,24 +366,24 @@
             "Riverine Flood",
             "Earthquake",
             "Bushfire",
-            "Other",
             "Tree Down",
-            "Rescue Road Trap Fire",
+            "Road Accident",
             "Building Fire",
+            "Other",
+            "Rescue Road Trap Fire",
             "Gale Wind",
             "Strong Wind",
-            "Road Accident",
             "Building Damage"
           ],
           "status": [
             "Minor",
             "Moderate",
             "Under Control",
-            "Safe",
             "Request For Assistance",
-            "On Scene",
             "Responding",
-            "Warning"
+            "On Scene",
+            "Warning",
+            "Safe"
           ],
           "name": [
             "Advice",
@@ -408,9 +410,9 @@
         "url": "https://emergency.vic.gov.au/public/osom-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 88729,
+        "bytes": 90840,
         "shape": "object",
-        "items": 34,
+        "items": 38,
         "fields": {
           "category": [
             "Met"
@@ -434,10 +436,10 @@
             "Earthquake",
             "Fire",
             "Tree Down",
+            "Accident / Rescue",
+            "Other",
             "Rescue",
             "Burn Area",
-            "Other",
-            "Accident / Rescue",
             "Building Damage"
           ],
           "category2": [
@@ -445,26 +447,26 @@
             "Riverine Flood",
             "Earthquake",
             "Bushfire",
-            "Other",
             "Tree Down",
-            "Rescue Road Trap Fire",
+            "Road Accident",
             "Building Fire",
+            "Other",
+            "Rescue Road Trap Fire",
             "Gale Wind",
             "Strong Wind",
             "Burn Area",
-            "Road Accident",
             "Building Damage"
           ],
           "status": [
             "Minor",
             "Moderate",
             "Under Control",
-            "Safe",
             "Request For Assistance",
-            "On Scene",
             "Responding",
+            "On Scene",
             "Warning",
-            "Unknown"
+            "Unknown",
+            "Safe"
           ],
           "name": [
             "Advice",
@@ -543,7 +545,7 @@
         "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 28647,
+        "bytes": 27785,
         "shape": "object",
         "fields": {
           "_category": [
@@ -580,7 +582,7 @@
         "url": "http://www.bom.gov.au/fwo/IDZ00054.warnings_land_nsw.xml",
         "status": 403,
         "title": "",
-        "bytes": 1386
+        "bytes": 1387
       }
     ]
   }

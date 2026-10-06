@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-06T00:34:59.116Z",
+  "at": "2026-10-06T00:43:27.047Z",
   "feeds": {
     "qld": {
       "url": "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json",
@@ -13,19 +13,50 @@
             "type",
             "geometry",
             "properties"
-          ]
+          ],
+          "firstRecord": {
+            "type": "Feature",
+            "geometry": "object{type, coordinates}",
+            "properties": "object{OBJECTID, UniqueID, WarningTitle, WarningLevel, CallToAction, WarningText, Header, Impacts, LeaveSafely, FurtherInformation, WarningLevelSort, ShouldDo, WarningArea, Latitude, Longitude, GroupedType, ItemDateTimeUTM, ItemDateTimeLocal_ISO, PublishDateLocal_ISO, ItemExpiryDateTimeLocal_ISO, MultipleWarnings, MessageSent, SendEmailSubscription, WarningType_Level, EventType}"
+          },
+          "firstProperties": {
+            "OBJECTID": 3802,
+            "UniqueID": "WARN-979",
+            "WarningTitle": "STAY INFORMED - Murphys Creek and Fifteen Mile - fire as at 1:43pm Monday, 5 October 2026",
+            "WarningLevel": "Advice",
+            "CallToAction": "Stay Informed",
+            "WarningText": "*** There is more than one warning for this area. To see all current warnings, visit the Qld Fire website ***\r\n\r\nA fire is burning between White Mountain Road, …[1911]",
+            "Header": "*** There is more than one warning for this area. To see all current warnings, visit the Qld Fire website ***\r\n\r\nA fire is burning between White Mountain Road, …[282]",
+            "Impacts": "- No properties are at risk now, but this could change.\r\n\r\n- Some roads may be closed or impacted by smoke. It could be hard to see. You may need to drive a dif…[350]",
+            "LeaveSafely": null,
+            "FurtherInformation": "- For all fire warnings, visit the Qld Fire website.\r\n\r\n- Follow Queensland Fire Department on Facebook.\r\n\r\n- For road closures, visit the QLD Traffic website o…[776]",
+            "WarningLevelSort": 5,
+            "ShouldDo": "- Check for warning updates often and listen to your local radio station.\r\n\r\n- Decide what you will do if the bushfire gets closer.\r\n\r\n- If the smoke is thick w…[435]",
+            "WarningArea": "Between White Mountain Road, Penderests Road and Strohfeldt Road",
+            "Latitude": -27.428673749427603,
+            "Longitude": 152.07133087450717,
+            "GroupedType": "FIRE VEGETATION",
+            "ItemDateTimeUTM": "20261005034338.500000",
+            "ItemDateTimeLocal_ISO": "2026-10-05T13:43:38+10:00",
+            "PublishDateLocal_ISO": "2026-10-06T10:33:02+10:00",
+            "ItemExpiryDateTimeLocal_ISO": "2026-10-06T13:43:38.5+10:00",
+            "MultipleWarnings": null,
+            "MessageSent": null,
+            "SendEmailSubscription": null,
+            "WarningType_Level": "Advice Fire",
+            "EventType": "Fire"
+          }
         }
-      ],
-      "firstRecord": {}
+      ]
     },
     "wa": {
       "url": "https://api.emergency.wa.gov.au/v1/warnings",
-      "bytes": 42573,
+      "bytes": 45302,
       "topShape": "object{warnings}",
       "recordArrays": [
         {
           "path": "$.warnings",
-          "length": 14,
+          "length": 15,
           "keys": [
             "geo-source",
             "suburbs",
@@ -53,7 +84,36 @@
             "warning-type",
             "title",
             "issued-date-time"
-          ]
+          ],
+          "firstRecord": {
+            "geo-source": "object{features, type}",
+            "suburbs": "array(1) of string(17)",
+            "entityType": "warnings",
+            "entitySubType": "warnings_bushfire--advice",
+            "lga": "array(1) of string(15)",
+            "sorting-priority": 30,
+            "cap-urgency": "Future - act in near future",
+            "publishing-status": "Published",
+            "cap-event-type": "array(1) of string(8)",
+            "alert-line": "<p>A Bushfire Advice is in place for people in the vicinity of Djarindjin and Lombadina communities and Lombadina Campground, west of Broome-Cape Leveque Road i…[206]",
+            "cap-certainty": "Observed - occurred or ongoing",
+            "published-date-time": "2026-10-06T08:41:29.241+08:00",
+            "what-to-do-note": "<ul><li><p>Stay alert and monitor your surroundings.</p></li><li><p>Read through your plan and decide what you will do if the situation gets worse. If you do no…[1198]",
+            "cap-severity": "Minor - minimal threat",
+            "name": "Bushfire Advice",
+            "location": "object{latitude, value, longitude}",
+            "id": "6ac38dc119b59070821e77b8",
+            "event": "6ac37f63f0e6361b3f553e5a",
+            "action-statement--type": "Escalating",
+            "headline": "DAMPIER PENINSULA",
+            "action-statement": "Monitor conditions",
+            "cap-category": "Fire",
+            "updatedAt": "2026-10-06T00:41:29.908Z",
+            "warning-type": "Bushfire Advice",
+            "title": "MONITOR CONDITIONS - DAMPIER PENINSULA",
+            "issued-date-time": "2026-10-06T08:41:29.241+08:00"
+          },
+          "firstProperties": null
         },
         {
           "path": "$.warnings[0].geo-source.features",
@@ -63,24 +123,65 @@
             "id",
             "type",
             "properties"
-          ]
+          ],
+          "firstRecord": {
+            "geometry": "object{coordinates, type}",
+            "id": "1dabb0345ddc87d9c8546565ed2d17d1",
+            "type": "Feature",
+            "properties": "object{icon-name, stroke-width, fill, fill-opacity, stroke, priority}"
+          },
+          "firstProperties": {
+            "icon-name": "ew-bushfire--advice",
+            "stroke-width": 2,
+            "fill": "#FBE032",
+            "fill-opacity": 0.25,
+            "stroke": "#FBE032",
+            "priority": 15
+          }
         }
-      ],
-      "firstRecord": {}
+      ]
     },
     "vic": {
       "url": "https://emergency.vic.gov.au/public/events-geojson.json",
-      "bytes": 71462,
+      "bytes": 73573,
       "topShape": "object{type, features, properties}",
       "recordArrays": [
         {
           "path": "$.features",
-          "length": 22,
+          "length": 26,
           "keys": [
             "type",
             "geometry",
             "properties"
-          ]
+          ],
+          "firstRecord": {
+            "type": "Feature",
+            "geometry": "object{type, geometries}",
+            "properties": "object{feedType, cap, sourceOrg, sourceId, sourceFeed, sourceTitle, id, category1, category2, status, name, action, statewide, location, created, updated, webHeadline, webBody, text, sizeFmt, incidentFeatures}"
+          },
+          "firstProperties": {
+            "feedType": "warning",
+            "cap": "object{category, event, eventCode, urgency, severity, certainty, contact, senderName, responseType}",
+            "sourceOrg": "EMV",
+            "sourceId": "43461",
+            "sourceFeed": "cop-cap",
+            "sourceTitle": "Advice",
+            "id": "43461",
+            "category1": "Advice",
+            "category2": "Met",
+            "status": "Minor",
+            "name": "Advice",
+            "action": "Stay Informed",
+            "statewide": "N",
+            "location": "Barwon River downstream of Inverleigh",
+            "created": "2026-10-05T13:44:34+11:00",
+            "updated": "2026-10-05T13:44:34+11:00",
+            "webHeadline": null,
+            "webBody": "<div style=\"margin-bottom:20px\">This&nbsp;<b>Minor Flood Warning </b>is being issued<b>&nbsp;</b>for <span class=\"editable editable-click editable-unsaved\" data…[3275]",
+            "text": "ADVICE - RIVERINE FLOOD - Stay Informed\nIncident Location: Barwon River downstream of Inverleigh\nIssue Date: Monday 05 October 2026, 01:44 pm\nNext Update: Tuesd…[760]",
+            "sizeFmt": null,
+            "incidentFeatures": "array(1) of object{properties}"
+          }
         },
         {
           "path": "$.features[0].geometry.geometries",
@@ -88,14 +189,38 @@
           "keys": [
             "type",
             "coordinates"
-          ]
+          ],
+          "firstRecord": {
+            "type": "Point",
+            "coordinates": "array(2) of number"
+          },
+          "firstProperties": null
         },
         {
           "path": "$.features[0].properties.incidentFeatures",
           "length": 1,
           "keys": [
             "properties"
-          ]
+          ],
+          "firstRecord": {
+            "properties": "object{feedType, sourceOrg, sourceId, sourceFeed, sourceTitle, id, category1, category2, name, location, created, updated, webHeadline, sizeFmt}"
+          },
+          "firstProperties": {
+            "feedType": "incident",
+            "sourceOrg": "EMV",
+            "sourceId": "43461",
+            "sourceFeed": "cop-cap",
+            "sourceTitle": "Advice",
+            "id": "43461",
+            "category1": "Met",
+            "category2": "Riverine Flood",
+            "name": "Advice",
+            "location": "Barwon River downstream of Inverleigh",
+            "created": "2026-10-05T13:44:34+11:00",
+            "updated": "2026-10-05T13:44:34+11:00",
+            "webHeadline": null,
+            "sizeFmt": null
+          }
         },
         {
           "path": "$.properties.conditions.forecasts",
@@ -106,27 +231,55 @@
             "date",
             "heat",
             "asthma"
-          ]
+          ],
+          "firstRecord": {
+            "fdr": "object{East Gippsland, West and South Gippsland, North East, Central, North Central, Northern Country, South West, Wimmera, Mallee}",
+            "tfb": "object{East Gippsland, West and South Gippsland, North East, Central, North Central, Northern Country, South West, Wimmera, Mallee}",
+            "date": "2026-10-05T13:00:00.000Z",
+            "heat": "object{Mallee, Wimmera, Northern Country, North East, East Gippsland, West and South Gippsland, Central, North Central, South West}",
+            "asthma": "object{Mallee, Wimmera, Northern Country, North East, East Gippsland, West and South Gippsland, Central, North Central, South West}"
+          },
+          "firstProperties": null
         }
-      ],
-      "firstRecord": {}
+      ]
     },
     "nt": {
       "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
-      "bytes": 28647,
+      "bytes": 27785,
       "topShape": "object{title, note, lastupdated, incidents}",
       "recordArrays": [
         {
           "path": "$.incidents.features",
-          "length": 26,
+          "length": 25,
           "keys": [
             "type",
             "geometry",
             "properties"
-          ]
+          ],
+          "firstRecord": {
+            "type": "Feature",
+            "geometry": "object{type, coordinates}",
+            "properties": "object{_category, _status, _eventtype, _location, _dateclosed, _datenotified, _lastupdate, Fire Type, Location, Status, Alert Level, Responsible Agency, Last Update, Notified, Closed}"
+          },
+          "firstProperties": {
+            "_category": "fire",
+            "_status": "closed",
+            "_eventtype": "Grass and Scrub Fire",
+            "_location": "PLENTY HWY, BURT PLAIN",
+            "_dateclosed": "2026-10-06T09:14:05+09:30",
+            "_datenotified": "2026-10-04T14:02:43+09:30",
+            "_lastupdate": "2026-10-06T09:14:05+09:30",
+            "Fire Type": "Grass and Scrub Fire",
+            "Location": "PLENTY HWY, BURT PLAIN",
+            "Status": "Closed",
+            "Alert Level": "Advice",
+            "Responsible Agency": "NTFRS",
+            "Last Update": "06/10/2026 09:14",
+            "Notified": "04/10/2026 14:02",
+            "Closed": "06/10/2026 09:14"
+          }
         }
-      ],
-      "firstRecord": {}
+      ]
     }
   }
 }
