@@ -269,7 +269,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-06-townlookup';
+const WORKER_BUILD = '2026-10-06-sahonest';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -3094,9 +3094,23 @@ async function refreshStateOutages(state) {
     }
 
     if (!entry.ok && drifted) {
-      /* Answered, shape unrecognised. That is a parser fix, not an outage, so
-         it is reported as reachable-but-undreadable rather than as down. */
-      entry.ok = true;
+      /* Answered, shape unrecognised. Worth saying apart from "down",
+         because it is a parser fix rather than an outage -- but NOT worth
+         calling a report, which is what this used to do by setting ok.
+      
+         Marking it ok put the operator into `reporting`, and `reporting`
+         drives both the state's ok flag and `complete`. So South Australia
+         answered ok:true, complete:true, count:0 -- "every operator
+         reported and there are no outages in South Australia" -- when in
+         fact all four of its sources had failed: two with an Incapsula 403
+         and two with an unreadable page. On a dashboard used to decide where
+         to send people during a storm, a confident zero is the worst
+         available way to be wrong, and it is worse than an error because
+         nobody investigates a quiet state.
+      
+         So the distinction is kept in its own flag and the operator is not
+         counted as having reported. */
+      entry.unreadable = true;
       entry.sourceUrl = drifted.source.url;
       entry.diagnostics = drifted.parsed.diagnostics;
     }
@@ -3107,7 +3121,13 @@ async function refreshStateOutages(state) {
          amount of URL-fixing will help. */
       const own = attempts.filter((a) => !a.via);
       const challenged = own.length && own.every((a) => looksLikeBotChallenge(a.error));
-      if (challenged) {
+      if (entry.unreadable && !challenged) {
+        /* Said plainly, because the three cases need different responses:
+           blocked is a conversation with the operator, unreadable is a
+           parser fix here, and down is a wait. */
+        entry.error = 'Their outage page answered but could not be read — the page layout has '
+          + 'probably changed. Their own map is linked and still works in a browser.';
+      } else if (challenged) {
         entry.blocked = true;
         entry.error = 'This operator blocks automated access to its outage page (bot challenge)'
           + (attempts.length > own.length ? ', and the third-party fallback did not answer either' : '')
@@ -3209,7 +3229,12 @@ async function refreshStateOutages(state) {
       name: n.name, area: n.area, site: n.site, ok: n.ok, count: n.count,
       customers: (n.outages || []).reduce((s, o) => s + (o.customers || 0), 0),
       confirmed: n.confirmed,
-      error: n.error, unconfirmed: n.unconfirmed, blocked: n.blocked,
+      /* `unreadable` must be listed here. This payload is built from an
+         explicit field list, so a flag set on the entry and not named here
+         is silently dropped -- which has now happened three times in this
+         file, to viaDiagnostic, to endpoints, and to this. The flag existed,
+         drove the error message, and was invisible to every caller. */
+      error: n.error, unconfirmed: n.unconfirmed, blocked: n.blocked, unreadable: n.unreadable,
       via: n.via, viaUrl: n.viaUrl, mergedInto: n.mergedInto,
       sourceUrl: n.sourceUrl, columns: n.columns,
       diagnostics: n.diagnostics, attempts: n.attempts

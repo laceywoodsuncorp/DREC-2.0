@@ -271,7 +271,17 @@ console.log('\n== reachable but unreadable is a parser fix, not an outage ==');
   upstream['WP_Outage_Prod'] = json([{ zzz: 1, qqq: 2 }, { zzz: 3, qqq: 4 }]);
   const b = await (await call('/api/outages/wa')).json();
   const net = b.networks.find(n => n.name === 'Western Power');
-  check('the operator counts as reachable', net.ok === true, net);
+  /* Not counted as reporting. This asserted net.ok === true, and that was
+     the bug: ok put the operator into `reporting`, which drives both the
+     state's ok flag and `complete` -- so South Australia answered ok:true,
+     complete:true, count:0 while all four of its sources had failed. A
+     confident zero is the worst way for this dashboard to be wrong, because
+     nobody investigates a quiet state. */
+  check('an unreadable operator is not counted as reporting', net.ok === false, net);
+  check('but it is marked unreadable rather than simply down', net.unreadable === true, net);
+  check('and it is not confused with being blocked', !net.blocked, net);
+  check('the message says the layout changed, not that there are no outages',
+    /could not be read/.test(net.error || ''), net.error);
   check('and says what it actually sent', net.diagnostics && net.diagnostics.recordsSeen === 2, net.diagnostics);
   check('naming the keys it did have',
     net.diagnostics && net.diagnostics.sampleKeys.includes('zzz'), net.diagnostics);
@@ -517,7 +527,21 @@ console.log('\n== a datacentre the cron never ran in fills itself ==');
     store.delete(MARKER);
     last = await (await callWarm('/api/outages')).json();
   }
-  check('and over a few page loads the location is complete', okStates(last) === 8,
+  /* Measured as "every state has been looked at", not "every state is ok".
+     This asserted okStates === 8 and passed only because a state that could
+     not be read was counted as reporting -- the same bug as above, and the
+     reason it went unnoticed: in this harness two states are deliberately
+     unreadable, so demanding eight reporting states was demanding that two
+     failures look like successes.
+  
+     A network never reached on this pass still carries 'Not checked on this
+     pass', so the absence of that is what completeness actually means. */
+  const unchecked = last.states.flatMap(s => (s.networks || [])
+    .filter(n => /Not checked on this pass/.test(n.error || ''))
+    .map(n => s.state + '/' + n.name));
+  check('and over a few page loads every state has been looked at',
+    unchecked.length === 0, unchecked);
+  check('and at least most of them are reporting', okStates(last) >= 6,
     last.states.filter(s => !s.ok).map(s => s.state));
   check('once something is reporting, the aggregate is cached', store.has(AGG));
 }

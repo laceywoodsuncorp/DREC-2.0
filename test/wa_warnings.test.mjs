@@ -55,7 +55,15 @@ if (!live) {
   const w = one(rec);
   ck('a warning is parsed', !!w);
   ck('the level comes out of the slug', w && w.alertLevel === 'Advice', w && w.alertLevel);
-  ck('the title is the agency headline', w && /DAMPIER PENINSULA/.test(w.title), w && w.title);
+  /* Asserted by shape, not by content. This named the place in the record
+     the probe happened to capture ("DAMPIER PENINSULA") and broke the moment
+     WA's warnings moved on -- the parser was right and the test was wrong,
+     which is the least useful way for a test to fail. What matters is that
+     the title is the headline and not a restatement of the level. */
+  ck('the title is a headline, not the warning type',
+    w && w.title.length > 8 && w.title !== w.alertLevel && w.title !== rec['warning-type'],
+    w && w.title);
+  ck('and it is the feed\'s own title field', w && w.title === rec.title, w && w.title);
   ck('the type is the hazard category', w && w.type === 'Fire', w && w.type);
   ck('the action statement is kept as status', w && /Monitor/i.test(w.status), w && w.status);
   ck('the timestamp parses to ISO', w && /^20\d\d-/.test(w.whenIso || ''), w && w.whenIso);
