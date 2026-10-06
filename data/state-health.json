@@ -1,0 +1,286 @@
+{
+  "base": "https://drec-oncall-updates-site.lacey-wood.workers.dev",
+  "at": "2026-10-06T00:24:42.676Z",
+  "incidents": {
+    "nsw": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 21,
+      "withAlertLevel": 21,
+      "alertLevels": [
+        "Advice",
+        "Planned Burn",
+        "Not Applicable"
+      ],
+      "statuses": [
+        "Under control",
+        "Being controlled"
+      ],
+      "types": [
+        "Grass Fire",
+        "Bush Fire",
+        "Hazard Reduction",
+        "Structure Fire",
+        "Burn off",
+        "Assist Other Agency"
+      ],
+      "attempts": []
+    },
+    "vic": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 22,
+      "withAlertLevel": 22,
+      "alertLevels": [
+        "Watch and Act",
+        "Advice",
+        "Earthquake",
+        "Fire",
+        "Tree Down",
+        "Accident / Rescue",
+        "Rescue",
+        "Met",
+        "Other",
+        "Building Damage"
+      ],
+      "statuses": [
+        "Moderate",
+        "Minor",
+        "Under Control",
+        "Complete",
+        "Responding",
+        "Request For Assistance",
+        "Safe",
+        "On Scene",
+        "Warning"
+      ],
+      "types": [
+        "Met",
+        "Earthquake",
+        "Bushfire",
+        "Tree Down",
+        "Road Accident",
+        "Building Fire",
+        "Other",
+        "Rescue Road Trap Fire"
+      ],
+      "attempts": []
+    },
+    "qld": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 52,
+      "withAlertLevel": 0,
+      "alertLevels": [],
+      "statuses": [
+        "Patrolled",
+        "Going",
+        "Contained"
+      ],
+      "types": [
+        "FIRE VEGETATION",
+        "FIRE PERMITTED BURN",
+        "FIRE OTHER",
+        "FIRE STRUCTURE",
+        "POWER / GAS ELECTRICAL / POWER",
+        "RESCUE ROAD CRASH"
+      ],
+      "attempts": []
+    },
+    "wa": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 15,
+      "withAlertLevel": 0,
+      "alertLevels": [],
+      "statuses": [],
+      "types": [
+        "Incident"
+      ],
+      "partial": "warnings only",
+      "attempts": [
+        {
+          "url": "https://www.emergency.wa.gov.au/data/incident_FCAD.json",
+          "error": "Expected JSON, got HTML — EmergencyWA Warnings & Incidents"
+        }
+      ]
+    },
+    "sa": {
+      "httpStatus": 502,
+      "ok": false,
+      "error": "Expected JSON, got HTML — SA ESS - File Unavailable File currently unavailable, please try again",
+      "count": 0,
+      "withAlertLevel": 0,
+      "alertLevels": [],
+      "statuses": [],
+      "types": [],
+      "attempts": [
+        {
+          "url": "https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json",
+          "error": "Expected JSON, got HTML — SA ESS - File Unavailable File currently unavailable, please try again"
+        }
+      ]
+    },
+    "tas": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 1,
+      "withAlertLevel": 1,
+      "alertLevels": [
+        "Informational<br>"
+      ],
+      "statuses": [
+        "Going <br>"
+      ],
+      "types": [
+        "Smoke Alert<br>"
+      ],
+      "attempts": []
+    },
+    "nt": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 0,
+      "withAlertLevel": 0,
+      "alertLevels": [],
+      "statuses": [],
+      "types": [],
+      "attempts": [
+        {
+          "url": "https://securent.nt.gov.au/respond/bushfire-alerts",
+          "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+        },
+        {
+          "url": "https://securent.nt.gov.au/alerts-warnings",
+          "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+        },
+        {
+          "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
+          "error": "Responded, but no recognisable incident fields"
+        }
+      ]
+    },
+    "act": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 14,
+      "withAlertLevel": 0,
+      "alertLevels": [],
+      "statuses": [
+        "Resource Allocation Pending",
+        "On Scene",
+        "Units On Route"
+      ],
+      "types": [
+        "AMBULANCE RESPONSE"
+      ],
+      "attempts": []
+    }
+  },
+  "outages": {
+    "nsw": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 210,
+      "customers": 10501,
+      "complete": true,
+      "rows": 210,
+      "networks": [
+        "Endeavour Energy",
+        "Ausgrid"
+      ],
+      "withTowns": 203,
+      "sources": []
+    },
+    "vic": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 22,
+      "customers": 1300,
+      "complete": true,
+      "rows": 22,
+      "networks": [
+        "United Energy",
+        "AusNet Services",
+        "Powercor"
+      ],
+      "withTowns": 0,
+      "sources": []
+    },
+    "qld": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 370,
+      "customers": 15561,
+      "complete": true,
+      "rows": 370,
+      "networks": [
+        "Energex",
+        "Ergon Energy"
+      ],
+      "withTowns": 370,
+      "sources": []
+    },
+    "wa": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 235,
+      "customers": 23640,
+      "complete": false,
+      "rows": 235,
+      "networks": [
+        "Western Power"
+      ],
+      "withTowns": 235,
+      "sources": []
+    },
+    "sa": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 0,
+      "customers": 0,
+      "complete": true,
+      "rows": 0,
+      "networks": [],
+      "withTowns": 0,
+      "sources": []
+    },
+    "tas": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 9,
+      "customers": 565,
+      "complete": true,
+      "rows": 9,
+      "networks": [
+        "TasNetworks"
+      ],
+      "withTowns": 0,
+      "sources": []
+    },
+    "nt": {
+      "httpStatus": 200,
+      "ok": false,
+      "count": 0,
+      "customers": 0,
+      "complete": false,
+      "rows": 0,
+      "networks": [],
+      "withTowns": 0,
+      "sources": []
+    },
+    "act": {
+      "httpStatus": 200,
+      "ok": true,
+      "count": 2,
+      "customers": 88,
+      "complete": true,
+      "rows": 2,
+      "networks": [
+        "Evoenergy"
+      ],
+      "withTowns": 2,
+      "sources": []
+    }
+  }
+}
