@@ -41,6 +41,17 @@ for (const s of STATES) {
   const withAlert = inc.filter((i) => String(i.alertLevel || '').trim() !== '');
   report.incidents[s] = {
     httpStatus: r.status, ok: b.ok, error: b.error || r.error,
+    /* Without these three, a state showing old values is unreadable: a fix
+       that did not deploy and a fix that deployed but whose cached payload
+       has not been rebuilt yet look identical. Incidents are refreshed on a
+       sharded cron, so a state can legitimately be minutes behind the code.
+       build says which Worker answered, cacheAgeSeconds says how old the
+       payload is, and sourceUrl/mergedFrom say which feeds actually went
+       into it. */
+    build: b.build,
+    cacheAgeSeconds: b.cacheAgeSeconds,
+    sourceUrl: b.sourceUrl,
+    mergedFrom: b.mergedFrom,
     count: inc.length,
     withAlertLevel: withAlert.length,
     alertLevels: uniq(inc.map((i) => String(i.alertLevel || '').trim())).slice(0, 12),
@@ -58,6 +69,8 @@ for (const s of STATES) {
   const out = b.outages || [];
   report.outages[s] = {
     httpStatus: r.status, ok: b.ok, error: b.error || r.error,
+    build: b.build,
+    cacheAgeSeconds: b.cacheAgeSeconds,
     count: b.count, customers: b.customers, complete: b.complete,
     rows: out.length,
     networks: uniq(out.map((o) => o.network)),
@@ -74,12 +87,18 @@ if (asJson) { console.log(JSON.stringify(report, null, 2)); process.exit(0); }
 
 const pad = (s, n) => String(s === undefined || s === null ? '' : s).padEnd(n);
 console.log('INCIDENTS -- alert level is the thing NSW has and the question is who else does');
-console.log(pad('state', 7) + pad('count', 7) + pad('w/alert', 9) + 'alert levels seen');
-console.log('-'.repeat(78));
+console.log(pad('state', 6) + pad('count', 7) + pad('w/alert', 9) + pad('build', 24)
+  + pad('age', 7) + 'alert levels seen');
+console.log('-'.repeat(110));
 for (const s of STATES) {
   const d = report.incidents[s];
-  console.log(pad(s, 7) + pad(d.count, 7) + pad(d.withAlertLevel, 9)
+  console.log(pad(s, 6) + pad(d.count, 7) + pad(d.withAlertLevel, 9)
+    + pad(d.build || '?', 24)
+    + pad(d.cacheAgeSeconds === undefined ? '?' : Math.round(d.cacheAgeSeconds) + 's', 7)
     + (d.alertLevels.length ? d.alertLevels.join(' | ') : '(none)'));
+  if (d.mergedFrom) console.log('      merged from: ' + d.mergedFrom.join(', '));
+  (d.attempts || []).filter((a) => a.error).forEach((a) =>
+    console.log('      attempt failed: ' + String(a.error).slice(0, 80) + '  <- ' + String(a.url).slice(0, 60)));
   if (d.error) console.log('       error: ' + d.error);
   if (!d.alertLevels.length && d.statuses.length) {
     console.log('       status only: ' + d.statuses.join(' | '));
