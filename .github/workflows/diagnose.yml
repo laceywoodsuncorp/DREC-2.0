@@ -1,0 +1,66 @@
+# Asks the live service and the agencies what they actually return.
+#
+# Read-only, no credential, deploys nothing. Exists because the sandbox this
+# project is developed in cannot reach workers.dev or most agency hosts -- the
+# egress proxy answers 403 -- so every question about live behaviour was being
+# answered by reading the source, which only says what the code would do with
+# a well-formed response. This says what is really being sent.
+name: Diagnose
+
+on:
+  workflow_dispatch:
+    inputs:
+      nt_probe:
+        description: 'Also search the catalogues for an NT outage feed'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Which states carry an agency alert level, and which only carry a
+      # status. That is the whole difference between NSW's display and the
+      # others, and it is a property of the feeds, not of the page.
+      - name: Live incidents and outages, per state
+        run: node scripts/diagnose-states.mjs
+
+      - name: Same thing as JSON, kept with the run
+        run: |
+          mkdir -p data
+          node scripts/diagnose-states.mjs --json > data/state-health.json || true
+
+      - name: Search the catalogues for an NT outage feed
+        if: ${{ inputs.nt_probe }}
+        run: node scripts/probe-nt-power.mjs
+
+      # Committed because a probe whose findings are not written down gets run
+      # again from scratch next time the question comes up -- which has
+      # happened on this project more than once.
+      - name: Keep the findings
+        if: always()
+        run: |
+          set -e
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/state-health.json data/nt-power-probe.json 2>/dev/null || true
+          # --quiet does not notice a new file, which has silently discarded
+          # probe results here before.
+          if [ -n "$(git status --porcelain data/state-health.json data/nt-power-probe.json)" ]; then
+            git commit -m 'Record live state health and the NT outage probe'
+            for i in 1 2 3 4; do
+              git push origin HEAD:${{ github.ref_name }} && break || sleep $((2 ** i))
+            done
+          else
+            echo 'nothing changed'
+          fi
