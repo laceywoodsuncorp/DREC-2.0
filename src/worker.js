@@ -252,7 +252,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-06-wawarnings';
+const WORKER_BUILD = '2026-10-06-buildstamp';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -2014,8 +2014,16 @@ async function refreshStateIncidents(state) {
 
     const merged = await addMergeSources(mergeSources, result.parsed.incidents, attempts);
     const payload = {
+      /* Which Worker produced this payload. Added because verifying four
+         parser fixes against production was impossible without it: a fix that
+         had not deployed and a fix that had deployed but whose cached payload
+         had not been rebuilt yet were indistinguishable, and the state feeds
+         are refreshed on a cron rather than per request. The news payload has
+         carried a build stamp for this reason since the page started warning
+         about mismatches; the state payloads should too. */
       state: state.toUpperCase(),
       name: feed.name,
+      build: WORKER_BUILD,
       agency: feed.agency,
       ok: true,
       count: merged.incidents.length,
@@ -2041,6 +2049,7 @@ async function refreshStateIncidents(state) {
       const payload = {
         state: state.toUpperCase(),
         name: feed.name,
+        build: WORKER_BUILD,
         agency: feed.agency,
         ok: true,
         count: rescued.incidents.length,
@@ -2063,6 +2072,7 @@ async function refreshStateIncidents(state) {
     const payload = {
       state: state.toUpperCase(),
       name: feed.name,
+      build: WORKER_BUILD,
       agency: feed.agency,
       ok: true,
       count: 0,
@@ -2109,6 +2119,7 @@ async function rebuildIncidentsAggregate() {
     return {
       state: state.toUpperCase(),
       name: feed.name,
+      build: WORKER_BUILD,
       agency: feed.agency,
       ok: false,
       count: 0,
@@ -2161,6 +2172,7 @@ async function handleIncidentsState(state) {
   return new Response(JSON.stringify({
     state: state.toUpperCase(),
     name: feed.name,
+    build: WORKER_BUILD,
     agency: feed.agency,
     ok: false,
     count: 0,
