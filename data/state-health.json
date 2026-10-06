@@ -1,10 +1,11 @@
 {
   "base": "https://drec-oncall-updates-site.lacey-wood.workers.dev",
-  "at": "2026-10-06T00:56:23.702Z",
+  "at": "2026-10-06T01:00:35.331Z",
   "incidents": {
     "nsw": {
       "httpStatus": 200,
       "ok": true,
+      "sourceUrl": "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json",
       "count": 22,
       "withAlertLevel": 22,
       "alertLevels": [
@@ -30,6 +31,7 @@
     "vic": {
       "httpStatus": 200,
       "ok": true,
+      "sourceUrl": "https://emergency.vic.gov.au/public/events-geojson.json",
       "count": 26,
       "withAlertLevel": 26,
       "alertLevels": [
@@ -69,6 +71,7 @@
     "qld": {
       "httpStatus": 200,
       "ok": true,
+      "sourceUrl": "https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services/ESCAD_Current_Incidents_Public/FeatureServer/0/query?f=geojson&where=1%3D1&outFields=*",
       "count": 52,
       "withAlertLevel": 0,
       "alertLevels": [],
@@ -89,6 +92,7 @@
     "wa": {
       "httpStatus": 200,
       "ok": true,
+      "sourceUrl": "https://api.emergency.wa.gov.au/v1/rss/warnings",
       "count": 16,
       "withAlertLevel": 0,
       "alertLevels": [],
@@ -123,6 +127,7 @@
     "tas": {
       "httpStatus": 200,
       "ok": true,
+      "sourceUrl": "https://alert.tas.gov.au/data/incidents-and-alerts.xml",
       "count": 1,
       "withAlertLevel": 1,
       "alertLevels": [
@@ -139,6 +144,7 @@
     "nt": {
       "httpStatus": 200,
       "ok": true,
+      "sourceUrl": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
       "count": 0,
       "withAlertLevel": 0,
       "alertLevels": [],
@@ -162,6 +168,7 @@
     "act": {
       "httpStatus": 200,
       "ok": true,
+      "sourceUrl": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
       "count": 14,
       "withAlertLevel": 0,
       "alertLevels": [],
@@ -180,20 +187,22 @@
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "count": 212,
-      "customers": 10584,
+      "cacheAgeSeconds": 51,
+      "count": 208,
+      "customers": 10555,
       "complete": true,
-      "rows": 212,
+      "rows": 208,
       "networks": [
         "Endeavour Energy",
         "Ausgrid"
       ],
-      "withTowns": 205,
+      "withTowns": 201,
       "sources": []
     },
     "vic": {
       "httpStatus": 200,
       "ok": true,
+      "cacheAgeSeconds": 47,
       "count": 22,
       "customers": 1300,
       "complete": true,
@@ -209,6 +218,7 @@
     "qld": {
       "httpStatus": 200,
       "ok": true,
+      "cacheAgeSeconds": 1091,
       "count": 368,
       "customers": 15004,
       "complete": true,
@@ -223,6 +233,7 @@
     "wa": {
       "httpStatus": 200,
       "ok": true,
+      "cacheAgeSeconds": 1090,
       "count": 235,
       "customers": 23999,
       "complete": false,
@@ -236,6 +247,7 @@
     "sa": {
       "httpStatus": 200,
       "ok": true,
+      "cacheAgeSeconds": 1090,
       "count": 0,
       "customers": 0,
       "complete": true,
@@ -247,6 +259,7 @@
     "tas": {
       "httpStatus": 200,
       "ok": true,
+      "cacheAgeSeconds": 1089,
       "count": 9,
       "customers": 565,
       "complete": true,
@@ -260,6 +273,7 @@
     "nt": {
       "httpStatus": 200,
       "ok": false,
+      "cacheAgeSeconds": 1089,
       "count": 0,
       "customers": 0,
       "complete": false,
@@ -271,6 +285,7 @@
     "act": {
       "httpStatus": 200,
       "ok": true,
+      "cacheAgeSeconds": 1087,
       "count": 2,
       "customers": 88,
       "complete": true,
