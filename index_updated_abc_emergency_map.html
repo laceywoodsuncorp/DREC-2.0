@@ -648,21 +648,45 @@
      AU-relevance gate applied to everyone else's world/uncategorised
      stories, so genuine global news still has a reliable home here. */
   const WORLD_DOMAIN='aljazeera.com';
+  /* A trailing * marks a STEM, matched from a word boundary onwards
+     ("insur*" finds insurance, insurer, insured). Everything else is matched
+     as a whole word, and multi-word phrases stay plain substring tests.
+
+     The marker exists because every single keyword used to be a stem, which
+     was wrong far more often than it was right. Measured against thirteen
+     realistic headlines, twelve were mis-tagged:
+
+       war     matched "warning", "warrant", "Warburton" -- so every
+               bushfire and severe-weather warning was also World news
+       polic   matched "policy" and "policyholders" -- so every insurance
+               policy story was also Crime, on an insurance dashboard
+       hail    matched "hailed" -- "PM hailed the agreement" was a flood
+       court   matched "courtesy"
+       flu     matched "fluctuating"
+       strike  matched "striker", putting footballers in Politics
+
+     Those are now whole words. Stems that genuinely need to be stems are
+     marked, and the two that cannot be fixed by a boundary are spelled out
+     instead: "polic" is replaced by police/policing, which keeps the police
+     meaning and drops the policy collision, and "striker" is added to sport
+     so the footballer lands somewhere right rather than merely not wrong. */
   const CAT_KEYWORDS={
-    insurance:['insur','claim','afca','premium','policyholder','underwrit','icaustralia','insurance council'],
+    insurance:['insur*','claim*','afca','premium*','policyholder*','underwrit*','icaustralia','insurance council'],
     fire:['house fire','home fire','building fire','structure fire','fire kills','blaze kills','fireplace',
       'property fire','residential fire','unit fire','townhouse fire','duplex fire','granny flat fire',
       'garage fire','shed fire','caravan fire','fire destroys','fire guts','blaze destroys','blaze guts',
       'razed by fire','gutted by fire','fire rips through','fire tears through','house blaze','home blaze'],
-    flood:['flood','storm','cyclone','deluge','rainfall warning','severe weather','hail'],
-    bushfire:['bushfire','wildfire','grassfire','hazard reduction','fire ban','fire danger'],
-    politics:['politic','parliament','minister','senator',' mp ','election','federal government','prime minister','premier',
-      'strike','walkout','industrial action','protest','union','ferry','train delay','bus strike','commuter'],
-    economy:['econom','inflation','rba','interest rate','fuel price','cost of living','super fund','budget','market'],
-    crime:['polic','stabb','arrest','court','charged','shooting','crime','jail','sentenc'],
-    health:['health','hospital','virus','flu','disease','medicine','vaccine','bird flu','pbs'],
-    sport:['sport','cricket',' afl ','nrl','rugby','olympic','commonwealth games','tennis','swim','golf'],
-    world:['iran','ukraine','gaza','israel','china','white house','united nations','trump','war']
+    flood:['flood*','storm*','cyclone*','deluge','rainfall warning','severe weather','hail','hailstone*'],
+    bushfire:['bushfire*','wildfire*','grassfire*','hazard reduction','fire ban','fire danger'],
+    politics:['politic*','parliament*','minister','ministers','senator','senators','mp','mps','election*',
+      'federal government','prime minister','premier','premiers',
+      'strike','strikes','walkout','industrial action','protest*','union','unions','ferry','train delay',
+      'bus strike','commuter*'],
+    economy:['econom*','inflation','rba','interest rate*','fuel price*','cost of living','super fund','budget*','market*'],
+    crime:['police','policing','stabb*','arrest*','court','courts','charged','shooting*','crime*','criminal*','jail*','sentenc*'],
+    health:['health*','hospital*','virus*','flu','disease*','medicine*','vaccine*','bird flu','pbs'],
+    sport:['sport*','cricket','afl','nrl','rugby','olympic*','commonwealth games','tennis','swim*','golf','striker*','premiership'],
+    world:['iran','ukraine','gaza','israel','china','white house','united nations','trump','war','wars','warfare']
   };
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
     politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
@@ -808,14 +832,76 @@
      unambiguous enough to stay plain substring tests. */
   const kwMatchers={};
   function keywordHit(text,kw){
-    if(/\s/.test(kw))return text.includes(kw);
+    const stem=kw.charAt(kw.length-1)==='*';
+    const bare=stem?kw.slice(0,-1):kw;
+    /* The marker is stripped BEFORE choosing a path. A phrase is matched as a
+       substring, so "fuel price*" went down that path with the asterisk still
+       attached and matched nothing at all -- which is how the marker I had
+       just added broke "Fluctuating fuel prices squeeze drivers". A substring
+       already behaves like a stem at its end, so the marker is simply
+       redundant on a phrase rather than meaningful. */
+    if(/\s/.test(bare))return text.includes(bare);
     let re=kwMatchers[kw];
-    if(!re){re=new RegExp('\\b'+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');kwMatchers[kw]=re;}
+    if(!re){
+      const word=bare;
+      const esc=word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      /* A stem is anchored at the start only, so it still matches a longer
+         word. A whole word is anchored at both ends, which is what stops
+         "war" finding "warning" and "polic" finding "policy". */
+      re=new RegExp('\\b'+esc+(stem?'':'\\b'),'i');
+      kwMatchers[kw]=re;
+    }
     return re.test(text);
   }
-  function classify(title){
-    const t=title.toLowerCase();const cats=[];
-    Object.keys(CAT_KEYWORDS).forEach(k=>{if(CAT_KEYWORDS[k].some(kw=>keywordHit(t,kw)))cats.push(k);});
+  /* Some categories follow from WHO published a story, not from how it is
+     worded, and insuranceNEWS is the clearest case: it is a trade masthead
+     whose entire output is insurance, so its own headlines rarely bother to
+     say so. "NIBA finalising code after extensive feedback" and "APRA
+     flags capital review" are both insurance stories containing no
+     insurance keyword, and keyword matching alone tagged them General.
+
+     Matched on the publisher rather than the feed's declared group. Group
+     would be shorter -- insuranceNEWS is the only 'trade' feed today -- but
+     it would silently mis-tag the next trade title added under that group,
+     whatever its subject. The publisher is the fact we actually know. */
+  const SOURCE_CATS=[
+    { hosts:['insurancenews.com.au'], names:/^insurancenews$/i, cat:'insurance' }
+  ];
+  /* The domain arrives as a bare host from the RSS path and can carry a
+     scheme or a www. prefix from the GDELT fallback, so it is normalised
+     before comparison. Suffix-matched on a label boundary rather than by
+     substring: a plain `includes` would also match a host that merely ends
+     with our domain inside a longer one. */
+  function hostOf(v){
+    return String(v||'').toLowerCase().trim()
+      .replace(/^[a-z][a-z0-9+.-]*:\/\//,'')
+      .replace(/[\/?#].*$/,'')
+      .replace(/:\d+$/,'')
+      .replace(/^www\./,'');
+  }
+  function sourceCats(domain,source){
+    const host=hostOf(domain);
+    const name=String(source||'').trim();
+    const out=[];
+    SOURCE_CATS.forEach(rule=>{
+      const byHost=rule.hosts.some(d=>host===d||host.endsWith('.'+d));
+      const byName=rule.names ? rule.names.test(name) : false;
+      if((byHost||byName)&&out.indexOf(rule.cat)===-1)out.push(rule.cat);
+    });
+    return out;
+  }
+  function classify(title,domain,source){
+    const t=String(title||'').toLowerCase();
+    /* Source-derived categories lead deliberately. The card renders only the
+       first three tags, so appending this one would let a story that also
+       matched politics, economy and crime push Insurance off the card of the
+       insurance masthead. What we know from the publisher is the most certain
+       thing here, so it goes first. */
+    const cats=sourceCats(domain,source);
+    Object.keys(CAT_KEYWORDS).forEach(k=>{
+      if(cats.indexOf(k)!==-1)return;
+      if(CAT_KEYWORDS[k].some(kw=>keywordHit(t,kw)))cats.push(k);
+    });
     if(!cats.includes('fire')&&!cats.includes('bushfire')&&FIRE_REGEX.test(t))cats.push('fire');
     return cats;
   }
@@ -839,7 +925,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-06-staleread';
+  const EXPECTED_WORKER_BUILD='2026-10-06-tagging';
   let workerBuildSeen=null;
   const SAME_ORIGIN_ROUTES=['/api/gdelt','/.netlify/functions/gdelt'];
   async function fetchJsonWithTimeout(url,ms){
@@ -879,7 +965,7 @@
          headlines remain available as a fallback when nothing recent is. */
       if(a.pubMs>Date.now()+3600000)return;
       if(EXCLUDE_KEYWORDS.test(a.title))return; // recipes, celebrity gossip, horoscopes etc -- not news
-      const cats=classify(a.title);
+      const cats=classify(a.title,a.domain,a.source);
       if(a.world||(a.domain||'').includes(WORLD_DOMAIN)){
         /* The dedicated World source -- always keep and tag it World
            regardless of keyword matches, exempt from the AU-relevance gate
