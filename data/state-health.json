@@ -1,6 +1,6 @@
 {
   "base": "https://drec-oncall-updates-site.lacey-wood.workers.dev",
-  "at": "2026-10-06T00:46:00.720Z",
+  "at": "2026-10-06T00:56:23.702Z",
   "incidents": {
     "nsw": {
       "httpStatus": 200,
@@ -14,7 +14,8 @@
       ],
       "statuses": [
         "Under control",
-        "Being controlled"
+        "Being controlled",
+        "Responding"
       ],
       "types": [
         "Grass Fire",
@@ -29,40 +30,39 @@
     "vic": {
       "httpStatus": 200,
       "ok": true,
-      "count": 27,
-      "withAlertLevel": 27,
+      "count": 26,
+      "withAlertLevel": 26,
       "alertLevels": [
         "Advice",
         "Watch and Act",
         "Earthquake",
         "Fire",
-        "Other",
-        "Rescue",
-        "Hazardous Material",
+        "Tree Down",
         "Accident / Rescue",
+        "Other",
         "Met",
-        "Building Damage",
-        "Tree Down"
+        "Rescue",
+        "Building Damage"
       ],
       "statuses": [
         "Minor",
         "Moderate",
         "Under Control",
+        "Request For Assistance",
         "Responding",
-        "On Scene",
         "Warning",
         "Safe",
-        "Request For Assistance"
+        "On Scene"
       ],
       "types": [
         "Met",
         "Earthquake",
         "Bushfire",
+        "Tree Down",
+        "Road Accident",
         "Building Fire",
         "Other",
-        "Rescue Road Trap Fire",
-        "Hazardous Material",
-        "Road Accident"
+        "Gale Wind"
       ],
       "attempts": []
     },
@@ -139,24 +139,11 @@
     "nt": {
       "httpStatus": 200,
       "ok": true,
-      "count": 23,
-      "withAlertLevel": 23,
-      "alertLevels": [
-        "Advice"
-      ],
-      "statuses": [
-        "Closed",
-        "Going"
-      ],
-      "types": [
-        "Grass and Scrub Fire",
-        "Automatic Fire Alarm",
-        "Road Crash",
-        "Vehicle Fire",
-        "Structure Fire",
-        "Alarm Bells Ringing",
-        "Bushfire"
-      ],
+      "count": 0,
+      "withAlertLevel": 0,
+      "alertLevels": [],
+      "statuses": [],
+      "types": [],
       "attempts": [
         {
           "url": "https://securent.nt.gov.au/respond/bushfire-alerts",
@@ -165,13 +152,17 @@
         {
           "url": "https://securent.nt.gov.au/alerts-warnings",
           "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+        },
+        {
+          "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
+          "error": "Responded, but no recognisable incident fields"
         }
       ]
     },
     "act": {
       "httpStatus": 200,
       "ok": true,
-      "count": 13,
+      "count": 14,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
@@ -189,15 +180,15 @@
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "count": 208,
-      "customers": 10555,
+      "count": 212,
+      "customers": 10584,
       "complete": true,
-      "rows": 208,
+      "rows": 212,
       "networks": [
         "Endeavour Energy",
         "Ausgrid"
       ],
-      "withTowns": 201,
+      "withTowns": 205,
       "sources": []
     },
     "vic": {
@@ -232,14 +223,14 @@
     "wa": {
       "httpStatus": 200,
       "ok": true,
-      "count": 237,
-      "customers": 24031,
+      "count": 235,
+      "customers": 23999,
       "complete": false,
-      "rows": 237,
+      "rows": 235,
       "networks": [
         "Western Power"
       ],
-      "withTowns": 237,
+      "withTowns": 235,
       "sources": []
     },
     "sa": {
