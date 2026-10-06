@@ -23,7 +23,7 @@
    Run from somewhere that can reach the Worker:
      node scripts/unmapped-towns.mjs
 */
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const BASE = process.env.BASE || 'https://drec-oncall-updates-site.lacey-wood.workers.dev';
 const page = readFileSync(new URL('../index_updated_abc_emergency_map.html', import.meta.url), 'utf8');
@@ -48,6 +48,8 @@ gaz.items.forEach((it) => {
 console.log('gazetteer: ' + gaz.items.length + ' localities, edition ' + gaz.edition);
 
 const states = ['nsw', 'vic', 'qld', 'wa', 'sa', 'tas', 'nt', 'act'];
+const fetchErrors = [];
+const perState = {};
 const unplaced = new Map(); // "TOWN|ST" -> { town, state, rows, customers, networks:Set }
 const notPlaces = new Map();
 let placed = 0, total = 0;
@@ -57,7 +59,13 @@ for (const st of states) {
   try {
     const res = await fetch(BASE + '/api/outages/' + st);
     payload = await res.json();
-  } catch (e) { console.log('  ' + st + ': ' + e.message); continue; }
+  } catch (e) { fetchErrors.push(st + ': ' + e.message); continue; }
+  /* Said out loud. A state that returned nothing is not a state with no
+     unplaceable towns, and the first run of this script finished in one
+     second, which is the shape of every fetch having failed silently. */
+  const n = (payload.outages || []).length;
+  perState[st] = { rows: n, ok: payload.ok, count: payload.count };
+  if (!n) fetchErrors.push(st + ': 0 rows (ok=' + payload.ok + ', count=' + payload.count + ')');
 
   (payload.outages || []).forEach((o) => {
     const rowState = (o.state || st).toUpperCase();
@@ -132,3 +140,26 @@ rows.forEach((r) => {
 });
 if (!near) console.log('  (none)');
 console.log('\nnear misses: ' + near + ' of ' + rows.length + ' unplaced names');
+
+if (fetchErrors.length) {
+  console.log('\nSTATES THAT CONTRIBUTED NOTHING (so their towns are not in the above)');
+  fetchErrors.forEach((e) => console.log('  ' + e));
+}
+
+/* Written out as well as printed. Reading this back out of a workflow log
+   means paging through twenty other steps, and a finding that is awkward to
+   retrieve is one nobody retrieves. */
+const report = {
+  at: new Date().toISOString(),
+  gazetteer: { items: gaz.items.length, edition: gaz.edition },
+  totals: { townReferences: total, placed, unplaced: total - placed },
+  perState,
+  statesContributingNothing: fetchErrors,
+  unplaced: rows.map((r) => ({ town: r.town, state: r.state, rows: r.rows,
+    customers: r.customers, networks: [...r.networks],
+    nearMiss: (normIndex.get(norm(r.town) + '|' + r.state) || [null])[0] })),
+  notPlaces: junk.map(([name, n]) => ({ value: name, rows: n }))
+};
+mkdirSync('data', { recursive: true });
+writeFileSync('data/unmapped-towns.json', JSON.stringify(report, null, 2));
+console.log('\nwrote data/unmapped-towns.json');

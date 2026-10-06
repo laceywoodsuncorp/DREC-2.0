@@ -136,6 +136,84 @@ for (const url of NT_EXTRA) {
   console.log('NT    ' + url + ' -> ' + (r.error || r.status) + (r.challenged ? '  [CHALLENGE]' : ''));
 }
 
+/* ---- 5. where the aggregator's numbers actually live ------------------ */
+/* Both aggregator pages answer 200 and contain no table at all -- the SA one
+   is 744 KB with rows=0, cells=0. So the rows are rendered client-side, which
+   is exactly why SA's configured aggregator source parses to zero outages
+   without erroring, and why SA then claims a complete report of nothing.
+   parseOutageTable cannot read a table that is not in the HTML.
+   
+   The page must still carry its data somewhere. This looks for it in the
+   usual three places -- an embedded JSON blob, a declared API path, and a
+   Next.js/Nuxt style hydration payload -- and then fetches whatever it finds.
+   Nothing here defeats a protection; these pages are not challenged. */
+out.embedded = [];
+const PAGES = [
+  ['sa', 'https://poweroutagesaustralia.com.au/distributors/sa-power-networks/'],
+  ['nt', 'https://poweroutagesaustralia.com.au/distributors/power-and-water/']
+];
+for (const [state, url] of PAGES) {
+  const r = await get(url);
+  if (r.error || !r.text) { out.embedded.push({ state, url, error: r.error }); continue; }
+  const html = r.text;
+
+  /* Hydration payloads, which is how a modern site ships server-rendered
+     data to the browser. */
+  const hydration = [];
+  [/__NEXT_DATA__[^>]*>([\s\S]*?)<\/script>/i,
+   /window\.__NUXT__\s*=\s*([\s\S]{0,400000}?);?\s*<\/script>/i,
+   /window\.__INITIAL_STATE__\s*=\s*([\s\S]{0,400000}?);?\s*<\/script>/i]
+    .forEach((re) => { const m = re.exec(html); if (m) hydration.push(m[1].slice(0, 300)); });
+
+  /* Any absolute or root-relative path that looks like data rather than an
+     asset. Deduplicated and filtered, because a page this size names a lot
+     of CSS. */
+  const paths = [...new Set((html.match(/["'`](\/(?:api|wp-json|data|feed)\/[^"'`\s]{2,120})["'`]/g) || [])
+    .map((x) => x.slice(1, -1)))].slice(0, 25);
+  const absolute = [...new Set((html.match(/https?:\/\/[^"'`\s]*\/(?:api|wp-json)\/[^"'`\s]{2,120}/g) || []))].slice(0, 15);
+
+  /* A big inline array of objects is the other common shape. Only the keys
+     are kept -- the question is whether outage rows are in here, not what
+     today's rows say. */
+  const arrays = [];
+  const re = /\[\s*\{[\s\S]{200,}?\}\s*\]/g;
+  let m, guard = 0;
+  while ((m = re.exec(html)) !== null && guard++ < 6) {
+    try {
+      const arr = JSON.parse(m[0]);
+      if (Array.isArray(arr) && arr.length && typeof arr[0] === 'object') {
+        arrays.push({ length: arr.length, keys: Object.keys(arr[0]).slice(0, 20) });
+      }
+    } catch (e) { /* not valid JSON on its own, skip */ }
+  }
+
+  out.embedded.push({ state, url, bytes: html.length, hydration, paths, absolute, inlineArrays: arrays });
+  console.log('\nEMBED ' + state.toUpperCase() + '  ' + url + '  (' + html.length + ' bytes)');
+  console.log('        hydration payloads: ' + hydration.length);
+  console.log('        data-ish paths: ' + (paths.join(' ') || '(none)'));
+  console.log('        absolute api urls: ' + (absolute.join(' ') || '(none)'));
+  arrays.forEach((a) => console.log('        inline array of ' + a.length + ': ' + a.keys.join(', ')));
+
+  /* Fetch what was found, so this ends with an answer rather than a lead. */
+  const tryUrls = [...absolute, ...paths.map((p) => 'https://poweroutagesaustralia.com.au' + p)].slice(0, 10);
+  for (const u of tryUrls) {
+    const rr = await get(u, 'application/json');
+    let note = rr.error ? 'ERROR ' + rr.error : 'HTTP ' + rr.status + ' ' + (rr.type || '').split(';')[0]
+      + ' ' + rr.bytes + 'b';
+    if (rr.text && /^[\[{]/.test(rr.text.trim())) {
+      try {
+        const j = JSON.parse(rr.text);
+        const arr = Array.isArray(j) ? j : (j.data || j.outages || j.items || null);
+        if (Array.isArray(arr)) note += '  -> array(' + arr.length + ')'
+          + (arr.length && typeof arr[0] === 'object' ? ' keys: ' + Object.keys(arr[0]).slice(0, 14).join(',') : '');
+      } catch (e) { /* not json after all */ }
+    }
+    out.embedded[out.embedded.length - 1].fetched = out.embedded[out.embedded.length - 1].fetched || [];
+    out.embedded[out.embedded.length - 1].fetched.push({ url: u, note });
+    console.log('        ' + u.slice(0, 92) + ' -> ' + note);
+  }
+}
+
 mkdirSync('data', { recursive: true });
 writeFileSync('data/sa-nt-probe.json', JSON.stringify(out, null, 2));
 console.log('\nwrote data/sa-nt-probe.json');
