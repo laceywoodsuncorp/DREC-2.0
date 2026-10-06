@@ -50,6 +50,16 @@ jobs:
       - name: Find each state's warnings feed
         run: node scripts/probe-warnings.mjs
 
+      # Which outage locations the map cannot place, and why. Run before the
+      # probes below so it is in the log even if a probe times out.
+      - name: Unmapped towns
+        run: node scripts/unmapped-towns.mjs
+
+      # The routes still open for SA and NT outages, both of which report
+      # nothing today.
+      - name: SA and NT outage routes
+        run: node scripts/probe-sa-nt-outages.mjs
+
       # The field names of the feeds the step above found. Parsers get written
       # against this output, not against a guess at what a column is called.
       - name: Dump the shape of the usable warnings feeds
@@ -68,4 +78,4 @@ jobs:
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh 'Record live state health and the feed probes' \
               data/state-health.json data/nt-power-probe.json \
-              data/warnings-probe.json data/shape-probe.json
+              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json
