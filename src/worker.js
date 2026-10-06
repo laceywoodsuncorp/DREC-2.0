@@ -252,7 +252,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-06-striptags';
+const WORKER_BUILD = '2026-10-06-ntenvelope';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -946,6 +946,34 @@ function collectRecords(json) {
   }
   if (Array.isArray(json)) {
     return { envelope: 'array', records: json.filter((r) => r && typeof r === 'object').map((r) => ({ props: r })) };
+  }
+  /* A FeatureCollection wrapped one level down, which is what the Northern
+     Territory sends:
+
+       { title, note, lastupdated, incidents: { type, features: [ ... ] } }
+
+     Nothing below matched that. `incidents` is an object rather than an
+     array, so the longest-array search skipped it; the object-values
+     fallback then returned the FeatureCollection itself as a single record,
+     which has no title and was dropped. The result was zero NT incidents
+     from a feed carrying twenty-six of them -- and it reported ok, because
+     an empty list is what a quiet day looks like too.
+
+     Checked before the longest-array search deliberately. A nested
+     `features` array is an exact structural match against the GeoJSON spec,
+     where that search is explicitly a guess at which key holds the records;
+     a precise signal should win over a heuristic. One level only, so the
+     behaviour stays predictable rather than finding an array anywhere in a
+     deep payload. */
+  const nested = Object.entries(json).find(([, v]) =>
+    v && typeof v === 'object' && !Array.isArray(v) && Array.isArray(v.features));
+  if (nested) {
+    return {
+      envelope: 'nested-geojson:' + nested[0],
+      records: nested[1].features.map((f) => ({
+        props: (f && f.properties) || {}, geometry: f && f.geometry
+      }))
+    };
   }
   /* An object wrapping the real list under some key -- try the longest
      array-of-objects property rather than guessing its name. */
