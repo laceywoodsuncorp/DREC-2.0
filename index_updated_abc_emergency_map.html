@@ -804,10 +804,10 @@
     const live=(lastFeeds||[]).filter(f=>f.ok).length,total=(lastFeeds||[]).length;
     const pending=(lastFeeds||[]).filter(f=>f.pending).length;
     if(total){
-      const mismatch=workerBuildSeen&&workerBuildSeen!==EXPECTED_WORKER_BUILD;
+      const skew=buildSkew();
       html.push('<div class="panel-foot">'+live+' of '+total+' sources returning articles'+
         (pending?' · '+pending+' still loading':'')+
-        (mismatch?'<br><b>Worker build '+escapeHtml(workerBuildSeen)+' is older than this page ('+escapeHtml(EXPECTED_WORKER_BUILD)+') — redeploy src/worker.js.</b>':'')+
+        (skew?'<br><b>'+escapeHtml(skew.long)+'</b>':'')+
         '</div>');
     }
     sourcePanelList.innerHTML=html.join('');
@@ -925,7 +925,35 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-06-sahonest';
+  const EXPECTED_WORKER_BUILD='2026-10-06-buildskew';
+  /* Which of the two is behind, rather than assuming.
+  
+     Both the page and the Worker carry a build stamp and the page warns when
+     they differ -- but it asserted, in both places it said so, that the
+     WORKER was the old one and told the reader to redeploy. It cannot know
+     that from a mismatch alone, and the common case is the opposite: a push
+     deploys the Worker immediately while the page is an asset served from a
+     per-datacentre cache, so a reader keeps an older page against a current
+     Worker. Being told to redeploy a Worker that is already current, when the
+     fix is to reload, sends someone to look in the wrong place.
+  
+     The stamps begin with the date they were cut, so the dates answer it.
+     Equal dates with different slugs means two builds on the same day and no
+     way to order them, which is said rather than guessed at. */
+  function buildDate(b){
+    const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(b||''));
+    return m?m[1]+m[2]+m[3]:null;
+  }
+  function buildSkew(){
+    if(!workerBuildSeen||workerBuildSeen===EXPECTED_WORKER_BUILD)return null;
+    const w=buildDate(workerBuildSeen),p=buildDate(EXPECTED_WORKER_BUILD);
+    if(w&&p&&w<p)return {who:'worker',short:'Worker out of date ('+workerBuildSeen+') — redeploy src/worker.js',
+      long:'Worker build '+workerBuildSeen+' is older than this page ('+EXPECTED_WORKER_BUILD+') — redeploy src/worker.js.'};
+    if(w&&p&&w>p)return {who:'page',short:'This page is cached ('+EXPECTED_WORKER_BUILD+') — reload to get '+workerBuildSeen,
+      long:'This page ('+EXPECTED_WORKER_BUILD+') is older than the Worker ('+workerBuildSeen+') — reload the page; a hard refresh if it persists.'};
+    return {who:'unknown',short:'Page and Worker builds differ ('+EXPECTED_WORKER_BUILD+' vs '+workerBuildSeen+')',
+      long:'Page build '+EXPECTED_WORKER_BUILD+' and Worker build '+workerBuildSeen+' differ. Same date, so which is newer cannot be told from the stamps.'};
+  }
   let workerBuildSeen=null;
   const SAME_ORIGIN_ROUTES=['/api/gdelt','/.netlify/functions/gdelt'];
   async function fetchJsonWithTimeout(url,ms){
@@ -1199,12 +1227,12 @@
            day. */
         const live=(feeds||[]).filter(f=>f.ok).length,total=(feeds||[]).length;
         const pending=(feeds||[]).filter(f=>f.pending).length;
-        const stale=workerBuildSeen&&workerBuildSeen!==EXPECTED_WORKER_BUILD;
+        const skew=buildSkew();
         /* While sources are still pending the tally is a snapshot of a feed
            that is visibly still filling, so say so -- otherwise "4 of 30"
            looks like 26 broken outlets. */
         return 'Live · '+n+' articles'+(total?' from '+live+' of '+total+' sources':'')+
-          (stale?' · ⚠️ Worker out of date ('+workerBuildSeen+') — redeploy src/worker.js':
+          (skew?' · ⚠️ '+skew.short:
             (pending?' · '+pending+' more still loading':' · updates every 10 min'));
       });
       if(via!=='gdelt'&&feeds&&feeds.length){
@@ -1213,9 +1241,11 @@
         const down=feeds.filter(f=>!f.ok&&!f.pending);
         if(down.length>feeds.length/2)cacheNote.classList.add('stale');
       }
-      if(workerBuildSeen&&workerBuildSeen!==EXPECTED_WORKER_BUILD){
+      const skew=buildSkew();
+      if(skew){
         cacheNote.classList.add('stale');
-        console.warn('Worker build mismatch: page expects '+EXPECTED_WORKER_BUILD+', worker reports '+workerBuildSeen);
+        console.warn('Build mismatch ('+skew.who+' is behind): page '+EXPECTED_WORKER_BUILD
+          +', worker '+workerBuildSeen);
       }
     }catch(err){
       /* A failed refresh with a usable cached copy on hand is the normal,
