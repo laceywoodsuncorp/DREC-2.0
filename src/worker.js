@@ -252,7 +252,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-06-qldwarnings';
+const WORKER_BUILD = '2026-10-06-vicfields';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -870,14 +870,40 @@ function pickField(lowered, kind) {
 
 /* Pulls coordinates out of whichever of the several conventions a feed uses:
    a GeoJSON geometry, separate lat/lon fields, or SA's "lat,lon" string. */
-function pickCoords(record, geometry) {
-  if (geometry && Array.isArray(geometry.coordinates)) {
-    const c = geometry.coordinates;
-    const flat = Array.isArray(c[0]) ? null : c;
-    if (flat && isFinite(flat[0]) && isFinite(flat[1])) {
-      return { lon: Number(flat[0]), lat: Number(flat[1]) }; // GeoJSON is [lon, lat]
+/* Reduces any GeoJSON geometry to a single point: a Point as itself, a line
+   or polygon to its first vertex, a GeometryCollection to the first of its
+   members that yields one.
+
+   Victoria needs the collection case and a nested-array case. Its features
+   carry {type: 'GeometryCollection', geometries: [...]}, which has no
+   `coordinates` of its own, so the old check failed and the fallbacks looked
+   for lat/lon columns VicEmergency does not publish -- leaving every
+   Victorian incident without a position. On a map that reads as Victoria
+   having nothing happening, which is the failure mode this whole file keeps
+   running into: absent data looking like calm. */
+function geometryPoint(geometry, depth = 0) {
+  if (!geometry || typeof geometry !== 'object' || depth > 4) return null;
+  if (Array.isArray(geometry.geometries)) {
+    for (const g of geometry.geometries) {
+      const p = geometryPoint(g, depth + 1);
+      if (p) return p;
     }
+    return null;
   }
+  let c = geometry.coordinates;
+  /* Walk into nested rings until the first pair of numbers. A polygon is
+     [[[lon,lat],...]], a line is [[lon,lat],...], a point is [lon,lat]. */
+  let guard = 0;
+  while (Array.isArray(c) && Array.isArray(c[0]) && guard++ < 4) c = c[0];
+  if (Array.isArray(c) && isFinite(c[0]) && isFinite(c[1])) {
+    return { lon: Number(c[0]), lat: Number(c[1]) }; // GeoJSON is [lon, lat]
+  }
+  return null;
+}
+
+function pickCoords(record, geometry) {
+  const fromGeometry = geometryPoint(geometry);
+  if (fromGeometry) return fromGeometry;
   const lowered = lowerKeyMap(record);
   /* Opendatasoft carries the point as a nested object (geo_point_2d), not as
      two columns -- so check that before falling back to flat lat/lon. */
@@ -1295,6 +1321,80 @@ function parseNsw(json) {
   return { incidents };
 }
 
+/* VicEmergency's public events feed, which carries three different kinds of
+   record in one list and distinguishes them with `feedType`.
+
+   That is the whole reason it needs its own parser. The same key means
+   different things per kind, confirmed against the live feed and recorded in
+   data/shape-probe.json:
+
+     feedType=warning     category1 is the ALERT LEVEL -- "Advice",
+                          "Watch and Act". name and sourceTitle are also just
+                          the level, and the place is in `location`.
+     feedType=incident    category1 is the EVENT TYPE -- Fire, Rescue, Tree
+                          Down, Building Damage, Hazardous Material. The
+                          real label is in `sourceTitle`
+                          ("Seacombe - Longford-Loch Sport Rd"); `name` is
+                          usually absent.
+     feedType=earthquake  category1 is "Earthquake", and `name` carries the
+                          magnitude and place.
+
+   Read as one field, category1 produced exactly what the live service was
+   reporting as Victoria's alert levels: Earthquake, Tree Down, Building
+   Damage, Accident / Rescue. None of those is a warning anybody issued,
+   which is the same mistake that was fixed for SA's "GOING" and is the worst
+   thing a dashboard used to decide where to send people can do.
+
+   The title needed fixing with it. `name` outranks `location` in the shared
+   hint list, and for a warning `name` is the string "Advice" -- so those
+   rows were titled "Advice" while "Barwon River downstream of Inverleigh"
+   was discarded. */
+function parseVic(json) {
+  const incidents = [];
+  (json.features || []).forEach((f) => {
+    const p = (f && f.properties) || {};
+    const kind = String(p.feedType || '').toLowerCase();
+    const cap = (p.cap && typeof p.cap === 'object') ? p.cap : {};
+
+    /* Only a warning publishes a level. For anything else category1 is a
+       type, and inventing a level from it is the bug. */
+    const alertLevel = kind === 'warning' ? String(p.category1 || '').trim() : '';
+
+    /* First candidate that is not merely a restatement of the level. For a
+       warning that rules out name and sourceTitle and leaves the place; for
+       an incident sourceTitle is already the right label. */
+    const sameAsLevel = (v) => {
+      const a = String(v || '').toLowerCase().replace(/&/g, 'and').replace(/\s+/g, ' ').trim();
+      const b = alertLevel.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, ' ').trim();
+      return !!a && a === b;
+    };
+    const title = [p.sourceTitle, p.name, p.location, p.webHeadline]
+      .map((v) => String(v == null ? '' : v).trim())
+      .find((v) => v && !sameAsLevel(v)) || '';
+    if (!title) return;
+
+    incidents.push(Object.assign(
+      {
+        title,
+        alertLevel,
+        /* "Minor", "Under Control" -- how the event is behaving, kept
+           separate from the instruction to the public. */
+        status: String(p.status || '').trim(),
+        /* cap.event names the hazard properly ("Minor Flood Warning") where
+           category2 is an opaque code ("Met"), so prefer it when present. */
+        type: String(cap.event || p.category2 || p.category1 || 'Incident').trim()
+      },
+      normaliseWhen(p.updated || p.created || ''),
+      pickCoords(p, f && f.geometry)
+    ));
+  });
+  const result = { incidents };
+  if (!incidents.length && !(json.features || []).length) {
+    result.diagnostics = { envelope: 'geojson', itemsSeen: 0 };
+  }
+  return result;
+}
+
 /* Queensland Fire Department public warnings. A separate feed from the ESCAD
    incident feed already configured, and the one that answers the question
    ESCAD cannot: ESCAD reports operational state -- Going, Contained,
@@ -1616,8 +1716,8 @@ const INCIDENT_FEEDS = {
   vic: {
     name: 'Victoria', agency: 'VicEmergency',
     sources: [
-      { url: 'https://emergency.vic.gov.au/public/events-geojson.json', format: 'json', parse: normaliseRecords },
-      { url: 'https://www.emergency.vic.gov.au/public/events-geojson.json', format: 'json', parse: normaliseRecords }
+      { url: 'https://emergency.vic.gov.au/public/events-geojson.json', format: 'json', parse: parseVic },
+      { url: 'https://www.emergency.vic.gov.au/public/events-geojson.json', format: 'json', parse: parseVic }
     ]
   },
   /* WA's primary JSON feed is the documented one and answers fine from an

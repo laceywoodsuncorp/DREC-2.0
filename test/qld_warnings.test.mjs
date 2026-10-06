@@ -32,6 +32,11 @@ const parseQldWarnings = new Function([
   grab(/const FIELD_CANDIDATES = \{[\s\S]*?\n\};/),
   grab(/function lowerKeyMap\(obj\) \{[\s\S]*?\n\}/),
   grab(/function pickField\(lowered, kind\) \{[\s\S]*?\n\}/),
+  /* pickCoords calls geometryPoint, so it comes along. Leaving it out made
+     this test throw ReferenceError rather than fail an assertion -- which is
+     at least proof that these tests run the real worker code and not a copy
+     of it. */
+  grab(/function geometryPoint\(geometry, depth = 0\) \{[\s\S]*?\n\}/),
   grab(/function pickCoords\(record, geometry\) \{[\s\S]*?\n\}/),
   grab(/function normaliseWhen\([\s\S]*?\n\}/),
   grab(/function parseQldWarnings\(json\) \{[\s\S]*?\n\}/)
