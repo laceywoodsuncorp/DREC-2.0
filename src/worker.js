@@ -252,7 +252,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-06-vicfields';
+const WORKER_BUILD = '2026-10-06-wawarnings';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -890,6 +890,16 @@ function geometryPoint(geometry, depth = 0) {
     }
     return null;
   }
+  /* A whole FeatureCollection, which is how WA nests its warning footprint
+     under `geo-source`. Handled here so callers can pass the container and
+     not have to know which GeoJSON wrapper an agency chose. */
+  if (Array.isArray(geometry.features)) {
+    for (const f of geometry.features) {
+      const p = geometryPoint(f && f.geometry, depth + 1);
+      if (p) return p;
+    }
+    return null;
+  }
   let c = geometry.coordinates;
   /* Walk into nested rings until the first pair of numbers. A polygon is
      [[[lon,lat],...]], a line is [[lon,lat],...], a point is [lon,lat]. */
@@ -1321,6 +1331,85 @@ function parseNsw(json) {
   return { incidents };
 }
 
+/* Emergency WA public warnings. Schema confirmed against the live feed and
+   recorded in data/shape-probe.json.
+
+   The level is not in a field of its own -- it is the suffix of a slug:
+
+     entitySubType   "warnings_bushfire--advice"
+     warning-type    "Bushfire Advice"
+     name            "Bushfire Advice"
+     title           "MONITOR CONDITIONS - DAMPIER PENINSULA"
+     location        { latitude, longitude, value }
+     cap-severity    "Minor - minimal threat"
+
+   The slug is read rather than the prose, because the slug is what the
+   agency generates for machines: "Bushfire Advice" and "Smoke Alert" are
+   both warning-types, but only the first is a level, and telling them apart
+   by parsing English would be guesswork. Splitting on '--' gives the level
+   directly and keeps "Smoke Alert" correctly levelless.
+
+   Worth recording about this feed's history here. The Worker already lists
+   api.emergency.wa.gov.au/v1/rss/warnings as a 'partial' fallback behind
+   incident_FCAD.json, and incident_FCAD.json does not fail -- so that
+   fallback has never once been fetched in production. When it was finally
+   fetched directly, it turned out to carry no level field at all. This
+   sibling endpoint does. A fallback nobody reaches is indistinguishable from
+   one that works. */
+const WA_LEVELS = {
+  'advice': 'Advice',
+  'watch-and-act': 'Watch and Act',
+  'watchandact': 'Watch and Act',
+  'emergency-warning': 'Emergency Warning',
+  'emergencywarning': 'Emergency Warning',
+  'all-clear': 'All Clear',
+  'allclear': 'All Clear'
+};
+function parseWa(json) {
+  const incidents = [];
+  const rows = Array.isArray(json && json.warnings) ? json.warnings : [];
+  rows.forEach((w) => {
+    if (!w || typeof w !== 'object') return;
+    const slug = String(w.entitySubType || w['icon-name'] || '').toLowerCase();
+    const suffix = slug.includes('--') ? slug.split('--').pop().trim() : '';
+    /* Only a recognised suffix becomes a level. An unknown one is left blank
+       rather than guessed at -- "Smoke Alert" is a real warning-type that is
+       not one of the three levels, and promoting it would invent an
+       instruction nobody issued. */
+    const alertLevel = WA_LEVELS[suffix] || '';
+
+    const title = [w.title, w.headline, w['warning-type']]
+      .map((v) => String(v == null ? '' : v).trim())
+      .find((v) => v) || '';
+    if (!title) return;
+
+    const coords = {};
+    const loc = w.location;
+    if (loc && typeof loc === 'object' && isFinite(loc.latitude) && isFinite(loc.longitude)) {
+      coords.lat = Number(loc.latitude);
+      coords.lon = Number(loc.longitude);
+    }
+
+    incidents.push(Object.assign(
+      {
+        title,
+        alertLevel,
+        /* "Monitor conditions" / "Escalating" -- what to do and where it is
+           heading, which is not the level. */
+        status: String(w['action-statement'] || w['cap-severity'] || '').trim(),
+        type: String(w['cap-category'] || w['warning-type'] || 'Warning').trim()
+      },
+      normaliseWhen(w['issued-date-time'] || w['published-date-time'] || w.updatedAt || ''),
+      coords,
+      /* Falls back to the warning's mapped footprint when no point is given. */
+      (coords.lat === undefined ? (geometryPoint(w['geo-source']) || {}) : {})
+    ));
+  });
+  const result = { incidents };
+  if (!incidents.length && !rows.length) result.diagnostics = { envelope: 'wrapped:warnings', itemsSeen: 0 };
+  return result;
+}
+
 /* VicEmergency's public events feed, which carries three different kinds of
    record in one list and distinguishes them with `feedType`.
 
@@ -1731,6 +1820,11 @@ const INCIDENT_FEEDS = {
     sources: [
       { url: 'https://www.emergency.wa.gov.au/data/incident_FCAD.json', format: 'json', parse: normaliseRecords },
       { url: 'https://api.emergency.wa.gov.au/v1/rss/warnings', format: 'text', parse: parseGeoRss, partial: 'warnings only' },
+      /* Additive. The RSS sibling above carries no level field; this one
+         does. Marked merge because incident_FCAD.json never fails, so an
+         ordinary source listed after it would never be read -- which is
+         exactly what has been happening to that RSS fallback. */
+      { url: 'https://api.emergency.wa.gov.au/v1/warnings', format: 'json', parse: parseWa, merge: true, label: 'Emergency WA warnings' },
       { url: 'https://www.emergency.wa.gov.au/data/message_FCAD.json', format: 'json', parse: normaliseRecords }
     ]
   },
