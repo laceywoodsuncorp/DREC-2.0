@@ -153,6 +153,92 @@ for (const url of PATHS) {
     + (r.title ? '  "' + r.title.slice(0, 60) + '"' : ''));
 }
 
+/* ---- 5. Round two, chasing what round one surfaced ------------------- */
+/* Round one's keyword search returned mostly United States layers, because
+   "power outage" is a common phrase and ArcGIS Online ranks globally. These
+   are the specific leads worth settling rather than more keywords. */
+out.round2 = { candidateLayers: [], nationalPortal: [], jacana: [], agolScoped: [] };
+
+/* 5a. The only two hits that could plausibly have been Australian. Both are
+   owned by "MAGICAdmin" and both were last modified in April 2021, which for
+   a live outage layer is itself close to an answer -- but a layer can be old
+   and still fed, so ask it for its extent and a row count. */
+for (const base of [
+  'https://services.arcgis.com/YKu9KTHe0ln1JUmf/arcgis/rest/services/ElectricalOutages/FeatureServer',
+  'https://services.arcgis.com/YKu9KTHe0ln1JUmf/arcgis/rest/services/PublicElectricalOutages/FeatureServer'
+]) {
+  const meta = await json(base + '?f=json');
+  const layers = (meta.json && meta.json.layers) || [];
+  const entry = { base, status: meta.status, error: meta.error || meta.jsonError,
+    serviceDescription: meta.json && meta.json.serviceDescription,
+    extent: meta.json && meta.json.fullExtent, layers: [] };
+  for (const l of layers.slice(0, 4)) {
+    const cnt = await json(base + '/' + l.id + '/query?where=1%3D1&returnCountOnly=true&f=json');
+    const sample = await json(base + '/' + l.id
+      + '/query?where=1%3D1&outFields=*&resultRecordCount=1&f=json');
+    const feats = (sample.json && sample.json.features) || [];
+    entry.layers.push({ id: l.id, name: l.name,
+      count: cnt.json && cnt.json.count,
+      fields: feats.length ? Object.keys(feats[0].attributes || {}).slice(0, 20) : [],
+      firstRow: feats.length ? feats[0].attributes : null });
+  }
+  out.round2.candidateLayers.push(entry);
+  console.log('LAYER ' + base.split('/services/')[1] + ' -> '
+    + (entry.error || entry.layers.map((l) => l.name + ': ' + l.count + ' rows').join('; ')));
+  /* An extent in the wrong hemisphere settles it faster than any field
+     inspection. The NT spans roughly 129-138E, -11 to -26. */
+  if (entry.extent) {
+    console.log('        extent x ' + entry.extent.xmin + '..' + entry.extent.xmax
+      + '  y ' + entry.extent.ymin + '..' + entry.extent.ymax);
+  }
+}
+
+/* 5b. The national open data portal, which aggregates state and territory
+   publishers and would list a Power and Water dataset if one existed. */
+for (const q of ['power and water outage', 'electricity outage northern territory', 'power outage']) {
+  const r = await json('https://data.gov.au/data/api/3/action/package_search?rows=10&q='
+    + encodeURIComponent(q));
+  const res = (r.json && r.json.result) || {};
+  out.round2.nationalPortal.push({ query: q, status: r.status, error: r.error || r.jsonError,
+    total: res.count,
+    hits: (res.results || []).map((d) => ({ title: d.title, org: d.organization && d.organization.title,
+      formats: [...new Set((d.resources || []).map((x) => x.format))] })) });
+  console.log('DGAU  ' + q + ' -> ' + (res.count !== undefined ? res.count : (r.error || r.status)));
+  (res.results || []).slice(0, 6).forEach((d) => console.log('        ' + d.title
+    + '  [' + ((d.organization && d.organization.title) || '?') + ']'));
+}
+
+/* 5c. Jacana Energy answered 404 on two guessed paths, so stop guessing and
+   read what the site itself links to. Jacana is the Territory's retailer and
+   Power and Water the distributor, so Jacana may only link onward -- but a
+   link is still a lead, and their host is not challenged. */
+for (const url of ['https://www.jacanaenergy.com.au/', 'https://www.jacanaenergy.com.au/sitemap.xml']) {
+  const r = await get(url);
+  const links = r.text ? [...new Set((r.text.match(/href="([^"]+)"|<loc>([^<]+)<\/loc>/g) || [])
+    .map((m) => m.replace(/^href="|"$|<loc>|<\/loc>/g, ''))
+    .filter((h) => /outage|fault|interrupt|supply|emergency|power.?out/i.test(h)))] : [];
+  out.round2.jacana.push({ url, status: r.status, error: r.error, bytes: r.bytes, links: links.slice(0, 20) });
+  console.log('JACANA ' + url + ' -> ' + (r.error || r.status)
+    + '  outage-ish links: ' + links.length);
+  links.slice(0, 10).forEach((l) => console.log('        ' + l));
+}
+
+/* 5d. The same ArcGIS Online search, but bounded to Australia so the United
+   States layers that drowned round one cannot rank. */
+for (const q of ['outage', 'electrical outage', 'power outage']) {
+  const url = 'https://www.arcgis.com/sharing/rest/search?f=json&num=25'
+    + '&bbox=' + encodeURIComponent('112,-44,154,-9')
+    + '&q=' + encodeURIComponent(q + ' (type:"Feature Service" OR type:"Map Service")');
+  const r = await json(url);
+  const results = (r.json && r.json.results) || [];
+  out.round2.agolScoped.push({ query: q, status: r.status, total: r.json && r.json.total,
+    hits: results.map((x) => ({ title: x.title, owner: x.owner, url: x.url,
+      modified: x.modified ? new Date(x.modified).toISOString().slice(0, 10) : null })) });
+  console.log('AGOL-AU  ' + q + ' -> ' + (r.json ? r.json.total + ' total' : (r.error || r.status)));
+  results.forEach((x) => console.log('        ' + x.title + '  [' + x.owner + ']  '
+    + (x.modified ? new Date(x.modified).toISOString().slice(0, 10) : '') + '  ' + (x.url || '')));
+}
+
 mkdirSync('data', { recursive: true });
 writeFileSync('data/nt-power-probe.json', JSON.stringify(out, null, 2));
 console.log('\nwrote data/nt-power-probe.json');
