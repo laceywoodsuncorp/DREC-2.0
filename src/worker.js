@@ -252,7 +252,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-06-ntenvelope';
+const WORKER_BUILD = '2026-10-06-qldwarnings';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -1295,6 +1295,67 @@ function parseNsw(json) {
   return { incidents };
 }
 
+/* Queensland Fire Department public warnings. A separate feed from the ESCAD
+   incident feed already configured, and the one that answers the question
+   ESCAD cannot: ESCAD reports operational state -- Going, Contained,
+   Patrolled -- while this carries WarningLevel, the instruction to the
+   public, which is what NSW's feed gives and what the dashboard ranks by.
+
+   Schema confirmed against the live feed (data/shape-probe.json), not
+   guessed. It is a GeoJSON FeatureCollection whose properties carry:
+
+     WarningLevel            "Advice"
+     WarningTitle            "STAY INFORMED - Murphys Creek and Fifteen Mile - fire as at ..."
+     WarningArea             "Between White Mountain Road, Penderests Road and ..."
+     CallToAction            "Stay Informed"
+     EventType               "Fire"
+     Latitude / Longitude    numbers, in their own fields
+     ItemDateTimeLocal_ISO   "2026-10-05T13:43:38+10:00"
+
+   A dedicated parser rather than the generic normaliser because three of
+   those names are in none of the shared hint lists -- WarningTitle,
+   WarningArea and ItemDateTimeLocal_ISO -- so the generic path finds no
+   title and drops every row. Adding Queensland's spellings to the shared
+   lists would make them a little more wrong for the other seven agencies
+   each time a feed is added; a parser per schema stays honest. */
+function parseQldWarnings(json) {
+  const incidents = [];
+  (json.features || []).forEach((f) => {
+    const p = (f && f.properties) || {};
+    /* WarningTitle already reads as a headline ("STAY INFORMED - Murphys
+       Creek and Fifteen Mile - fire as at 1:43pm Monday"). WarningArea is
+       the fallback because it at least names the place; a row with neither
+       would render blank and is better dropped. */
+    const title = String(p.WarningTitle || p.WarningArea || '').trim();
+    if (!title) return;
+    const coords = {};
+    if (isFinite(p.Latitude) && isFinite(p.Longitude)) {
+      coords.lat = Number(p.Latitude);
+      coords.lon = Number(p.Longitude);
+    }
+    incidents.push(Object.assign(
+      {
+        title,
+        alertLevel: String(p.WarningLevel || '').trim(),
+        /* CallToAction is "Stay Informed" / "Prepare to Leave" -- what to do,
+           which is closer to a status than to a level and is kept separate
+           from both. */
+        status: String(p.CallToAction || '').trim(),
+        type: String(p.EventType || p.GroupedType || 'Warning').trim()
+      },
+      normaliseWhen(p.ItemDateTimeLocal_ISO || p.PublishDateLocal_ISO || ''),
+      coords,
+      /* Falls back to the feature geometry when the explicit pair is absent. */
+      (coords.lat === undefined ? pickCoords(p, f && f.geometry) : {})
+    ));
+  });
+  const result = { incidents };
+  if (!incidents.length && !(json.features || []).length) {
+    result.diagnostics = { envelope: 'geojson', itemsSeen: 0 };
+  }
+  return result;
+}
+
 /* SA CFS current incidents -- either a bare array or an object keyed by
    incident number; fields IncidentNo/Date/Time/Location_name/Type/Status,
    with Location as a "lat,lon" string. Confirmed schema. */
@@ -1542,9 +1603,14 @@ const INCIDENT_FEEDS = {
     ]
   },
   qld: {
-    name: 'Queensland', agency: 'QFES ESCAD',
+    name: 'Queensland', agency: 'Queensland Fire Department',
     sources: [
-      { url: 'https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services/ESCAD_Current_Incidents_Public/FeatureServer/0/query?f=geojson&where=1%3D1&outFields=*', format: 'json', parse: normaliseRecords }
+      { url: 'https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services/ESCAD_Current_Incidents_Public/FeatureServer/0/query?f=geojson&where=1%3D1&outFields=*', format: 'json', parse: normaliseRecords },
+      /* Additive, not a fallback. ESCAD never fails, so anything listed
+         after it as an ordinary source would never once be read -- which is
+         exactly what happened to WA's warnings feed. `merge` means fetch it
+         as well and combine the results. */
+      { url: 'https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json', format: 'json', parse: parseQldWarnings, merge: true, label: 'QFD public warnings' }
     ]
   },
   vic: {
@@ -1655,6 +1721,64 @@ async function tryIncidentSource(source) {
   }
 }
 
+/* Fetches every `merge` source and appends what it finds to `base`.
+
+   De-duplicated, because the two feeds genuinely overlap: a fire large
+   enough to carry a public warning is also an open ESCAD job, so it arrives
+   twice. Matching is on the normalised title plus the position rounded to
+   about a kilometre -- an exact coordinate compare would miss, since the two
+   systems place the same fire slightly differently, and title alone would
+   collapse two real fires that share a locality name.
+
+   A failing merge source is recorded and skipped. It must never take down a
+   state whose primary feed is fine, which is the whole reason this is
+   additive. */
+async function addMergeSources(mergeSources, base, attempts) {
+  const incidents = base.slice();
+  const urls = [];
+  const key = (inc) => [
+    String(inc.title || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(),
+    isFinite(inc.lat) ? Number(inc.lat).toFixed(2) : '',
+    isFinite(inc.lon) ? Number(inc.lon).toFixed(2) : ''
+  ].join('|');
+  const seen = new Set(incidents.map(key));
+
+  for (const source of mergeSources) {
+    const result = await tryIncidentSource(source);
+    if (!result.ok) {
+      attempts.push({ url: source.url, error: result.error, merge: true });
+      continue;
+    }
+    if (result.parsed.diagnostics) {
+      attempts.push({ url: source.url, merge: true,
+        error: 'Responded, but no recognisable incident fields' });
+      continue;
+    }
+    let added = 0;
+    result.parsed.incidents.forEach((inc) => {
+      const k = key(inc);
+      if (seen.has(k)) return;
+      seen.add(k);
+      incidents.push(inc);
+      added++;
+    });
+    urls.push(source.url);
+    attempts.push({ url: source.url, merge: true, added,
+      duplicates: result.parsed.incidents.length - added });
+  }
+  /* Warned incidents first, so a merged list does not bury an Emergency
+     Warning below a routine job the other feed happened to list earlier. */
+  const rank = (inc) => {
+    const a = String(inc.alertLevel || '').toLowerCase();
+    if (/emergency warning|evacuat/.test(a)) return 0;
+    if (/watch and act|watch & act/.test(a)) return 1;
+    if (/advice/.test(a)) return 2;
+    return 3;
+  };
+  incidents.sort((x, y) => rank(x) - rank(y));
+  return { incidents, urls };
+}
+
 async function refreshStateIncidents(state) {
   const feed = INCIDENT_FEEDS[state];
   if (!feed) return { ok: false, state, error: 'Unknown state' };
@@ -1662,7 +1786,24 @@ async function refreshStateIncidents(state) {
   const attempts = [];
   let drifted = null; // a source that answered but whose shape wasn't recognised
 
-  for (const source of feed.sources) {
+  /* Two kinds of source, because two different things are being asked for.
+     Ordinary sources are alternatives: the first that answers wins and the
+     rest are never tried, which is right for a feed with a mirror or a
+     fallback. Sources marked `merge` are additions: they are fetched as
+     well, and their incidents join the winner's.
+
+     Queensland needs this. Its warnings and its incidents are different
+     feeds -- ESCAD carries Going and Contained, the warnings feed carries
+     Advice -- and neither is a substitute for the other. Listing the
+     warnings feed as an ordinary source after ESCAD would mean never
+     reading it, since ESCAD does not fail. That is not hypothetical: it is
+     precisely what happened to WA's warnings feed, which has sat in this
+     config as a fallback behind a source that always succeeds and has
+     therefore never once been fetched. */
+  const mergeSources = feed.sources.filter((src) => src.merge);
+  const primarySources = feed.sources.filter((src) => !src.merge);
+
+  for (const source of primarySources) {
     const result = await tryIncidentSource(source);
     if (!result.ok) {
       attempts.push({ url: source.url, error: result.error });
@@ -1677,22 +1818,48 @@ async function refreshStateIncidents(state) {
       continue;
     }
 
+    const merged = await addMergeSources(mergeSources, result.parsed.incidents, attempts);
     const payload = {
       state: state.toUpperCase(),
       name: feed.name,
       agency: feed.agency,
       ok: true,
-      count: result.parsed.incidents.length,
-      incidents: result.parsed.incidents,
+      count: merged.incidents.length,
+      incidents: merged.incidents,
       sourceUrl: source.url,
       fetchedAt: Date.now()
     };
+    if (merged.urls.length) payload.mergedFrom = merged.urls;
     /* Flag when the answer came from a reduced fallback, so "0 incidents"
        from a warnings-only source isn't read as "nothing is happening". */
     if (source.partial) payload.partial = source.partial;
     if (attempts.length) payload.attempts = attempts; // earlier sources that failed
     await writeSharedCache(incidentCacheUrl(state), JSON.stringify(payload), 'application/json');
     return { ok: true, state, payload };
+  }
+
+  /* No ordinary source worked. A merge source might still have, and a
+     warnings feed carrying real warnings is worth far more than a blank
+     state -- so try them before reporting failure rather than after. */
+  if (mergeSources.length) {
+    const rescued = await addMergeSources(mergeSources, [], attempts);
+    if (rescued.incidents.length) {
+      const payload = {
+        state: state.toUpperCase(),
+        name: feed.name,
+        agency: feed.agency,
+        ok: true,
+        count: rescued.incidents.length,
+        incidents: rescued.incidents,
+        sourceUrl: rescued.urls[0],
+        mergedFrom: rescued.urls,
+        partial: 'warnings only — the incident feed is not responding',
+        attempts,
+        fetchedAt: Date.now()
+      };
+      await writeSharedCache(incidentCacheUrl(state), JSON.stringify(payload), 'application/json');
+      return { ok: true, state, payload };
+    }
   }
 
   /* Every source answered but none was recognisable -- report it as a schema
