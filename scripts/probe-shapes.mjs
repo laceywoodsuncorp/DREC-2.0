@@ -58,13 +58,30 @@ function findRecordArrays(node, path = '$', out = [], depth = 0) {
   if (depth > 5 || node == null || typeof node !== 'object') return out;
   if (Array.isArray(node)) {
     if (node.length && typeof node[0] === 'object' && !Array.isArray(node[0])) {
-      out.push({ path, length: node.length, keys: Object.keys(node[0]) });
+      /* The record itself is kept, not just its path. Reconstructing the path
+         with a string reducer was how the first run of this probe printed no
+         sample at all -- the keys are the entire point of the exercise, so
+         they do not get to depend on parsing my own path notation. */
+      out.push({ path, length: node.length, keys: Object.keys(node[0]), _first: node[0] });
     }
     if (node.length) findRecordArrays(node[0], path + '[0]', out, depth + 1);
     return out;
   }
   for (const [k, v] of Object.entries(node)) findRecordArrays(v, path + '.' + k, out, depth + 1);
   return out;
+}
+
+/* A record trimmed for printing: long strings cut, nested objects reduced to
+   their shape. Seeing that a field holds a paragraph of markup is itself
+   information, so values are cut rather than dropped. */
+function trim(sample) {
+  const t = {};
+  if (!sample || typeof sample !== 'object') return t;
+  for (const [k, v] of Object.entries(sample)) {
+    t[k] = typeof v === 'string' && v.length > 160 ? v.slice(0, 160) + '…[' + v.length + ']'
+      : (v && typeof v === 'object' ? shape(v, 2) : v);
+  }
+  return t;
 }
 
 const out = { at: new Date().toISOString(), feeds: {} };
@@ -92,33 +109,29 @@ for (const [state, url] of Object.entries(TARGETS)) {
   const arrays = findRecordArrays(json);
   console.log('  top level: ' + topShape);
   console.log('  record arrays found: ' + (arrays.length || 'none'));
-  arrays.forEach((a) => {
+
+  /* GeoJSON keeps everything interesting one level down in `properties`, so
+     the keys that matter are not the record's own -- they are its
+     properties'. That is precisely where VIC's real alert level is hiding
+     while category1 gets read instead. */
+  const dumped = arrays.map((a) => {
+    const rec = trim(a._first);
+    const props = a._first && a._first.properties && typeof a._first.properties === 'object'
+      ? trim(a._first.properties) : null;
     console.log('    ' + a.path + '  (' + a.length + ' records)');
-    console.log('      keys: ' + a.keys.join(', '));
+    console.log('      record keys: ' + a.keys.join(', '));
+    if (props) {
+      console.log('      properties:');
+      Object.entries(props).forEach(([k, v]) =>
+        console.log('        ' + k.padEnd(26) + JSON.stringify(v)));
+    } else {
+      Object.entries(rec).forEach(([k, v]) =>
+        console.log('        ' + k.padEnd(26) + JSON.stringify(v)));
+    }
+    return { path: a.path, length: a.length, keys: a.keys, firstRecord: rec, firstProperties: props };
   });
 
-  /* One whole record, verbatim but trimmed. The field names are the point;
-     long HTML bodies are not, so they are cut rather than removed -- seeing
-     that a field holds a paragraph of markup is itself information. */
-  const first = arrays.length
-    ? arrays[0].path.split(/[.\[]/).filter(Boolean).reduce((acc, k) => {
-        if (k === '0]' || k === '0') return Array.isArray(acc) ? acc[0] : acc;
-        return acc && acc[k.replace(']', '')];
-      }, json)
-    : json;
-  const sample = Array.isArray(first) ? first[0] : first;
-  const trimmed = {};
-  if (sample && typeof sample === 'object') {
-    for (const [k, v] of Object.entries(sample)) {
-      trimmed[k] = typeof v === 'string' && v.length > 180 ? v.slice(0, 180) + '…[' + v.length + ']'
-        : (v && typeof v === 'object' ? shape(v) : v);
-    }
-  }
-  console.log('  first record:');
-  console.log(Object.entries(trimmed).map(([k, v]) =>
-    '      ' + k.padEnd(26) + JSON.stringify(v)).join('\n'));
-
-  out.feeds[state] = { url, bytes: body.length, topShape, recordArrays: arrays, firstRecord: trimmed };
+  out.feeds[state] = { url, bytes: body.length, topShape, recordArrays: dumped };
 }
 
 mkdirSync('data', { recursive: true });
