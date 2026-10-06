@@ -76,9 +76,16 @@ for (const s of STATES) {
     networks: uniq(out.map((o) => o.network)),
     withTowns: out.filter((o) => (o.towns || []).length).length,
     reported: b.reported,
-    sources: (b.sources || []).map((x) => ({
-      network: x.network, ok: x.ok, count: x.count, error: x.error,
-      blocked: x.blocked, via: x.via, url: x.url
+    /* `networks`, not `sources`. Reading the wrong field made every state
+       print an empty source list, which is why "SA reports zero" could not
+       be traced to the source that produced the zero -- the per-operator
+       detail was there the whole time and this was looking past it. */
+    networks: (b.networks || []).map((x) => ({
+      name: x.name, ok: x.ok, count: x.count, error: x.error,
+      blocked: x.blocked, unconfirmed: x.unconfirmed, via: x.via,
+      sourceUrl: x.sourceUrl, columns: x.columns,
+      diagnostics: x.diagnostics,
+      attempts: (x.attempts || []).map((a) => ({ url: a.url, error: a.error }))
     }))
   };
 }
@@ -112,8 +119,20 @@ for (const s of STATES) {
   const d = report.outages[s];
   console.log(pad(s, 7) + pad(d.rows, 7) + pad(d.customers, 9)
     + (d.networks.length ? d.networks.join(', ') : '(none)'));
-  (d.sources || []).filter((x) => !x.ok).forEach((x) => {
-    console.log('       FAIL ' + pad(x.network, 30)
-      + (x.blocked ? 'blocked: ' : '') + String(x.error || '').slice(0, 90));
+  (d.networks || []).forEach((x) => {
+    /* An operator that answered with zero rows is printed too, not only a
+       failure. "Reported nothing" and "reported zero" look identical in a
+       total and need different responses, so they are shown apart. */
+    if (!x.ok) {
+      console.log('       FAIL ' + pad(x.name, 28)
+        + (x.blocked ? 'blocked: ' : '') + String(x.error || '').slice(0, 86));
+    } else if (!x.count) {
+      console.log('       ZERO ' + pad(x.name, 28) + 'ok but no rows'
+        + (x.via ? '  via ' + x.via : '')
+        + (x.columns ? '  columns: ' + x.columns.slice(0, 6).join('|') : '  (no columns)'));
+      if (x.sourceUrl) console.log('            from ' + String(x.sourceUrl).slice(0, 96));
+    }
+    (x.attempts || []).filter((a) => a.error).forEach((a) =>
+      console.log('            tried ' + String(a.url).slice(0, 70) + ' -> ' + String(a.error).slice(0, 60)));
   });
 }
