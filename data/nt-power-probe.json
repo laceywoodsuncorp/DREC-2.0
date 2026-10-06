@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-06T00:24:44.873Z",
+  "at": "2026-10-06T00:29:46.258Z",
   "arcgisOnline": [
     {
       "query": "\"power and water\" outage",
@@ -114,20 +114,20 @@
           "modified": "2022-04-04"
         },
         {
-          "title": "Irrigation District",
-          "owner": "gis_svc",
-          "type": "Feature Service",
-          "url": "https://services.arcgis.com/C34zQ7veRS0V1t04/arcgis/rest/services/Irrigation_District_2024/FeatureServer",
-          "access": "public",
-          "modified": "2026-06-29"
-        },
-        {
           "title": "Utility Locations",
           "owner": "mokan2020",
           "type": "Feature Service",
           "url": "https://services3.arcgis.com/6kmcRUkHohgDzKog/arcgis/rest/services/Utility_Locations/FeatureServer",
           "access": "public",
           "modified": "2023-12-06"
+        },
+        {
+          "title": "Irrigation District",
+          "owner": "gis_svc",
+          "type": "Feature Service",
+          "url": "https://services.arcgis.com/C34zQ7veRS0V1t04/arcgis/rest/services/Irrigation_District_2024/FeatureServer",
+          "access": "public",
+          "modified": "2026-06-29"
         },
         {
           "title": "Groundwater Bores with Water Levels",
@@ -527,7 +527,7 @@
       "url": "https://www.powerwater.com.au/outages/current-outages",
       "status": 403,
       "type": "text/html; charset=UTF-8",
-      "bytes": 5758,
+      "bytes": 5737,
       "challenged": true,
       "title": "Just a moment...",
       "jsonHints": []
@@ -545,7 +545,7 @@
       "url": "https://www.powerwater.com.au/api/outages/current",
       "status": 403,
       "type": "text/html; charset=UTF-8",
-      "bytes": 5725,
+      "bytes": 5746,
       "challenged": true,
       "title": "Just a moment...",
       "jsonHints": []
@@ -562,7 +562,7 @@
       "url": "https://www.powerwater.com.au/sitemap.xml",
       "status": 403,
       "type": "text/html; charset=UTF-8",
-      "bytes": 5722,
+      "bytes": 5701,
       "challenged": true,
       "title": "Just a moment...",
       "jsonHints": []
@@ -585,5 +585,858 @@
       "title": "Page can&#039;t be found | Jacana Energy",
       "jsonHints": []
     }
-  ]
+  ],
+  "round2": {
+    "candidateLayers": [
+      {
+        "base": "https://services.arcgis.com/YKu9KTHe0ln1JUmf/arcgis/rest/services/ElectricalOutages/FeatureServer",
+        "status": 200,
+        "serviceDescription": "Muscatine Power and Water Electric Outage Information",
+        "extent": {
+          "xmin": 2286243.1206072555,
+          "ymin": 500911.00669873675,
+          "xmax": 2329022.0244171973,
+          "ymax": 542194.7341546135,
+          "spatialReference": {
+            "wkid": 102676,
+            "latestWkid": 3418
+          }
+        },
+        "layers": [
+          {
+            "id": 0,
+            "name": "Outages",
+            "count": 16,
+            "fields": [
+              "OBJECTID",
+              "SUBTYPECD",
+              "FEEDERID",
+              "LABELTEXT",
+              "PHASEDESIGNATION",
+              "RATEDKVA",
+              "LOCATION",
+              "CUSTCOUNT",
+              "CUSTCOUNT_APHASE",
+              "CUSTCOUNT_BPHASE",
+              "CUSTCOUNT_CPHASE",
+              "CUSTCOUNT_3PHASE",
+              "CUSTCOUNT_ABPHASE",
+              "CUSTCOUNT_BCPHASE",
+              "CUSTCOUNT_ACPHASE",
+              "Source"
+            ],
+            "firstRow": {
+              "OBJECTID": 134493,
+              "SUBTYPECD": null,
+              "FEEDERID": "GV5",
+              "LABELTEXT": "2694 25 A|3470 25 C|2681 25 B",
+              "PHASEDESIGNATION": 7,
+              "RATEDKVA": 75,
+              "LOCATION": "T5ND9F01",
+              "CUSTCOUNT": 3,
+              "CUSTCOUNT_APHASE": 1,
+              "CUSTCOUNT_BPHASE": 0,
+              "CUSTCOUNT_CPHASE": 0,
+              "CUSTCOUNT_3PHASE": 2,
+              "CUSTCOUNT_ABPHASE": 0,
+              "CUSTCOUNT_BCPHASE": 0,
+              "CUSTCOUNT_ACPHASE": 0,
+              "Source": "ONT"
+            }
+          }
+        ]
+      },
+      {
+        "base": "https://services.arcgis.com/YKu9KTHe0ln1JUmf/arcgis/rest/services/PublicElectricalOutages/FeatureServer",
+        "status": 200,
+        "serviceDescription": "",
+        "extent": {
+          "xmin": 2290557.853351115,
+          "ymin": 502009.4200754,
+          "xmax": 2328490.4034750476,
+          "ymax": 542194.7341546135,
+          "spatialReference": {
+            "wkid": 102676,
+            "latestWkid": 3418
+          }
+        },
+        "layers": [
+          {
+            "id": 0,
+            "name": "Outages",
+            "count": 16,
+            "fields": [
+              "OBJECTID",
+              "SUBTYPECD",
+              "FEEDERID",
+              "LABELTEXT",
+              "PHASEDESIGNATION",
+              "RATEDKVA",
+              "LOCATION",
+              "CUSTCOUNT",
+              "CUSTCOUNT_APHASE",
+              "CUSTCOUNT_BPHASE",
+              "CUSTCOUNT_CPHASE",
+              "CUSTCOUNT_3PHASE",
+              "CUSTCOUNT_ABPHASE",
+              "CUSTCOUNT_BCPHASE",
+              "CUSTCOUNT_ACPHASE",
+              "Source"
+            ],
+            "firstRow": {
+              "OBJECTID": 134493,
+              "SUBTYPECD": null,
+              "FEEDERID": "GV5",
+              "LABELTEXT": "2694 25 A|3470 25 C|2681 25 B",
+              "PHASEDESIGNATION": 7,
+              "RATEDKVA": 75,
+              "LOCATION": "T5ND9F01",
+              "CUSTCOUNT": 3,
+              "CUSTCOUNT_APHASE": 1,
+              "CUSTCOUNT_BPHASE": 0,
+              "CUSTCOUNT_CPHASE": 0,
+              "CUSTCOUNT_3PHASE": 2,
+              "CUSTCOUNT_ABPHASE": 0,
+              "CUSTCOUNT_BCPHASE": 0,
+              "CUSTCOUNT_ACPHASE": 0,
+              "Source": "ONT"
+            }
+          }
+        ]
+      }
+    ],
+    "nationalPortal": [
+      {
+        "query": "power and water outage",
+        "status": 200,
+        "total": 130,
+        "hits": [
+          {
+            "title": "Base Station installed at One Tree Island as part of the Facility for the Automated Intelligent Monitoring of Marine Systems - FAIMMS",
+            "org": "Australian Institute of Marine Science",
+            "formats": [
+              "HTML"
+            ]
+          },
+          {
+            "title": "One Tree Island Base Station",
+            "org": "Australian Ocean Data Network",
+            "formats": [
+              "HTML",
+              "audio/basic",
+              "PNG"
+            ]
+          },
+          {
+            "title": "2016 SoE Marine Chapter - State and Trends - Algal blooms, jellyfish blooms",
+            "org": "Australian Ocean Data Network",
+            "formats": [
+              "PDF",
+              "HTML"
+            ]
+          },
+          {
+            "title": "Department of Water and Energy Annual Report 2006-2007",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Volume Twelve 2016 Report on Industry, Skills, Electricity and Water",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Sydney Water Annual Report 2004",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "12 January 2017 - Lower Blue Mountains electricity supply secured",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Hunter Water Annual Report 2014-15",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Department of Energy, Utilities and Sustainability Annual Report 05-06",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Department of Environment and Conservation (NSW) Annual Report 2004-05",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          }
+        ]
+      },
+      {
+        "query": "electricity outage northern territory",
+        "status": 200,
+        "total": 52,
+        "hits": [
+          {
+            "title": "Delta Electricity Annual Report 2014",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Delta Electricity Annual Report 2011",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Delta Electricity Annual Report '08",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Delta Electricity Annual Report 2015",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Delta Electricity Annual Report 2007",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Delta Electricity Annual Report 2009",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Delta Electricity Annual Report 2013",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Delta Electricity Annual Report 2006",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Delta Electricity Sustainability Report 2008",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          },
+          {
+            "title": "Delta Electricity Annual Report 2010",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          }
+        ]
+      },
+      {
+        "query": "power outage",
+        "status": 200,
+        "total": 155,
+        "hits": [
+          {
+            "title": "Power Outage Effected Address's",
+            "org": "Spatial Services (DCS)",
+            "formats": [
+              "ARCGIS REST SERVICE"
+            ]
+          },
+          {
+            "title": "Power Outage Effected Address's",
+            "org": "Spatial Services (DCS)",
+            "formats": [
+              "ARCGIS REST SERVICE"
+            ]
+          },
+          {
+            "title": "Power Outage Effected Address's",
+            "org": "Spatial Services (DCS)",
+            "formats": [
+              "ARCGIS REST SERVICE"
+            ]
+          },
+          {
+            "title": "Past Outages",
+            "org": "Ausgrid",
+            "formats": [
+              "website link"
+            ]
+          },
+          {
+            "title": "Mobile Network Hardening Program (MNHP)",
+            "org": "Department of Infrastructure, Transport, Regional Development, Communications, Sport and the Arts",
+            "formats": [
+              "WMS",
+              "KML",
+              "WFS",
+              "GeoJSON"
+            ]
+          },
+          {
+            "title": "Base Station installed at One Tree Island as part of the Facility for the Automated Intelligent Monitoring of Marine Systems - FAIMMS",
+            "org": "Australian Institute of Marine Science",
+            "formats": [
+              "HTML"
+            ]
+          },
+          {
+            "title": "One Tree Island Base Station",
+            "org": "Australian Ocean Data Network",
+            "formats": [
+              "HTML",
+              "audio/basic",
+              "PNG"
+            ]
+          },
+          {
+            "title": "Australian geomagnetic observatory network monitors space weather hazard – 180 years on",
+            "org": "Geoscience Australia Data",
+            "formats": [
+              "HTML"
+            ]
+          },
+          {
+            "title": "Understanding space weather hazard in the Australian high-voltage power transmission lines using geomagnetic and magnetotelluric data",
+            "org": "Geoscience Australia Data",
+            "formats": [
+              "HTML"
+            ]
+          },
+          {
+            "title": "10 September 2013 - Richmond power supply update",
+            "org": "NSW Government",
+            "formats": [
+              "PDF"
+            ]
+          }
+        ]
+      }
+    ],
+    "jacana": [
+      {
+        "url": "https://www.jacanaenergy.com.au/",
+        "status": 200,
+        "bytes": 45527,
+        "links": [
+          "/sites/default/files/JE_Energy_burst_favicon.png",
+          "/sites/default/files/css/css_9g8aLH1x_Yy5a6f79ZlskaSWojVNtgC8U6B759ikZAA.css?delta=0&amp;language=en&amp;theme=jacana&amp;include=eJxFykkOgCAQBdELIZzpM8iQtiHdkMjt3WjcVV4KMc4O3g5v2FM6TxO6JBdlDZBFw20aAhguU_egQ-emytkMCLJgFP3mX-zisTxVLSka3TrT5Tw0PRbiLL0",
+          "/sites/default/files/css/css_iaaTClpYn7xrHwqGfH6zqmaJKAqBUYx3q86V2GcD7kI.css?delta=1&amp;language=en&amp;theme=jacana&amp;include=eJxFykkOgCAQBdELIZzpM8iQtiHdkMjt3WjcVV4KMc4O3g5v2FM6TxO6JBdlDZBFw20aAhguU_egQ-emytkMCLJgFP3mX-zisTxVLSka3TrT5Tw0PRbiLL0",
+          "https://myaccount.jacanaenergy.com.au/Login/tabid/90/Default.aspx?returnurl=%2f"
+        ]
+      },
+      {
+        "url": "https://www.jacanaenergy.com.au/sitemap.xml",
+        "status": 200,
+        "bytes": 4675,
+        "links": []
+      }
+    ],
+    "agolScoped": [
+      {
+        "query": "outage",
+        "status": 200,
+        "total": 817,
+        "hits": [
+          {
+            "title": "Metro Water Services - Service Outages",
+            "owner": "NashvilleOpenData",
+            "url": "https://services2.arcgis.com/HdTo6HJqh92wn4D8/arcgis/rest/services/Metro_Water_Services_Outages_Feature_Layer_view2/FeatureServer",
+            "modified": "2026-10-06"
+          },
+          {
+            "title": "PUBLIC_OUTAGE_PROD",
+            "owner": "smithmc",
+            "url": "https://services.arcgis.com/IUHS0rm95L1JaTkq/arcgis/rest/services/PUBLIC_OUTAGE_PROD3/FeatureServer",
+            "modified": "2023-01-17"
+          },
+          {
+            "title": "Public Outages Production V2",
+            "owner": "rochmnGIS",
+            "url": "https://services1.arcgis.com/zC7pGkrIoR451W0i/arcgis/rest/services/Public_Outages_Production_V2/FeatureServer",
+            "modified": "2026-10-06"
+          },
+          {
+            "title": "Road Outages",
+            "owner": "mikefief_usasoc",
+            "url": "https://services9.arcgis.com/8XFoPVBCQgMU7YqP/arcgis/rest/services/Road_Outages/FeatureServer",
+            "modified": "2018-09-19"
+          },
+          {
+            "title": "Planned Outages Website View",
+            "owner": "a_azm0",
+            "url": "https://services7.arcgis.com/JnfgtYmPIMDJpRxm/arcgis/rest/services/Planned_Outages_Website_View/FeatureServer",
+            "modified": "2026-09-15"
+          },
+          {
+            "title": "Event_Outages_PSPS_Public_View",
+            "owner": "KFuller_sempra",
+            "url": "https://services.arcgis.com/S0EUI1eVapjRPS5e/arcgis/rest/services/Event_Outages_PSPS_Public_View/FeatureServer",
+            "modified": "2024-01-24"
+          },
+          {
+            "title": "Cal OES - Power Outage Incidents",
+            "owner": "eocgisfc",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/ArcGIS/rest/services/Power_Outages_(View)/FeatureServer/0",
+            "modified": "2022-07-20"
+          },
+          {
+            "title": "Cumulative Statewide Power Outages (Public View)",
+            "owner": "kira.evers_DublinCA",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/Power_Outages_(View)/FeatureServer",
+            "modified": "2023-06-01"
+          },
+          {
+            "title": "Customer Public Facing Outage Maps",
+            "owner": "EsriElectricContent",
+            "url": "https://services3.arcgis.com/k6BftEE1TI58PR5c/arcgis/rest/services/Customer_Public_Facing_Outage_Maps/FeatureServer",
+            "modified": "2025-04-14"
+          },
+          {
+            "title": "Public Outage Flags View",
+            "owner": "IconWaterAdmin",
+            "url": "https://services7.arcgis.com/j1RuquQh3Rm5rhxi/arcgis/rest/services/Flags_view/FeatureServer",
+            "modified": "2026-07-29"
+          },
+          {
+            "title": "Public Outages and Alerts",
+            "owner": "UtilitySolutionsDeployment",
+            "url": "https://services7.arcgis.com/mbo4CkTxRxNUaNGx/arcgis/rest/services/Public_Outages_and_Alerts/FeatureServer",
+            "modified": "2019-03-20"
+          },
+          {
+            "title": "Outage Polygon",
+            "owner": "jray@serviceauthority.org_ACSA",
+            "url": "https://services2.arcgis.com/OS21qeuPwRnS7y5V/arcgis/rest/services/Outage_Polygon/FeatureServer",
+            "modified": "2025-03-27"
+          },
+          {
+            "title": "Water Outages and Alerts",
+            "owner": "UtilitySolutionsDeployment",
+            "url": "https://services7.arcgis.com/mbo4CkTxRxNUaNGx/arcgis/rest/services/Water_Outage_and_Alerts/FeatureServer",
+            "modified": "2019-03-20"
+          },
+          {
+            "title": "Outage Map_WFL1 view",
+            "owner": "mwl_gis",
+            "url": "https://services3.arcgis.com/bmrnS1GnJG9pdwm3/arcgis/rest/services/Outage_Map_WFL1_view/FeatureServer",
+            "modified": "2025-12-23"
+          },
+          {
+            "title": "Water_Outage_Service_Public",
+            "owner": "UW-GIS",
+            "url": "https://services2.arcgis.com/tQg86iShPXJPWQWw/arcgis/rest/services/Water_Outage_Service_Public/FeatureServer",
+            "modified": "2023-02-28"
+          },
+          {
+            "title": "Outages_view",
+            "owner": "jeff.berry",
+            "url": "https://services1.arcgis.com/3ymEnGydxeYILJzI/arcgis/rest/services/Outages_view/FeatureServer",
+            "modified": "2022-02-12"
+          },
+          {
+            "title": "Public View NISC AMI Outages",
+            "owner": "MAGICAdmin",
+            "url": "https://services.arcgis.com/YKu9KTHe0ln1JUmf/arcgis/rest/services/Public_View_NISC_AMI_Outages/FeatureServer",
+            "modified": "2025-11-04"
+          },
+          {
+            "title": "Deprecated: Waterworks Outage Location_WFL1",
+            "owner": "WaterworksDataUpdater",
+            "url": "https://services6.arcgis.com/SiUAoHzWN11AIADA/arcgis/rest/services/Waterworks_Outage_Location/FeatureServer",
+            "modified": "2026-09-16"
+          },
+          {
+            "title": "Outage Layers V2_view",
+            "owner": "Mainmast",
+            "url": "https://services8.arcgis.com/wNDmObY7QplwZD9m/arcgis/rest/services/Outage_Layers_V2_view/FeatureServer",
+            "modified": "2022-06-24"
+          },
+          {
+            "title": "PUBLIC_OUTAGE_PROD_vw",
+            "owner": "smithmc",
+            "url": "https://services.arcgis.com/IUHS0rm95L1JaTkq/arcgis/rest/services/PUBLIC_OUTAGE_PROD_vw/FeatureServer",
+            "modified": "2023-01-17"
+          },
+          {
+            "title": "Power_Outages_(View) - Power Outage Incidents",
+            "owner": "Nick_Fury",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/Power_Outages_(View)/FeatureServer",
+            "modified": "2019-12-09"
+          },
+          {
+            "title": "Outage Area Public view",
+            "owner": "kwindsor@ntpower.ca_ntpower",
+            "url": "https://services5.arcgis.com/PwcBheX3Og5dQmvT/arcgis/rest/services/Outage_Area_Public_view/FeatureServer",
+            "modified": "2025-10-17"
+          },
+          {
+            "title": "Outages_view",
+            "owner": "wdorantes@epwu",
+            "url": "https://services3.arcgis.com/vJh59rtgaXYEYFhg/arcgis/rest/services/Outages_view/FeatureServer",
+            "modified": "2026-08-10"
+          },
+          {
+            "title": "Outage_Area_view",
+            "owner": "wdorantes@epwu",
+            "url": "https://services3.arcgis.com/vJh59rtgaXYEYFhg/arcgis/rest/services/Outage_Area_view/FeatureServer",
+            "modified": "2022-07-27"
+          },
+          {
+            "title": "Power_Outages_(View) - Power Outage Areas",
+            "owner": "nancy.milholland_sfdem",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/ArcGIS/rest/services/Power_Outages_(View)/FeatureServer",
+            "modified": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "query": "electrical outage",
+        "status": 200,
+        "total": 140,
+        "hits": [
+          {
+            "title": "Public Outages Production V2",
+            "owner": "rochmnGIS",
+            "url": "https://services1.arcgis.com/zC7pGkrIoR451W0i/arcgis/rest/services/Public_Outages_Production_V2/FeatureServer",
+            "modified": "2026-10-06"
+          },
+          {
+            "title": "Cal OES - Power Outage Incidents",
+            "owner": "eocgisfc",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/ArcGIS/rest/services/Power_Outages_(View)/FeatureServer/0",
+            "modified": "2022-07-20"
+          },
+          {
+            "title": "Cumulative Statewide Power Outages (Public View)",
+            "owner": "kira.evers_DublinCA",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/Power_Outages_(View)/FeatureServer",
+            "modified": "2023-06-01"
+          },
+          {
+            "title": "HHS emPOWER REST Service Public",
+            "owner": "DHHS_gissupport",
+            "url": "https://services2.arcgis.com/ZQ4jTQn6k7VPXEwO/arcgis/rest/services/HHS_emPOWER_REST_Service_Public/FeatureServer",
+            "modified": "2026-09-21"
+          },
+          {
+            "title": "Electric Service",
+            "owner": "Smyrna.viewer",
+            "url": "https://services7.arcgis.com/rle0MZUQbRoIpmfe/arcgis/rest/services/Electric_Service/FeatureServer",
+            "modified": "2023-04-05"
+          },
+          {
+            "title": "ELECTRIC GAS - EM Operations Board View",
+            "owner": "cakee",
+            "url": "https://services.arcgis.com/ptvDyBs1KkcwzQNJ/arcgis/rest/services/ELECTRIC_GAS_EM_Operations_Board_View/FeatureServer",
+            "modified": "2024-01-29"
+          },
+          {
+            "title": "Outage",
+            "owner": "Infinity_lodi",
+            "url": "https://services2.arcgis.com/Gx8PA57brTGuyAwy/arcgis/rest/services/Outage/FeatureServer",
+            "modified": "2026-10-06"
+          },
+          {
+            "title": "Buffered Outage Polygons",
+            "owner": "gvecgisadmin",
+            "url": "https://esridatastore.gvec.org/arcgis/rest/services/Buffered_Outage_Polygons/MapServer",
+            "modified": "2024-09-16"
+          },
+          {
+            "title": "Damage Hurricane Katrina",
+            "owner": "A_Milosevic",
+            "url": "https://services7.arcgis.com/elGJbr6urgJjupLi/arcgis/rest/services/Damage_Hurricane_Katrina/FeatureServer",
+            "modified": "2020-10-10"
+          },
+          {
+            "title": "Damage_ACG",
+            "owner": "agrosso_DTCC_S_GIS",
+            "url": "https://services3.arcgis.com/n0T17SpLcOAjNSXv/arcgis/rest/services/Damage_ACG/FeatureServer",
+            "modified": "2021-02-16"
+          },
+          {
+            "title": "Electricity Outages (BETA) - Read Only",
+            "owner": "nema.geo",
+            "url": "https://services5.arcgis.com/cJn6oR1QqErYBL5d/arcgis/rest/services/electricity_outages_read_only/FeatureServer",
+            "modified": "2025-10-22"
+          },
+          {
+            "title": "PSPS Public Power Survey Results_stakeholder",
+            "owner": "sanjose",
+            "url": "https://services.arcgis.com/6kSayNlqm3HvsYZ8/arcgis/rest/services/survey123_9e82d50f7dd54fff9e62a2d38d5dcc99_stakeholder/FeatureServer",
+            "modified": "2022-02-03"
+          },
+          {
+            "title": "LUS Outage Survey view",
+            "owner": "CDBROUSSARD_LUSLAF",
+            "url": "https://services9.arcgis.com/qsLUYRSKpfE7mbs8/arcgis/rest/services/LUS_Outage_Survey_view/FeatureServer",
+            "modified": "2023-07-31"
+          },
+          {
+            "title": "PSPS Public Power Survey Results_fieldworker",
+            "owner": "sanjose",
+            "url": "https://services.arcgis.com/6kSayNlqm3HvsYZ8/arcgis/rest/services/survey123_9e82d50f7dd54fff9e62a2d38d5dcc99_fieldworker/FeatureServer",
+            "modified": "2022-02-03"
+          },
+          {
+            "title": "Damage_RMP",
+            "owner": "rpierc21_GISandData",
+            "url": "https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/Damage_RMP/FeatureServer",
+            "modified": "2023-02-06"
+          },
+          {
+            "title": "Damage Damage",
+            "owner": "BigMase",
+            "url": "https://services2.arcgis.com/PYn6bWCjT6bhw1z3/arcgis/rest/services/Damage_Damage/FeatureServer",
+            "modified": "2021-06-27"
+          },
+          {
+            "title": "PSPS Public Power Survey Results",
+            "owner": "sanjose",
+            "url": "https://services.arcgis.com/6kSayNlqm3HvsYZ8/arcgis/rest/services/survey123_9e82d50f7dd54fff9e62a2d38d5dcc99/FeatureServer",
+            "modified": "2022-02-03"
+          },
+          {
+            "title": "Esmeria_Damage",
+            "owner": "rjayresmeria_UCSDOnline",
+            "url": "https://services1.arcgis.com/eGSDp8lpKe5izqVc/arcgis/rest/services/Esmeria_Damage/FeatureServer",
+            "modified": "2022-02-02"
+          },
+          {
+            "title": "PublicOutages1081_Production Public View",
+            "owner": "ColumbusOhioGIS",
+            "url": "https://services1.arcgis.com/9yy6msODkIBzkUXU/arcgis/rest/services/PublicOutages1081_Production_Public_View/FeatureServer",
+            "modified": "2026-07-13"
+          },
+          {
+            "title": "Damage_Duarte",
+            "owner": "elianaduarte_ufl",
+            "url": "https://services.arcgis.com/LBbVDC0hKPAnLRpO/arcgis/rest/services/Damage_Duarte2/FeatureServer",
+            "modified": "2022-12-06"
+          },
+          {
+            "title": "PublicOutages1081_Staging Public View",
+            "owner": "ColumbusOhioGIS",
+            "url": "https://services1.arcgis.com/9yy6msODkIBzkUXU/arcgis/rest/services/PublicOutages1081_Staging_Public_View/FeatureServer",
+            "modified": "2026-07-13"
+          },
+          {
+            "title": "Outage Incidents",
+            "owner": "mqp5992_pennstate",
+            "url": "https://services9.arcgis.com/6EuFgO4fLTqfNOhu/arcgis/rest/services/Outage_Incidents/FeatureServer",
+            "modified": "2025-07-30"
+          },
+          {
+            "title": "ImpactAnalysis",
+            "owner": "ArcGISforElectric",
+            "url": "https://services.arcgis.com/8xyWD7BXPXLSUGKQ/arcgis/rest/services/ImpactAnalysis/FeatureServer",
+            "modified": "2015-12-08"
+          },
+          {
+            "title": "Damage_Hanson",
+            "owner": "thanson572@anselm.edu",
+            "url": "https://services1.arcgis.com/aguSsLS841Hp3EC4/arcgis/rest/services/Damage_Hanson/FeatureServer",
+            "modified": "2025-02-19"
+          },
+          {
+            "title": "Available Distribution Capacity",
+            "owner": "geoscienceaustralia",
+            "url": "https://services1.arcgis.com/wfNKYeHsOyaFyPw3/arcgis/rest/services/AvailableDistributionCapacity/FeatureServer",
+            "modified": "2022-08-04"
+          }
+        ]
+      },
+      {
+        "query": "power outage",
+        "status": 200,
+        "total": 265,
+        "hits": [
+          {
+            "title": "Cal OES - Power Outage Incidents",
+            "owner": "eocgisfc",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/ArcGIS/rest/services/Power_Outages_(View)/FeatureServer/0",
+            "modified": "2022-07-20"
+          },
+          {
+            "title": "Cumulative Statewide Power Outages (Public View)",
+            "owner": "kira.evers_DublinCA",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/Power_Outages_(View)/FeatureServer",
+            "modified": "2023-06-01"
+          },
+          {
+            "title": "Power_Outages_(View) - Power Outage Incidents",
+            "owner": "Nick_Fury",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/Power_Outages_(View)/FeatureServer",
+            "modified": "2019-12-09"
+          },
+          {
+            "title": "Planned Outages Website View",
+            "owner": "a_azm0",
+            "url": "https://services7.arcgis.com/JnfgtYmPIMDJpRxm/arcgis/rest/services/Planned_Outages_Website_View/FeatureServer",
+            "modified": "2026-09-15"
+          },
+          {
+            "title": "Power Outages",
+            "owner": "hstatter@frontlinewildfire.com",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/Power_Outages_(View)/FeatureServer/0",
+            "modified": "2020-04-16"
+          },
+          {
+            "title": "Outage Map_WFL1 view",
+            "owner": "mwl_gis",
+            "url": "https://services3.arcgis.com/bmrnS1GnJG9pdwm3/arcgis/rest/services/Outage_Map_WFL1_view/FeatureServer",
+            "modified": "2025-12-23"
+          },
+          {
+            "title": "Cumulative Statewide Power Outages (Public View) - Power Outage Areas",
+            "owner": "JDestefans_OES",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/Power_Outages_(View)/FeatureServer",
+            "modified": "2025-12-24"
+          },
+          {
+            "title": "Power_Outages_(View) - Power Outage Areas",
+            "owner": "nancy.milholland_sfdem",
+            "url": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/ArcGIS/rest/services/Power_Outages_(View)/FeatureServer",
+            "modified": "2026-02-25"
+          },
+          {
+            "title": "PSPS Public Power Survey Results_stakeholder",
+            "owner": "sanjose",
+            "url": "https://services.arcgis.com/6kSayNlqm3HvsYZ8/arcgis/rest/services/survey123_9e82d50f7dd54fff9e62a2d38d5dcc99_stakeholder/FeatureServer",
+            "modified": "2022-02-03"
+          },
+          {
+            "title": "PSPS Public Power Survey Results_fieldworker",
+            "owner": "sanjose",
+            "url": "https://services.arcgis.com/6kSayNlqm3HvsYZ8/arcgis/rest/services/survey123_9e82d50f7dd54fff9e62a2d38d5dcc99_fieldworker/FeatureServer",
+            "modified": "2022-02-03"
+          },
+          {
+            "title": "PSPS Public Power Survey Results",
+            "owner": "sanjose",
+            "url": "https://services.arcgis.com/6kSayNlqm3HvsYZ8/arcgis/rest/services/survey123_9e82d50f7dd54fff9e62a2d38d5dcc99/FeatureServer",
+            "modified": "2022-02-03"
+          },
+          {
+            "title": "Outage Data Initiative (ODI) US Power Outages",
+            "owner": "bria7556@esri.com_wpl",
+            "url": "https://services.arcgis.com/rueeA7pb6NPcb9uU/arcgis/rest/services/Outage_Data_Initiative_(ODI)_US_Power_Outages/FeatureServer",
+            "modified": "2020-04-14"
+          },
+          {
+            "title": "Report a Power Outage",
+            "owner": "ESRichlandGIS",
+            "url": "https://services3.arcgis.com/5g4JcCVJwbhPOszb/arcgis/rest/services/survey123_9ac822e42bda47629743e4ab29c0cd6c/FeatureServer",
+            "modified": "2025-07-09"
+          },
+          {
+            "title": "Lab_2_Outages",
+            "owner": "janelle6",
+            "url": "https://services3.arcgis.com/J1Locv0GPOt6yBRR/arcgis/rest/services/Lab_2_Outages/FeatureServer",
+            "modified": "2018-02-03"
+          },
+          {
+            "title": "EnergexOutageArea",
+            "owner": "BrisbaneCityCouncil",
+            "url": "https://services.arcgis.com/bfVzktoY0OhzQCDj/ArcGIS/rest/services/VwEnergexOutages/FeatureServer/0",
+            "modified": "2023-06-05"
+          },
+          {
+            "title": "EnergexOutagePoint",
+            "owner": "BrisbaneCityCouncil",
+            "url": "https://services.arcgis.com/bfVzktoY0OhzQCDj/ArcGIS/rest/services/VwEnergexOutages/FeatureServer/1",
+            "modified": "2023-06-05"
+          },
+          {
+            "title": "Outage Area Public view",
+            "owner": "kwindsor@ntpower.ca_ntpower",
+            "url": "https://services5.arcgis.com/PwcBheX3Og5dQmvT/arcgis/rest/services/Outage_Area_Public_view/FeatureServer",
+            "modified": "2025-10-17"
+          },
+          {
+            "title": "Power Outage Survey",
+            "owner": "ic-briantfabela",
+            "url": "https://services7.arcgis.com/RomaVqqozKczDNgd/arcgis/rest/services/survey123_e3ca2a03d5764717b93cfc7b6ea4916c/FeatureServer",
+            "modified": "2023-02-27"
+          },
+          {
+            "title": "Report a Power Outage 3 view",
+            "owner": "ESRichlandGIS",
+            "url": "https://services3.arcgis.com/5g4JcCVJwbhPOszb/arcgis/rest/services/Report_a_Power_Outage_3_view/FeatureServer",
+            "modified": "2026-06-16"
+          },
+          {
+            "title": "Traffic_Lights_forDOC",
+            "owner": "TEOPublisher",
+            "url": "https://services.arcgis.com/B7ZrK1Hv4P1dsm9R/arcgis/rest/services/Traffic_Lights_forDOC/FeatureServer",
+            "modified": "2018-04-16"
+          },
+          {
+            "title": "PowerOutage",
+            "owner": "NashuaAdmin",
+            "url": "https://services1.arcgis.com/WwJAqA4K2ienzdKW/arcgis/rest/services/PowerOutage/FeatureServer",
+            "modified": "2017-10-30"
+          },
+          {
+            "title": "HHS emPOWER REST Service Public",
+            "owner": "DHHS_gissupport",
+            "url": "https://services2.arcgis.com/ZQ4jTQn6k7VPXEwO/arcgis/rest/services/HHS_emPOWER_REST_Service_Public/FeatureServer",
+            "modified": "2026-09-21"
+          },
+          {
+            "title": "Damage Hurricane Katrina",
+            "owner": "A_Milosevic",
+            "url": "https://services7.arcgis.com/elGJbr6urgJjupLi/arcgis/rest/services/Damage_Hurricane_Katrina/FeatureServer",
+            "modified": "2020-10-10"
+          },
+          {
+            "title": "Power Outages by Zip Code",
+            "owner": "Timothy.Hutchison@dc.gov_DCGIS",
+            "url": "https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_APPS/PepcoPowerOutages2020/MapServer/1",
+            "modified": "2020-08-04"
+          },
+          {
+            "title": "Damage_ACG",
+            "owner": "agrosso_DTCC_S_GIS",
+            "url": "https://services3.arcgis.com/n0T17SpLcOAjNSXv/arcgis/rest/services/Damage_ACG/FeatureServer",
+            "modified": "2021-02-16"
+          }
+        ]
+      }
+    ]
+  }
 }
