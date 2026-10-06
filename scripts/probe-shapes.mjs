@@ -134,6 +134,43 @@ for (const [state, url] of Object.entries(TARGETS)) {
   out.feeds[state] = { url, bytes: body.length, topShape, recordArrays: dumped };
 }
 
+/* Victoria puts two different kinds of record in one feed and distinguishes
+   them with `feedType`. That matters because the same key means different
+   things in each: in a warning, category1 is the alert level ("Advice"); in
+   an incident it is the event type ("Fire", "Tree Down"). Reading one field
+   for both is why the live service reports Earthquake and Building Damage as
+   alert levels.
+
+   So dump one of each kind rather than one of the first kind, and the field
+   that is safe to use for a title at the same time -- for a warning, `name`
+   is the string "Advice" and the place is in `location`, which the title
+   hints currently discard in favour of name. */
+try {
+  const res = await fetch(TARGETS.vic, { headers: { 'User-Agent': UA } });
+  const vic = JSON.parse(await res.text());
+  const byType = {};
+  (vic.features || []).forEach((f) => {
+    const p = (f && f.properties) || {};
+    const k = String(p.feedType || 'unknown');
+    byType[k] = byType[k] || { count: 0, sample: null, category1: new Set(), names: new Set() };
+    byType[k].count++;
+    if (!byType[k].sample) byType[k].sample = trim(p);
+    if (byType[k].category1.size < 10 && p.category1) byType[k].category1.add(String(p.category1));
+    if (byType[k].names.size < 6 && p.name) byType[k].names.add(String(p.name).slice(0, 48));
+  });
+  out.vicByFeedType = Object.fromEntries(Object.entries(byType).map(([k, v]) => [k, {
+    count: v.count, category1Values: [...v.category1], nameValues: [...v.names], sample: v.sample
+  }]));
+  console.log('\n======== VIC, split by feedType');
+  Object.entries(out.vicByFeedType).forEach(([k, v]) => {
+    console.log('  feedType=' + k + '  (' + v.count + ' records)');
+    console.log('    category1 values: ' + v.category1Values.join(' | '));
+    console.log('    name values:      ' + v.nameValues.join(' | '));
+    Object.entries(v.sample).forEach(([kk, vv]) =>
+      console.log('      ' + kk.padEnd(22) + JSON.stringify(vv)));
+  });
+} catch (e) { out.vicByFeedType = { error: e.message }; console.log('VIC split failed: ' + e.message); }
+
 mkdirSync('data', { recursive: true });
 writeFileSync('data/shape-probe.json', JSON.stringify(out, null, 2));
 console.log('\nwrote data/shape-probe.json');
