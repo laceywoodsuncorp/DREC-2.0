@@ -37,6 +37,14 @@ const UA = 'Mozilla/5.0 (compatible; NewsRadar/1.0; +https://drec-oncall-updates
    too, but they rarely offer an open feed, and the independents alongside
    them often do. */
 const DISCOVER = [
+  /* 9News is configured at /rss and that address answers 404, measured by
+     the live feed-health check. It is one of only four feeds the cold start
+     fetches, so the slot has been spent on nothing. Autodiscovery is asked
+     for the real address rather than another guess -- guessing is what put
+     /rss there. */
+  ['9News home', 'https://www.9news.com.au/'],
+  ['9News national', 'https://www.9news.com.au/national'],
+
   ['insuranceNEWS home', 'https://www.insurancenews.com.au/'],
   ['insuranceNEWS rss-channels', 'https://www.insurancenews.com.au/rss-channels'],
   ['SA CFS', 'https://www.cfs.sa.gov.au/'],

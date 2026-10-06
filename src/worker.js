@@ -205,7 +205,13 @@ const NEWS_FEEDS = [
   { name: 'ABC News', domain: 'abc.net.au', group: 'national', url: 'https://www.abc.net.au/news/feed/51120/rss.xml', priority: true },
   { name: 'ABC News', domain: 'abc.net.au', group: 'national', url: 'https://www.abc.net.au/news/feed/10719986/rss.xml', priority: true },
   { name: 'SBS News', domain: 'sbs.com.au', group: 'national', url: 'https://www.sbs.com.au/news/feed', priority: true },
-  { name: '9News', domain: '9news.com.au', group: 'national', url: 'https://www.9news.com.au/rss', priority: true },
+  /* Not `priority` any more. This address answers 404 -- measured, not
+     suspected -- and priority feeds are the four a cold start fetches, so
+     this one was spending a quarter of that budget on nothing. The feed is
+     kept because the outlet is worth having and the right address is being
+     looked for by autodiscovery (see scripts/probe-feeds.mjs); it just no
+     longer displaces a feed that works. */
+  { name: '9News', domain: '9news.com.au', group: 'national', url: 'https://www.9news.com.au/rss' },
   { name: '7NEWS', domain: '7news.com.au', group: 'national', url: 'https://7news.com.au/feed', priority: true },
   /* Back in now that the feed can be filtered by source -- anyone who doesn't
      want it can simply deselect it rather than it having to be dropped
@@ -257,7 +263,13 @@ const NEWS_FEEDS = [
      the list looks a little thin -- so this was invisible until someone
      noticed insurance stories had stopped appearing. Twice now. Hence
      test/feed_url.test.mjs, which fails if it ever goes back. */
-  { name: 'insuranceNEWS', domain: 'insurancenews.com.au', group: 'trade', url: 'https://www.insurancenews.com.au/rss/all' },
+  /* Fetched on a cold start, despite sitting near the end of this list.
+     It is the ONLY source for the Insurance category, so without it that
+     chip reads (0) in every location until the slow top-up eventually
+     reaches position 29 of 30 -- and on a dashboard built for an insurer,
+     Insurance is a primary category rather than a long-tail one. Observed
+     live as "Insurance (3)" while 25 of 30 sources were returning articles. */
+  { name: 'insuranceNEWS', domain: 'insurancenews.com.au', group: 'trade', url: 'https://www.insurancenews.com.au/rss/all', priority: true, bootstrapAlways: true },
 
   /* --- world --- */
   /* Exempt from the client's AU-relevance filter, same as under GDELT. */
@@ -269,7 +281,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-06-buildskew';
+const WORKER_BUILD = '2026-10-06-insbootstrap';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -652,6 +664,15 @@ const BOOTSTRAP_FEED_LIMIT = 4;
 function bootstrapFeeds() {
   const seen = new Set();
   const picked = [];
+  /* Taken first, regardless of position. Selecting purely by list order gave
+     the whole cold start to the national outlets and left a category with a
+     single source showing nothing at all -- which reads as "no insurance
+     news today" rather than "not fetched yet". */
+  for (const feed of NEWS_FEEDS) {
+    if (!feed.bootstrapAlways || seen.has(feed.domain)) continue;
+    seen.add(feed.domain);
+    picked.push(feed);
+  }
   for (const feed of NEWS_FEEDS) {
     if (!feed.priority || seen.has(feed.domain)) continue;
     seen.add(feed.domain);
