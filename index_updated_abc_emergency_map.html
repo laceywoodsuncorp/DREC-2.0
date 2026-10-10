@@ -55,6 +55,9 @@
   .chip:hover{transform:translateY(-1px)}
   .chip.active{background:var(--neutral-green);color:var(--true-white)}
   .chip .n{opacity:.75;font-weight:700;margin-left:2px}
+  .subfilter{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:.78rem;color:var(--heritage-green)}
+  .subfilter label{font-weight:600;opacity:.8}
+  .subfilter select{font:inherit;padding:5px 10px;border-radius:999px;border:1px solid rgba(0,67,70,.2);background:var(--true-white);color:var(--heritage-green);font-weight:600;cursor:pointer}
   .news-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 24px 12px}
   .news-toolbar .cache-note{font-size:.72rem;color:#5a6a6a}
   .news-toolbar .cache-note.stale{color:#a06000}
@@ -423,14 +426,25 @@
         <button class="chip active" data-cat="all">All</button>
         <button class="chip" data-cat="insurance">🛡️ Insurance</button>
         <button class="chip" data-cat="fire">🔥 House Fires</button>
-        <button class="chip" data-cat="flood">🌊 Floods &amp; Storms</button>
         <button class="chip" data-cat="bushfire">🌲 Bushfires</button>
+        <button class="chip" data-cat="flood">🌊 Floods</button>
+        <button class="chip" data-cat="peril">⛈️ Other Natural Perils</button>
+        <button class="chip" data-cat="environment">🌱 Environment</button>
+        <button class="chip" data-cat="ai">🤖 AI</button>
         <button class="chip" data-cat="politics">🏛️ Politics</button>
         <button class="chip" data-cat="economy">💰 Economy</button>
+        <button class="chip" data-cat="roads">🚗 Road Accidents</button>
         <button class="chip" data-cat="crime">🚔 Crime</button>
         <button class="chip" data-cat="health">🩺 Health</button>
         <button class="chip" data-cat="sport">🏅 Sport</button>
         <button class="chip" data-cat="world">🌏 World</button>
+      </div>
+      <!-- Only shown for a category that has one. Hiding it rather than
+           disabling it keeps the row from carrying a control that does
+           nothing for twelve of the fifteen chips. -->
+      <div class="subfilter" id="subfilterWrap" style="display:none">
+        <label for="subFilter" id="subFilterLabel">Narrow to</label>
+        <select id="subFilter"><option value="">All</option></select>
       </div>
       <div class="news-toolbar">
         <div class="cache-note" id="cacheNote">Loading latest Australian news…</div>
@@ -682,7 +696,9 @@
       'property fire','residential fire','unit fire','townhouse fire','duplex fire','granny flat fire',
       'garage fire','shed fire','caravan fire','fire destroys','fire guts','blaze destroys','blaze guts',
       'razed by fire','gutted by fire','fire rips through','fire tears through','house blaze','home blaze'],
-    flood:['flood*','storm*','cyclone*','deluge','rainfall warning','severe weather','hail','hailstone*'],
+    /* Water only. Storms, hail and cyclones moved to `peril`, which is now
+       their own category with a per-peril filter. */
+    flood:['flood*','floodwater*','inundat*','deluge','downpour*','rainfall warning','flash flooding','riverine'],
     bushfire:['bushfire*','wildfire*','grassfire*','hazard reduction','fire ban','fire danger'],
     /* Parties, people, institutions and the language of campaigning. The
        original list was parliament + minister + election + industrial
@@ -715,7 +731,17 @@
       'preselection','by-election','question time','senate estimates','party room','leadership spill',
       /* campaigning */
       'voter*','electorate*','ballot*','polling booth','opinion poll','swing against','swing to',
-      'policy platform','cpac','party conference','conservative','progressive','left-wing','right-wing'],
+      'policy platform','cpac','party conference','conservative','progressive','left-wing','right-wing',
+      /* Politics elsewhere. Without these the category was Australia-only,
+         so "Trump signs executive order" landed in World and "Starmer faces
+         Commons revolt" and "Putin meets Xi Jinping" landed nowhere at all
+         -- and the Global option on the politics filter had nothing to
+         show. These also stay tagged World where they match it; an article
+         is allowed to be both. */
+      'trump','white house','us congress','republican*','democrat*','biden','kamala harris',
+      'downing street','westminster','house of commons','starmer','brexit',
+      'nato','putin','kremlin','zelensky','xi jinping','modi','macron','netanyahu',
+      'g7','g20','state department','foreign minister','impeach*','sanction*','summit'],
     economy:['econom*','inflation','rba','interest rate*','fuel price*','cost of living','super fund','budget*','market*'],
     /* The original twelve were all police-and-courts process -- police,
        arrest, charged, court, jail, sentence -- and contained not one
@@ -752,7 +778,53 @@
       'hit-and-run','hit and run','wanted by police','wanted over','police raid','drug raid',
       'murder victim','crime victim','armed robbery','armed attacker*','armed men','firearm*'],
     health:['health*','hospital*','virus*','flu','disease*','medicine*','vaccine*','bird flu','pbs'],
-    sport:['sport*','cricket','afl','nrl','rugby','olympic*','commonwealth games','tennis','swim*','golf','striker*','premiership'],
+    /* Twelve words missed most of the sport pages. Codes, competitions,
+       national teams and the vocabulary of a match report are all here now.
+       Words with a strong non-sport sense are left out on purpose: "test"
+       is a medical test, "ashes" are what a bushfire leaves, "goal" is a
+       policy goal, "coach" is a bus, "club" is a nightclub and "victory" is
+       usually an election -- so each appears only as a phrase, if at all. */
+    sport:['sport*','athlete*','athletics',
+      'cricket*','afl','aflw','nrl','nrlw','rugby','soccer','football','netball','basketball','baseball',
+      'hockey','golf','tennis','swim*','cycling','rowing','surfing','boxing','ufc','motorsport','sailing',
+      'olympic*','paralympic*','commonwealth games','world cup','grand slam','grand final','finals series',
+      'test match','state of origin','melbourne cup','big bash','a-league','nbl','nba','wnba','bbl',
+      'wimbledon','australian open','us open','french open','the ashes','ryder cup','tour de france',
+      'matildas','socceroos','wallabies','boomers','opals','diamonds','kangaroos','wallaroos',
+      'premiership','brownlow','dally m','norm smith','premiers',
+      'striker*','midfielder*','goalkeeper*','fullback*','batsman','batter','bowler*','wicket*','innings',
+      'jockey*','supercars','formula one','grand prix','marathon','medal*','podium','scoreboard'],
+    /* Everything the weather and the ground can do that is not a flood or
+       a fire. Sub-filtered in the UI by PERIL_SUBS. */
+    peril:['storm*','thunderstorm*','supercell*','damaging winds','gale*','squall*','storm surge',
+      'hail','hailstone*','hailstorm*','cyclone*','tropical low','tornado*','waterspout*',
+      'earthquake*','quake*','tremor*','aftershock*','tsunami*',
+      'landslide*','landslip*','mudslide*','rockfall*','subsidence','sinkhole*',
+      'drought*','heatwave*','lightning','severe weather','natural disaster','natural peril*'],
+    /* Climate, ecology and biosecurity. */
+    environment:['climate change','climate','global warming','emissions','carbon','net zero','decarbonis*',
+      'renewable*','solar farm','wind farm','fossil fuel*','coal mine','greenhouse gas*',
+      'coral bleaching','great barrier reef','reef','biodiversity','ecosystem*','extinct*','endangered',
+      'threatened species','habitat','deforestation','land clearing','conservation','national park',
+      'pollution','microplastic*','algal bloom','water quality','sustainab*','recycling','landfill',
+      'bird flu','avian influenza','varroa','biosecurity','foot and mouth','white spot'],
+    /* Artificial intelligence, and the data centres being built for it. */
+    /* 'ai', 'llm' and 'gpu' are plain words here, not regexes: keywordHit
+       escapes metacharacters, so a written-out \b would be matched
+       literally and never fire. A single keyword already gets word
+       boundaries at both ends, which is exactly what these need -- \bai\b
+       does not match "said" or "rain". */
+    ai:['ai','artificial intelligence','machine learning','deep learning','neural network*',
+      'large language model*','llm','llms','generative ai','genai','chatbot*','chatgpt','openai','anthropic',
+      'copilot','gemini','deepfake*','algorithm*','automation','robotics',
+      'data centre*','data center*','datacentre*','datacenter*','hyperscale*','gpu','gpus','nvidia'],
+    /* Road trauma. Almost entirely phrases: "crash" alone is a market
+       crash or a plane crash, and this dashboard sees both. */
+    roads:['road toll','fatal crash','car crash','road crash','truck crash','bus crash','motorcycle crash',
+      'multi-vehicle','head-on','head on collision','collision','rollover','rolled over',
+      'hit-and-run','hit and run','pedestrian struck','pedestrian hit','cyclist struck','cyclist hit',
+      'motorcyclist','drink-driving','drink driving','drug driving','speeding','highway closed',
+      'crash on the','crashed into','single-vehicle','traffic crash','road fatalit*','road death*'],
     world:['iran','ukraine','gaza','israel','china','white house','united nations','trump','war','wars','warfare']
   };
   /* Two words that mean insurance in one sense and something ordinary in
@@ -826,8 +898,60 @@
 
   const POLITICS_VETO=/\b(rugby union|credit union|european union|union jack|air ?strikes?|drone strikes?|missile strikes?|lightning strikes?|strike rate|hat-?trick|kitchen cabinet|filing cabinet|cabinet maker)\b/i;
 
-  const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
-    politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
+  const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',bushfire:'🌲 Bushfires',
+    flood:'🌊 Floods',peril:'⛈️ Other Natural Perils',environment:'🌱 Environment',ai:'🤖 AI',
+    politics:'🏛️ Politics',economy:'💰 Economy',roads:'🚗 Road Accidents',crime:'🚔 Crime',
+    health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
+
+  /* A second level of filtering for the two categories broad enough to need
+     it. Each entry is matched the same way a keyword is, so the same stem
+     and whole-word rules apply.
+
+     Perils are split by the peril, because "is there a hailstorm on" and
+     "is there an earthquake on" are different questions. Politics is split
+     by where, because a reader here is usually after one or the other and
+     the feed carries plenty of both. */
+  const SUBCATS={
+    peril:{label:'Peril',options:[
+      ['storm','Storms',['storm*','thunderstorm*','supercell*','damaging winds','gale*','squall*','storm surge']],
+      ['hail','Hail',['hail','hailstone*','hailstorm*']],
+      ['cyclone','Cyclones',['cyclone*','tropical low']],
+      ['tornado','Tornadoes',['tornado*','waterspout*']],
+      ['earthquake','Earthquakes',['earthquake*','quake*','tremor*','aftershock*']],
+      ['tsunami','Tsunami',['tsunami*']],
+      ['landslide','Landslides',['landslide*','landslip*','mudslide*','rockfall*','sinkhole*','subsidence']],
+      ['drought','Drought',['drought*']],
+      ['heatwave','Heatwaves',['heatwave*']],
+      ['lightning','Lightning',['lightning']]
+    ]},
+    politics:{label:'Where',options:[
+      ['au','Australia',['labor','coalition','liberals','liberal party','greens','one nation','teal','teals',
+        'albanese','dutton','hanson','bandt','littleproud','plibersek','pocock','lambie',
+        'angus taylor','jim chalmers','penny wong','barnaby joyce','sussan ley',
+        'parliament house','federal government','prime minister','premier','premiers','senate estimates',
+        'question time','by-election','preselection','caucus','party room','australia','australian',
+        'canberra','nsw','victoria','queensland','wa','sa','tasmania','act','nt']],
+      ['global','Global',['trump','white house','congress','senate republican*','democrat*','biden','harris',
+        'downing street','westminster','starmer','european union','\u0065u summit','brussels','nato',
+        'united nations','putin','kremlin','zelensky','xi jinping','beijing','modi','macron','merz',
+        'netanyahu','g7','g20','cop2*','cop3*','foreign minister','state department']]
+    ]}
+  };
+
+  /* The sub-keys an article matches, if its category has any. An article
+     can match several -- a storm that brings hail is both -- and one that
+     matches none still appears under the category's "All". */
+  function subsFor(title){
+    const t=String(title||'').toLowerCase();
+    const out=[];
+    Object.keys(SUBCATS).forEach(cat=>{
+      SUBCATS[cat].options.forEach(([key,,words])=>{
+        if(words.some(w=>keywordHit(t,w))&&out.indexOf(cat+':'+key)===-1)out.push(cat+':'+key);
+      });
+    });
+    return out;
+  }
+
   const AU_RELEVANCE=/australia|australian|aussie|sydney|melbourne|brisbane|perth|adelaide|canberra|hobart|darwin|queensland|tasmania|\bnsw\b|\bqld\b|\bnt\b/i;
   /* Lifestyle/fluff content (recipes, celebrity gossip, horoscopes, TV
      recaps) shows up because GDELT's domain scoping pulls every section of
@@ -851,7 +975,7 @@
         cacheNote=document.getElementById('cacheNote'),refreshBtn=document.getElementById('newsRefresh'),
         catChips=document.querySelectorAll('#filters .chip');
 
-  let currentCat='all',currentArticles=null;
+  let currentCat='all',currentSub='',currentArticles=null;
   /* Source filtering runs alongside the category chips. `lastFeeds` is the
      per-outlet status from /api/news, kept so the dropdown can list every
      configured source -- including ones that returned nothing -- rather than
@@ -1076,7 +1200,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-10-crime';
+  const EXPECTED_WORKER_BUILD='2026-10-10-categories';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
@@ -1145,6 +1269,7 @@
       if(a.pubMs>Date.now()+3600000)return;
       if(EXCLUDE_KEYWORDS.test(a.title))return; // recipes, celebrity gossip, horoscopes etc -- not news
       const cats=classify(a.title,a.domain,a.source);
+      const subs=subsFor(a.title);
       if(a.world||(a.domain||'').includes(WORLD_DOMAIN)){
         /* The dedicated World source -- always keep and tag it World
            regardless of keyword matches, exempt from the AU-relevance gate
@@ -1161,7 +1286,7 @@
       /* `group` must survive here -- it's what the source filter's group
          options key off. Rebuilding the object without it silently put every
          article in "Other" and made every group count zero. */
-      out.push({title:a.title,url:a.url,domain:a.domain||'',source:a.source||'',group:a.group||'other',summary:a.summary||'',pubMs:a.pubMs,cats});
+      out.push({title:a.title,url:a.url,domain:a.domain||'',source:a.source||'',group:a.group||'other',summary:a.summary||'',pubMs:a.pubMs,cats,subs});
     });
     out.sort((x,y)=>y.pubMs-x.pubMs);
     return out;
@@ -1222,21 +1347,58 @@
     throw new Error(problems.join(' | ')||'No news source reachable');
   }
 
+  /* One place deciding what the chips and the list both mean by "in this
+     category", so a count and the rows under it cannot disagree. */
+  function matchesCat(a){
+    if(currentCat==='all')return true;
+    if(!a.cats.includes(currentCat))return false;
+    if(!currentSub)return true;
+    return (a.subs||[]).includes(currentCat+':'+currentSub);
+  }
+
+  /* Rebuilds the narrow-to dropdown for whichever chip is active, and
+     hides it entirely for a category that has no second level. Each option
+     carries its own count, so a peril with nothing in the feed says so
+     rather than looking like a filter that broke. */
+  function renderSubFilter(){
+    const wrap=document.getElementById('subfilterWrap');
+    const sel=document.getElementById('subFilter');
+    const lab=document.getElementById('subFilterLabel');
+    if(!wrap||!sel)return;
+    const spec=SUBCATS[currentCat];
+    if(!spec){wrap.style.display='none';currentSub='';return;}
+    wrap.style.display='flex';
+    lab.textContent=spec.label;
+    const inCat=(currentArticles||[]).filter(a=>matchesSource(a)&&a.cats.includes(currentCat));
+    const opts=['<option value="">All ('+inCat.length+')</option>'].concat(
+      spec.options.map(([key,label])=>{
+        const n=inCat.filter(a=>(a.subs||[]).includes(currentCat+':'+key)).length;
+        return '<option value="'+key+'"'+(key===currentSub?' selected':'')+'>'
+          +escapeHtml(label)+' ('+n+')</option>';
+      }));
+    sel.innerHTML=opts.join('');
+    sel.value=currentSub;
+  }
+
   function renderCatCounts(){
     catChips.forEach(ch=>{
       const cat=ch.dataset.cat;
       const base=(cat==='all')?'All':CAT_LABEL[cat];
       if(!currentArticles){ch.innerHTML=base;return;}
       const n=currentArticles.filter(a=>matchesSource(a)&&(cat==='all'||a.cats.includes(cat))).length;
+      /* Deliberately the category total, not the sub-filtered one: the chip
+         says how much is there, the dropdown says how much of it you are
+         looking at. */
       ch.innerHTML=base+' <span class="n">('+n+')</span>';
     });
   }
 
   function applyFilters(){
     if(!currentArticles)return;
+    renderSubFilter();
     const loadingEl=document.getElementById('newsLoading');
     if(loadingEl)loadingEl.style.display='none';
-    const visible=currentArticles.filter(a=>matchesSource(a)&&(currentCat==='all'||a.cats.includes(currentCat)));
+    const visible=currentArticles.filter(a=>matchesSource(a)&&matchesCat(a));
     feed.querySelectorAll('.item').forEach(el=>el.remove());
     visible.forEach(a=>{
       const el=document.createElement('div');el.className='item';el.dataset.cat=a.cats.join(' ');
@@ -1449,7 +1611,19 @@
     }
   }
 
-  catChips.forEach(ch=>ch.addEventListener('click',()=>{catChips.forEach(c=>c.classList.remove('active'));ch.classList.add('active');currentCat=ch.dataset.cat;applyFilters();}));
+  catChips.forEach(ch=>ch.addEventListener('click',()=>{
+    catChips.forEach(c=>c.classList.remove('active'));ch.classList.add('active');
+    currentCat=ch.dataset.cat;
+    /* Reset on every chip change. A peril left selected while switching to
+       Politics would silently filter it to nothing. */
+    currentSub='';
+    renderSubFilter();
+    applyFilters();
+  }));
+  (function(){
+    const sel=document.getElementById('subFilter');
+    if(sel)sel.addEventListener('change',()=>{currentSub=sel.value;applyFilters();});
+  })();
   /* Keeps the panel on screen at any width. Anchored under the button and to
      its right edge where there's room, otherwise clamped to the viewport --
      on a phone the button sits far enough right that a right-aligned 340px

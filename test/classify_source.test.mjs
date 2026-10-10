@@ -101,7 +101,10 @@ console.log('\n== the stem overreach, measured headline by headline ==');
    word. Listed individually so a regression names the headline it broke. */
 [
   ['Bushfire warning for the Blue Mountains', ['bushfire']],
-  ['Severe weather warning issued for the Hunter', ['flood']],
+  /* Storms and hail moved from flood to the peril category when "Floods &
+     Storms" was split in two, so these expect peril now. The split was the
+     point of the change, not a regression from it. */
+  ['Severe weather warning issued for the Hunter', ['peril']],
   ['Flood warning upgraded for the Macquarie', ['flood']],
   ['Emergency warning as fire approaches Warburton', []],
   ['Warrant issued for missing man', []],
@@ -117,12 +120,12 @@ console.log('\n== the stem overreach, measured headline by headline ==');
   ['Court sentences man over arson', ['crime']],
   ['Council courtesy bus returns to service', []],
   ['PM hailed the housing agreement', []],
-  ['Hailstones smash windscreens in Toowoomba', ['flood']],
+  ['Hailstones smash windscreens in Toowoomba', ['peril']],
   ['Fluctuating fuel prices squeeze drivers', ['economy']],
   ['Interest rates on hold says RBA', ['economy']],
   ['Striker signs with Melbourne Victory', ['sport']],
   ['Minister announces election date', ['politics']],
-  ['Insurer rejects claim after storm', ['insurance', 'flood']],
+  ['Insurer rejects claim after storm', ['insurance', 'peril']],
   ['Illawarra Mercury reports on council budget', ['economy']]
 ].forEach(([title, want]) => {
   const got = classify(title, 'abc.net.au', 'ABC News');
