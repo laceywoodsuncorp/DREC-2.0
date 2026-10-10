@@ -1,0 +1,3195 @@
+{
+  "at": "2026-10-10T04:10:44.660Z",
+  "operators": {
+    "Essential Energy": {
+      "searches": [
+        {
+          "query": "\"Essential Energy\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"Essential Energy\"",
+          "total": 19,
+          "hits": 19
+        }
+      ],
+      "candidates": [
+        {
+          "title": "DGN_Tiles",
+          "owner": "EssentialAdminGIS",
+          "url": "https://services-ap1.arcgis.com/3o0vFs4fJRsuYuBO/arcgis/rest/services/DGN_Tiles/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2023-10-24",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15688018.327200005,
+            "ymin": -4526585.497299999,
+            "xmax": 17736905.3672,
+            "ymax": -3186080.2279000017,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 5,
+              "name": "DGN_Tiles",
+              "count": 1902,
+              "fields": [
+                "FID",
+                "id",
+                "name",
+                "zone",
+                "date_trans",
+                "translated",
+                "pm_regions",
+                "last_trn_u",
+                "last_cad_u",
+                "depot_name",
+                "Shape__Area",
+                "Shape__Length",
+                "GlobalID"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Connectors_",
+          "owner": "EssentialAdminGIS",
+          "url": "https://services-ap1.arcgis.com/3o0vFs4fJRsuYuBO/arcgis/rest/services/Connectors_/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-03-01",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15741329.475100003,
+            "ymin": -4441002.979499999,
+            "xmax": 17102714.144599997,
+            "ymax": -3248203.8418000005,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 5,
+              "name": "Connectors",
+              "count": 6769,
+              "fields": [
+                "FID",
+                "id",
+                "type",
+                "operating_",
+                "service_st"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Substation",
+          "owner": "EssentialAdminGIS",
+          "url": "https://services-ap1.arcgis.com/3o0vFs4fJRsuYuBO/arcgis/rest/services/Substation/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-02-17",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15692766.595752995,
+            "ymin": -4474870.710319208,
+            "xmax": 17102636.52784955,
+            "ymax": -3212961.8974384414,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Substation",
+              "count": 144569,
+              "fields": [
+                "FID",
+                "DATE_E",
+                "ASSET_ID",
+                "ASSET_LABE",
+                "CONSTRUCTI",
+                "SW_ID",
+                "KVA",
+                "PREMISE_CO",
+                "PRIMARY_VO",
+                "SUBURB",
+                "VICINITY",
+                "WACS_ID"
+              ],
+              "outageFields": [
+                "SUBURB"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Streetlights_",
+          "owner": "EssentialAdminGIS",
+          "url": "https://services-ap1.arcgis.com/3o0vFs4fJRsuYuBO/arcgis/rest/services/Streetlights_/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-02-12",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15720741.990000002,
+            "ymin": -4474121.1559999995,
+            "xmax": 17102719.2448,
+            "ymax": -3213228.4679000005,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 1,
+              "name": "Streetlights",
+              "count": 176112,
+              "fields": [
+                "FID",
+                "DATE_E",
+                "ASSET_ID",
+                "ASSET_LABE",
+                "CONTROL_ME",
+                "SW_ID",
+                "LANTERN_TY",
+                "LIGHTING_C",
+                "NUM_LANTER",
+                "OPERATING_",
+                "PL_CAT_TAB",
+                "SERVICE_ST",
+                "SUBURB",
+                "SUPPORT_TY",
+                "VICINITY",
+                "WACS_ID"
+              ],
+              "outageFields": [
+                "SUBURB"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cubicles_",
+          "owner": "EssentialAdminGIS",
+          "url": "https://services-ap1.arcgis.com/3o0vFs4fJRsuYuBO/arcgis/rest/services/Cubicles_/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-10-21",
+          "serviceStatus": 200,
+          "inAustralia": null,
+          "layers": []
+        },
+        {
+          "title": "Substation_LOAD_Capacity",
+          "owner": "FNdata_EssentialEnergy",
+          "url": "https://services-ap1.arcgis.com/3o0vFs4fJRsuYuBO/arcgis/rest/services/Substation_LOAD_Capacity/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-03-26",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 16256688.449900001,
+            "ymin": -4202282.000399999,
+            "xmax": 17093154.985,
+            "ymax": -3270188.9624999985,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 28,
+              "name": "Substation_LOAD_Capacity",
+              "count": 672,
+              "fields": [
+                "OBJECTID",
+                "ASSET_ID",
+                "ASSET_LABE",
+                "CONSTRUCTI",
+                "PREMISE_CO",
+                "PRIMARY_VO",
+                "SUBURB",
+                "VICINITY",
+                "feeder",
+                "capacity_label",
+                "Firm_Spare_Capacity_kW",
+                "Best_Case_Spare_Capacity_kW",
+                "min_constraint",
+                "max_constraint",
+                "kVA_rating",
+                "Display"
+              ],
+              "outageFields": [
+                "SUBURB"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Substation_GEN_Capacity",
+          "owner": "FNdata_EssentialEnergy",
+          "url": "https://services-ap1.arcgis.com/3o0vFs4fJRsuYuBO/arcgis/rest/services/Substation_GEN_Capacity/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-03-26"
+        },
+        {
+          "title": "VMA_Current_Cycle_Time",
+          "owner": "AshaUebe",
+          "url": "https://services6.arcgis.com/eEiub4GddAjtio9C/arcgis/rest/services/VMA_Current_Cycle_Time/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-22"
+        },
+        {
+          "title": "Desktop Scoping Demo Merimbula Town",
+          "owner": "AshaUebe",
+          "url": "https://services6.arcgis.com/eEiub4GddAjtio9C/arcgis/rest/services/Desktop_Scoping_Demo_Merimbula_Town/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-04-08"
+        },
+        {
+          "title": "Com_Sites",
+          "owner": "EssentialAdminGIS",
+          "url": "https://services-ap1.arcgis.com/3o0vFs4fJRsuYuBO/arcgis/rest/services/Com_Sites/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-02-25"
+        },
+        {
+          "title": "Roger_Extract_Growin",
+          "owner": "AshaUebe",
+          "url": "https://services6.arcgis.com/eEiub4GddAjtio9C/arcgis/rest/services/Roger_Extract_Growin/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-22"
+        },
+        {
+          "title": "Roger_Extract_Regrowth 1",
+          "owner": "AshaUebe",
+          "url": "https://services6.arcgis.com/eEiub4GddAjtio9C/arcgis/rest/services/Roger_Extract_Regrowth_1/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-19"
+        },
+        {
+          "title": "Merimbula Desktop Validation Tasks",
+          "owner": "AshaUebe",
+          "url": "https://services6.arcgis.com/eEiub4GddAjtio9C/arcgis/rest/services/Desktop_Scope_Merimbula_Update_1/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-04-08"
+        },
+        {
+          "title": "Essential_Energy_Substation",
+          "owner": "mike@enhar.com.au",
+          "url": "https://services-ap1.arcgis.com/s047i49VH0D2nqIM/arcgis/rest/services/Essential_Energy_Substation/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-09-15"
+        },
+        {
+          "title": "ExclusionZoneQLD",
+          "owner": "administrator@byda",
+          "url": "https://services-ap1.arcgis.com/k80Uc1xPs09BfQyv/arcgis/rest/services/ExclusionZoneQLD/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-04"
+        },
+        {
+          "title": "EE_Overhead_Span_Transmission",
+          "owner": "mike@enhar.com.au",
+          "url": "https://services-ap1.arcgis.com/s047i49VH0D2nqIM/arcgis/rest/services/EE_Overhead_Span_Transmission/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-03-17"
+        },
+        {
+          "title": "COMMON_FEATURE_SERVICE",
+          "owner": "Ian.Darlington_humelinkproject",
+          "url": "https://services-ap1.arcgis.com/yhMGAo3mGKSAkF8m/arcgis/rest/services/20251105_COMMON_FEATURESERVICE_TEST/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-09-03"
+        },
+        {
+          "title": "SITRANS-BG-QUESTIONNAIRE 1 - Energy Poverty - v.1 1",
+          "owner": "kikloadmin",
+          "url": "https://services5.arcgis.com/5uhA4CaSb3qXwqtP/arcgis/rest/services/service_b1c7330e269e48f4b524adec0bf47a41/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-02-14"
+        },
+        {
+          "title": "SITRANS-IT-QUESTIONNAIRE 1 - Energy Poverty - v.1",
+          "owner": "kikloadmin",
+          "url": "https://services5.arcgis.com/5uhA4CaSb3qXwqtP/arcgis/rest/services/service_5003d428c8104bcd9f771e30cae5abbd/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-06-25"
+        }
+      ]
+    },
+    "Horizon Power": {
+      "searches": [
+        {
+          "query": "\"Horizon Power\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"Horizon Power\"",
+          "total": 12,
+          "hits": 12
+        }
+      ],
+      "candidates": [
+        {
+          "title": "HPC POLE DO NOTHING YEAR 20",
+          "owner": "asseticdev",
+          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_POLE_DO_NOTHING_YEAR_20/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-05-19",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 12632441.082473047,
+            "ymin": -2866933.2919469774,
+            "xmax": 12703692.625264565,
+            "ymax": -2803939.969844356,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "HPC_POLE_DO_NOTHING_YEAR_20",
+              "count": 3613,
+              "fields": [
+                "FID",
+                "TOWN",
+                "SHORT_PLAN",
+                "ASSET_ID",
+                "STRUCTURE_",
+                "STRUCTUR1",
+                "PARENT_TYP",
+                "ELLIPSE_PA",
+                "ELLIPSE_EQ",
+                "LIFECYCLE_",
+                "DATE_INSTA",
+                "LOCATION_D",
+                "NUMBER",
+                "HEIGHT",
+                "MATERIAL",
+                "POLE_TYPE",
+                "FUNCTION_",
+                "TREATMENT",
+                "OVERHEAD_E",
+                "OWNER_TYPE",
+                "OWNER_NAME",
+                "ID",
+                "Unique_Ass",
+                "Asset_Name"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "HPC WIRE ROUTE DO NOTHING YEAR 20",
+          "owner": "asseticdev",
+          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-05-19",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 12632441.081987321,
+            "ymin": -2866933.2919469774,
+            "xmax": 12703692.525424087,
+            "ymax": -2803117.439271737,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20",
+              "count": 3960,
+              "fields": [
+                "FID",
+                "TOWN",
+                "SHORT_PLAN",
+                "PLANT_NUMB",
+                "CARRIER_TA",
+                "CARRIER_TY",
+                "PARENT_TYP",
+                "ELLIPSE_PA",
+                "ELLIPSE_EQ",
+                "LIFECYCLE_",
+                "DATE_INSTA",
+                "LOCATION_D",
+                "MOUNTING",
+                "USAGE",
+                "ACTUAL_LEN",
+                "NOMINAL_VO",
+                "NETWORK_TY",
+                "PHASE",
+                "SPEC_CODE",
+                "SPEC_NAME",
+                "SPEC_DESCR",
+                "MATERIAL",
+                "SIZE",
+                "PARENT_FEE"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "HPC POLE UNRESTRICTED FUNDING YEAR 20",
+          "owner": "asseticdev",
+          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_POLE_UNRESTRICTED_FUNDING_YEAR_20/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-05-19",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 12632441.082473047,
+            "ymin": -2866933.2919469774,
+            "xmax": 12703692.625264565,
+            "ymax": -2803939.969844356,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "HPC_POLE_UNRESTRICTED_FUNDING_YEAR_20",
+              "count": 3642,
+              "fields": [
+                "FID",
+                "TOWN",
+                "SHORT_PLAN",
+                "ASSET_ID",
+                "STRUCTURE_",
+                "STRUCTUR1",
+                "PARENT_TYP",
+                "ELLIPSE_PA",
+                "ELLIPSE_EQ",
+                "LIFECYCLE_",
+                "DATE_INSTA",
+                "LOCATION_D",
+                "NUMBER",
+                "HEIGHT",
+                "MATERIAL",
+                "POLE_TYPE",
+                "FUNCTION_",
+                "TREATMENT",
+                "OVERHEAD_E",
+                "OWNER_TYPE",
+                "OWNER_NAME",
+                "ID",
+                "Unique_Ass",
+                "Asset_Name"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "HPC WIRE ROUTE UNRESTRICTED FUNDING YEAR 20",
+          "owner": "asseticdev",
+          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_WIRE_ROUTE_UNRESTRICTED_FUNDING_YEAR_20/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-05-19",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 12632441.081987321,
+            "ymin": -2866933.2919469774,
+            "xmax": 12703692.525424087,
+            "ymax": -2803117.439271737,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "HPC_WIRE_ROUTE_UNRESTRICTED_FUNDING_YEAR_20",
+              "count": 3799,
+              "fields": [
+                "FID",
+                "TOWN",
+                "SHORT_PLAN",
+                "PLANT_NUMB",
+                "CARRIER_TA",
+                "CARRIER_TY",
+                "PARENT_TYP",
+                "ELLIPSE_PA",
+                "ELLIPSE_EQ",
+                "LIFECYCLE_",
+                "DATE_INSTA",
+                "LOCATION_D",
+                "MOUNTING",
+                "USAGE",
+                "ACTUAL_LEN",
+                "NOMINAL_VO",
+                "NETWORK_TY",
+                "PHASE",
+                "SPEC_CODE",
+                "SPEC_NAME",
+                "SPEC_DESCR",
+                "MATERIAL",
+                "SIZE",
+                "PARENT_FEE"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Carnarvon Transformer",
+          "owner": "asseticdev",
+          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/Carnarvon_Transformer/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-05-19",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 12634976.461598232,
+            "ymin": -2867694.608266573,
+            "xmax": 12703692.625264565,
+            "ymax": -2803877.8909047563,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Carnarvon_Transformer",
+              "count": 259,
+              "fields": [
+                "FID",
+                "PLANT_NO",
+                "Asset_Type",
+                "Asset_Life",
+                "ANIMALP__",
+                "CAIBP___Ut",
+                "DTID___Ins",
+                "DTMAN___Ma",
+                "FEEDER___F",
+                "IMPED___Im",
+                "MANOEM___M",
+                "MKGTMWO__",
+                "OWNERSHIP",
+                "PHASEPHA__",
+                "PKVA___Rat",
+                "SEGMENT__",
+                "SUPPSUP__",
+                "TAPPOS___T",
+                "TAPSQ___Nu",
+                "TYPEHVE__",
+                "TYPETAP__",
+                "VECTOR___V",
+                "VKVPRIM__",
+                "VKVSEC___R"
+              ],
+              "outageFields": [
+                "TYPETAP__"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Carnarvon Current Electric Network",
+          "owner": "tommageBD",
+          "url": "https://services1.arcgis.com/vHnIGBHHqDR6y0CR/arcgis/rest/services/Carnarvon_Current_Electric_Network/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-07-23",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -180,
+            "ymin": -90,
+            "xmax": 180,
+            "ymax": 90,
+            "spatialReference": {
+              "wkid": 4283,
+              "latestWkid": 4283
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 2,
+              "name": "Street_Light",
+              "count": 883,
+              "fields": [
+                "OBJECTID",
+                "FID_ServiceArea",
+                "SERVICE_AR",
+                "HPC_AREA",
+                "HPC_REGION",
+                "HPC_DISTRI",
+                "FILE_NAME",
+                "Shape_Leng",
+                "FID_Street_Light",
+                "ID",
+                "SHRT_PLANT",
+                "MOUNTING",
+                "CIRCUIT_1",
+                "CIRCUIT_2",
+                "LAMP_TYPE",
+                "MOUNT_LEN",
+                "FIX_TYPE",
+                "STATUS",
+                "LOCATION",
+                "ASSET_ID",
+                "NET_TYPE",
+                "REMARKS",
+                "NUMBER",
+                "HPC_ELLIPS"
+              ],
+              "outageFields": [
+                "CUSTOMER"
+              ]
+            },
+            {
+              "id": 3,
+              "name": "Meter",
+              "count": 2725,
+              "fields": [
+                "OBJECTID",
+                "FID_ServiceArea",
+                "SERVICE_AR",
+                "HPC_AREA",
+                "HPC_REGION",
+                "HPC_DISTRI",
+                "FILE_NAME",
+                "Shape_Leng",
+                "FID_Electric_Meters",
+                "SERIAL_NUM",
+                "DEV_TYPE",
+                "STATUS",
+                "NET_TYPE",
+                "NOM_VOLTS",
+                "CIRCUIT_1",
+                "CIRCUIT_2",
+                "OWNER",
+                "INSTALL_NO",
+                "NMI",
+                "INSTALL_ST",
+                "HV_INSTALL",
+                "HOUSE_NUM",
+                "HSE_NO_SFX",
+                "STREET_NME"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 4,
+              "name": "HPC_ISOLATORS",
+              "count": 1469,
+              "fields": [
+                "OBJECTID",
+                "FID_ServiceArea",
+                "SERVICE_AR",
+                "HPC_AREA",
+                "HPC_REGION",
+                "HPC_DISTRI",
+                "FILE_NAME",
+                "Shape_Leng",
+                "FID_HPC_ISOLATORS",
+                "PLANT_ID",
+                "DEVICE_TYP",
+                "LABEL",
+                "NETWORK_TY",
+                "NOMINAL_VO",
+                "MOUNTING",
+                "CIRCUIT_CO",
+                "SCADA_ALIA",
+                "LOCATION_D",
+                "REMARKS",
+                "OWNER_NAME",
+                "OWNER_TYPE",
+                "MANUFACTUR",
+                "SERIAL_NUM",
+                "EGI"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Carnarvon HP Service Area",
+          "owner": "tommageBD",
+          "url": "https://services1.arcgis.com/vHnIGBHHqDR6y0CR/arcgis/rest/services/Carnarvon_HP_Service_Area/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-07-23"
+        },
+        {
+          "title": "Horizon Power (C) Distribution High Voltage Underground Extract 27022024",
+          "owner": "BenjaminJRobins",
+          "url": "https://services-ap1.arcgis.com/c3f29mC2Vg6nyPHB/arcgis/rest/services/Horizon_Power_(C)_Distribution_High_Voltage_Underground_Extract_27022024/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-03-01"
+        },
+        {
+          "title": "Horizon Power (C) Low Voltage Underground Extract 27022024",
+          "owner": "BenjaminJRobins",
+          "url": "https://services-ap1.arcgis.com/c3f29mC2Vg6nyPHB/arcgis/rest/services/Horizon_Power_(C)_Low_Voltage_Underground_Extract_27022024/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-03-01"
+        },
+        {
+          "title": "Horizon Power (C) Low Voltage Overhead Extract 27022024",
+          "owner": "BenjaminJRobins",
+          "url": "https://services-ap1.arcgis.com/c3f29mC2Vg6nyPHB/arcgis/rest/services/Horizon_Power_(C)_Low_Voltage_Overhead_Extract_27022024/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-03-01"
+        },
+        {
+          "title": "Horizon Power (C) Distribution High Voltage Overhead Extract 27022024",
+          "owner": "BenjaminJRobins",
+          "url": "https://services-ap1.arcgis.com/c3f29mC2Vg6nyPHB/arcgis/rest/services/Horizon_Power_(C)_Distribution_High_Voltage_Overhead_Extract_27022024/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-03-01"
+        },
+        {
+          "title": "HP IPP Substations Horizon power",
+          "owner": "evenergi",
+          "url": "https://services-ap1.arcgis.com/4TNjTqjusZrfpdYy/arcgis/rest/services/HP_IPP_Substations_Horizon_power/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-11-08"
+        }
+      ]
+    },
+    "SA Power Networks": {
+      "searches": [
+        {
+          "query": "\"SA Power Networks\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"SA Power Networks\"",
+          "total": 7,
+          "hits": 7
+        }
+      ],
+      "candidates": [
+        {
+          "title": "Lighting SA Power Networks",
+          "owner": "jkellywalkerville",
+          "url": "https://services-ap1.arcgis.com/38lmAqtkEsaNGT6T/arcgis/rest/services/Lighting_SA_Power_Networks/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-05-06",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 280531.2581428209,
+            "ymin": 6134462.8671071995,
+            "xmax": 283826.0701618085,
+            "ymax": 6137672.824004844,
+            "spatialReference": {
+              "wkid": 28354,
+              "latestWkid": 28354
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Lighting (SA Power Networks)",
+              "count": 790,
+              "fields": [
+                "OBJECTID_1",
+                "OBJECTID",
+                "EQUIPMENT_NUMBER",
+                "FUNC_LOCATION",
+                "LATITUDE",
+                "LONGITUDE",
+                "CUSTOMER_NAME",
+                "CUSTOMER_NUMBER",
+                "CUSTOMER_TYPE",
+                "TARIFF",
+                "LAMP_TYPE",
+                "LUMINARE_TYPE",
+                "FACILITY_OWNER",
+                "BILLING_CYCLE",
+                "REFERENCE_CUSTOMER_NUMBER",
+                "REFERENCE_CUSTOMER_NAME",
+                "CREATED",
+                "UPDATED",
+                "DELETED",
+                "ISACTIVE",
+                "SHAPE_1",
+                "x",
+                "y",
+                "wkid"
+              ],
+              "outageFields": [
+                "CUSTOMER_NAME",
+                "CUSTOMER_NUMBER",
+                "CUSTOMER_TYPE",
+                "REFERENCE_CUSTOMER_NUMBER",
+                "REFERENCE_CUSTOMER_NAME"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "SA_Power_Vegetation_Clearance_2019",
+          "owner": "jackiemules3",
+          "url": "https://services3.arcgis.com/ruKK3MyCLGkyViJB/arcgis/rest/services/SA_Power_Vegetation_Clearance_2019/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2019-08-05",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 138.4706006,
+            "ymin": -35.27647540999993,
+            "xmax": 138.6439028000001,
+            "ymax": -35.02464102999994,
+            "spatialReference": {
+              "wkid": 4326,
+              "latestWkid": 4326
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Vegetation_Clearance_2019",
+              "count": 1599,
+              "fields": [
+                "OBJECTID",
+                "FEEDER",
+                "COUNCIL_NAME",
+                "ZONE",
+                "DISTRICT",
+                "QUARTER",
+                "YEAR",
+                "ATS_ID",
+                "Audit_Status",
+                "Net_Status",
+                "Tree_Species",
+                "HVVOLTAGE",
+                "LVVOLTAGE",
+                "SPANLENGTH",
+                "Tree_Owner",
+                "HOUSE_NUMBER",
+                "STREET",
+                "SUBURB",
+                "INSPECTION_COMMENTS",
+                "SUPERVISOR_COMMENTS",
+                "TRIM_COMMENTS",
+                "NOTICE_NUMBER",
+                "INSPECTION_DATE",
+                "Longitude"
+              ],
+              "outageFields": [
+                "SUBURB"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "ExclusionZoneQLD",
+          "owner": "administrator@byda",
+          "url": "https://services-ap1.arcgis.com/k80Uc1xPs09BfQyv/arcgis/rest/services/ExclusionZoneQLD/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-04",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15373401.261602668,
+            "ymin": -3375515.36108935,
+            "xmax": 17093216.619096283,
+            "ymax": -1031886.0946452051,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "ExclusionZoneQLD",
+              "count": 90638,
+              "fields": [
+                "OBJECTID",
+                "ORIG_FID",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "SAPN Subtransmission & High Voltage Overhead Line",
+          "owner": "HRound_CoS",
+          "url": "https://lsa2.geohub.sa.gov.au/server/rest/services/LSA/LocationSAViewerv3/MapServer/173",
+          "type": "Feature Service",
+          "modified": "2020-04-08",
+          "serviceStatus": 403,
+          "inAustralia": null,
+          "layers": []
+        },
+        {
+          "title": "SAPN Subtransmission & High Voltage Underground Cable",
+          "owner": "HRound_CoS",
+          "url": "https://lsa2.geohub.sa.gov.au/server/rest/services/LSA/LocationSAViewerv3/MapServer/172",
+          "type": "Feature Service",
+          "modified": "2020-04-08",
+          "serviceStatus": 403,
+          "inAustralia": null,
+          "layers": []
+        },
+        {
+          "title": "GIS Viewer Layers",
+          "owner": "jkellywalkerville",
+          "url": "https://services-ap1.arcgis.com/38lmAqtkEsaNGT6T/arcgis/rest/services/GIS_Viewer_Layers/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-04-22",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -5120763.7676473735,
+            "ymin": 2035.0570612549784,
+            "xmax": 6120762.3084345665,
+            "ymax": 19997964.281424727,
+            "spatialReference": {
+              "wkid": 28354,
+              "latestWkid": 28354
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Regulatory Signage ",
+              "count": 1,
+              "fields": [
+                "OBJECTID",
+                "SignName",
+                "SignType",
+                "MountingType"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 1,
+              "name": "Lighting (Council)",
+              "count": 163,
+              "fields": [
+                "OBJECTID",
+                "Stage",
+                "Light_num",
+                "light_ID",
+                "PoleType",
+                "PoleHeight",
+                "FittingType",
+                "asset_name",
+                "location",
+                "asset_type",
+                "hierarchy",
+                "suburb",
+                "ownership",
+                "last_renewal",
+                "asset_class",
+                "asset_subclass",
+                "asset_subtype",
+                "construction_date",
+                "asset_ID"
+              ],
+              "outageFields": [
+                "suburb"
+              ]
+            },
+            {
+              "id": 2,
+              "name": "Lighting (SA Power Networks)",
+              "count": 908,
+              "fields": [
+                "OBJECTID_1",
+                "OBJECTID",
+                "EQUIPMENT_NUMBER",
+                "FUNC_LOCATION",
+                "LATITUDE",
+                "LONGITUDE",
+                "CUSTOMER_NAME",
+                "CUSTOMER_NUMBER",
+                "CUSTOMER_TYPE",
+                "TARIFF",
+                "LAMP_TYPE",
+                "LUMINARE_TYPE",
+                "FACILITY_OWNER",
+                "BILLING_CYCLE",
+                "REFERENCE_CUSTOMER_NUMBER",
+                "REFERENCE_CUSTOMER_NAME",
+                "CREATED",
+                "UPDATED",
+                "DELETED",
+                "ISACTIVE",
+                "SHAPE_1",
+                "x",
+                "y",
+                "wkid"
+              ],
+              "outageFields": [
+                "CUSTOMER_NAME",
+                "CUSTOMER_NUMBER",
+                "CUSTOMER_TYPE",
+                "REFERENCE_CUSTOMER_NUMBER",
+                "REFERENCE_CUSTOMER_NAME"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Financial Asset Layer",
+          "owner": "lchazal@mitchamcouncil.sa.gov.au_mitcham",
+          "url": "https://services6.arcgis.com/UphqjK3yJGEvvlyt/arcgis/rest/services/Financial_Asset_Layer/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-02-24"
+        }
+      ]
+    },
+    "Ausgrid": {
+      "searches": [
+        {
+          "query": "\"Ausgrid\" outage",
+          "total": 1,
+          "hits": 1
+        },
+        {
+          "query": "\"Ausgrid\"",
+          "total": 9,
+          "hits": 9
+        }
+      ],
+      "candidates": [
+        {
+          "title": "NSW_AusGrid_Outages",
+          "owner": "QitAndrew",
+          "url": "https://services7.arcgis.com/si70weKpzPSa0BGV/arcgis/rest/services/NSW_AusGrid_Outages/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-06-19",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 16705829.195110584,
+            "ymin": -4047889.1662035356,
+            "xmax": 16941061.310433477,
+            "ymax": -3718565.0697419727,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 1,
+              "name": "NSW_AusGrid_Outages_Points",
+              "count": 12,
+              "fields": [
+                "OBJECTID",
+                "WebId",
+                "Area",
+                "Cause",
+                "Classification",
+                "Customers",
+                "EstRestTime",
+                "OutageDisplayType",
+                "StartDateTime",
+                "Status",
+                "LGA_NAME"
+              ],
+              "outageFields": [
+                "Cause",
+                "Customers",
+                "OutageDisplayType"
+              ]
+            },
+            {
+              "id": 2,
+              "name": "NSW_AusGrid_Outages_Polygons",
+              "count": 4,
+              "fields": [
+                "OBJECTID",
+                "WebId",
+                "Area",
+                "Cause",
+                "Classification",
+                "Customers",
+                "EstRestTime",
+                "lat",
+                "lng",
+                "OutageDisplayType",
+                "StartDateTime",
+                "Status",
+                "LGA_NAME",
+                "Shape__Area",
+                "Shape__Length"
+              ],
+              "outageFields": [
+                "Cause",
+                "Customers",
+                "OutageDisplayType"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Ausgrid_2010_11",
+          "owner": "demo1esriaustralia",
+          "url": "https://services.arcgis.com/uH2bZ8EU7r86PYdN/arcgis/rest/services/Ausgrid_2010_11/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2013-02-08",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 16674725.5277,
+            "ymin": -4051965.1701,
+            "xmax": 16943440.8576,
+            "ymax": -3704870.7672,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Consumption 2010-2011",
+              "count": 38,
+              "fields": [
+                "OBJECTID",
+                "ID",
+                "ID2",
+                "LGA_CODE11",
+                "LGA_NAME11",
+                "STE_CODE11",
+                "STE_NAME11",
+                "AREA_SQKM",
+                "KW_HOURS",
+                "CUSTOMERS",
+                "AVG_KWH_CU",
+                "GEN_SUPPLY",
+                "OFF_PEAK",
+                "SOLAR_TO_G"
+              ],
+              "outageFields": [
+                "CUSTOMERS"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "AusgridConsumptionChange",
+          "owner": "demo1esriaustralia",
+          "url": "https://services.arcgis.com/uH2bZ8EU7r86PYdN/arcgis/rest/services/AusgridConsumptionChange/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2013-02-08",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 16674725.5277,
+            "ymin": -4051965.1701,
+            "xmax": 16943440.8576,
+            "ymax": -3704870.7672,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Consumption_Change_2010_2011",
+              "count": 38,
+              "fields": [
+                "OBJECTID",
+                "ID",
+                "ID2",
+                "LGA_CODE11",
+                "LGA_NAME11",
+                "STE_CODE11",
+                "STE_NAME11",
+                "AREA_SQKM",
+                "CHANGE_AVG"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Ausgrid_LUAL",
+          "owner": "kymjackway_byda",
+          "url": "https://services-ap1.arcgis.com/ug6sGLFkytbXYo4f/arcgis/rest/services/Ausgrid_LUAL/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-30",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 150.07100996000008,
+            "ymin": -34.159933052999975,
+            "xmax": 152.18264733400008,
+            "ymax": -31.65843276199996,
+            "spatialReference": {
+              "wkid": 7844,
+              "latestWkid": 7844
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 1,
+              "name": "Poles",
+              "count": 515371,
+              "fields": [
+                "OBJECTID",
+                "UTILITY",
+                "SITE_LABEL",
+                "ASSET_TYPE",
+                "SYSTEM_ID",
+                "STAY_COUNT",
+                "LON",
+                "LAT",
+                "CUSTOM1",
+                "CUSTOM2",
+                "CUSTOM3",
+                "REFRESH_DT"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 2,
+              "name": "HV",
+              "count": 158902,
+              "fields": [
+                "OBJECTID",
+                "UTILITY",
+                "NETWORK_TYPE",
+                "OPERATING_VOLTAGE",
+                "ASSET_TYPE",
+                "FEEDER",
+                "FEEDER_NAME",
+                "SPAN_NUMBER",
+                "SYSTEM_ID",
+                "CUSTOM1",
+                "CUSTOM2",
+                "LENGTH",
+                "REFRESH_DT",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 3,
+              "name": "LV",
+              "count": 1271929,
+              "fields": [
+                "OBJECTID",
+                "UTILITY",
+                "NETWORK_TYPE",
+                "OPERATING_VOLTAGE",
+                "ASSET_TYPE",
+                "FEEDER",
+                "FEEDER_NAME",
+                "SPAN_NUMBER",
+                "SYSTEM_ID",
+                "CUSTOM1",
+                "CUSTOM2",
+                "LENGTH",
+                "REFRESH_DT",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Electric vehicle charging bays",
+          "owner": "cityofsydneyspatial",
+          "url": "https://services1.arcgis.com/cNVyNtjGVZybOQWZ/arcgis/rest/services/Electric_vehicle_charging_bays/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-16",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 331418.88329999987,
+            "ymin": 6245703.8323,
+            "xmax": 336286.3161000004,
+            "ymax": 6252199.1405,
+            "spatialReference": {
+              "wkid": 7856,
+              "latestWkid": 7856
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Electric vehicle charging bays",
+              "count": 59,
+              "fields": [
+                "OBJECTID",
+                "Operator",
+                "Street",
+                "Suburb",
+                "ParkingArea"
+              ],
+              "outageFields": [
+                "Suburb"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "ExclusionZoneQLD",
+          "owner": "administrator@byda",
+          "url": "https://services-ap1.arcgis.com/k80Uc1xPs09BfQyv/arcgis/rest/services/ExclusionZoneQLD/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-04",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15373401.261602668,
+            "ymin": -3375515.36108935,
+            "xmax": 17093216.619096283,
+            "ymax": -1031886.0946452051,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "ExclusionZoneQLD",
+              "count": 90638,
+              "fields": [
+                "OBJECTID",
+                "ORIG_FID",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "NSW_Distribution_Substation",
+          "owner": "mike@enhar.com.au",
+          "url": "https://services-ap1.arcgis.com/s047i49VH0D2nqIM/arcgis/rest/services/NSW_Distribution_Substation/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-09-20"
+        },
+        {
+          "title": "COPC LAAN",
+          "owner": "skhatri_parracity",
+          "url": "https://services6.arcgis.com/NrOjMi9LSYL3MUze/arcgis/rest/services/COPC_LAAN/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-05-22"
+        },
+        {
+          "title": "NEM NSW AUSGRID",
+          "owner": "evenergi",
+          "url": "https://services-ap1.arcgis.com/4TNjTqjusZrfpdYy/arcgis/rest/services/NEM_NSW_AUSGRID/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-12"
+        }
+      ]
+    },
+    "Endeavour Energy": {
+      "searches": [
+        {
+          "query": "\"Endeavour Energy\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"Endeavour Energy\"",
+          "total": 2,
+          "hits": 2
+        }
+      ],
+      "candidates": [
+        {
+          "title": "Endeavour Energy Street Lighting Map",
+          "owner": "asset_systems_cbc",
+          "url": "https://services2.arcgis.com/Ax17MufLaTdpFneh/arcgis/rest/services/Endeavour_Energy_Street_Lighting_Map/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2020-03-23",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 150.9738000000001,
+            "ymin": -33.96131099999997,
+            "xmax": 150.9905440000001,
+            "ymax": -33.86423099999996,
+            "spatialReference": {
+              "wkid": 4326,
+              "latestWkid": 4326
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Endeavour Energy Street Lighting",
+              "count": 82,
+              "fields": [
+                "OBJECTID",
+                "Customer_Name",
+                "Equip_Class",
+                "Asset_ID",
+                "Status",
+                "Status__Desc_",
+                "Plant_No",
+                "Bill_Processed",
+                "Map_No",
+                "Suburb",
+                "Frequency",
+                "Equipment_Location_Desc",
+                "Existing_Rating",
+                "Existing_Rating__Desc_",
+                "Category",
+                "Previous_Rating",
+                "Energised_Date",
+                "Prev_Energised_Date",
+                "Last_Billed_Date",
+                "GIS_Ref_Code",
+                "SLTRCLSS",
+                "SLHONSUP_Val",
+                "Horiz_Supp_Rate",
+                "Horiz_Supp_Rate_Desc"
+              ],
+              "outageFields": [
+                "Customer_Name",
+                "Suburb"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "ExclusionZoneQLD",
+          "owner": "administrator@byda",
+          "url": "https://services-ap1.arcgis.com/k80Uc1xPs09BfQyv/arcgis/rest/services/ExclusionZoneQLD/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-04",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15373401.261602668,
+            "ymin": -3375515.36108935,
+            "xmax": 17093216.619096283,
+            "ymax": -1031886.0946452051,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "ExclusionZoneQLD",
+              "count": 90638,
+              "fields": [
+                "OBJECTID",
+                "ORIG_FID",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        }
+      ]
+    },
+    "CitiPower": {
+      "searches": [
+        {
+          "query": "\"CitiPower\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"CitiPower\"",
+          "total": 2,
+          "hits": 2
+        }
+      ],
+      "candidates": [
+        {
+          "title": "VicEmergency - Incidents",
+          "owner": "jakc",
+          "url": "https://services1.arcgis.com/vHnIGBHHqDR6y0CR/arcgis/rest/services/Vic_Emergency_Incidents/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-06-21",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -0.000001,
+            "ymin": -7298314.86659728,
+            "xmax": 16670950.752623996,
+            "ymax": 0.000001,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Incidents",
+              "count": 8,
+              "fields": [
+                "OBJECTID",
+                "incidentNo",
+                "lastUpdateDateTime",
+                "originDateTime",
+                "incidentType",
+                "incidentLocation",
+                "incidentStatus",
+                "incidentSize",
+                "name",
+                "territory",
+                "resourceCount",
+                "eventCode",
+                "fireDistrict",
+                "municipality",
+                "category1",
+                "category2",
+                "agency",
+                "originStatus",
+                "type",
+                "lastUpdatedDt",
+                "lastUpdatedDtStr",
+                "originDateTimeStr",
+                "GlobalID"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "ExclusionZoneQLD",
+          "owner": "administrator@byda",
+          "url": "https://services-ap1.arcgis.com/k80Uc1xPs09BfQyv/arcgis/rest/services/ExclusionZoneQLD/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-04",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15373401.261602668,
+            "ymin": -3375515.36108935,
+            "xmax": 17093216.619096283,
+            "ymax": -1031886.0946452051,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "ExclusionZoneQLD",
+              "count": 90638,
+              "fields": [
+                "OBJECTID",
+                "ORIG_FID",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        }
+      ]
+    },
+    "Powercor": {
+      "searches": [
+        {
+          "query": "\"Powercor\" outage",
+          "total": 1,
+          "hits": 1
+        },
+        {
+          "query": "\"Powercor\"",
+          "total": 5,
+          "hits": 5
+        }
+      ],
+      "candidates": [
+        {
+          "title": "Powercor_Outages",
+          "owner": "QitAndrew",
+          "url": "https://services7.arcgis.com/si70weKpzPSa0BGV/arcgis/rest/services/Powercor_Outages/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-08-07",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 2126039.305955413,
+            "ymin": 2292994.8808182683,
+            "xmax": 2607870.584656082,
+            "ymax": 2824404.890076775,
+            "spatialReference": {
+              "wkid": 102171,
+              "latestWkid": 3111
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 1,
+              "name": "Powercor_Outages_Points",
+              "count": 9,
+              "fields": [
+                "OBJECTID",
+                "createDateTime",
+                "ORDER_ID",
+                "BUSINESS",
+                "AREA",
+                "TOWN",
+                "POSTCODE",
+                "CUSTOMERS",
+                "ETR",
+                "CREW_STATUS",
+                "CAUSE",
+                "START_TIME",
+                "PRIVATISED",
+                "LGA_NAME"
+              ],
+              "outageFields": [
+                "CUSTOMERS",
+                "CREW_STATUS",
+                "CAUSE"
+              ]
+            },
+            {
+              "id": 2,
+              "name": "Powercor_Outages_Polygons",
+              "count": 9,
+              "fields": [
+                "OBJECTID",
+                "createDateTime",
+                "ORDER_ID",
+                "BUSINESS",
+                "AREA",
+                "TOWN",
+                "POSTCODE",
+                "CUSTOMERS",
+                "ETR",
+                "CREW_STATUS",
+                "CAUSE",
+                "START_TIME",
+                "PRIVATISED",
+                "LGA_NAME",
+                "Shape__Area",
+                "Shape__Length"
+              ],
+              "outageFields": [
+                "CUSTOMERS",
+                "CREW_STATUS",
+                "CAUSE"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "powercorlights",
+          "owner": "dr03602",
+          "url": "https://services1.arcgis.com/5REoMU162diWrxzT/arcgis/rest/services/powercorlights/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2020-02-04",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 258603.5448000003,
+            "ymin": 5757969.8311,
+            "xmax": 300198.0586000001,
+            "ymax": 5803412.6366,
+            "spatialReference": {
+              "wkid": 28355,
+              "latestWkid": 28355
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "powercor lights",
+              "count": 24332,
+              "fields": [
+                "OBJECTID",
+                "GIS_ID",
+                "POLE_TECH_",
+                "LIGHT_TYPE",
+                "RATING",
+                "OWNER",
+                "Maintenanc",
+                "POLE_TYPE",
+                "COST_SHARE",
+                "Lantern_Id",
+                "MUNICIPALI",
+                "COMM_DATE",
+                "LAMP_CHANG",
+                "NMI_REF"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "VicEmergency - Incidents",
+          "owner": "jakc",
+          "url": "https://services1.arcgis.com/vHnIGBHHqDR6y0CR/arcgis/rest/services/Vic_Emergency_Incidents/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-06-21",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -0.000001,
+            "ymin": -7298314.86659728,
+            "xmax": 16670950.752623996,
+            "ymax": 0.000001,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Incidents",
+              "count": 8,
+              "fields": [
+                "OBJECTID",
+                "incidentNo",
+                "lastUpdateDateTime",
+                "originDateTime",
+                "incidentType",
+                "incidentLocation",
+                "incidentStatus",
+                "incidentSize",
+                "name",
+                "territory",
+                "resourceCount",
+                "eventCode",
+                "fireDistrict",
+                "municipality",
+                "category1",
+                "category2",
+                "agency",
+                "originStatus",
+                "type",
+                "lastUpdatedDt",
+                "lastUpdatedDtStr",
+                "originDateTimeStr",
+                "GlobalID"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "ExclusionZoneQLD",
+          "owner": "administrator@byda",
+          "url": "https://services-ap1.arcgis.com/k80Uc1xPs09BfQyv/arcgis/rest/services/ExclusionZoneQLD/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-04",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15373401.261602668,
+            "ymin": -3375515.36108935,
+            "xmax": 17093216.619096283,
+            "ymax": -1031886.0946452051,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "ExclusionZoneQLD",
+              "count": 90638,
+              "fields": [
+                "OBJECTID",
+                "ORIG_FID",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "DDWF_Site_Layout_20231206",
+          "owner": "robert.lewis_Tilt",
+          "url": "https://services7.arcgis.com/TPt8kaJUJGSs2VIg/arcgis/rest/services/DDWF_Site_Layout_20231206/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-05-12",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 618158.5014790919,
+            "ymin": 5763562.34756909,
+            "xmax": 706842.0497009322,
+            "ymax": 5833530.747183574,
+            "spatialReference": {
+              "wkid": 28354,
+              "latestWkid": 28354
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "DDWF_Proposed_Met_Masts",
+              "count": 3,
+              "fields": [
+                "OBJECTID",
+                "Name",
+                "East_MGA54",
+                "Nth_MGA54",
+                "NewName",
+                "Updated",
+                "Type"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 1,
+              "name": "Wind Turbine Layout (As-Built)",
+              "count": 80,
+              "fields": [
+                "OBJECTID",
+                "ID",
+                "E",
+                "N"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 2,
+              "name": "TXL Pole Locations (As-Built)",
+              "count": 146,
+              "fields": [
+                "OBJECTID",
+                "Name",
+                "FolderPath"
+              ],
+              "outageFields": []
+            }
+          ]
+        }
+      ]
+    },
+    "United Energy": {
+      "searches": [
+        {
+          "query": "\"United Energy\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"United Energy\"",
+          "total": 15,
+          "hits": 15
+        }
+      ],
+      "candidates": [
+        {
+          "title": "UE_Map_Catchments",
+          "owner": "geoplexing_prod",
+          "url": "https://services7.arcgis.com/1bQRRUcj0FTGB7oX/arcgis/rest/services/UE_Map_Catchments/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-08-26",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 294582.5424680608,
+            "ymin": 5736798.235751572,
+            "xmax": 350078.30837080174,
+            "ymax": 5822308.928891588,
+            "spatialReference": {
+              "wkt": "PROJCS[\"UTM_Zone_55_Southern_Hemisphere\",GEOGCS[\"GCS_unnamed ellipse\",DATUM[\"D_unknown\",SPHEROID[\"Unknown\",6378137.0,298.257222101]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"false_easting\",500000.0],PARAMETER[\"false_northing\",10000000.0],PARAMETER[\"central_meridian\",147.0],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"latitude_of_origin\",0.0],UNIT[\"Meter\",1.0]]"
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Depot Location",
+              "count": 5,
+              "fields": [
+                "FID",
+                "Name",
+                "Y",
+                "X",
+                "Type",
+                "S1",
+                "S2",
+                "S3",
+                "S4",
+                "S5"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 1,
+              "name": "Catchment Areas",
+              "count": 1296,
+              "fields": [
+                "OBJECTID",
+                "Depot",
+                "DepotScenario",
+                "Scenario",
+                "Priority",
+                "work_type",
+                "STPI",
+                "MAX_TimetoDepot",
+                "MEAN_TimetoDepot",
+                "SUM_TimetoDepot",
+                "CosttoDepot",
+                "customers_off_supply",
+                "CountWorks",
+                "ASRdollar",
+                "ASRdelta",
+                "ScenACost",
+                "ScenASTPI",
+                "Shape__Area",
+                "Shape__Length"
+              ],
+              "outageFields": [
+                "customers_off_supply"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "UE Boundary",
+          "owner": "geoplexing_prod",
+          "url": "https://services.arcgis.com/y3GIulxK3Ox4lXG0/arcgis/rest/services/UE_Boundary/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-07-14",
+          "serviceStatus": 200,
+          "inAustralia": null,
+          "layers": []
+        },
+        {
+          "title": "VicEmergency - Incidents",
+          "owner": "jakc",
+          "url": "https://services1.arcgis.com/vHnIGBHHqDR6y0CR/arcgis/rest/services/Vic_Emergency_Incidents/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-06-21",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -0.000001,
+            "ymin": -7298314.86659728,
+            "xmax": 16670950.752623996,
+            "ymax": 0.000001,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Incidents",
+              "count": 8,
+              "fields": [
+                "OBJECTID",
+                "incidentNo",
+                "lastUpdateDateTime",
+                "originDateTime",
+                "incidentType",
+                "incidentLocation",
+                "incidentStatus",
+                "incidentSize",
+                "name",
+                "territory",
+                "resourceCount",
+                "eventCode",
+                "fireDistrict",
+                "municipality",
+                "category1",
+                "category2",
+                "agency",
+                "originStatus",
+                "type",
+                "lastUpdatedDt",
+                "lastUpdatedDtStr",
+                "originDateTimeStr",
+                "GlobalID"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "ExclusionZoneQLD",
+          "owner": "administrator@byda",
+          "url": "https://services-ap1.arcgis.com/k80Uc1xPs09BfQyv/arcgis/rest/services/ExclusionZoneQLD/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-04",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 15373401.261602668,
+            "ymin": -3375515.36108935,
+            "xmax": 17093216.619096283,
+            "ymax": -1031886.0946452051,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "ExclusionZoneQLD",
+              "count": 90638,
+              "fields": [
+                "OBJECTID",
+                "ORIG_FID",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Global_CO2_1972",
+          "owner": "DEWITTMT1829_UWEC",
+          "url": "https://services1.arcgis.com/gK4swK4xfdoKv59p/arcgis/rest/services/Global_CO2_1972/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-02-25",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -20037507.0672,
+            "ymin": -7538976.357099999,
+            "xmax": 20037507.0672,
+            "ymax": 18418386.3091,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Global_CO2_1972",
+              "count": 185,
+              "fields": [
+                "OBJECTID_1",
+                "OBJECTID",
+                "iso_code",
+                "country_1",
+                "year",
+                "co2",
+                "co2_growth_prct",
+                "co2_growth_abs",
+                "consumption_co2",
+                "trade_co2",
+                "trade_co2_share",
+                "co2_per_capita",
+                "consumption_co2_per_capita",
+                "share_global_co2",
+                "cumulative_co2",
+                "share_global_cumulative_co2",
+                "co2_per_gdp",
+                "consumption_co2_per_gdp",
+                "co2_per_unit_energy",
+                "cement_co2",
+                "coal_co2",
+                "flaring_co2",
+                "gas_co2",
+                "oil_co2"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Global Emissions 1972 (Billion Tons)",
+          "owner": "DEWITTMT1829_UWEC",
+          "url": "https://services1.arcgis.com/gK4swK4xfdoKv59p/arcgis/rest/services/Global_CO2_PerYear2019/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-02-25",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -20037507.0672,
+            "ymin": -7538976.357099999,
+            "xmax": 20037507.0672,
+            "ymax": 18418386.3091,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Global_CO2_PerYear2019",
+              "count": 196,
+              "fields": [
+                "OBJECTID_1",
+                "OBJECTID",
+                "iso_code",
+                "country_1",
+                "year",
+                "co2",
+                "co2_growth_prct",
+                "co2_growth_abs",
+                "consumption_co2",
+                "trade_co2",
+                "trade_co2_share",
+                "co2_per_capita",
+                "consumption_co2_per_capita",
+                "share_global_co2",
+                "cumulative_co2",
+                "share_global_cumulative_co2",
+                "co2_per_gdp",
+                "consumption_co2_per_gdp",
+                "co2_per_unit_energy",
+                "cement_co2",
+                "coal_co2",
+                "flaring_co2",
+                "gas_co2",
+                "oil_co2"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Distributed Generation Application Form rev-2",
+          "owner": "sgrenell1",
+          "url": "https://services6.arcgis.com/trQ6M8UEC1PGeNSB/arcgis/rest/services/service_f24644ef010b4e968d7485aa55720578/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2023-08-11"
+        },
+        {
+          "title": "BPA Interconnection Queue",
+          "owner": "zac_cleanprosperousinstitute",
+          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/BPA_Interconnection_Queue/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-10-16"
+        },
+        {
+          "title": "Infrastructure Investments",
+          "owner": "zac_cleanprosperousinstitute",
+          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/Infrastructure_Investments/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-10-16"
+        },
+        {
+          "title": "svg_gfdrr_survey",
+          "owner": "rharrison_wb",
+          "url": "https://services.arcgis.com/iQ1dY19aHwbSDYIF/arcgis/rest/services/service_6678e9ea09574abf9313e6c4e240ce78/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-06-13"
+        },
+        {
+          "title": "2022_RBSA_Data_Collection_Tool_Working_NY_v2_form",
+          "owner": "NYetz_NEEA",
+          "url": "https://services1.arcgis.com/CmvSIsDghIn6Uvfm/arcgis/rest/services/service_554e7d077ac54201967b0b1f63f4135f_form/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-04-27"
+        },
+        {
+          "title": "2022_RBSA_Data_Collection_Tool_Working_NY_v2_results",
+          "owner": "NYetz_NEEA",
+          "url": "https://services1.arcgis.com/CmvSIsDghIn6Uvfm/arcgis/rest/services/survey123_157fc61d63034f26ac2f878c6d65b266_results/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-04-24"
+        },
+        {
+          "title": "2027_RBSA_Data_Collection_Tool_DRAFT_results",
+          "owner": "NYetz_NEEA",
+          "url": "https://services1.arcgis.com/CmvSIsDghIn6Uvfm/arcgis/rest/services/survey123_3dd712231f954c2eae9a8926ad263e34_results/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-04-28"
+        },
+        {
+          "title": "svg_gfdrr_survey_results",
+          "owner": "rharrison_wb",
+          "url": "https://services.arcgis.com/iQ1dY19aHwbSDYIF/arcgis/rest/services/survey123_3e59f8843f18472a96807db5947da652_results/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-06-13"
+        },
+        {
+          "title": "EnergyConsumption_per_Capita_2023",
+          "owner": "xzhan434_GISandData",
+          "url": "https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/EnergyConsumption_per_Capita_2023/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-04-26"
+        }
+      ]
+    },
+    "Jemena": {
+      "searches": [
+        {
+          "query": "\"Jemena\" outage",
+          "total": 2,
+          "hits": 2
+        },
+        {
+          "query": "\"Jemena\"",
+          "total": 23,
+          "hits": 20
+        }
+      ],
+      "candidates": [
+        {
+          "title": "NBC_Outages_Jemena",
+          "owner": "QitAndrew",
+          "url": "https://services7.arcgis.com/si70weKpzPSa0BGV/arcgis/rest/services/NBC_Outages_Jemena/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-06-12",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 16761622.379338954,
+            "ymin": -4056263.0484843133,
+            "xmax": 16761622.379338954,
+            "ymax": -4056263.0484843133,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "NBC_Outages_Jemena",
+              "count": 1,
+              "fields": [
+                "OBJECTID",
+                "outageType",
+                "outageLabel",
+                "suburb",
+                "numberOfCustomersOffSupply",
+                "cause",
+                "estimatedRestorationTime",
+                "postCode"
+              ],
+              "outageFields": [
+                "outageType",
+                "outageLabel",
+                "suburb",
+                "numberOfCustomersOffSupply",
+                "cause",
+                "estimatedRestorationTime"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "HCC_Outages_Jemena",
+          "owner": "QitAndrew",
+          "url": "https://services7.arcgis.com/si70weKpzPSa0BGV/arcgis/rest/services/HCC_Outages_Jemena/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-07-08",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 16761622.044106506,
+            "ymin": -4056263.129609574,
+            "xmax": 16761622.714571401,
+            "ymax": -4056262.9673590525,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "HCC_Outages_Jemena",
+              "count": 0,
+              "fields": [],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "100m_Buffer_of_preliminary_Jemena_sites_with_Parcel_and_lot_infomation_1",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/100m_Buffer_of_preliminary_Jemena_sites_with_Parcel_and_lot_infomation_1/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2020-04-27",
+          "serviceStatus": 200,
+          "inAustralia": null,
+          "layers": []
+        },
+        {
+          "title": "500m_Buffer_of_Jemena_sites_with_EPG",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/500m_Buffer_of_Jemena_sites_with_EPG/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2020-06-11",
+          "serviceStatus": 200,
+          "inAustralia": null,
+          "layers": []
+        },
+        {
+          "title": "500m_Buffer_of_Preliminary_Jemena_sites",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/500m_Buffer_of_Preliminary_Jemena_sites/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2020-05-26",
+          "serviceStatus": 200,
+          "inAustralia": null,
+          "layers": []
+        },
+        {
+          "title": "Buffer_of_Proposed_routes_for_cables_Jemena",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/Buffer_of_Proposed_routes_for_cables_Jemena/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2020-06-05",
+          "serviceStatus": 200,
+          "inAustralia": null,
+          "layers": []
+        },
+        {
+          "title": "Buffer_3_of_Proposed_routes_for_cables_Jemena",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/Buffer_3_of_Proposed_routes_for_cables_Jemena/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2020-06-05"
+        },
+        {
+          "title": "Buffer_2_of_Proposed_routes_for_cables_Jemena",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/Buffer_2_of_Proposed_routes_for_cables_Jemena/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2020-06-05"
+        },
+        {
+          "title": "Jemena_sites_wtih_Probabilistic_outputs",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/Jemena_sites_wtih_Probabilistic_outputs/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-03-23"
+        },
+        {
+          "title": "Jemena_Sites_Area_1",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/Jemena_Sites_Area_1/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-03-10"
+        },
+        {
+          "title": "Join_Features_to_Jemena_sites",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/Join_Features_to_Jemena_sites/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-03-23"
+        },
+        {
+          "title": "Jemena sites with EPG and risk score 1",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/Jemena_sites_with_EPG_and_risk_score_1/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-03-09"
+        },
+        {
+          "title": "VicEmergency - Incidents",
+          "owner": "jakc",
+          "url": "https://services1.arcgis.com/vHnIGBHHqDR6y0CR/arcgis/rest/services/Vic_Emergency_Incidents/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-06-21"
+        },
+        {
+          "title": "Jemena_Sites_With_Probabilistic_Analysis",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/Jemena_Sites_With_Probabilistic_Analysis/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-05-24"
+        },
+        {
+          "title": "jemena_sites_area",
+          "owner": "pfallon@eesi.biz",
+          "url": "https://services7.arcgis.com/xU7mQmNslCensetC/arcgis/rest/services/jemena_sites_area/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-03-09"
+        },
+        {
+          "title": "ExclusionZoneQLD",
+          "owner": "administrator@byda",
+          "url": "https://services-ap1.arcgis.com/k80Uc1xPs09BfQyv/arcgis/rest/services/ExclusionZoneQLD/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-04"
+        },
+        {
+          "title": "Client Supplied",
+          "owner": "EngenyAdmin",
+          "url": "https://services-ap1.arcgis.com/DzY5f75GNxPSBOcO/arcgis/rest/services/Client_Supplied/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2023-12-20"
+        },
+        {
+          "title": "COPC LAAN",
+          "owner": "skhatri_parracity",
+          "url": "https://services6.arcgis.com/NrOjMi9LSYL3MUze/arcgis/rest/services/COPC_LAAN/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-05-22"
+        },
+        {
+          "title": "Pipelines split",
+          "owner": "EngenyAdmin",
+          "url": "https://services-ap1.arcgis.com/DzY5f75GNxPSBOcO/arcgis/rest/services/Pipelines_split/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-10-09"
+        },
+        {
+          "title": "JemenaLUALExZone",
+          "owner": "neil.dunford.jemena",
+          "url": "https://services6.arcgis.com/YusxtMlesygp46on/arcgis/rest/services/JemenaLUALExZone/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2022-12-01"
+        }
+      ]
+    },
+    "AusNet Services": {
+      "searches": [
+        {
+          "query": "\"AusNet Services\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"AusNet Services\"",
+          "total": 1,
+          "hits": 1
+        }
+      ],
+      "candidates": [
+        {
+          "title": "VicEmergency - Incidents",
+          "owner": "jakc",
+          "url": "https://services1.arcgis.com/vHnIGBHHqDR6y0CR/arcgis/rest/services/Vic_Emergency_Incidents/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-06-21",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -0.000001,
+            "ymin": -7298314.86659728,
+            "xmax": 16670950.752623996,
+            "ymax": 0.000001,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Incidents",
+              "count": 8,
+              "fields": [
+                "OBJECTID",
+                "incidentNo",
+                "lastUpdateDateTime",
+                "originDateTime",
+                "incidentType",
+                "incidentLocation",
+                "incidentStatus",
+                "incidentSize",
+                "name",
+                "territory",
+                "resourceCount",
+                "eventCode",
+                "fireDistrict",
+                "municipality",
+                "category1",
+                "category2",
+                "agency",
+                "originStatus",
+                "type",
+                "lastUpdatedDt",
+                "lastUpdatedDtStr",
+                "originDateTimeStr",
+                "GlobalID"
+              ],
+              "outageFields": []
+            }
+          ]
+        }
+      ]
+    },
+    "TasNetworks": {
+      "searches": [
+        {
+          "query": "\"TasNetworks\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"TasNetworks\"",
+          "total": 4,
+          "hits": 4
+        }
+      ],
+      "candidates": [
+        {
+          "title": "A1JZCU2ICUOJQW443NNF",
+          "owner": "OC_AEMO",
+          "url": "https://services8.arcgis.com/V0Uhw1Q4KWa0Il0n/arcgis/rest/services/Merged Transmission Lines/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-05-25",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -581068.2732999995,
+            "ymin": 5220926.4766,
+            "xmax": 1145046.3786000004,
+            "ymax": 8287932.1721,
+            "spatialReference": {
+              "wkid": 28355,
+              "latestWkid": 28355
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "MergedFeatures",
+              "count": 2503,
+              "fields": [
+                "OBJECTID",
+                "ID",
+                "Class",
+                "feeder_num",
+                "length_m",
+                "objectid_1",
+                "featuretyp",
+                "operationa",
+                "spatialcon",
+                "ga_guid",
+                "st_lengths",
+                "Voltage_Combined",
+                "GlobalID",
+                "Line_Status",
+                "State_Final",
+                "Name_Final"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Network_EV_Capacity_TheListLayers",
+          "owner": "tasnetworksagol",
+          "url": "https://services-ap1.arcgis.com/CboTUwZPuP6lLNFs/arcgis/rest/services/Network_EV_Capacity_TheListLayers/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-09-08",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 50811.8200000003,
+            "ymin": 412906.66,
+            "xmax": 16379792.1864,
+            "ymax": 52566959,
+            "spatialReference": {
+              "wkid": 28355,
+              "latestWkid": 28355
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Pole",
+              "count": 216256,
+              "fields": [
+                "OBJECTID",
+                "ASSETGROUP",
+                "ASSETTYPE",
+                "Material",
+                "TagNumber",
+                "Owner",
+                "GLOBALID",
+                "CreatedBy",
+                "CreationDate",
+                "LastUpdatedBy",
+                "LastUpdatedDate"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 1,
+              "name": "Conductor",
+              "count": 430249,
+              "fields": [
+                "OBJECTID",
+                "ASSETGROUP",
+                "ASSETTYPE",
+                "NominalVoltage",
+                "SUBNETWORKNAME",
+                "GLOBALID",
+                "CreatedBy",
+                "CreationDate",
+                "LastUpdatedBy",
+                "LastUpdatedDate",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 2,
+              "name": "Roadlight",
+              "count": 51872,
+              "fields": [
+                "OBJECTID",
+                "ASSETGROUP",
+                "ASSETTYPE",
+                "GLOBALID",
+                "SymbolRotation",
+                "CustomerName",
+                "FixtureCode",
+                "FixtureDescription",
+                "NominalRating",
+                "PoleTagNumber",
+                "CreatedBy",
+                "CreationDate",
+                "LastUpdatedBy",
+                "LastUpdatedDate",
+                "SUBNETWORKNAME"
+              ],
+              "outageFields": [
+                "CustomerName",
+                "PoleTagNumber"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "SAPEquipment",
+          "owner": "GIS_Admin_esriau",
+          "url": "https://services1.arcgis.com/vHnIGBHHqDR6y0CR/arcgis/rest/services/SAPEquipment/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2021-07-11",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 506377.58160000015,
+            "ymin": 5241905.5534,
+            "xmax": 525941.6480999999,
+            "ymax": 5263507.732,
+            "spatialReference": {
+              "wkid": 7855,
+              "latestWkid": 7855
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Equipment",
+              "count": 1009,
+              "fields": [
+                "OBJECTID",
+                "CreationUser",
+                "DateCreated",
+                "DateModified",
+                "LastUser",
+                "State",
+                "SymbolRotation",
+                "WASPAssetID",
+                "WASPJobID",
+                "AssetType"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 1,
+              "name": "Segment",
+              "count": 151,
+              "fields": [
+                "OBJECTID",
+                "CreationUser",
+                "DateCreated",
+                "DateModified",
+                "LastUser",
+                "SubtypeCD",
+                "MeasuredLength",
+                "LengthSource",
+                "Comments",
+                "WorkOrderID",
+                "InstallationDate",
+                "PhaseDesignation",
+                "FeederID",
+                "FeederID2",
+                "State",
+                "WASPAssetID",
+                "WASPJobID",
+                "VoltageLevel",
+                "AssetType",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "NEM TAS TASNETWORKS",
+          "owner": "evenergi",
+          "url": "https://services-ap1.arcgis.com/4TNjTqjusZrfpdYy/arcgis/rest/services/NEM_TAS_TASNETWORKS/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-06-12",
+          "serviceStatus": 200,
+          "extent": null,
+          "inAustralia": null,
+          "layers": [
+            {
+              "id": 0,
+              "name": "NEM_TAS_TASNETWORKS",
+              "count": 1,
+              "fields": [
+                "FID",
+                "FID_1",
+                "Shape__Area",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        }
+      ]
+    },
+    "Evoenergy": {
+      "searches": [
+        {
+          "query": "\"Evoenergy\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"Evoenergy\"",
+          "total": 1,
+          "hits": 1
+        }
+      ],
+      "candidates": [
+        {
+          "title": "Electricity",
+          "owner": "Larissa.Taylor@canberra.edu.au_Canberra",
+          "url": "https://services3.arcgis.com/iR1gOFe0FlzMQ2yd/arcgis/rest/services/Electricity/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-10-09",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 16594782.793424992,
+            "ymin": -4197020.414900933,
+            "xmax": 16596945.265607225,
+            "ymax": -4195253.671518057,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "ElectricalLight",
+              "count": 1012,
+              "fields": [
+                "OBJECTID",
+                "SymbolRotation",
+                "LifecycleStatus",
+                "UID",
+                "Owner",
+                "DATASOURCE",
+                "DRAWINGNUM",
+                "POSITIONSOURCE",
+                "SUBTYPE",
+                "Manufacturer",
+                "LIGHTTYPE",
+                "FITTINGMODEL",
+                "POLE",
+                "QUANTITY",
+                "Location",
+                "POINT_X",
+                "POINT_Y",
+                "POINT_Z",
+                "CreationDate",
+                "Creator",
+                "EditDate",
+                "Editor"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 1,
+              "name": "OverheadHVElectricLine",
+              "count": 74,
+              "fields": [
+                "OBJECTID",
+                "UID",
+                "CreationDate",
+                "Creator",
+                "EditDate",
+                "Editor",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 2,
+              "name": "UndergroundLVElectricLine",
+              "count": 162,
+              "fields": [
+                "OBJECTID",
+                "SUBTYPE",
+                "DATASOURCE",
+                "DRAWINGNUMBER",
+                "POSITIONSOURCE",
+                "CreationDate",
+                "Creator",
+                "EditDate",
+                "Editor",
+                "SHAPE__Length"
+              ],
+              "outageFields": []
+            }
+          ]
+        }
+      ]
+    },
+    "Power and Water Corporation": {
+      "searches": [
+        {
+          "query": "\"Power and Water Corporation\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"Power and Water Corporation\"",
+          "total": 0,
+          "hits": 0
+        }
+      ],
+      "candidates": []
+    },
+    "Energy Queensland": {
+      "searches": [
+        {
+          "query": "\"Energy Queensland\" outage",
+          "total": 0,
+          "hits": 0
+        },
+        {
+          "query": "\"Energy Queensland\"",
+          "total": 4,
+          "hits": 4
+        }
+      ],
+      "candidates": [
+        {
+          "title": "Foundation data",
+          "owner": "RilipoAGOL",
+          "url": "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Basemaps/FoundationData/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2024-11-29",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 137.5,
+            "ymin": -29.5,
+            "xmax": 155.5,
+            "ymax": -8.5,
+            "spatialReference": {
+              "wkid": 4283,
+              "latestWkid": 4283,
+              "xyTolerance": 8.983152841195215e-9,
+              "zTolerance": 0.001,
+              "mTolerance": 0.001,
+              "falseX": -400,
+              "falseY": -400,
+              "xyUnits": 999999999.9999999,
+              "falseZ": -100000,
+              "zUnits": 10000,
+              "falseM": -100000,
+              "mUnits": 10000
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Address",
+              "count": 2845313,
+              "fields": [
+                "lot",
+                "plan",
+                "unit_number",
+                "unit_type",
+                "street_number",
+                "street_name",
+                "street_type",
+                "state",
+                "street_suffix",
+                "geocode_type",
+                "address",
+                "unit_suffix",
+                "floor_type",
+                "floor_number",
+                "floor_suffix",
+                "property_name",
+                "street_no_1",
+                "street_no_1_suffix",
+                "street_no_2",
+                "street_no_2_suffix",
+                "street_full",
+                "locality",
+                "local_authority",
+                "address_status"
+              ],
+              "outageFields": [
+                "locality"
+              ]
+            },
+            {
+              "id": 1,
+              "name": "Natural property boundary",
+              "count": 171737,
+              "fields": [
+                "objectid",
+                "linestyle",
+                "seg_num",
+                "par_num",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 2,
+              "name": "Lot boundary",
+              "count": 3473750,
+              "fields": [
+                "lot",
+                "plan",
+                "lotplan",
+                "tenure",
+                "lot_area",
+                "excl_area",
+                "lot_volume",
+                "feat_name",
+                "alias_name",
+                "acc_code",
+                "surv_ind",
+                "cover_typ",
+                "parcel_typ",
+                "locality",
+                "shire_name",
+                "smis_map",
+                "objectid",
+                "Shape__Area",
+                "Shape__Length"
+              ],
+              "outageFields": [
+                "locality"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Foundation data",
+          "owner": "RilipoAGOL",
+          "url": "https://gisservices.information.qld.gov.au/arcgis/rest/services/Basemaps/FoundationData/MapServer",
+          "type": "Map Service",
+          "modified": "2023-02-20",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 137.5,
+            "ymin": -29.5,
+            "xmax": 155.5,
+            "ymax": -8.5,
+            "spatialReference": {
+              "wkid": 4283,
+              "latestWkid": 4283,
+              "xyTolerance": 8.983152841195215e-9,
+              "zTolerance": 0.001,
+              "mTolerance": 0.001,
+              "falseX": -400,
+              "falseY": -400,
+              "xyUnits": 999999999.9999999,
+              "falseZ": -100000,
+              "zUnits": 10000,
+              "falseM": -100000,
+              "mUnits": 10000
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "Address",
+              "count": 2845313,
+              "fields": [
+                "lot",
+                "plan",
+                "unit_number",
+                "unit_type",
+                "street_number",
+                "street_name",
+                "street_type",
+                "state",
+                "street_suffix",
+                "geocode_type",
+                "address",
+                "unit_suffix",
+                "floor_type",
+                "floor_number",
+                "floor_suffix",
+                "property_name",
+                "street_no_1",
+                "street_no_1_suffix",
+                "street_no_2",
+                "street_no_2_suffix",
+                "street_full",
+                "locality",
+                "local_authority",
+                "address_status"
+              ],
+              "outageFields": [
+                "locality"
+              ]
+            },
+            {
+              "id": 1,
+              "name": "Natural property boundary",
+              "count": 171737,
+              "fields": [
+                "objectid",
+                "linestyle",
+                "seg_num",
+                "par_num",
+                "st_length(shape)"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 2,
+              "name": "Lot boundary",
+              "count": 3473750,
+              "fields": [
+                "lot",
+                "plan",
+                "lotplan",
+                "tenure",
+                "lot_area",
+                "excl_area",
+                "lot_volume",
+                "feat_name",
+                "alias_name",
+                "acc_code",
+                "surv_ind",
+                "cover_typ",
+                "parcel_typ",
+                "locality",
+                "shire_name",
+                "smis_map",
+                "objectid",
+                "st_area(shape)",
+                "st_perimeter(shape)"
+              ],
+              "outageFields": [
+                "locality"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Energy Queensland - GIS Governance _fieldworker",
+          "owner": "mgregory@esriaustralia.com.au",
+          "url": "https://services1.arcgis.com/vHnIGBHHqDR6y0CR/arcgis/rest/services/survey123_b15d72176dc547efbaa17da5a28ceeb9_fieldworker/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2020-06-24",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -180,
+            "ymin": -90,
+            "xmax": 180,
+            "ymax": 90,
+            "spatialReference": {
+              "wkid": 4326,
+              "latestWkid": 4326
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "survey",
+              "count": 16,
+              "fields": [
+                "objectid",
+                "globalid",
+                "CreationDate",
+                "Creator",
+                "EditDate",
+                "Editor",
+                "name",
+                "role_title",
+                "email",
+                "which_business_unit_do_you_work",
+                "q1_in_your_view_which_of_the_fo",
+                "q1_in_your_view_which_of_the_fo_other",
+                "q2_in_your_own_words_describe_t",
+                "q3_please_describe_the_main_bus",
+                "q4_what_are_the_current_industr",
+                "q5_overall_what_do_you_feel_are",
+                "q6_to_what_extent_does_energy_q",
+                "q7_please_identify_the_existing",
+                "q8_based_on_the_governance_grou",
+                "q9_generally_how_often_do_the_g",
+                "q10_which_methods_are_typically",
+                "q10_which_methods_are_typically_other",
+                "q11_please_describe_the_most_si",
+                "q12_overall_how_would_you_rate_"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "Energy Queensland Interview Request Esri UC 2022_fieldworker",
+          "owner": "rdeming_EsriMedia",
+          "url": "https://services.arcgis.com/AgwDJMQH12AGieWa/arcgis/rest/services/survey123_b40731b2346c4115a6055e76da67bfc7_fieldworker/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2022-07-05",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": -180,
+            "ymin": -90,
+            "xmax": 180,
+            "ymax": 90,
+            "spatialReference": {
+              "wkid": 4326,
+              "latestWkid": 4326
+            }
+          },
+          "inAustralia": false,
+          "layers": [
+            {
+              "id": 0,
+              "name": "survey",
+              "fields": [],
+              "outageFields": []
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
