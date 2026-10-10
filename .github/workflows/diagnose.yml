@@ -91,6 +91,12 @@ jobs:
       - name: Discover the feeds behind the published pages
         run: node scripts/discover-feeds.mjs
 
+      # What is inside the Alert SA combined feed the step above found. SA is
+      # the state the dashboard reports nothing for, and the CFS data host is
+      # serving a soft-404 to the agency's own page, so this is the route in.
+      - name: Alert SA combined feed contents
+        run: node scripts/probe-alert-sa.mjs
+
       # Committed because a probe whose findings are not written down gets run
       # again from scratch next time the question comes up -- which has
       # happened on this project more than once.
@@ -104,4 +110,4 @@ jobs:
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh 'Record live state health and the feed probes' \
               data/state-health.json data/nt-power-probe.json \
-              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json data/feed-discovery.json
+              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json data/feed-discovery.json data/alert-sa-probe.json
