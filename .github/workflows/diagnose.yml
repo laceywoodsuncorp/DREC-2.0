@@ -85,6 +85,12 @@ jobs:
       - name: Dump the shape of the usable warnings feeds
         run: node scripts/probe-shapes.mjs
 
+      # Ask the published pages what feeds THEY read, instead of guessing at
+      # addresses. Every SA endpoint we hold was a guess, and both answer a
+      # soft-404 that reads as a quiet day.
+      - name: Discover the feeds behind the published pages
+        run: node scripts/discover-feeds.mjs
+
       # Committed because a probe whose findings are not written down gets run
       # again from scratch next time the question comes up -- which has
       # happened on this project more than once.
@@ -98,4 +104,4 @@ jobs:
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh 'Record live state health and the feed probes' \
               data/state-health.json data/nt-power-probe.json \
-              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json
+              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json data/feed-discovery.json

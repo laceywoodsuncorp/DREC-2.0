@@ -159,10 +159,17 @@ const CANDIDATES = {
     'https://alert.tas.gov.au/data/incidents-and-alerts.xml',
     'https://alert.tas.gov.au/data/warnings.xml'
   ],
+  /* Both data.eso.sa.gov.au addresses answer 200 with a 197-byte "SA ESS -
+     File Unavailable" page, which is why SA reported ok:true, complete:true,
+     count:0 -- a soft-404 reads exactly like a quiet day. The CFS page a
+     human actually opens is included so the probe reports what IT says
+     rather than what we assume about the data host. */
   sa: [
     'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json',
     'https://www.cfs.sa.gov.au/warnings/feed/',
-    'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_warnings.json'
+    'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_warnings.json',
+    'https://www.cfs.sa.gov.au/warnings-restrictions/warnings/incidents-warnings/',
+    'https://alert.sa.gov.au/'
   ],
   nt: [
     'https://securent.nt.gov.au/alerts-warnings',
