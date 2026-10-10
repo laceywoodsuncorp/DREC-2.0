@@ -89,6 +89,53 @@ for (const [op, urls] of Object.entries(TARGETS)) {
   }
 }
 
+/* ---- follow the sitemap, where one is readable -------------------------
+   Horizon is the interesting case. /faults-outages/ answers 403 with a
+   Cloudflare challenge, but /faults-outages/power-outages/ -- the FIRST
+   source in the config -- answers a plain 404 from the origin, and
+   sitemap.xml and robots.txt both answer 200. So the protection is not
+   blanket: some paths reach the site and one configured path simply does
+   not exist any more.
+
+   That makes the sitemap worth reading. It is the site telling us where
+   its pages are, which beats guessing at paths, and it is how the real
+   outage URL gets found if there is one. */
+out.sitemaps = {};
+for (const [op, root] of [['Horizon Power', 'https://www.horizonpower.com.au/sitemap.xml'],
+                          ['SA Power Networks', 'https://www.sapowernetworks.com.au/sitemap.xml']]) {
+  const r = await get(root, 'application/xml');
+  if (r.error || r.status !== 200 || !r.text) {
+    out.sitemaps[op] = { root, status: r.status, error: r.error };
+    console.log('\nSITEMAP ' + op + ' -> ' + (r.error || r.status));
+    continue;
+  }
+  let locs = [...new Set((r.text.match(/<loc>([^<]+)<\/loc>/g) || []).map((x) => x.slice(5, -6)))];
+  /* A sitemap index points at more sitemaps rather than pages. */
+  const nested = locs.filter((u) => /sitemap[^/]*\.xml$/i.test(u)).slice(0, 5);
+  for (const n of nested) {
+    const rr = await get(n, 'application/xml');
+    if (rr.text) locs = locs.concat([...new Set((rr.text.match(/<loc>([^<]+)<\/loc>/g) || []).map((x) => x.slice(5, -6)))]);
+  }
+  const hits = [...new Set(locs.filter((u) => /outage|fault|interrupt|supply|power-?out/i.test(u)))].slice(0, 20);
+  out.sitemaps[op] = { root, total: locs.length, nested: nested.length, outageUrls: hits, tried: [] };
+  console.log('\nSITEMAP ' + op + '  ' + locs.length + ' urls, ' + hits.length + ' outage-ish');
+  hits.forEach((h) => console.log('    ' + h));
+
+  /* Fetch what it named, because a URL in a sitemap that answers 403 is
+     still no use and that has to be measured, not assumed. */
+  for (const u of hits.slice(0, 8)) {
+    const rr = await get(u);
+    const n = rr.text ? rows(rr.text) : 0;
+    const agol = rr.text ? [...new Set((rr.text.match(/https?:\/\/services\d*\.arcgis\.com\/[^"'\s]{5,120}/g) || []))].slice(0, 3) : [];
+    out.sitemaps[op].tried.push({ url: u, status: rr.status, error: rr.error,
+      challenged: rr.challenged, bytes: rr.bytes, tableRows: n, arcgis: agol });
+    console.log('      ' + u.slice(0, 80));
+    console.log('        ' + (rr.error ? 'ERROR ' + rr.error
+      : 'HTTP ' + rr.status + (rr.challenged ? '  [CHALLENGE]' : '') + '  ' + rr.bytes + 'b  rows=' + n));
+    if (agol.length) console.log('        ARCGIS: ' + agol.join(' '));
+  }
+}
+
 mkdirSync('data', { recursive: true });
 writeFileSync('data/blocked-recheck.json', JSON.stringify(out, null, 2));
 console.log('\nwrote data/blocked-recheck.json');
