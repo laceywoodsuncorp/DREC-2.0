@@ -21,7 +21,7 @@ const grab = (re, what) => {
 
 const classify = new Function([
   grab(/const CAT_KEYWORDS=\{[\s\S]*?\n  \};/, 'CAT_KEYWORDS'),
-  grab(/const CLAIM_RE=[\s\S]*?\n  const CLAIM_CONTEXT=[^\n]*\n/, 'claim rules'),
+  grab(/const CLAIM_RE=[\s\S]*?\n  const PREMIUM_CONTEXT=[^\n]*\n/, 'ambiguous-term rules'),
   grab(/const FIRE_REGEX=[\s\S]*?;\n/, 'FIRE_REGEX'),
   grab(/const kwMatchers=\{\};/, 'kwMatchers'),
   grab(/function keywordHit\(text,kw\)\{[\s\S]*?\n  \}/, 'keywordHit'),
@@ -105,7 +105,11 @@ console.log('\n== the stem overreach, measured headline by headline ==');
   ['Warrant issued for missing man', []],
   ['War in Ukraine enters third year', ['world']],
   ['Insurance policy changes hit small business', ['insurance']],
-  ['New policy on premiums announced', ['insurance']],
+  /* No line of cover named, so the narrow premium rule leaves it alone.
+     This expected ['insurance'] while premium* was a standalone trigger;
+     "policy" on its own is not an insurance word either -- a government
+     policy on premiums reads identically. */
+  ['New policy on premiums announced', []],
   ['Policyholders face higher excess', ['insurance']],
   ['Police charge man over Brisbane stabbing', ['crime']],
   ['Court sentences man over arson', ['crime']],
@@ -178,6 +182,59 @@ ck('a bare trade claims headline is caught by the publisher',
   classify('Claims bill tops $1bn', 'insurancenews.com.au', 'insuranceNEWS').includes('insurance'));
 ck('and the same words from a general outlet are not',
   !classify('Claims bill tops $1bn', 'abc.net.au', 'ABC News').includes('insurance'));
+
+console.log('\n== "premium" needs a line of cover: home or motor ==');
+/* "Premium" is a price in insurance and an adjective meaning upmarket
+   everywhere else, so on its own it tagged all of these Insurance. */
+[
+  'Qantas expands premium economy',
+  'Woolworths launches premium own-brand range',
+  'Premium fuel prices hit record',
+  'Premium Bonds winners announced',
+  'Streaming service raises premium tier price',
+  'Club offers premium seating upgrade',
+  'Premium wine exports to China rebound'
+].forEach((t) => {
+  ck('not insurance: ' + t.slice(0, 42),
+    !classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+[
+  'Premiums rise 15% for Queensland homeowners',
+  'Home premiums climb after floods',
+  'Motor premiums climb as repair costs bite',
+  'House premiums unaffordable in the north',
+  'Vehicle premiums rise'
+].forEach((t) => {
+  ck('insurance: ' + t.slice(0, 42),
+    classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+console.log('\n== what the narrow premium rule knowingly drops ==');
+/* Real insurance stories that this rule will not tag, asserted so the cost
+   is visible rather than discovered later. Each becomes a one-word addition
+   to PREMIUM_CONTEXT if it turns out to matter. */
+[
+  'Health premiums jump again in April',
+  'Strata premiums double in flood zones',
+  'Northern Australia premiums remain unaffordable'
+].forEach((t) => {
+  ck('knowingly untagged: ' + t.slice(0, 40),
+    !classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+/* Neither term may corroborate itself: the claim context contains
+   "premiums" and vice versa, so each is blanked from the text before its
+   own context is tested. */
+ck('premium cannot corroborate itself',
+  !classify('Premium premium premium', 'abc.net.au', '').includes('insurance'));
+ck('claim cannot corroborate itself',
+  !classify('Claims claim claimed', 'abc.net.au', '').includes('insurance'));
+ck('a trade premium headline is still caught by the publisher',
+  classify('Premium review flagged', 'insurancenews.com.au', 'insuranceNEWS').includes('insurance'));
 
 console.log('\n== other outlets are unaffected ==');
 ck('an ABC bushfire story is bushfire and nothing else',

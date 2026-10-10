@@ -673,7 +673,11 @@
   const CAT_KEYWORDS={
     /* 'claim*' is deliberately NOT here -- see CLAIM_RE below. Everything
        in this list is sufficient on its own. */
-    insurance:['insur*','afca','premium*','policyholder*','underwrit*','icaustralia','insurance council'],
+    /* 'claim*' and 'premium*' are deliberately NOT here -- both are
+       insurance words in one sense and ordinary English in another, so they
+       are handled by AMBIGUOUS_RE below. Everything in this list is
+       sufficient on its own. */
+    insurance:['insur*','afca','policyholder*','underwrit*','icaustralia','insurance council'],
     fire:['house fire','home fire','building fire','structure fire','fire kills','blaze kills','fireplace',
       'property fire','residential fire','unit fire','townhouse fire','duplex fire','granny flat fire',
       'garage fire','shed fire','caravan fire','fire destroys','fire guts','blaze destroys','blaze guts',
@@ -690,25 +694,39 @@
     sport:['sport*','cricket','afl','nrl','rugby','olympic*','commonwealth games','tennis','swim*','golf','striker*','premiership'],
     world:['iran','ukraine','gaza','israel','china','white house','united nations','trump','war','wars','warfare']
   };
-  /* "Claim" is an insurance noun and also one of the commonest verbs in a
-     news headline, where it just means "asserts". As a bare stem it tagged
-     all of these Insurance:
+  /* Two words that mean insurance in one sense and something ordinary in
+     another, so neither is trusted alone. They need different support,
+     because they go wrong in different ways.
 
-       Man claims he was assaulted
-       Police claim offender fled
-       Teen claims victory at nationals
-       Minister claims budget is balanced
-       Group claims responsibility for attack
+     "Claim" is an insurance noun and also one of the commonest verbs in a
+     headline, where it only means "asserts": "Man claims he was assaulted",
+     "Teen claims victory", "Minister claims budget is balanced" were all
+     tagged Insurance. It is corroborated by a peril or an insurance term,
+     which is how a genuine claims headline reads.
 
-     So it needs corroboration rather than removal -- "Flood claims surge"
-     really is an insurance story. It counts only alongside an insurance term
-     or a peril, which is how a genuine claims headline is written.
+     "Premium" is a price in insurance and an adjective meaning upmarket
+     everywhere else: "Qantas expands premium economy", "Premium fuel prices
+     hit record", "Premium Bonds winners announced". It is corroborated by a
+     line of cover -- home or motor and their obvious variants -- which is
+     narrower than the claim rule on purpose.
 
-     Trade-press headlines that mention claims without naming a peril
-     ("Claims bill tops $1bn") are not lost by this: they come from
-     insuranceNEWS, which is tagged by publisher before any keyword runs. */
+     That narrowness is a deliberate trade and it does drop things. These are
+     real insurance stories this rule will NOT tag:
+
+       Health premiums jump again in April
+       Strata premiums double in flood zones
+       Northern Australia premiums remain unaffordable
+
+     They are the price of a clean Insurance tab, and the lines can be added
+     to PREMIUM_CONTEXT one at a time if any of them turns out to matter.
+
+     Neither word is lost on the trade press: insuranceNEWS is tagged by
+     publisher before any keyword runs, so "Premium review flagged" from
+     there is still Insurance. */
   const CLAIM_RE=/\bclaim/i;
-  const CLAIM_CONTEXT=/\b(insur\w*|premium\w*|policyholder\w*|underwrit\w*|excess|deductible|payout|pay-?out|settlement|assessor\w*|loss|losses|damage\w*|catastrophe|disaster|flood\w*|storm\w*|hail\w*|cyclone\w*|bushfire\w*|quake|earthquake|afca|icaustralia|broker\w*|reinsur\w*)\b/i;
+  const CLAIM_CONTEXT=/\b(insur\w*|reinsur\w*|underwrit\w*|policyholder\w*|premiums?|excess|deductible|payout|pay-?out|settlement|assessor\w*|broker\w*|afca|icaustralia|loss|losses|damage\w*|catastrophe|disaster|flood\w*|storm\w*|hail\w*|cyclone\w*|bushfire\w*|quake|earthquake)\b/i;
+  const PREMIUM_RE=/\bpremium/i;
+  const PREMIUM_CONTEXT=/\b(home|homes|homeowner\w*|household\w*|house|houses|motor|motorist\w*|car|cars|vehicle\w*)\b/i;
 
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
     politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
@@ -926,7 +944,14 @@
     });
     /* Corroborated claims. Checked after the keyword loop so it cannot
        double-add when an insurance term already matched. */
-    if(cats.indexOf('insurance')===-1&&CLAIM_RE.test(t)&&CLAIM_CONTEXT.test(t))cats.push('insurance');
+    /* Each ambiguous term is corroborated by a word OTHER than itself. The
+       claim list contains "premiums" and vice versa, so without blanking the
+       term first a headline could support itself and be right back where it
+       started. */
+    if(cats.indexOf('insurance')===-1){
+      if(CLAIM_RE.test(t)&&CLAIM_CONTEXT.test(t.replace(/\bclaim\w*/ig,' ')))cats.push('insurance');
+      else if(PREMIUM_RE.test(t)&&PREMIUM_CONTEXT.test(t.replace(/\bpremium\w*/ig,' ')))cats.push('insurance');
+    }
     if(!cats.includes('fire')&&!cats.includes('bushfire')&&FIRE_REGEX.test(t))cats.push('fire');
     return cats;
   }
@@ -950,7 +975,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-10-claimctx';
+  const EXPECTED_WORKER_BUILD='2026-10-10-premiumctx';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
