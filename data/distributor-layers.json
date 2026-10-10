@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-10T04:49:28.449Z",
+  "at": "2026-10-10T07:54:08.978Z",
   "operators": {
     "Essential Energy": {
       "searches": [
@@ -346,59 +346,6 @@
       ],
       "candidates": [
         {
-          "title": "HPC WIRE ROUTE DO NOTHING YEAR 20",
-          "owner": "asseticdev",
-          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20/FeatureServer",
-          "type": "Feature Service",
-          "modified": "2025-05-19",
-          "serviceStatus": 200,
-          "extent": {
-            "xmin": 12632441.081987321,
-            "ymin": -2866933.2919469774,
-            "xmax": 12703692.525424087,
-            "ymax": -2803117.439271737,
-            "spatialReference": {
-              "wkid": 102100,
-              "latestWkid": 3857
-            }
-          },
-          "inAustralia": true,
-          "layers": [
-            {
-              "id": 0,
-              "name": "HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20",
-              "count": 3960,
-              "fields": [
-                "FID",
-                "TOWN",
-                "SHORT_PLAN",
-                "PLANT_NUMB",
-                "CARRIER_TA",
-                "CARRIER_TY",
-                "PARENT_TYP",
-                "ELLIPSE_PA",
-                "ELLIPSE_EQ",
-                "LIFECYCLE_",
-                "DATE_INSTA",
-                "LOCATION_D",
-                "MOUNTING",
-                "USAGE",
-                "ACTUAL_LEN",
-                "NOMINAL_VO",
-                "NETWORK_TY",
-                "PHASE",
-                "SPEC_CODE",
-                "SPEC_NAME",
-                "SPEC_DESCR",
-                "MATERIAL",
-                "SIZE",
-                "PARENT_FEE"
-              ],
-              "outageFields": []
-            }
-          ]
-        },
-        {
           "title": "HPC POLE DO NOTHING YEAR 20",
           "owner": "asseticdev",
           "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_POLE_DO_NOTHING_YEAR_20/FeatureServer",
@@ -446,6 +393,59 @@
                 "ID",
                 "Unique_Ass",
                 "Asset_Name"
+              ],
+              "outageFields": []
+            }
+          ]
+        },
+        {
+          "title": "HPC WIRE ROUTE DO NOTHING YEAR 20",
+          "owner": "asseticdev",
+          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2025-05-19",
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 12632441.081987321,
+            "ymin": -2866933.2919469774,
+            "xmax": 12703692.525424087,
+            "ymax": -2803117.439271737,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20",
+              "count": 3960,
+              "fields": [
+                "FID",
+                "TOWN",
+                "SHORT_PLAN",
+                "PLANT_NUMB",
+                "CARRIER_TA",
+                "CARRIER_TY",
+                "PARENT_TYP",
+                "ELLIPSE_PA",
+                "ELLIPSE_EQ",
+                "LIFECYCLE_",
+                "DATE_INSTA",
+                "LOCATION_D",
+                "MOUNTING",
+                "USAGE",
+                "ACTUAL_LEN",
+                "NOMINAL_VO",
+                "NETWORK_TY",
+                "PHASE",
+                "SPEC_CODE",
+                "SPEC_NAME",
+                "SPEC_DESCR",
+                "MATERIAL",
+                "SIZE",
+                "PARENT_FEE"
               ],
               "outageFields": []
             }
@@ -1100,7 +1100,7 @@
             {
               "id": 1,
               "name": "NSW_AusGrid_Outages_Points",
-              "count": 12,
+              "count": 17,
               "fields": [
                 "OBJECTID",
                 "WebId",
@@ -1548,7 +1548,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 14,
+              "count": 8,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -1648,7 +1648,7 @@
             {
               "id": 1,
               "name": "Powercor_Outages_Points",
-              "count": 9,
+              "count": 3,
               "fields": [
                 "OBJECTID",
                 "createDateTime",
@@ -1674,7 +1674,7 @@
             {
               "id": 2,
               "name": "Powercor_Outages_Polygons",
-              "count": 9,
+              "count": 3,
               "fields": [
                 "OBJECTID",
                 "createDateTime",
@@ -1766,7 +1766,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 14,
+              "count": 8,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -2002,7 +2002,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 14,
+              "count": 8,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -2178,16 +2178,16 @@
           "modified": "2023-08-11"
         },
         {
-          "title": "Infrastructure Investments",
+          "title": "BPA Interconnection Queue",
           "owner": "zac_cleanprosperousinstitute",
-          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/Infrastructure_Investments/FeatureServer",
+          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/BPA_Interconnection_Queue/FeatureServer",
           "type": "Feature Service",
           "modified": "2025-10-16"
         },
         {
-          "title": "BPA Interconnection Queue",
+          "title": "Infrastructure Investments",
           "owner": "zac_cleanprosperousinstitute",
-          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/BPA_Interconnection_Queue/FeatureServer",
+          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/Infrastructure_Investments/FeatureServer",
           "type": "Feature Service",
           "modified": "2025-10-16"
         },
@@ -2497,7 +2497,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 14,
+              "count": 8,
               "fields": [
                 "OBJECTID",
                 "incidentNo",

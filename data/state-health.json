@@ -1,14 +1,14 @@
 {
   "base": "https://drec-oncall-updates-site.lacey-wood.workers.dev",
-  "at": "2026-10-10T04:48:45.525Z",
+  "at": "2026-10-10T07:53:28.246Z",
   "incidents": {
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-cron2min",
+      "build": "2026-10-10-alertsa",
       "sourceUrl": "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json",
-      "count": 29,
-      "withAlertLevel": 29,
+      "count": 25,
+      "withAlertLevel": 25,
       "alertLevels": [
         "Advice",
         "Planned Burn",
@@ -26,7 +26,7 @@
         "Hazard Reduction",
         "Assist Other Agency",
         "Planned Event",
-        "MVA/Transport",
+        "Other",
         "Burn off",
         "Flood/Storm/Tree Down"
       ],
@@ -35,48 +35,50 @@
     "vic": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-cron2min",
+      "build": "2026-10-10-alertsa",
       "sourceUrl": "https://emergency.vic.gov.au/public/events-geojson.json",
-      "count": 18,
-      "withAlertLevel": 0,
-      "alertLevels": [],
+      "count": 13,
+      "withAlertLevel": 1,
+      "alertLevels": [
+        "Watch and Act"
+      ],
       "statuses": [
+        "Moderate",
         "Not Yet Under Control",
-        "Safe",
         "Responding",
-        "Complete",
+        "Safe",
         "Warning",
-        "On Scene",
-        "Request For Assistance"
+        "Under Control"
       ],
       "types": [
         "Bushfire",
         "Other",
+        "Non Structure Fire",
+        "Structure Fire",
         "Building Fire",
-        "Flooding",
-        "Strong Wind",
-        "Road Accident",
-        "Rescue Road Trap Fire",
-        "Tree Down"
+        "Strong Wind"
       ],
       "attempts": []
     },
     "qld": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-cron2min",
+      "build": "2026-10-10-alertsa",
       "sourceUrl": "https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services/ESCAD_Current_Incidents_Public/FeatureServer/0/query?f=geojson&where=1%3D1&outFields=*",
       "mergedFrom": [
         "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json"
       ],
-      "count": 121,
-      "withAlertLevel": 55,
+      "count": 136,
+      "withAlertLevel": 69,
       "alertLevels": [
         "Watch and Act",
+        "Advice",
         "Information"
       ],
       "statuses": [
         "Prepare to Leave",
+        "Stay Informed",
+        "Avoid Smoke",
         "Going",
         "Patrolled",
         "Contained",
@@ -86,7 +88,10 @@
         "Fire",
         "FIRE VEGETATION",
         "FIRE PERMITTED BURN",
-        "FIRE OTHER"
+        "FIRE STRUCTURE",
+        "POWER / GAS ELECTRICAL / POWER",
+        "RESCUE ROAD CRASH",
+        "POWER / GAS GAS"
       ],
       "attempts": [
         {
@@ -97,7 +102,7 @@
     "wa": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-multiword",
+      "build": "2026-10-10-alertsa",
       "sourceUrl": "https://api.emergency.wa.gov.au/v1/rss/warnings",
       "mergedFrom": [
         "https://api.emergency.wa.gov.au/v1/warnings"
@@ -109,7 +114,7 @@
       ],
       "statuses": [
         "Monitor conditions",
-        "Stay informed",
+        "Threat is reduced",
         "Minor - minimal threat"
       ],
       "types": [
@@ -128,34 +133,36 @@
       ]
     },
     "sa": {
-      "httpStatus": 502,
-      "ok": false,
-      "error": "Expected JSON, got HTML — SA ESS - File Unavailable File currently unavailable, please try again",
-      "build": "2026-10-10-cron2min",
-      "count": 0,
+      "httpStatus": 200,
+      "ok": true,
+      "build": "2026-10-10-alertsa",
+      "sourceUrl": "https://combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
+      "count": 14,
       "withAlertLevel": 0,
       "alertLevels": [],
-      "statuses": [],
-      "types": [],
-      "attempts": [
-        {
-          "url": "https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json",
-          "error": "Expected JSON, got HTML — SA ESS - File Unavailable File currently unavailable, please try again"
-        }
-      ]
+      "statuses": [
+        "Controlled - Incident",
+        "Going - Incident",
+        "Completed - Incident"
+      ],
+      "types": [
+        "Burn Off",
+        "TREE DOWN"
+      ],
+      "attempts": []
     },
     "tas": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-cron2min",
+      "build": "2026-10-10-alertsa",
       "sourceUrl": "https://alert.tas.gov.au/data/incidents-and-messages.kml",
-      "count": 19,
+      "count": 21,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
         "Patrol",
-        "Going",
-        "Investigating"
+        "Investigating",
+        "Going"
       ],
       "types": [
         "Bushfire",
@@ -172,10 +179,10 @@
     "nt": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-cron2min",
+      "build": "2026-10-10-alertsa",
       "sourceUrl": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
-      "count": 46,
-      "withAlertLevel": 46,
+      "count": 44,
+      "withAlertLevel": 44,
       "alertLevels": [
         "Advice"
       ],
@@ -187,13 +194,13 @@
       ],
       "types": [
         "Grass and Scrub Fire",
-        "Automatic Fire Alarm",
         "Road Crash",
-        "Hazmat Incident",
-        "Power Lines Down",
+        "Automatic Fire Alarm",
         "Permit Burn",
+        "Power Lines Down",
         "Rubbish Fire",
-        "Structure Fire"
+        "Structure Fire",
+        "Non Structure Fire"
       ],
       "attempts": [
         {
@@ -209,9 +216,9 @@
     "act": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-cron2min",
+      "build": "2026-10-10-alertsa",
       "sourceUrl": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
-      "count": 16,
+      "count": 18,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
@@ -221,7 +228,8 @@
       ],
       "types": [
         "HAZARD REDUCTION BURN",
-        "AMBULANCE RESPONSE"
+        "AMBULANCE RESPONSE",
+        "MOTOR VEHICLE ACCIDENT"
       ],
       "attempts": []
     }
@@ -230,22 +238,22 @@
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 1552,
-      "count": 205,
-      "customers": 15677,
+      "cacheAgeSeconds": 23,
+      "count": 204,
+      "customers": 10487,
       "complete": false,
-      "rows": 205,
+      "rows": 204,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 11,
+          "count": 13,
           "attempts": []
         },
         {
           "name": "Endeavour Energy",
           "ok": true,
-          "count": 194,
+          "count": 191,
           "sourceUrl": "https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/exports/geojson",
           "columns": [
             "street_name",
@@ -293,16 +301,16 @@
           ]
         }
       ],
-      "withTowns": 194
+      "withTowns": 191
     },
     "vic": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 1548,
-      "count": 9,
+      "cacheAgeSeconds": 8,
+      "count": 11,
       "customers": 1300,
       "complete": false,
-      "rows": 9,
+      "rows": 11,
       "networks": [
         {
           "name": "AusNet Services",
@@ -313,7 +321,7 @@
         {
           "name": "Powercor",
           "ok": true,
-          "count": 6,
+          "count": 8,
           "attempts": []
         },
         {
@@ -358,16 +366,16 @@
     "qld": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 1455,
-      "count": 475,
-      "customers": 19434,
+      "cacheAgeSeconds": 6,
+      "count": 463,
+      "customers": 19527,
       "complete": true,
       "rows": 400,
       "networks": [
         {
           "name": "Energex",
           "ok": true,
-          "count": 128,
+          "count": 126,
           "via": "ArcGIS Online",
           "sourceUrl": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
           "columns": [
@@ -401,7 +409,7 @@
         {
           "name": "Ergon Energy",
           "ok": true,
-          "count": 347,
+          "count": 337,
           "via": "ArcGIS Online",
           "sourceUrl": "https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
           "columns": [
@@ -438,16 +446,16 @@
     "wa": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 1455,
-      "count": 172,
-      "customers": 15812,
+      "cacheAgeSeconds": 6,
+      "count": 170,
+      "customers": 15649,
       "complete": false,
-      "rows": 172,
+      "rows": 170,
       "networks": [
         {
           "name": "Western Power",
           "ok": true,
-          "count": 172,
+          "count": 170,
           "sourceUrl": "https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
           "columns": [
             "OBJECTID",
@@ -485,12 +493,12 @@
           ]
         }
       ],
-      "withTowns": 172
+      "withTowns": 170
     },
     "sa": {
       "httpStatus": 200,
       "ok": false,
-      "cacheAgeSeconds": 2,
+      "cacheAgeSeconds": 5,
       "count": 0,
       "customers": 0,
       "complete": false,
@@ -512,11 +520,11 @@
           "attempts": [
             {
               "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/OutageList",
-              "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1683000830088338754-173108850249110781"
+              "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 327000850073747409-155654197558580560"
             },
             {
               "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/api/outages",
-              "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1663000830072708943-171728864370693373"
+              "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 685000800039827846-114189552514307090"
             },
             {
               "url": "https://www.sapowernetworks.com.au/outages/",
@@ -534,43 +542,26 @@
     "tas": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 2,
-      "count": 1,
-      "customers": 38,
+      "cacheAgeSeconds": 3,
+      "count": 0,
+      "customers": 0,
       "complete": true,
-      "rows": 1,
+      "rows": 0,
       "networks": [
         {
           "name": "TasNetworks",
           "ok": true,
-          "count": 1,
+          "count": 0,
           "sourceUrl": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages",
-          "columns": [
-            "messageId",
-            "jobId",
-            "dispatchStatus",
-            "reason",
-            "affectedAreas",
-            "postcodes",
-            "affectedRegions",
-            "customersAffected",
-            "createdOn",
-            "modifiedOn",
-            "estimatedTimeOfRestoration",
-            "sortValue",
-            "outagePolygon_WKT",
-            "outageCentroid_WKT",
-            "canFollow"
-          ],
           "attempts": []
         }
       ],
-      "withTowns": 1
+      "withTowns": 0
     },
     "nt": {
       "httpStatus": 200,
       "ok": false,
-      "cacheAgeSeconds": 2832,
+      "cacheAgeSeconds": 3,
       "count": 0,
       "customers": 0,
       "complete": false,
@@ -599,7 +590,7 @@
     "act": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 2831,
+      "cacheAgeSeconds": 1,
       "count": 0,
       "customers": 0,
       "complete": true,

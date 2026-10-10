@@ -1,14 +1,14 @@
 {
-  "at": "2026-10-10T04:51:48.436Z",
+  "at": "2026-10-10T07:57:03.526Z",
   "feeds": {
     "qld": {
       "url": "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json",
-      "bytes": 120467,
+      "bytes": 165044,
       "topShape": "object{type, name, features}",
       "recordArrays": [
         {
           "path": "$.features",
-          "length": 55,
+          "length": 69,
           "keys": [
             "type",
             "geometry",
@@ -20,26 +20,26 @@
             "properties": "object{OBJECTID, UniqueID, WarningTitle, WarningLevel, CallToAction, WarningText, Header, Impacts, LeaveSafely, FurtherInformation, WarningLevelSort, ShouldDo, WarningArea, Latitude, Longitude, GroupedType, ItemDateTimeUTM, ItemDateTimeLocal_ISO, PublishDateLocal_ISO, ItemExpiryDateTimeLocal_ISO, MultipleWarnings, MessageSent, SendEmailSubscription, WarningType_Level, EventType}"
           },
           "firstProperties": {
-            "OBJECTID": 3838,
-            "UniqueID": "WARN-9539",
-            "WarningTitle": "PREPARE TO LEAVE - Moorland (near Bundaberg) - fire as at 4:25pm Friday, 9 October 2026",
+            "OBJECTID": 3846,
+            "UniqueID": "WARN-9630",
+            "WarningTitle": "PREPARE TO LEAVE - Deepwater, Rules Beach and Baffle Creek - fire as at 3:37pm Saturday, 10 October 2026",
             "WarningLevel": "Watch and Act",
             "CallToAction": "Prepare to Leave",
-            "WarningText": "A dangerous fast moving fire is burning near Moorlands Road.\r\n\r\nPrepare to leave as the situation could get worse quickly.\r\n\r\nWhat you should do:\r\n\r\n- If you ar…[2064]",
-            "Header": "A dangerous fast moving fire is burning near Moorlands Road.\r\n\r\nPrepare to leave as the situation could get worse quickly.",
-            "Impacts": "- Roads may be impacted by smoke. Smoke can make it hard to see when driving.\r\n\r\n- Power, water, phone, and internet services may be impacted as the fire gets c…[309]",
+            "WarningText": "A dangerous slow moving fire is burning near Fingerfield Road, Deepwater.\r\n\r\nPrepare to leave as the situation could get worse quickly.\r\n\r\nAvoid driving on Fing…[2133]",
+            "Header": "A dangerous slow moving fire is burning near Fingerfield Road, Deepwater.\r\n\r\nPrepare to leave as the situation could get worse quickly.\r\n\r\nAvoid driving on Fing…[211]",
+            "Impacts": "- Roads may be impacted by smoke. Smoke can make it hard to see when driving.\r\n\r\n- Power, water, phone, and internet services may be impacted as the fire gets c…[289]",
             "LeaveSafely": null,
             "FurtherInformation": "- For all fire warnings, visit the Qld Fire website.\r\n\r\n- Follow Queensland Fire Department on Facebook.\r\n\r\n- For road closures, visit the QLD Traffic website o…[651]",
             "WarningLevelSort": 3,
             "ShouldDo": "- If you are in danger, call Triple Zero (000) now.\r\n\r\n- Check for warning updates often and listen to your local radio station.\r\n\r\n- If you need medication to …[914]",
-            "WarningArea": "Between Quinns Road and Moorlands Road",
-            "Latitude": -24.787932123061054,
-            "Longitude": 152.2051118982718,
+            "WarningArea": "Between Fernfield Road, Fingerfield Road and Coast Road",
+            "Latitude": -24.479071062161402,
+            "Longitude": 151.9852439599875,
             "GroupedType": "FIRE VEGETATION",
-            "ItemDateTimeUTM": "20261009062606.173000",
-            "ItemDateTimeLocal_ISO": "2026-10-09T16:26:06+10:00",
-            "PublishDateLocal_ISO": "2026-10-09T16:58:03+10:00",
-            "ItemExpiryDateTimeLocal_ISO": "2026-10-10T16:26:06.173+10:00",
+            "ItemDateTimeUTM": "20261010053709.817000",
+            "ItemDateTimeLocal_ISO": "2026-10-10T15:37:09+10:00",
+            "PublishDateLocal_ISO": "2026-10-10T17:48:03+10:00",
+            "ItemExpiryDateTimeLocal_ISO": "2026-10-11T15:37:09.817+10:00",
             "MultipleWarnings": null,
             "MessageSent": null,
             "SendEmailSubscription": null,
@@ -51,7 +51,7 @@
     },
     "wa": {
       "url": "https://api.emergency.wa.gov.au/v1/warnings",
-      "bytes": 15592,
+      "bytes": 14260,
       "topShape": "object{warnings}",
       "recordArrays": [
         {
@@ -111,7 +111,7 @@
             "updatedAt": "2026-10-09T08:12:47.646Z",
             "warning-type": "Bushfire Advice",
             "title": "MONITOR CONDITIONS - MUELLER RANGES",
-            "issued-date-time": "2026-10-10T09:55:07.102+08:00"
+            "issued-date-time": "2026-10-10T15:35:04.974+08:00"
           },
           "firstProperties": null
         },
@@ -143,38 +143,83 @@
     },
     "vic": {
       "url": "https://emergency.vic.gov.au/public/events-geojson.json",
-      "bytes": 19789,
+      "bytes": 19723,
       "topShape": "object{type, features, properties}",
       "recordArrays": [
         {
           "path": "$.features",
-          "length": 18,
+          "length": 10,
           "keys": [
-            "properties",
             "type",
-            "geometry"
+            "geometry",
+            "properties"
           ],
           "firstRecord": {
-            "properties": "object{status, feedType, sourceOrg, sourceId, sourceFeed, sourceTitle, id, category1, category2, created, updated, resources, size, sizeFmt, location}",
             "type": "Feature",
-            "geometry": "object{type, coordinates}"
+            "geometry": "object{type, geometries}",
+            "properties": "object{feedType, cap, sourceOrg, sourceId, sourceFeed, sourceTitle, id, category1, category2, status, name, action, statewide, location, created, updated, webHeadline, webBody, text, sizeFmt, incidentFeatures}"
           },
           "firstProperties": {
-            "status": "Not Yet Under Control",
+            "feedType": "warning",
+            "cap": "object{category, event, eventCode, urgency, severity, certainty, contact, senderName, responseType}",
+            "sourceOrg": "EMV",
+            "sourceId": "43481",
+            "sourceFeed": "cop-cap",
+            "sourceTitle": "Watch & Act",
+            "id": "43481",
+            "category1": "Watch and Act",
+            "category2": "Fire",
+            "status": "Moderate",
+            "name": "Watch & Act",
+            "action": "Monitor Conditions As They Are Changing",
+            "statewide": "N",
+            "location": "Drummond Point, Gaffneys Creek, Paradise Point, Raspberry Point, View Point",
+            "created": "2026-10-10T16:12:18+11:00",
+            "updated": "2026-10-10T16:12:19+11:00",
+            "webHeadline": null,
+            "webBody": "<div style=\"margin-bottom:20px\">This <b>Watch and Act </b>message is being issued for&nbsp;<span title=\"warning_locality\" class=\"param\" contenteditable=\"false\">…[3757]",
+            "text": "WATCH & ACT - BUSHFIRE - Monitor Conditions As They Are Changing\nIncident Location: 0.7Km S Of Gaffneys Creek\nIssue Date: Saturday 10 October 2026, 04:12 pm\nNex…[571]",
+            "sizeFmt": null,
+            "incidentFeatures": "array(1) of object{properties}"
+          }
+        },
+        {
+          "path": "$.features[0].geometry.geometries",
+          "length": 2,
+          "keys": [
+            "type",
+            "coordinates"
+          ],
+          "firstRecord": {
+            "type": "Point",
+            "coordinates": "array(2) of number"
+          },
+          "firstProperties": null
+        },
+        {
+          "path": "$.features[0].properties.incidentFeatures",
+          "length": 1,
+          "keys": [
+            "properties"
+          ],
+          "firstRecord": {
+            "properties": "object{feedType, sourceOrg, sourceId, sourceFeed, sourceTitle, id, category1, category2, name, location, created, updated, webHeadline, sizeFmt}"
+          },
+          "firstProperties": {
             "feedType": "incident",
-            "sourceOrg": "VIC/DEECA",
-            "sourceId": 102738005,
-            "sourceFeed": "deeca-incident",
-            "sourceTitle": "Gaffneys Creek - Gaffneys Creek Track",
-            "id": 102738005,
+            "sourceOrg": "EMV",
+            "sourceId": "43481",
+            "sourceFeed": "cop-cap",
+            "sourceTitle": "Watch & Act",
+            "id": "43481",
             "category1": "Fire",
             "category2": "Bushfire",
-            "created": "2026-10-10T01:25:00Z",
-            "updated": "2026-10-10T03:23:46.7303706Z",
-            "resources": 0,
-            "size": null,
-            "sizeFmt": "Unknown",
-            "location": "0.7Km S Of Gaffneys Creek"
+            "name": "Watch & Act",
+            "location": "0.7Km S Of Gaffneys Creek",
+            "created": "2026-10-10T16:12:18+11:00",
+            "updated": "2026-10-10T16:12:19+11:00",
+            "webHeadline": null,
+            "sizeFmt": null
           }
         },
         {
@@ -189,7 +234,7 @@
           ],
           "firstRecord": {
             "fdr": "object{East Gippsland, West and South Gippsland, North East, Central, North Central, Northern Country, South West, Wimmera, Mallee}",
-            "tfb": "object{East Gippsland, West and South Gippsland, North East, Central, North Central, Northern Country, South West, Wimmera, Mallee}",
+            "tfb": "object{Mallee, East Gippsland, West and South Gippsland, North East, Central, North Central, Northern Country, South West, Wimmera}",
             "date": "2026-10-09T13:00:00.000Z",
             "heat": "object{Mallee, Wimmera, Northern Country, North East, East Gippsland, West and South Gippsland, Central, North Central, South West}",
             "asthma": "object{Mallee, Wimmera, Northern Country, North East, East Gippsland, West and South Gippsland, Central, North Central, South West}"
@@ -200,7 +245,7 @@
     },
     "nt": {
       "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
-      "bytes": 51572,
+      "bytes": 51164,
       "topShape": "object{title, note, lastupdated, incidents}",
       "recordArrays": [
         {
@@ -238,16 +283,44 @@
     }
   },
   "vicByFeedType": {
+    "warning": {
+      "count": 1,
+      "category1Values": [
+        "Watch and Act"
+      ],
+      "nameValues": [
+        "Watch & Act"
+      ],
+      "sample": {
+        "feedType": "warning",
+        "cap": "object{category, event, eventCode, urgency, severity, certainty, contact, senderName, responseType}",
+        "sourceOrg": "EMV",
+        "sourceId": "43481",
+        "sourceFeed": "cop-cap",
+        "sourceTitle": "Watch & Act",
+        "id": "43481",
+        "category1": "Watch and Act",
+        "category2": "Fire",
+        "status": "Moderate",
+        "name": "Watch & Act",
+        "action": "Monitor Conditions As They Are Changing",
+        "statewide": "N",
+        "location": "Drummond Point, Gaffneys Creek, Paradise Point, Raspberry Point, View Point",
+        "created": "2026-10-10T16:12:18+11:00",
+        "updated": "2026-10-10T16:12:19+11:00",
+        "webHeadline": null,
+        "webBody": "<div style=\"margin-bottom:20px\">This <b>Watch and Act </b>message is being issued for&nbsp;<span title=\"warning_locality\" class=\"param\" contenteditable=\"false\">…[3757]",
+        "text": "WATCH & ACT - BUSHFIRE - Monitor Conditions As They Are Changing\nIncident Location: 0.7Km S Of Gaffneys Creek\nIssue Date: Saturday 10 October 2026, 04:12 pm\nNex…[571]",
+        "sizeFmt": null,
+        "incidentFeatures": "array(1) of object{properties}"
+      }
+    },
     "incident": {
-      "count": 18,
+      "count": 9,
       "category1Values": [
         "Fire",
-        "Other",
-        "Flooding",
         "Met",
-        "Accident / Rescue",
-        "Rescue",
-        "Tree Down"
+        "Other"
       ],
       "nameValues": [
         "Strong Wind Warning"
@@ -263,10 +336,10 @@
         "category1": "Fire",
         "category2": "Bushfire",
         "created": "2026-10-10T01:25:00Z",
-        "updated": "2026-10-10T03:23:46.7303706Z",
-        "resources": 0,
-        "size": null,
-        "sizeFmt": "Unknown",
+        "updated": "2026-10-10T05:13:22.9043585Z",
+        "resources": 2,
+        "size": 10,
+        "sizeFmt": "10 Ha.",
         "location": "0.7Km S Of Gaffneys Creek"
       }
     }
