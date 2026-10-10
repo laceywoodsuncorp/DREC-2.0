@@ -1,14 +1,14 @@
 {
-  "at": "2026-10-10T03:57:24.097Z",
+  "at": "2026-10-10T04:03:46.738Z",
   "feeds": {
     "qld": {
       "url": "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json",
-      "bytes": 147722,
+      "bytes": 120467,
       "topShape": "object{type, name, features}",
       "recordArrays": [
         {
           "path": "$.features",
-          "length": 65,
+          "length": 55,
           "keys": [
             "type",
             "geometry",
@@ -20,30 +20,30 @@
             "properties": "object{OBJECTID, UniqueID, WarningTitle, WarningLevel, CallToAction, WarningText, Header, Impacts, LeaveSafely, FurtherInformation, WarningLevelSort, ShouldDo, WarningArea, Latitude, Longitude, GroupedType, ItemDateTimeUTM, ItemDateTimeLocal_ISO, PublishDateLocal_ISO, ItemExpiryDateTimeLocal_ISO, MultipleWarnings, MessageSent, SendEmailSubscription, WarningType_Level, EventType}"
           },
           "firstProperties": {
-            "OBJECTID": 3841,
-            "UniqueID": "WARN-9570",
-            "WarningTitle": "STAY INFORMED - Moorland (near Bundaberg) - fire as at 6:32pm Friday, 9 October 2026",
-            "WarningLevel": "Advice",
-            "CallToAction": "Stay Informed",
-            "WarningText": "A fire is burning near Moorlands Road.\r\n\r\nStay informed because the situation could change.\r\n\r\nWhat you should do:\r\n\r\n- Check for warning updates often and list…[1720]",
-            "Header": "A fire is burning near Moorlands Road.\r\n\r\nStay informed because the situation could change.",
-            "Impacts": "- No properties are at risk now, but this could change.\r\n\r\n- Some roads may be closed or impacted by smoke. It could be hard to see. You may need to drive a dif…[356]",
+            "OBJECTID": 3838,
+            "UniqueID": "WARN-9539",
+            "WarningTitle": "PREPARE TO LEAVE - Moorland (near Bundaberg) - fire as at 4:25pm Friday, 9 October 2026",
+            "WarningLevel": "Watch and Act",
+            "CallToAction": "Prepare to Leave",
+            "WarningText": "A dangerous fast moving fire is burning near Moorlands Road.\r\n\r\nPrepare to leave as the situation could get worse quickly.\r\n\r\nWhat you should do:\r\n\r\n- If you ar…[2064]",
+            "Header": "A dangerous fast moving fire is burning near Moorlands Road.\r\n\r\nPrepare to leave as the situation could get worse quickly.",
+            "Impacts": "- Roads may be impacted by smoke. Smoke can make it hard to see when driving.\r\n\r\n- Power, water, phone, and internet services may be impacted as the fire gets c…[309]",
             "LeaveSafely": null,
-            "FurtherInformation": "- For all fire warnings, visit the Qld Fire website.\r\n\r\n- Follow Queensland Fire Department on Facebook.\r\n\r\n- For road closures, visit the QLD Traffic website o…[774]",
-            "WarningLevelSort": 5,
-            "ShouldDo": "- Check for warning updates often and listen to your local radio station.\r\n\r\n- Decide what you will do if the bushfire gets closer.\r\n\r\n- If the smoke is thick w…[435]",
+            "FurtherInformation": "- For all fire warnings, visit the Qld Fire website.\r\n\r\n- Follow Queensland Fire Department on Facebook.\r\n\r\n- For road closures, visit the QLD Traffic website o…[651]",
+            "WarningLevelSort": 3,
+            "ShouldDo": "- If you are in danger, call Triple Zero (000) now.\r\n\r\n- Check for warning updates often and listen to your local radio station.\r\n\r\n- If you need medication to …[914]",
             "WarningArea": "Between Quinns Road and Moorlands Road",
             "Latitude": -24.787932123061054,
             "Longitude": 152.2051118982718,
             "GroupedType": "FIRE VEGETATION",
-            "ItemDateTimeUTM": "20261009083246.240000",
-            "ItemDateTimeLocal_ISO": "2026-10-09T18:32:46+10:00",
-            "PublishDateLocal_ISO": "2026-10-10T13:53:03+10:00",
-            "ItemExpiryDateTimeLocal_ISO": "2026-10-10T18:32:46.24+10:00",
+            "ItemDateTimeUTM": "20261009062606.173000",
+            "ItemDateTimeLocal_ISO": "2026-10-09T16:26:06+10:00",
+            "PublishDateLocal_ISO": "2026-10-09T16:58:03+10:00",
+            "ItemExpiryDateTimeLocal_ISO": "2026-10-10T16:26:06.173+10:00",
             "MultipleWarnings": null,
             "MessageSent": null,
             "SendEmailSubscription": null,
-            "WarningType_Level": "Advice Fire",
+            "WarningType_Level": "Watch and Act Fire",
             "EventType": "Fire"
           }
         }
@@ -143,12 +143,12 @@
     },
     "vic": {
       "url": "https://emergency.vic.gov.au/public/events-geojson.json",
-      "bytes": 17887,
+      "bytes": 17210,
       "topShape": "object{type, features, properties}",
       "recordArrays": [
         {
           "path": "$.features",
-          "length": 14,
+          "length": 13,
           "keys": [
             "properties",
             "type",
@@ -239,14 +239,13 @@
   },
   "vicByFeedType": {
     "incident": {
-      "count": 14,
+      "count": 13,
       "category1Values": [
         "Fire",
-        "Hazardous Material",
+        "Tree Down",
         "Met",
-        "Accident / Rescue",
         "Other",
-        "Tree Down"
+        "Accident / Rescue"
       ],
       "nameValues": [
         "Strong Wind Warning"

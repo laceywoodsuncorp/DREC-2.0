@@ -1,6 +1,6 @@
 {
   "base": "https://drec-oncall-updates-site.lacey-wood.workers.dev",
-  "at": "2026-10-10T03:56:21.127Z",
+  "at": "2026-10-10T04:01:37.428Z",
   "incidents": {
     "nsw": {
       "httpStatus": 200,
@@ -35,25 +35,25 @@
       "ok": true,
       "build": "2026-10-10-multiword",
       "sourceUrl": "https://emergency.vic.gov.au/public/events-geojson.json",
-      "count": 14,
+      "count": 13,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
         "Not Yet Under Control",
         "Safe",
         "Responding",
+        "Complete",
         "Warning",
-        "On Scene",
-        "Request For Assistance"
+        "Request For Assistance",
+        "On Scene"
       ],
       "types": [
         "Bushfire",
-        "Other",
         "Building Fire",
-        "Hazardous Material",
+        "Tree Down",
         "Strong Wind",
-        "Road Accident",
-        "Tree Down"
+        "Other",
+        "Road Accident"
       ],
       "attempts": []
     },
@@ -65,15 +65,14 @@
       "mergedFrom": [
         "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json"
       ],
-      "count": 131,
-      "withAlertLevel": 65,
+      "count": 120,
+      "withAlertLevel": 55,
       "alertLevels": [
-        "Advice",
+        "Watch and Act",
         "Information"
       ],
       "statuses": [
-        "Stay Informed",
-        "Avoid Smoke",
+        "Prepare to Leave",
         "Going",
         "Patrolled",
         "Contained",
@@ -214,12 +213,10 @@
       "alertLevels": [],
       "statuses": [
         "Resource Allocation Pending",
-        "On Scene",
-        "Units On Route"
+        "On Scene"
       ],
       "types": [
         "HAZARD REDUCTION BURN",
-        "ANIMAL RESCUE",
         "AMBULANCE RESPONSE"
       ],
       "attempts": []
@@ -229,11 +226,11 @@
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 17,
-      "count": 205,
-      "customers": 15687,
+      "cacheAgeSeconds": 21,
+      "count": 206,
+      "customers": 15688,
       "complete": false,
-      "rows": 205,
+      "rows": 206,
       "networks": [
         {
           "name": "Ausgrid",
@@ -244,7 +241,7 @@
         {
           "name": "Endeavour Energy",
           "ok": true,
-          "count": 194,
+          "count": 195,
           "sourceUrl": "https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/exports/geojson",
           "columns": [
             "street_name",
@@ -292,12 +289,12 @@
           ]
         }
       ],
-      "withTowns": 194
+      "withTowns": 195
     },
     "vic": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 7,
+      "cacheAgeSeconds": 10,
       "count": 9,
       "customers": 1300,
       "complete": false,
@@ -357,9 +354,9 @@
     "qld": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 5,
-      "count": 474,
-      "customers": 19465,
+      "cacheAgeSeconds": 7,
+      "count": 475,
+      "customers": 19480,
       "complete": true,
       "rows": 400,
       "networks": [
@@ -400,7 +397,7 @@
         {
           "name": "Ergon Energy",
           "ok": true,
-          "count": 347,
+          "count": 348,
           "via": "ArcGIS Online",
           "sourceUrl": "https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
           "columns": [
@@ -437,16 +434,16 @@
     "wa": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 5,
-      "count": 173,
-      "customers": 15875,
+      "cacheAgeSeconds": 7,
+      "count": 171,
+      "customers": 15593,
       "complete": false,
-      "rows": 173,
+      "rows": 171,
       "networks": [
         {
           "name": "Western Power",
           "ok": true,
-          "count": 173,
+          "count": 171,
           "sourceUrl": "https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
           "columns": [
             "OBJECTID",
@@ -484,12 +481,12 @@
           ]
         }
       ],
-      "withTowns": 173
+      "withTowns": 171
     },
     "sa": {
       "httpStatus": 200,
       "ok": false,
-      "cacheAgeSeconds": 4,
+      "cacheAgeSeconds": 5,
       "count": 0,
       "customers": 0,
       "complete": false,
@@ -511,11 +508,11 @@
           "attempts": [
             {
               "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/OutageList",
-              "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 100000340204147454-232376160424822961"
+              "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1662000840090822652-11445555376821508"
             },
             {
               "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/api/outages",
-              "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 187000330550577633-711036611868690548"
+              "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1684000780082853114-206120333958452157"
             },
             {
               "url": "https://www.sapowernetworks.com.au/outages/",
@@ -533,7 +530,7 @@
     "tas": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 3,
+      "cacheAgeSeconds": 4,
       "count": 0,
       "customers": 0,
       "complete": true,
