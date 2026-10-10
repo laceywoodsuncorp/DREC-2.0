@@ -59,21 +59,33 @@ jobs:
           set -e
           base=https://drec-oncall-updates-site.lacey-wood.workers.dev
           repo=$(grep -o "EXPECTED_WORKER_BUILD='[^']*'" index_updated_abc_emergency_map.html | sed "s/.*'\(.*\)'/\1/")
-          curl -sS -m 30 "$base/" -o /tmp/page.html || true
-          served=$(grep -o "EXPECTED_WORKER_BUILD='[^']*'" /tmp/page.html | sed "s/.*'\(.*\)'/\1/" | head -1)
-          age=$(curl -sS -m 20 -o /dev/null -D - "$base/" | tr -d '\r' | awk -F': ' 'tolower($1)=="age"{print $2}')
-          echo "page build in repo:   $repo"
-          echo "page build served:    ${served:-<none found>}"
-          echo "edge cache Age:       ${age:-<not reported>}"
-          if [ "$served" = "$repo" ]; then
-            echo "::notice::The served page matches the branch. A reader still seeing old behaviour has it cached in their own browser."
-          else
-            echo "::warning::The edge is serving $served while the branch is $repo — a hard refresh will NOT fix this for anyone; the cached asset has to age out or be purged."
-          fi
-          # The classifier rule actually in the served page, which is the
-          # thing a reader's tags come from.
-          echo "--- is the corroboration rule present in the served page?"
-          grep -c "AMBIGUOUS_RE" /tmp/page.html || echo "  0 — served page predates the claims/premiums rule"
+          echo "page build in repo: $repo"
+          # Both paths. The Worker rewrites / to the page, but an empty body
+          # from either must be visible rather than hidden behind `|| true`:
+          # the first version of this step reported "<none found>" and then
+          # confidently warned the edge was stale, when all it had actually
+          # established was that it had nothing to read.
+          for path in "/" "/index_updated_abc_emergency_map.html"; do
+            code=$(curl -sS -m 30 -o /tmp/page.html -w '%{http_code}' "$base$path" || echo 000)
+            size=$(wc -c < /tmp/page.html | tr -d ' ')
+            ctype=$(curl -sS -m 20 -o /dev/null -D - "$base$path" | tr -d '\r' \
+              | awk -F': ' 'tolower($1)=="content-type"{print $2}')
+            age=$(curl -sS -m 20 -o /dev/null -D - "$base$path" | tr -d '\r' \
+              | awk -F': ' 'tolower($1)=="age"{print $2}')
+            served=$(grep -o "EXPECTED_WORKER_BUILD='[^']*'" /tmp/page.html | sed "s/.*'\(.*\)'/\1/" | head -1)
+            rule=$(grep -c "AMBIGUOUS_RE" /tmp/page.html || true)
+            echo "--- $path"
+            echo "    HTTP $code  $size bytes  ${ctype:-<no content-type>}  age=${age:-<none>}"
+            echo "    build stamp: ${served:-<not present in body>}"
+            echo "    corroboration rule present: $rule"
+            if [ -z "$served" ]; then
+              echo "    first 200 bytes: $(head -c 200 /tmp/page.html | tr '\n' ' ')"
+            elif [ "$served" = "$repo" ]; then
+              echo "::notice::$path serves $served, which matches the branch. A reader still seeing old behaviour has it cached in their own browser."
+            else
+              echo "::warning::$path serves $served while the branch is $repo — the edge copy is stale and a reader cannot fix that by refreshing."
+            fi
+          done
 
       # Which feeds is the live Worker actually getting, and what does it say
       # about the ones it is not?
