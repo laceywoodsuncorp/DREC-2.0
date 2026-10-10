@@ -21,7 +21,7 @@ const grab = (re, what) => {
 
 const classify = new Function([
   grab(/const CAT_KEYWORDS=\{[\s\S]*?\n  \};/, 'CAT_KEYWORDS'),
-  grab(/const AMBIGUOUS_RE=[\s\S]*?\n  const INSURANCE_CONTEXT=[^\n]*\n/, 'ambiguous-term rules'),
+  grab(/const AMBIGUOUS_RE=[\s\S]*?const CLAIM_FATALITY_RE=[^\n]*\n/, 'ambiguous-term rules'),
   grab(/const FIRE_REGEX=[\s\S]*?;\n/, 'FIRE_REGEX'),
   grab(/const kwMatchers=\{\};/, 'kwMatchers'),
   grab(/function keywordHit\(text,kw\)\{[\s\S]*?\n  \}/, 'keywordHit'),
@@ -141,29 +141,64 @@ ck('"interest rates" matches the "interest rate" phrase',
 ck('no keyword is matched with a literal asterisk',
   !classify('Report mentions fuel price* in a footnote', 'abc.net.au', '').includes('nonsense'));
 
-console.log('\n== claims/premiums need one of the five supports ==');
-/* Both words mean insurance in one sense and something ordinary in another:
-   "claims victory" is a verb, "premium economy" is an adjective. Each needs
-   home, motor, health, strata or unaffordable alongside it -- inflections
-   included, since those are the same word doing the same job. */
+console.log('\n== natural perils support a claims headline ==');
+/* The perils are why this dashboard exists: a claims surge after an event
+   is the insurance story its readers most want flagged. */
 [
-  'Premiums rise 15% for Queensland homeowners',
-  'Home claims surge after floods',
-  'Motor premiums climb as repair costs bite',
-  'Health premiums jump again in April',
-  'Strata premiums double in flood zones',
-  'Northern Australia premiums remain unaffordable',
-  'Claims unaffordable for strata owners',
-  'Car claims take longer to settle',
-  'Household claims rise sharply',
-  'Health claims denied more often'
+  'Flood claims surge after Queensland storm',
+  'Hail claims top $400m',
+  'Storm claims pour in across Victoria',
+  'Cyclone claims expected to top $2bn',
+  'Bushfire claims mount',
+  'Earthquake claims lodged in Melbourne',
+  'Landslide claims under assessment',
+  'Lightning claims spike in summer',
+  'Water damage claims rise',
+  'Claims assessors sent to Lismore',
+  'Loss adjusters sent after hailstorm claims',
+  'Claims denied after floodwater entered'
 ].forEach((t) => {
   ck('insurance: ' + t.slice(0, 44),
     classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
     classify(t, 'abc.net.au', 'ABC News'));
 });
 
-console.log('\n== and without one, neither word tags on its own ==');
+console.log('\n== but "claims" also means "kills", and a peril makes that likely ==');
+/* The trap that comes with restoring the perils. A peril plus a death toll
+   is a casualty report, not an insurance story, and every one of these has
+   both. The fatality sense always attaches the claim to a person or a life,
+   which is what the veto keys on -- so it does not touch "Flood claims
+   surge", where the claims are the subject rather than the object. */
+[
+  'Fire claims three lives',
+  'Floods claim two lives in northern NSW',
+  'Storm claimed the life of a Sydney man',
+  'Bushfire claims a firefighter',
+  'Cyclone claims two victims',
+  'Heatwave claims elderly residents',
+  'Crash claims the life of a motorist'
+].forEach((t) => {
+  ck('not insurance: ' + t.slice(0, 44),
+    !classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+console.log('\n== lines of cover and affordability ==');
+[
+  'Premiums rise 15% for Queensland homeowners',
+  'Health premiums jump again in April',
+  'Strata premiums double in flood zones',
+  'Motor premiums climb as repair costs bite',
+  'Northern Australia premiums remain unaffordable',
+  'Household claims rise sharply',
+  'Car claims take longer to settle'
+].forEach((t) => {
+  ck('insurance: ' + t.slice(0, 44),
+    classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+console.log('\n== and the ordinary senses of both words stay out ==');
 [
   'Qantas expands premium economy',
   'Woolworths launches premium own-brand range',
@@ -181,27 +216,6 @@ console.log('\n== and without one, neither word tags on its own ==');
     classify(t, 'abc.net.au', 'ABC News'));
 });
 
-console.log('\n== what this knowingly drops: peril-only claims headlines ==');
-/* Perils are no longer support, so a claims story naming only the event
-   does not tag. On a disaster-response dashboard these are arguably the
-   most relevant insurance stories there are, so the cost is asserted here
-   rather than left to be noticed later. Restoring them means adding the
-   peril words back to INSURANCE_CONTEXT. */
-[
-  'Flood claims surge after Queensland storm',
-  'Hail claims top $400m',
-  'Claims assessors sent to Lismore',
-  'Storm claims pour in across Victoria'
-].forEach((t) => {
-  ck('knowingly untagged: ' + t.slice(0, 42),
-    !classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
-    classify(t, 'abc.net.au', 'ABC News'));
-});
-
-/* A peril headline that also names an insurer is still caught, by insur*
-   rather than by the corroboration rule. */
-ck('but a peril headline naming an insurer still tags',
-  classify('Bushfire claims mount for insurers', 'abc.net.au', '').includes('insurance'));
 ck('a trade headline with no support is caught by the publisher',
   classify('Claims bill tops $1bn', 'insurancenews.com.au', 'insuranceNEWS').includes('insurance'));
 

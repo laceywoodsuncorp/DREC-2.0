@@ -698,34 +698,53 @@
      another, so neither is trusted alone.
 
      "Claim" is an insurance noun and also one of the commonest verbs in a
-     headline, where it only means "asserts": "Man claims he was assaulted",
-     "Teen claims victory", "Minister claims budget is balanced".
-
+     headline: "Man claims he was assaulted", "Teen claims victory".
      "Premium" is a price in insurance and an adjective meaning upmarket
-     everywhere else: "Qantas expands premium economy", "Premium fuel prices
-     hit record", "Premium Bonds winners announced".
+     everywhere else: "Qantas expands premium economy", "Premium Bonds".
 
-     Both now need one of the same five supports: home, motor, health,
-     strata or unaffordable. Obvious inflections count -- homeowner,
-     household, house, motorist, car, vehicle, affordability -- since those
+     Each needs support from the same list: a line of cover, or a natural
+     peril, or a word from the claims process. Inflections count, since they
      are the same word doing the same job.
 
-     WHAT THIS DROPS, and it is worth knowing. Perils are no longer support
-     for "claims", so a claims story that names only the event does not tag:
-
-       Flood claims surge after Queensland storm
-       Hail claims top $400m
-       Claims assessors sent to Lismore
-
-     On a disaster-response dashboard those are arguably the most relevant
-     insurance stories there are, and they are asserted as untagged in the
-     tests so the cost stays visible. Restoring them is adding the peril
-     words back to this one list.
-
-     Neither word is lost on the trade press: insuranceNEWS is tagged by
-     publisher before any keyword runs. */
+     The perils are the reason this dashboard exists, so they are generous:
+     wind, water, fire, earth and the words used for the damage and the
+     response. */
   const AMBIGUOUS_RE=/\b(claim|premium)/i;
-  const INSURANCE_CONTEXT=/\b(home|homes|homeowner\w*|household\w*|house|houses|housing|motor|motorist\w*|car|cars|vehicle\w*|health|strata|unaffordab\w*|affordab\w*)\b/i;
+  const INSURANCE_CONTEXT=new RegExp('\\b(' + [
+    /* lines of cover */
+    'home|homes|homeowner\\w*|household\\w*|house|houses|housing|contents',
+    'motor|motorist\\w*|car|cars|vehicle\\w*|caravan\\w*',
+    'health|strata|landlord\\w*|tenant\\w*|farm|farmer\\w*|crop\\w*|business',
+    'unaffordab\\w*|affordab\\w*|underinsur\\w*|non-insur\\w*',
+    /* water */
+    'flood\\w*|floodwater\\w*|inundat\\w*|deluge|downpour\\w*|rainfall|water damage|riverine|flash flooding',
+    /* wind and storm */
+    'storm\\w*|thunderstorm\\w*|supercell\\w*|hail\\w*|cyclone\\w*|tropical low|tornado\\w*',
+    'windstorm\\w*|gale\\w*|squall\\w*|damaging winds|storm surge|lightning',
+    /* fire */
+    'bushfire\\w*|grassfire\\w*|wildfire\\w*|firestorm\\w*|fire|fires|blaze\\w*|ember\\w*|smoke damage',
+    /* earth and other natural peril */
+    'earthquake\\w*|quake\\w*|tremor\\w*|landslide\\w*|landslip\\w*|tsunami\\w*|subsidence',
+    'drought\\w*|heatwave\\w*|bom|severe weather|natural disaster|natural peril\\w*',
+    'catastroph\\w*|disaster\\w*|cat event',
+    /* the claims process itself */
+    'assessor\\w*|adjuster\\w*|loss adjust\\w*|make-?safe|rebuild\\w*|repair\\w*|temporary accommodation',
+    'excess|deductible|payout\\w*|pay-?out\\w*|settlement\\w*|lodge\\w*|denied|declined|dispute\\w*|hardship'
+  ].join('|') + ')\\b', 'i');
+
+  /* "Claims" also means "kills". A peril plus a death toll is a casualty
+     report, not an insurance story, and adding the perils back as support
+     would have filed all of these under Insurance:
+  
+       Fire claims three lives
+       Floods claim two lives in northern NSW
+       Storm claimed the life of a Sydney man
+       Bushfire claims a firefighter
+  
+     The fatality sense always attaches the claim to a person or a life, so
+     that is what is vetoed -- and only for that sense, which is why "Flood
+     claims surge" and "Hail claims top $400m" are untouched by it. */
+  const CLAIM_FATALITY_RE=/\bclaim(?:s|ed|ing)?\s+(?:the\s+)?(?:\w+\s+){0,2}(?:life|lives|victim\w*|firefighter\w*|resident\w*|motorist\w*|a\s+man|a\s+woman|a\s+child|a\s+teenager)\b/i;
 
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
     politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
@@ -943,9 +962,10 @@
     });
     /* Corroborated claims. Checked after the keyword loop so it cannot
        double-add when an insurance term already matched. */
-    /* Corroborated by one of the supports, which never include the
-       ambiguous terms themselves -- so a headline cannot support itself. */
-    if(cats.indexOf('insurance')===-1&&AMBIGUOUS_RE.test(t)&&INSURANCE_CONTEXT.test(t)){
+    /* Corroborated by one of the supports, unless the sentence is using
+       "claims" to mean killed. */
+    if(cats.indexOf('insurance')===-1&&AMBIGUOUS_RE.test(t)&&INSURANCE_CONTEXT.test(t)
+       &&!CLAIM_FATALITY_RE.test(t)){
       cats.push('insurance');
     }
     if(!cats.includes('fire')&&!cats.includes('bushfire')&&FIRE_REGEX.test(t))cats.push('fire');
@@ -971,7 +991,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-10-insctx5';
+  const EXPECTED_WORKER_BUILD='2026-10-10-perils';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
