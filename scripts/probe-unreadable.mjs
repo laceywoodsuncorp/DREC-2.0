@@ -37,7 +37,28 @@ async function get(url, accept) {
 
 const TARGETS = [
   ['Jemena', 'https://www.jemena.com.au/outages/electricity-outages/', 'https://www.jemena.com.au'],
-  ['SA Power Networks', 'https://www.sapowernetworks.com.au/outages/', 'https://www.sapowernetworks.com.au']
+  ['SA Power Networks', 'https://www.sapowernetworks.com.au/outages/', 'https://www.sapowernetworks.com.au'],
+  /* SA incidents has exactly one source and it has been soft-404ing for
+     weeks -- data.eso.sa.gov.au answers 200 with "SA ESS - File
+     Unavailable", which is why South Australia shows no incidents at all.
+     This is the CFS's own public warnings page, which is where a reader
+     would go, so whatever it calls for its list is the feed we want. */
+  ['SA CFS warnings', 'https://www.cfs.sa.gov.au/warnings-restrictions/warnings/incidents-warnings/',
+    'https://www.cfs.sa.gov.au']
+];
+
+/* Endpoints worth asking for directly as well as following from the page,
+   because a list rendered by a script may name its source in a bundle this
+   probe does not read. The old one is included so its state is recorded
+   alongside the rest rather than remembered. */
+const EXTRA = [
+  'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json',
+  'https://www.cfs.sa.gov.au/api/incidents',
+  'https://www.cfs.sa.gov.au/api/warnings',
+  'https://www.cfs.sa.gov.au/wp-json/wp/v2/incident',
+  'https://www.cfs.sa.gov.au/feed/',
+  'https://alerts.sa.gov.au/api/warnings',
+  'https://www.alert.sa.gov.au/api/warnings'
 ];
 
 const out = { at: new Date().toISOString(), targets: [] };
@@ -91,6 +112,35 @@ for (const [name, url, origin] of TARGETS) {
   }
   out.targets.push({ name, url, status: r.status, bytes: r.bytes, tableRows: tables,
     hydration, relative: rel, absolute: abs, tried });
+}
+
+/* ---- the direct asks ------------------------------------------------- */
+out.extra = [];
+console.log('\n======== endpoints asked for directly');
+for (const u of EXTRA) {
+  await sleep(300);
+  const r = await get(u, 'application/json, application/xml, */*');
+  let shape = '';
+  if (r.text && /^\s*[[{]/.test(r.text)) {
+    try {
+      const j = JSON.parse(r.text);
+      const arr = Array.isArray(j) ? j : (j.data || j.incidents || j.items || j.features || null);
+      shape = Array.isArray(arr)
+        ? 'array(' + arr.length + ')' + (arr.length && typeof arr[0] === 'object'
+          ? ' keys: ' + Object.keys(arr[0]).slice(0, 14).join(',') : '')
+        : 'object{' + Object.keys(j).slice(0, 14).join(',') + '}';
+    } catch (e) { shape = 'not json'; }
+  } else if (r.text && /<(rss|feed|\?xml)/i.test(r.text.slice(0, 200))) {
+    shape = 'xml, items=' + (r.text.match(/<(item|entry)\b/gi) || []).length;
+  }
+  /* A 200 that says "File Unavailable" is the failure this whole entry is
+     about, so it is named rather than counted as a success. */
+  const soft = r.text ? /File Unavailable|currently unavailable/i.test(r.text.slice(0, 2000)) : false;
+  out.extra.push({ url: u, status: r.status, type: r.type, bytes: r.bytes, error: r.error, shape, softFail: soft });
+  console.log('  ' + u.slice(0, 92));
+  console.log('    ' + (r.error ? 'ERROR ' + r.error
+    : 'HTTP ' + r.status + '  ' + r.type + '  ' + r.bytes + 'b'
+      + (soft ? '  [SOFT 404 - says unavailable]' : '') + (shape ? '  ' + shape : '')));
 }
 
 mkdirSync('data', { recursive: true });
