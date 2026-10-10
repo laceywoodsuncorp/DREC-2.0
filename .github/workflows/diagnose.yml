@@ -64,6 +64,11 @@ jobs:
       - name: Search for distributor map layers
         run: node scripts/probe-distributor-layers.mjs
 
+      # Are the third-party outage layers live, or a snapshot somebody
+      # published once? The schema does not say; the timestamps do.
+      - name: Check the third-party outage mirrors
+        run: node scripts/probe-outage-mirrors.mjs
+
       - name: Re-check the blocked operators
         run: node scripts/recheck-blocked.mjs
 
@@ -88,4 +93,4 @@ jobs:
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh 'Record live state health and the feed probes' \
               data/state-health.json data/nt-power-probe.json \
-              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json
+              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json
