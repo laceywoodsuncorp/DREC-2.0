@@ -21,7 +21,7 @@ const grab = (re, what) => {
 
 const classify = new Function([
   grab(/const CAT_KEYWORDS=\{[\s\S]*?\n  \};/, 'CAT_KEYWORDS'),
-  grab(/const CLAIM_RE=[\s\S]*?\n  const PREMIUM_CONTEXT=[^\n]*\n/, 'ambiguous-term rules'),
+  grab(/const AMBIGUOUS_RE=[\s\S]*?\n  const INSURANCE_CONTEXT=[^\n]*\n/, 'ambiguous-term rules'),
   grab(/const FIRE_REGEX=[\s\S]*?;\n/, 'FIRE_REGEX'),
   grab(/const kwMatchers=\{\};/, 'kwMatchers'),
   grab(/function keywordHit\(text,kw\)\{[\s\S]*?\n  \}/, 'keywordHit'),
@@ -141,100 +141,69 @@ ck('"interest rates" matches the "interest rate" phrase',
 ck('no keyword is matched with a literal asterisk',
   !classify('Report mentions fuel price* in a footnote', 'abc.net.au', '').includes('nonsense'));
 
-console.log('\n== "claim" needs corroboration: it is a verb far more often ==');
-/* As a bare stem this tagged every one of these Insurance. "Claim" is an
-   insurance noun and also one of the commonest verbs in a headline, where
-   it just means "asserts" -- so on its own it was pulling crime, politics
-   and sport into the Insurance tab. */
+console.log('\n== claims/premiums need one of the five supports ==');
+/* Both words mean insurance in one sense and something ordinary in another:
+   "claims victory" is a verb, "premium economy" is an adjective. Each needs
+   home, motor, health, strata or unaffordable alongside it -- inflections
+   included, since those are the same word doing the same job. */
 [
-  'Man claims he was assaulted',
-  'Police claim offender fled',
-  'Teen claims victory at nationals',
-  'Minister claims budget is balanced',
-  'Group claims responsibility for attack',
-  'She claimed the title',
-  'Council claims funding shortfall'
+  'Premiums rise 15% for Queensland homeowners',
+  'Home claims surge after floods',
+  'Motor premiums climb as repair costs bite',
+  'Health premiums jump again in April',
+  'Strata premiums double in flood zones',
+  'Northern Australia premiums remain unaffordable',
+  'Claims unaffordable for strata owners',
+  'Car claims take longer to settle',
+  'Household claims rise sharply',
+  'Health claims denied more often'
 ].forEach((t) => {
-  ck('not insurance: ' + t.slice(0, 40),
-    !classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
-    classify(t, 'abc.net.au', 'ABC News'));
-});
-
-console.log('\n== but a real claims story still is ==');
-/* Corroborated by an insurance term or a peril, which is how a genuine
-   claims headline is written. */
-[
-  'Flood claims surge after Queensland storm',
-  'Hail claims top $400m',
-  'Storm claims pour in across Victoria',
-  'Claims assessors sent to Lismore',
-  'Bushfire claims mount for insurers',
-  'Insurance claims rejected'
-].forEach((t) => {
-  ck('insurance: ' + t.slice(0, 40),
+  ck('insurance: ' + t.slice(0, 44),
     classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
     classify(t, 'abc.net.au', 'ABC News'));
 });
 
-/* A trade headline naming no peril is not lost, because the publisher rule
-   runs before any keyword. That is what makes the corroboration safe. */
-ck('a bare trade claims headline is caught by the publisher',
-  classify('Claims bill tops $1bn', 'insurancenews.com.au', 'insuranceNEWS').includes('insurance'));
-ck('and the same words from a general outlet are not',
-  !classify('Claims bill tops $1bn', 'abc.net.au', 'ABC News').includes('insurance'));
-
-console.log('\n== "premium" needs a line of cover: home or motor ==');
-/* "Premium" is a price in insurance and an adjective meaning upmarket
-   everywhere else, so on its own it tagged all of these Insurance. */
+console.log('\n== and without one, neither word tags on its own ==');
 [
   'Qantas expands premium economy',
   'Woolworths launches premium own-brand range',
   'Premium fuel prices hit record',
   'Premium Bonds winners announced',
-  'Streaming service raises premium tier price',
-  'Club offers premium seating upgrade',
-  'Premium wine exports to China rebound'
+  'Premium wine exports to China rebound',
+  'Man claims he was assaulted',
+  'Police claim offender fled',
+  'Teen claims victory at nationals',
+  'Minister claims budget is balanced',
+  'Group claims responsibility for attack'
 ].forEach((t) => {
-  ck('not insurance: ' + t.slice(0, 42),
+  ck('not insurance: ' + t.slice(0, 44),
     !classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
     classify(t, 'abc.net.au', 'ABC News'));
 });
 
+console.log('\n== what this knowingly drops: peril-only claims headlines ==');
+/* Perils are no longer support, so a claims story naming only the event
+   does not tag. On a disaster-response dashboard these are arguably the
+   most relevant insurance stories there are, so the cost is asserted here
+   rather than left to be noticed later. Restoring them means adding the
+   peril words back to INSURANCE_CONTEXT. */
 [
-  'Premiums rise 15% for Queensland homeowners',
-  'Home premiums climb after floods',
-  'Motor premiums climb as repair costs bite',
-  'House premiums unaffordable in the north',
-  'Vehicle premiums rise'
+  'Flood claims surge after Queensland storm',
+  'Hail claims top $400m',
+  'Claims assessors sent to Lismore',
+  'Storm claims pour in across Victoria'
 ].forEach((t) => {
-  ck('insurance: ' + t.slice(0, 42),
-    classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
-    classify(t, 'abc.net.au', 'ABC News'));
-});
-
-console.log('\n== what the narrow premium rule knowingly drops ==');
-/* Real insurance stories that this rule will not tag, asserted so the cost
-   is visible rather than discovered later. Each becomes a one-word addition
-   to PREMIUM_CONTEXT if it turns out to matter. */
-[
-  'Health premiums jump again in April',
-  'Strata premiums double in flood zones',
-  'Northern Australia premiums remain unaffordable'
-].forEach((t) => {
-  ck('knowingly untagged: ' + t.slice(0, 40),
+  ck('knowingly untagged: ' + t.slice(0, 42),
     !classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
     classify(t, 'abc.net.au', 'ABC News'));
 });
 
-/* Neither term may corroborate itself: the claim context contains
-   "premiums" and vice versa, so each is blanked from the text before its
-   own context is tested. */
-ck('premium cannot corroborate itself',
-  !classify('Premium premium premium', 'abc.net.au', '').includes('insurance'));
-ck('claim cannot corroborate itself',
-  !classify('Claims claim claimed', 'abc.net.au', '').includes('insurance'));
-ck('a trade premium headline is still caught by the publisher',
-  classify('Premium review flagged', 'insurancenews.com.au', 'insuranceNEWS').includes('insurance'));
+/* A peril headline that also names an insurer is still caught, by insur*
+   rather than by the corroboration rule. */
+ck('but a peril headline naming an insurer still tags',
+  classify('Bushfire claims mount for insurers', 'abc.net.au', '').includes('insurance'));
+ck('a trade headline with no support is caught by the publisher',
+  classify('Claims bill tops $1bn', 'insurancenews.com.au', 'insuranceNEWS').includes('insurance'));
 
 console.log('\n== other outlets are unaffected ==');
 ck('an ABC bushfire story is bushfire and nothing else',

@@ -695,38 +695,37 @@
     world:['iran','ukraine','gaza','israel','china','white house','united nations','trump','war','wars','warfare']
   };
   /* Two words that mean insurance in one sense and something ordinary in
-     another, so neither is trusted alone. They need different support,
-     because they go wrong in different ways.
+     another, so neither is trusted alone.
 
      "Claim" is an insurance noun and also one of the commonest verbs in a
      headline, where it only means "asserts": "Man claims he was assaulted",
-     "Teen claims victory", "Minister claims budget is balanced" were all
-     tagged Insurance. It is corroborated by a peril or an insurance term,
-     which is how a genuine claims headline reads.
+     "Teen claims victory", "Minister claims budget is balanced".
 
      "Premium" is a price in insurance and an adjective meaning upmarket
      everywhere else: "Qantas expands premium economy", "Premium fuel prices
-     hit record", "Premium Bonds winners announced". It is corroborated by a
-     line of cover -- home or motor and their obvious variants -- which is
-     narrower than the claim rule on purpose.
+     hit record", "Premium Bonds winners announced".
 
-     That narrowness is a deliberate trade and it does drop things. These are
-     real insurance stories this rule will NOT tag:
+     Both now need one of the same five supports: home, motor, health,
+     strata or unaffordable. Obvious inflections count -- homeowner,
+     household, house, motorist, car, vehicle, affordability -- since those
+     are the same word doing the same job.
 
-       Health premiums jump again in April
-       Strata premiums double in flood zones
-       Northern Australia premiums remain unaffordable
+     WHAT THIS DROPS, and it is worth knowing. Perils are no longer support
+     for "claims", so a claims story that names only the event does not tag:
 
-     They are the price of a clean Insurance tab, and the lines can be added
-     to PREMIUM_CONTEXT one at a time if any of them turns out to matter.
+       Flood claims surge after Queensland storm
+       Hail claims top $400m
+       Claims assessors sent to Lismore
+
+     On a disaster-response dashboard those are arguably the most relevant
+     insurance stories there are, and they are asserted as untagged in the
+     tests so the cost stays visible. Restoring them is adding the peril
+     words back to this one list.
 
      Neither word is lost on the trade press: insuranceNEWS is tagged by
-     publisher before any keyword runs, so "Premium review flagged" from
-     there is still Insurance. */
-  const CLAIM_RE=/\bclaim/i;
-  const CLAIM_CONTEXT=/\b(insur\w*|reinsur\w*|underwrit\w*|policyholder\w*|premiums?|excess|deductible|payout|pay-?out|settlement|assessor\w*|broker\w*|afca|icaustralia|loss|losses|damage\w*|catastrophe|disaster|flood\w*|storm\w*|hail\w*|cyclone\w*|bushfire\w*|quake|earthquake)\b/i;
-  const PREMIUM_RE=/\bpremium/i;
-  const PREMIUM_CONTEXT=/\b(home|homes|homeowner\w*|household\w*|house|houses|motor|motorist\w*|car|cars|vehicle\w*)\b/i;
+     publisher before any keyword runs. */
+  const AMBIGUOUS_RE=/\b(claim|premium)/i;
+  const INSURANCE_CONTEXT=/\b(home|homes|homeowner\w*|household\w*|house|houses|housing|motor|motorist\w*|car|cars|vehicle\w*|health|strata|unaffordab\w*|affordab\w*)\b/i;
 
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
     politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
@@ -944,13 +943,10 @@
     });
     /* Corroborated claims. Checked after the keyword loop so it cannot
        double-add when an insurance term already matched. */
-    /* Each ambiguous term is corroborated by a word OTHER than itself. The
-       claim list contains "premiums" and vice versa, so without blanking the
-       term first a headline could support itself and be right back where it
-       started. */
-    if(cats.indexOf('insurance')===-1){
-      if(CLAIM_RE.test(t)&&CLAIM_CONTEXT.test(t.replace(/\bclaim\w*/ig,' ')))cats.push('insurance');
-      else if(PREMIUM_RE.test(t)&&PREMIUM_CONTEXT.test(t.replace(/\bpremium\w*/ig,' ')))cats.push('insurance');
+    /* Corroborated by one of the supports, which never include the
+       ambiguous terms themselves -- so a headline cannot support itself. */
+    if(cats.indexOf('insurance')===-1&&AMBIGUOUS_RE.test(t)&&INSURANCE_CONTEXT.test(t)){
+      cats.push('insurance');
     }
     if(!cats.includes('fire')&&!cats.includes('bushfire')&&FIRE_REGEX.test(t))cats.push('fire');
     return cats;
@@ -975,7 +971,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-10-premiumctx';
+  const EXPECTED_WORKER_BUILD='2026-10-10-insctx5';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
