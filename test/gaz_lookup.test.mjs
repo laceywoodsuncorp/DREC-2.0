@@ -37,32 +37,17 @@ const fns = new Function([
   grab(/const GAZ_STATE=[\s\S]*?const GAZ_ST_RE=[^\n]*\n/, 'gazetteer regexes'),
   grab(/function gazBase\(name\)\{[\s\S]*?\n  \}/, 'gazBase'),
   grab(/function gazNorm\(name\)\{[\s\S]*?\n  \}/, 'gazNorm'),
+  grab(/function buildGazIndex\(items\)\{[\s\S]*?\n  \}/, 'buildGazIndex'),
   grab(/function gazLookup\(gaz,rawTown,st\)\{[\s\S]*?\n  \}/, 'gazLookup')
-].join('\n') + '; return { gazBase, gazNorm, gazLookup };')();
+].join('\n') + '; return { gazBase, gazNorm, gazLookup, buildGazIndex };')();
 
-/* The index is built the same way the page builds it. */
+/* The index is built BY the page's own builder, not by a copy of it. The
+   copy that used to live here went stale the moment the prefix rule
+   changed: the page resolved CHARTERS TOWERS and this file still insisted
+   it could not. */
 const j = JSON.parse(readFileSync(new URL('../data/gazetteer.json', import.meta.url), 'utf8'));
-const byKey = new Map(), byName = new Map(), byNorm = new Map(), byPrefix = new Map();
-(j.items || []).forEach(([name, st, lat, lon]) => {
-  byKey.set(name + '|' + st, [lat, lon]);
-  if (!byName.has(name)) byName.set(name, []);
-  byName.get(name).push([st, lat, lon]);
-  const base = fns.gazBase(name);
-  if (base !== name) {
-    if (!byKey.has(base + '|' + st)) byKey.set(base + '|' + st, [lat, lon]);
-    if (!byName.has(base)) byName.set(base, []);
-    byName.get(base).push([st, lat, lon]);
-  }
-  const nk = fns.gazNorm(base) + '|' + st;
-  if (!byNorm.has(nk)) byNorm.set(nk, [lat, lon]);
-  const sp = base.indexOf(' ');
-  if (sp > 1) {
-    const pk = base.slice(0, sp) + '|' + st;
-    if (!byPrefix.has(pk)) byPrefix.set(pk, []);
-    byPrefix.get(pk).push([base, lat, lon]);
-  }
-});
-const gaz = { byKey, byName, byNorm, byPrefix };
+const gaz = fns.buildGazIndex(j.items || []);
+
 
 let pass = 0, fail = 0;
 const ck = (n, c, e) => {
@@ -92,6 +77,19 @@ console.log('\n== the city case: operators name cities, the ABS holds suburbs ==
    resolving Toowoomba to a point in Cairns would still "work". */
 [['TOOWOOMBA', 'QLD', -27.56, 151.95], ['CAIRNS', 'QLD', -16.92, 145.77],
  ['ROCKHAMPTON', 'QLD', -23.38, 150.51], ['GLADSTONE', 'QLD', -23.84, 151.26]].forEach(([t, st, lat, lon]) => {
+  const p = fns.gazLookup(gaz, t, st);
+  ck(t + ' resolves near ' + lat + ',' + lon, near(p, lat, lon, 0.6), p);
+});
+
+console.log('\n== multi-word cities, which the first version of this missed ==');
+/* The prefix index was keyed on the first word only, so TOOWOOMBA found
+   TOOWOOMBA CITY and CHARTERS TOWERS did not find CHARTERS TOWERS CITY --
+   a one-word city resolved and a two-word city did not, for no reason. It
+   now indexes every leading word-run. */
+[['CHARTERS TOWERS', 'QLD', -20.08, 146.26], ['ALICE SPRINGS', 'NT', -23.70, 133.88],
+ ['BROKEN HILL', 'NSW', -32.32, 141.55], ['MOUNT ISA', 'QLD', -20.54, 139.46],
+ ['PORT MACQUARIE', 'NSW', -31.46, 152.89], ['COFFS HARBOUR', 'NSW', -30.30, 153.11],
+ ['WAGGA WAGGA', 'NSW', -35.11, 147.36]].forEach(([t, st, lat, lon]) => {
   const p = fns.gazLookup(gaz, t, st);
   ck(t + ' resolves near ' + lat + ',' + lon, near(p, lat, lon, 0.6), p);
 });

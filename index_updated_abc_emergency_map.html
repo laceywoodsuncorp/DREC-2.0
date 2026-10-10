@@ -1287,7 +1287,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-10-summaries';
+  const EXPECTED_WORKER_BUILD='2026-10-10-multiword';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
@@ -2604,6 +2604,50 @@ window.addEventListener('resize',()=>map.invalidateSize());
       .replace(/\bPT\.?\b/g,'PORT').replace(/\bUPR\.?\b/g,'UPPER')
       .replace(/[^A-Z0-9]+/g,'');
   }
+  /* Builds the lookup indexes from the gazetteer rows.
+
+     Its own function so the tests can build the same indexes the page
+     builds. They used to hold a second copy of this, and the copy went
+     stale the moment the prefix rule changed -- the page resolved CHARTERS
+     TOWERS and the test still said it could not, which is the least useful
+     kind of disagreement. */
+  function buildGazIndex(items){
+    const byKey=new Map(),byName=new Map(),byNorm=new Map(),byPrefix=new Map();
+    items.forEach(([name,st,lat,lon])=>{
+      byKey.set(name+'|'+st,[lat,lon]);
+      /* A name alone is ambiguous -- there is a Richmond in five states --
+         so the name index keeps every state it occurs in and the caller
+         decides. */
+      if(!byName.has(name))byName.set(name,[]);
+      byName.get(name).push([st,lat,lon]);
+      /* The ABS suffixes a repeated name with its state or its LGA:
+         "LONGFORD (TAS.)", "RED HILL (BRISBANE - QLD)". Indexing the base
+         name means the map works against a gazetteer file built before the
+         builder learned to strip those. */
+      const base=gazBase(name);
+      if(base!==name){
+        if(!byKey.has(base+'|'+st))byKey.set(base+'|'+st,[lat,lon]);
+        if(!byName.has(base))byName.set(base,[]);
+        byName.get(base).push([st,lat,lon]);
+      }
+      /* Abbreviation-insensitive, so "MT MORT" finds "MOUNT MORT". */
+      const nk=gazNorm(base)+'|'+st;
+      if(!byNorm.has(nk))byNorm.set(nk,[lat,lon]);
+      /* EVERY leading word-run, which is how a city gets found. The ABS
+         holds suburbs, not cities: there is no TOOWOOMBA, only TOOWOOMBA
+         CITY, and no CHARTERS TOWERS, only CHARTERS TOWERS CITY. Indexing
+         just the first word resolved the one-word city and not the
+         two-word one. */
+      const parts=base.split(' ');
+      for(let i=1;i<parts.length;i++){
+        const pk=parts.slice(0,i).join(' ')+'|'+st;
+        if(!byPrefix.has(pk))byPrefix.set(pk,[]);
+        byPrefix.get(pk).push([base,lat,lon]);
+      }
+    });
+    return {byKey,byName,byNorm,byPrefix};
+  }
+
   /* Resolves one operator-written town name to a point, in order of how much
      is being assumed. Exact first, then the same name with abbreviations
      expanded, then the city case, then a unique match in another state.
@@ -2647,42 +2691,8 @@ window.addEventListener('resize',()=>map.invalidateSize());
       const r=await fetch('/data/gazetteer.json',{cache:'force-cache'});
       if(!r.ok)throw new Error('HTTP '+r.status);
       const j=await r.json();
-      const byKey=new Map(),byName=new Map(),byNorm=new Map(),byPrefix=new Map();
-      (j.items||[]).forEach(([name,st,lat,lon])=>{
-        byKey.set(name+'|'+st,[lat,lon]);
-        /* A name alone is ambiguous -- there is a Richmond in five states --
-           so the name index keeps every state it occurs in and the caller
-           decides. */
-        if(!byName.has(name))byName.set(name,[]);
-        byName.get(name).push([st,lat,lon]);
-        /* The ABS suffixes a repeated name with its state or its LGA:
-           "LONGFORD (TAS.)", "RED HILL (BRISBANE - QLD)". The builder strips
-           those now, but a gazetteer file built before that fix still has
-           them, and indexing the base name here means the map works against
-           either -- rather than waiting on a rebuild to stop losing Longford
-           and Red Hill. */
-        const base=gazBase(name);
-        if(base!==name){
-          if(!byKey.has(base+'|'+st))byKey.set(base+'|'+st,[lat,lon]);
-          if(!byName.has(base))byName.set(base,[]);
-          byName.get(base).push([st,lat,lon]);
-        }
-        /* Abbreviation-insensitive index, so an operator writing "MT MORT"
-           finds "MOUNT MORT". */
-        const nk=gazNorm(base)+'|'+st;
-        if(!byNorm.has(nk))byNorm.set(nk,[lat,lon]);
-        /* First word of a multi-word locality, which is how a city gets
-           found. The ABS holds suburbs, not cities: there is no TOOWOOMBA,
-           only TOOWOOMBA CITY, and no CAIRNS, only CAIRNS CITY and CAIRNS
-           NORTH. Operators name the city. */
-        const sp=base.indexOf(' ');
-        if(sp>1){
-          const pk=base.slice(0,sp)+'|'+st;
-          if(!byPrefix.has(pk))byPrefix.set(pk,[]);
-          byPrefix.get(pk).push([base,lat,lon]);
-        }
-      });
-      gazetteer={byKey,byName,byNorm,byPrefix,attribution:j.attribution||''};
+      const idx=buildGazIndex(j.items||[]);
+      gazetteer=Object.assign(idx,{attribution:j.attribution||''});
       gazetteerState='ready';
     }catch(e){
       console.warn('Gazetteer unavailable:',e);
