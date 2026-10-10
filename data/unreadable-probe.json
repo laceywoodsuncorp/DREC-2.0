@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-10T04:26:12.101Z",
+  "at": "2026-10-10T04:32:06.307Z",
   "targets": [
     {
       "name": "Jemena",
@@ -119,7 +119,7 @@
       "name": "SA Power Networks",
       "url": "https://www.sapowernetworks.com.au/outages/",
       "status": 200,
-      "bytes": 132885,
+      "bytes": 132886,
       "tableRows": 0,
       "hydration": false,
       "relative": [
@@ -169,42 +169,42 @@
           "url": "https://outage.apps.sapowernetworks.com.au/Outages/OutageSearch",
           "status": 403,
           "type": "text/html",
-          "bytes": 755,
+          "bytes": 751,
           "shape": ""
         },
         {
           "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/OutageMap",
           "status": 403,
           "type": "text/html",
-          "bytes": 755,
+          "bytes": 753,
           "shape": ""
         },
         {
           "url": "https://www.sapowernetworks.com.au/contact-us/interpreter-services/",
           "status": 200,
           "type": "text/html",
-          "bytes": 129582,
+          "bytes": 129583,
           "shape": ""
         },
         {
           "url": "https://www.sapowernetworks.com.au/outages/",
           "status": 200,
           "type": "text/html",
-          "bytes": 132885,
+          "bytes": 132886,
           "shape": ""
         },
         {
           "url": "https://www.sapowernetworks.com.au/outages/have-a-power-outage-plan/",
           "status": 200,
           "type": "text/html",
-          "bytes": 149605,
+          "bytes": 149606,
           "shape": ""
         },
         {
           "url": "https://www.sapowernetworks.com.au/outages/view-the-outage-map/",
           "status": 403,
           "type": "text/html",
-          "bytes": 755,
+          "bytes": 753,
           "shape": ""
         },
         {
@@ -232,10 +232,120 @@
           "url": "https://www.sapowernetworks.com.au/outages/life-support-customers/",
           "status": 200,
           "type": "text/html",
-          "bytes": 150718,
+          "bytes": 150717,
           "shape": ""
         }
       ]
+    },
+    {
+      "name": "SA CFS warnings",
+      "url": "https://www.cfs.sa.gov.au/warnings-restrictions/warnings/incidents-warnings/",
+      "status": 200,
+      "bytes": 51861,
+      "tableRows": 1,
+      "hydration": false,
+      "relative": [
+        "/manifest.json",
+        "/warnings-restrictions/warnings/rss-feeds/",
+        "/about/awards-recognition/australian-fire-service-medal-recipients/",
+        "/about/awards-recognition/emergency-services-medal/"
+      ],
+      "absolute": [
+        "https://js.arcgis.com/3.23/"
+      ],
+      "tried": [
+        {
+          "url": "https://js.arcgis.com/3.23/",
+          "status": 200,
+          "type": "application/javascript",
+          "bytes": 1349224,
+          "shape": ""
+        },
+        {
+          "url": "https://www.cfs.sa.gov.au/manifest.json",
+          "status": 200,
+          "type": "application/json",
+          "bytes": 730,
+          "shape": "object{name,short_name,icons,start_url,display,background_color,theme_color}"
+        },
+        {
+          "url": "https://www.cfs.sa.gov.au/warnings-restrictions/warnings/rss-feeds/",
+          "status": 200,
+          "type": "text/html",
+          "bytes": 57322,
+          "shape": ""
+        },
+        {
+          "url": "https://www.cfs.sa.gov.au/about/awards-recognition/australian-fire-service-medal-recipients/",
+          "status": 200,
+          "type": "text/html",
+          "bytes": 43152,
+          "shape": ""
+        },
+        {
+          "url": "https://www.cfs.sa.gov.au/about/awards-recognition/emergency-services-medal/",
+          "status": 200,
+          "type": "text/html",
+          "bytes": 64338,
+          "shape": ""
+        }
+      ]
+    }
+  ],
+  "extra": [
+    {
+      "url": "https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json",
+      "status": 200,
+      "type": "text/html",
+      "bytes": 197,
+      "shape": "",
+      "softFail": true
+    },
+    {
+      "url": "https://www.cfs.sa.gov.au/api/incidents",
+      "status": 404,
+      "type": "text/html",
+      "bytes": 3390,
+      "shape": "",
+      "softFail": false
+    },
+    {
+      "url": "https://www.cfs.sa.gov.au/api/warnings",
+      "status": 404,
+      "type": "text/html",
+      "bytes": 3390,
+      "shape": "",
+      "softFail": false
+    },
+    {
+      "url": "https://www.cfs.sa.gov.au/wp-json/wp/v2/incident",
+      "status": 404,
+      "type": "text/html",
+      "bytes": 3390,
+      "shape": "",
+      "softFail": false
+    },
+    {
+      "url": "https://www.cfs.sa.gov.au/feed/",
+      "status": 404,
+      "type": "text/html",
+      "bytes": 3390,
+      "shape": "",
+      "softFail": false
+    },
+    {
+      "url": "https://alerts.sa.gov.au/api/warnings",
+      "error": "fetch failed",
+      "shape": "",
+      "softFail": false
+    },
+    {
+      "url": "https://www.alert.sa.gov.au/api/warnings",
+      "status": 404,
+      "type": "text/html",
+      "bytes": 22372,
+      "shape": "",
+      "softFail": false
     }
   ]
 }
