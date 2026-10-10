@@ -4,12 +4,42 @@
 # these lists only exist after JavaScript runs and a Worker fetch sees an empty
 # shell. Commits what it finds to data/outages.json, which the Worker serves.
 #
-# Deliberately manual. A schedule would keep the dashboard current but consumes
-# Actions minutes on a private repo; add a `schedule:` trigger here if that
-# trade becomes worth making.
+# Scheduled four times a day inside working hours, and runnable by hand at
+# any time.
+#
+# THE BUDGET THIS IS SIZED AGAINST IS ACTIONS MINUTES, NOT ANYTHING ELSE.
+# This workflow runs a Node script in a browser; it calls no model and costs
+# no model tokens. A run takes about five minutes, and a private repo gets
+# 2,000 free Actions minutes a month:
+#
+#     hourly      720 runs   3,600 min   180% of the budget -- impossible
+#     every 6h    120 runs     600 min    30%
+#     daily        30 runs     150 min     7.5%
+#
+# Four a day is the "about a third" setting.
+#
+# TIMES ARE UTC, which GitHub requires, and the window asked for was 6am to
+# 8pm in Australian Eastern Standard Time (UTC+10):
+#
+#     20:00 UTC -> 06:00 AEST   (the next day)
+#     01:00 UTC -> 11:00 AEST
+#     06:00 UTC -> 16:00 AEST
+#     10:00 UTC -> 20:00 AEST
+#
+# AEST is Brisbane, which does not observe daylight saving. A reader in
+# Sydney or Melbourne will see these an hour later over summer -- 7am to 9pm
+# rather than 6am to 8pm. Worth knowing before anyone reads the first run of
+# the day as late.
+#
+# The Worker's own five-minute cron is NOT affected by this and should not
+# be. It is what keeps the dashboard current, it costs nothing, and outages
+# do not stop overnight -- a storm at 2am is exactly when someone would want
+# this page to be right.
 name: Scrape outages
 
 on:
+  schedule:
+    - cron: '0 20,1,6,10 * * *'
   workflow_dispatch:
     inputs:
       only:
