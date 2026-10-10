@@ -57,6 +57,11 @@ jobs:
 
       # The routes still open for SA and NT outages, both of which report
       # nothing today.
+      # Is an operator we call blocked still blocked? The verdict ages, and
+      # quoting a days-old one as current is how a config stays wrong.
+      - name: Re-check the blocked operators
+        run: node scripts/recheck-blocked.mjs
+
       - name: SA and NT outage routes
         run: node scripts/probe-sa-nt-outages.mjs
 
@@ -78,4 +83,4 @@ jobs:
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh 'Record live state health and the feed probes' \
               data/state-health.json data/nt-power-probe.json \
-              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json
+              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json
