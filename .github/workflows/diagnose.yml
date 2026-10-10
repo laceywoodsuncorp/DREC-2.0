@@ -59,6 +59,11 @@ jobs:
       # nothing today.
       # Is an operator we call blocked still blocked? The verdict ages, and
       # quoting a days-old one as current is how a config stays wrong.
+      # Did any distributor we cannot read publish its outages as an open
+      # map layer? This is the question that recovered Queensland.
+      - name: Search for distributor map layers
+        run: node scripts/probe-distributor-layers.mjs
+
       - name: Re-check the blocked operators
         run: node scripts/recheck-blocked.mjs
 
@@ -83,4 +88,4 @@ jobs:
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh 'Record live state health and the feed probes' \
               data/state-health.json data/nt-power-probe.json \
-              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json
+              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json
