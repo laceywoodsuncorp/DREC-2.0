@@ -26,9 +26,10 @@ const base = [
   grab(/function hostOf\(v\)\{[\s\S]*?\n  \}/, 'hostOf'),
   grab(/function sourceCats\(domain,source\)\{[\s\S]*?\n  \}/, 'sourceCats'),
   grab(/const SUBCATS=\{[\s\S]*?\n  \};/, 'SUBCATS'),
-  grab(/function subsFor\(title\)\{[\s\S]*?\n  \}/, 'subsFor'),
+  grab(/function subsFor\(title,summary\)\{[\s\S]*?\n  \}/, 'subsFor'),
+  grab(/const SUMMARY_SAFE=\{[\s\S]*?\n  \};/, 'SUMMARY_SAFE'),
   grab(/const CAT_LABEL=\{[\s\S]*?\n    health[^\n]*\n/, 'CAT_LABEL'),
-  grab(/function classify\(title,domain,source\)\{[\s\S]*?\n  \}/, 'classify')
+  grab(/function classify\(title,domain,source,summary\)\{[\s\S]*?\n  \}/, 'classify')
 ].join('\n');
 const classify = new Function(base + '; return classify;')();
 const subsFor = new Function(base + '; return subsFor;')();
@@ -125,6 +126,57 @@ ck('a medical test is not sport', !cat('Blood test shortage hits clinics', 'spor
 ck('bushfire ashes are not sport', !cat('Residents return to ashes after bushfire', 'sport'));
 ck('a policy goal is not sport', !cat('Government sets emissions goal', 'sport'));
 ck('an election victory is not sport', !cat('Labor claims victory in Werriwa', 'sport'));
+
+console.log('== headlines written to intrigue, where the subject is in the summary ==');
+/* classify read the title only, deliberately, because matching the broad
+   keywords against two sentences of context would tag half the feed. That
+   costs real articles when the headline withholds the subject, which is
+   most feature writing. All four of these were filed as General. */
+const withSummary = (t, sum, c) => {
+  const got = classify(t, 'smh.com.au', 'SMH', sum);
+  ck(c + ': ' + t.slice(0, 46), got.includes(c), got);
+};
+withSummary("'I never gave consent': The Australians being replaced with copies of themselves",
+  'High-flying executives jetted in to the AI inquiry but the most startling revelations came from ordinary Australians.',
+  'ai');
+withSummary("'Fingers crossed': Walker hopes to secure new Roosters deal before November 1",
+  'The Roosters halfback is in the Australian squad for the World Cup after a stellar season in which he made his State of Origin debut and won a maiden NRL title.',
+  'sport');
+withSummary('Deal or no deal? How the major parties are tackling the minority government risk',
+  'Victorians reckon the two-party system is a thing of the past. Ahead of the state election, Jess Wilson and Ben Carroll are trying to come to terms with what the future may hold.',
+  'politics');
+withSummary("'An inspiration since I was a kid': Butters' childhood dream comes true with Bulldogs move",
+  'Zak Butters has opened up on his trade to the Western Bulldogs, and his favourite memory of the club growing up in Victoria.',
+  'sport');
+
+console.log('\n== the summary can only ADD, and only through vetted terms ==');
+/* The broad words stay title-only. A summary mentions market, health,
+   police, fire, court and claim in passing constantly, and trusting them
+   there is what would tag half the feed. */
+ck('a market in the summary does not tag economy',
+  !classify('Council debates parking changes',
+    'abc.net.au', 'ABC', 'The market for new housing remains weak and health services are stretched.')
+    .includes('economy'));
+ck('police and fire in the summary do not tag',
+  classify('Local business reopens', 'abc.net.au', 'ABC',
+    'Police said the fire was not suspicious and the court will hear more.').length === 0);
+ck('a title match still works with no summary at all',
+  classify('Market expected to open lower', 'abc.net.au', 'ABC').includes('economy'));
+ck('and the summary never removes a title match',
+  classify('Bushfire warning for the Blue Mountains', 'abc.net.au', 'ABC',
+    'Residents are urged to leave.').includes('bushfire'));
+
+console.log('\n== club names, and the ones left out on purpose ==');
+ck('Bulldogs is sport', cat('Bulldogs sign Butters in trade period', 'sport'));
+ck('Roosters is sport', cat('Roosters re-sign halfback', 'sport'));
+/* Each of these is a club nickname that means something else here, and
+   each would cost more than it caught. */
+ck('Storm is a peril, not the club', cat('Storm lashes the Gold Coast', 'peril')
+  && !cat('Storm lashes the Gold Coast', 'sport'));
+ck('Sharks is a shark attack', !cat('Shark attack closes Perth beach', 'sport'));
+ck('Magpies are birds in swooping season', !cat('Magpie swooping season begins', 'sport'));
+ck('Power is electricity', !cat('Power restored to 4,000 homes', 'sport'));
+ck('Blues is music', !cat('Blues festival returns to Byron', 'sport'));
 
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);

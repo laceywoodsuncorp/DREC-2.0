@@ -30,7 +30,11 @@ const classify = new Function([
   grab(/const SOURCE_CATS=\[[\s\S]*?\n  \];/, 'SOURCE_CATS'),
   grab(/function hostOf\(v\)\{[\s\S]*?\n  \}/, 'hostOf'),
   grab(/function sourceCats\(domain,source\)\{[\s\S]*?\n  \}/, 'sourceCats'),
-  grab(/function classify\(title,domain,source\)\{[\s\S]*?\n  \}/, 'classify')
+  /* classify also reads SUMMARY_SAFE now, so it comes along. The cases in
+     this file all pass a title only, which is the point: nothing here
+     should change because summaries became readable. */
+  grab(/const SUMMARY_SAFE=\{[\s\S]*?\n  \};/, 'SUMMARY_SAFE'),
+  grab(/function classify\(title,domain,source,summary\)\{[\s\S]*?\n  \}/, 'classify')
 ].join('\n') + '; return classify;')();
 
 let pass = 0, fail = 0;

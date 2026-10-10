@@ -732,6 +732,13 @@
       /* campaigning */
       'voter*','electorate*','ballot*','polling booth','opinion poll','swing against','swing to',
       'policy platform','cpac','party conference','conservative','progressive','left-wing','right-wing',
+      /* The contest itself, which the list described only through its
+         institutions. "How the major parties are tackling the minority
+         government risk" named no party, no politician and no institution,
+         and matched nothing. */
+      'major parties','major party','minor parties','minor party','the parties',
+      'minority government','majority government','hung parliament','two-party','balance of power',
+      'opposition','swing seat*','marginal seat*','safe seat*','primary vote','preference*','teal seat*',
       /* Politics elsewhere. Without these the category was Australia-only,
          so "Trump signs executive order" landed in World and "Starmer faces
          Commons revolt" and "Putin meets Xi Jinping" landed nowhere at all
@@ -793,6 +800,19 @@
       'matildas','socceroos','wallabies','boomers','opals','diamonds','kangaroos','wallaroos',
       'premiership','brownlow','dally m','norm smith','premiers',
       'striker*','midfielder*','goalkeeper*','fullback*','batsman','batter','bowler*','wicket*','innings',
+      'halfback*','five-eighth','winger*','ruckman','ruck','scrum','lineout','try-scorer*',
+      /* Club names, which is how a transfer or contract story is headlined.
+         Only the unambiguous ones: Storm is a peril on this dashboard,
+         Sharks is a shark attack, Crows Magpies and Swans are birds in
+         swooping season, Power is electricity, Cats and Lions are animals
+         and Blues is music -- every one of those would cost more than it
+         caught. */
+      'roosters','rabbitohs','broncos','eels','sea eagles','knights','titans','cowboys','dragons',
+      'raiders','panthers','warriors','wests tigers','bulldogs',
+      'collingwood','carlton','essendon','hawthorn','geelong cats','fremantle','west coast eagles',
+      'port adelaide','north melbourne','st kilda','gws giants','sydney swans','brisbane lions',
+      /* How a trade story is written when it names no code or competition. */
+      'trade period','free agency','draft pick','national draft','traded to','re-signs','re-signed',
       'jockey*','supercars','formula one','grand prix','marathon','medal*','podium','scoreboard'],
     /* Everything the weather and the ground can do that is not a flood or
        a fire. Sub-filtered in the UI by PERIL_SUBS. */
@@ -941,8 +961,11 @@
   /* The sub-keys an article matches, if its category has any. An article
      can match several -- a storm that brings hail is both -- and one that
      matches none still appears under the category's "All". */
-  function subsFor(title){
-    const t=String(title||'').toLowerCase();
+  function subsFor(title,summary){
+    /* Both, because a sub-filter is only consulted inside a category the
+       article already matched -- so the question is which peril or which
+       jurisdiction, not whether the story belongs at all. */
+    const t=(String(title||'')+' '+String(summary||'')).toLowerCase();
     const out=[];
     Object.keys(SUBCATS).forEach(cat=>{
       SUBCATS[cat].options.forEach(([key,,words])=>{
@@ -1152,8 +1175,60 @@
     });
     return out;
   }
-  function classify(title,domain,source){
+  /* Terms precise enough to trust in a SUMMARY as well as a headline.
+  
+     classify has always read the title only, deliberately: a summary is two
+     sentences of context and matching the broad keywords against it would
+     tag half the feed. But that costs real articles when the headline is
+     written to intrigue rather than inform --
+  
+       "'I never gave consent': The Australians being replaced with copies
+        of themselves"
+  
+     has no AI word in it at all, and the summary says "the AI inquiry".
+  
+     So the summary is matched too, but only against this list, and it can
+     only ADD a category. Nothing already tagged changes. Each entry is a
+     term whose presence anywhere in two sentences means the story really is
+     about that thing -- "coral bleaching" and "manslaughter" are safe,
+     "market", "health", "police", "fire", "claim" and "premium" are not and
+     stay out, because a summary mentions those in passing constantly. */
+  const SUMMARY_SAFE={
+    ai:['ai','artificial intelligence','machine learning','generative ai','chatgpt','openai',
+      'large language model*','deepfake*','data centre*','data center*','nvidia'],
+    environment:['climate change','global warming','net zero','emissions','coral bleaching',
+      'great barrier reef','biodiversity','deforestation','land clearing','bird flu','avian influenza'],
+    peril:['earthquake*','cyclone*','hailstorm*','tornado*','tsunami*','landslide*','mudslide*',
+      'heatwave*','thunderstorm*','storm surge'],
+    bushfire:['bushfire*','grassfire*','wildfire*'],
+    flood:['flood*','floodwater*','flash flooding'],
+    insurance:['insurance','insurer*','policyholder*','underwrit*','afca'],
+    crime:['murder*','homicide*','manslaughter','stabb*','armed robbery','burglar*','sexual assault',
+      'hit-and-run','kidnap*','trafficking'],
+    roads:['road toll','fatal crash','motorcyclist','head-on collision'],
+    politics:['albanese','dutton','hanson','labor','coalition','greens','parliament',
+      'election*','state election','federal election','by-election','minority government',
+      'prime minister','premier','minister*','senate','trump','white house','putin','zelensky','nato'],
+    /* Clubs are repeated here rather than shared with the headline list on
+       purpose: the two lists answer different questions. A headline may use
+       any club name; a summary is only trusted with ones that cannot be
+       anything else, which is why the ambiguous clubs are absent from both
+       and the trade vocabulary appears only here where it has context. */
+    sport:['matildas','socceroos','wallabies','olympic*','paralympic*','world cup','grand final',
+      'state of origin','melbourne cup','nrl','afl','nrlw','aflw','test match','premiership',
+      'halfback*','grand slam','a-league','trade period','free agency','draft pick',
+      'roosters','rabbitohs','broncos','eels','sea eagles','titans','cowboys','dragons','raiders',
+      'panthers','wests tigers','bulldogs','collingwood','carlton','essendon','hawthorn',
+      'geelong cats','west coast eagles','port adelaide','north melbourne','st kilda',
+      'gws giants','sydney swans','brisbane lions'],
+    economy:['inflation','interest rate*','cost of living','reserve bank'],
+    health:['hospital*','vaccine*','pandemic','outbreak'],
+    world:['ukraine','gaza','israel','iran']
+  };
+
+  function classify(title,domain,source,summary){
     const t=String(title||'').toLowerCase();
+    const sum=String(summary||'').toLowerCase();
     /* Source-derived categories lead deliberately. The card renders only the
        first three tags, so appending this one would let a story that also
        matched politics, economy and crime push Insurance off the card of the
@@ -1178,6 +1253,18 @@
       cats.push('insurance');
     }
     if(!cats.includes('fire')&&!cats.includes('bushfire')&&FIRE_REGEX.test(t))cats.push('fire');
+    /* The summary, last and additive only. The same vetoes apply, so a
+       summary about a tennis court or an air strike does not sneak in what
+       the title rule would have refused. */
+    if(sum){
+      Object.keys(SUMMARY_SAFE).forEach(k=>{
+        if(cats.indexOf(k)!==-1)return;
+        if(!SUMMARY_SAFE[k].some(kw=>keywordHit(sum,kw)))return;
+        if(k==='politics'&&POLITICS_VETO.test(sum))return;
+        if(k==='crime'&&CRIME_VETO.test(sum))return;
+        cats.push(k);
+      });
+    }
     return cats;
   }
   function readCache(){try{const raw=localStorage.getItem(CACHE_KEY_PREFIX);return raw?JSON.parse(raw):null;}catch(e){return null;}}
@@ -1200,7 +1287,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-10-categories';
+  const EXPECTED_WORKER_BUILD='2026-10-10-summaries';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
@@ -1268,8 +1355,8 @@
          headlines remain available as a fallback when nothing recent is. */
       if(a.pubMs>Date.now()+3600000)return;
       if(EXCLUDE_KEYWORDS.test(a.title))return; // recipes, celebrity gossip, horoscopes etc -- not news
-      const cats=classify(a.title,a.domain,a.source);
-      const subs=subsFor(a.title);
+      const cats=classify(a.title,a.domain,a.source,a.summary);
+      const subs=subsFor(a.title,a.summary);
       if(a.world||(a.domain||'').includes(WORLD_DOMAIN)){
         /* The dedicated World source -- always keep and tag it World
            regardless of keyword matches, exempt from the AU-relevance gate
