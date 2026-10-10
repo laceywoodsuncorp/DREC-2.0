@@ -298,7 +298,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-10-cron2min';
+const WORKER_BUILD = '2026-10-10-alertsa';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -1622,6 +1622,135 @@ function parseSa(json) {
   return { incidents };
 }
 
+/* Alert SA's combined CAP feed -- the state's incidents, from every agency.
+
+   This replaced the CFS endpoints because those are gone, not because the
+   address was wrong. Measured: the CFS incidents page loads its own feeds
+   from data.eso.sa.gov.au -- CFS_Current_Incidents.xml and
+   CFS_Fire_Warnings.xml -- and BOTH answer HTTP 200 with a 197-byte
+   "SA ESS - File Unavailable" page. The data host is serving a soft-404 to
+   the agency's own site. That soft-404 is why SA reported ok:true,
+   complete:true, count:0 for weeks: a 200 holding an error page is
+   indistinguishable from a quiet day unless something reads the body.
+
+   Alert SA, found from that page's own Javascript bundle, answers properly:
+   application/xml, CAP entries inside an Atom feed, every entry carrying a
+   circle geometry. Measured on a live run, 16 of 16 entries were placeable
+   and inside Australia. It is also a wider feed than what it replaces --
+   SES, CFS and MFS together, where the CFS endpoints were one agency.
+
+   Two things in this feed need care.
+
+   First, the level. CAP grades severity as Extreme/Severe/Moderate/Minor,
+   which is not the wording the dashboard colours by, and SA puts its own
+   vocabulary in the CAP parameter pairs as WarningLevel. But its observed
+   values are "Incident" and "Public Notice" -- a routine job and a notice,
+   NOT declared public warnings. Passing those through as an alert level is
+   precisely the bug that had VicEmergency showing "Tree Down" and
+   "Earthquake" as alert levels: a field named like a level whose values are
+   something else. So only the published public levels are accepted, and
+   anything else leaves alertLevel empty and goes to status instead, where
+   it belongs.
+
+   Second, CAP says some entries must not be displayed at all, and says so
+   in its own fields: status Test/Exercise/Draft is not a real event, and
+   msgType Cancel withdraws one. Both are dropped -- but only when stated
+   explicitly, so a feed that omits the field is not silently emptied. The
+   agency runs a UAT host whose 106 entries are fabricated, which is a
+   standing reminder that test data in a real-looking feed is not
+   hypothetical here. */
+
+/* The levels SA may declare to the public. Anything outside this list is an
+   operational state, not an instruction, however the field is named. */
+const SA_PUBLIC_LEVELS = /^(advice|watch and act|watch & act|emergency warning|all clear)$/i;
+
+/* Reads one CAP <parameter> pair set into a plain map. The pairs are where
+   every Australian jurisdiction keeps the fields CAP itself has no slot
+   for, so this is not SA-specific plumbing. */
+function capParameters(xml) {
+  const out = {};
+  const blocks = xml.match(/<(?:cap:)?parameter\b[^>]*>[\s\S]*?<\/(?:cap:)?parameter>/gi) || [];
+  blocks.forEach((b) => {
+    const name = (/<(?:cap:)?valueName\b[^>]*>([\s\S]*?)<\/(?:cap:)?valueName>/i.exec(b) || [])[1];
+    const value = (/<(?:cap:)?value\b[^>]*>([\s\S]*?)<\/(?:cap:)?value>/i.exec(b) || [])[1];
+    if (name) out[stripTags(name).trim()] = stripTags(value || '').trim();
+  });
+  return out;
+}
+
+function parseAlertSaCap(xml) {
+  const incidents = [];
+  /* Atom entries when wrapped, bare CAP alerts when not -- the feed is the
+     former today and the fallback costs nothing. */
+  let blocks = xml.match(/<entry\b[^>]*>[\s\S]*?<\/entry>/gi) || [];
+  if (!blocks.length) blocks = xml.match(/<(?:cap:)?alert\b[^>]*>[\s\S]*?<\/(?:cap:)?alert>/gi) || [];
+  const seen = [];
+
+  blocks.forEach((block) => {
+    const one = (tag, scope) => {
+      const m = new RegExp('<(?:cap:)?' + tag + '\\b[^>]*>([\\s\\S]*?)<\\/(?:cap:)?' + tag + '>', 'i')
+        .exec(scope);
+      return m ? stripTags(m[1]).trim() : '';
+    };
+
+    /* CAP's own suppression fields, honoured only when explicitly set. */
+    const capStatus = one('status', block);
+    if (/^(test|exercise|draft)$/i.test(capStatus)) { seen.push({ dropped: capStatus }); return; }
+    const msgType = one('msgType', block);
+    if (/^cancel$/i.test(msgType)) { seen.push({ dropped: msgType }); return; }
+
+    /* The detail lives in <info>. The first is the English one in every
+       entry of this feed; a multilingual feed would repeat the same event. */
+    const infoM = /<(?:cap:)?info\b[^>]*>[\s\S]*?<\/(?:cap:)?info>/i.exec(block);
+    const info = infoM ? infoM[0] : block;
+    const params = capParameters(info);
+
+    const event = one('event', info);
+    const areaDesc = one('areaDesc', info);
+    /* headline reads as a label already ("ST AGNES : BURN OFF"). Falling
+       back to event and place keeps an entry that has no headline rather
+       than dropping a real incident for a missing field. */
+    const title = one('headline', info)
+      || [event, params.Location || areaDesc].filter(Boolean).join(' - ')
+      || params.IncidentName || '';
+    if (!title) return;
+
+    /* circle is "lat,lon radius". The radius is deliberately dropped: the
+       dashboard plots a point, and drawing a 30km circle over a city reads
+       as a far larger emergency than the agency is declaring. */
+    const geo = one('circle', info) || one('polygon', info);
+    const cm = /(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/.exec(geo);
+    const coords = cm ? { lat: Number(cm[1]), lon: Number(cm[2]) } : {};
+
+    const declared = String(params.WarningLevel || '').trim();
+    const isLevel = SA_PUBLIC_LEVELS.test(declared);
+
+    incidents.push(Object.assign(
+      {
+        title,
+        /* Empty unless SA has actually declared a public level. */
+        alertLevel: isLevel ? declared : '',
+        /* Where "Incident" and "Public Notice" go, alongside the
+           operational state: how it is behaving, not what to do. */
+        status: [params.Status, isLevel ? '' : declared]
+          .map((v) => String(v || '').trim()).filter(Boolean).join(' - '),
+        type: String(params.SubCategory || event || 'Incident').trim()
+      },
+      normaliseWhen(one('effective', info) || one('sent', block) || one('updated', block)),
+      coords
+    ));
+  });
+
+  const result = { incidents };
+  /* A feed that parsed to nothing reports WHY, so an empty SA is never
+     again mistaken for a quiet day. */
+  if (!incidents.length) {
+    result.diagnostics = { envelope: 'cap-atom', itemsSeen: blocks.length,
+      suppressed: seen.filter((x) => x.dropped).length };
+  }
+  return result;
+}
+
 /* ACT ESA current incidents -- CAP/EDXL XML. Parsed with regexes rather than
    a DOM parse (Workers have no DOMParser) and in the same style as the NSW
    description blob above. Confirmed structure. */
@@ -1883,9 +2012,21 @@ const INCIDENT_FEEDS = {
       { url: 'https://www.emergency.wa.gov.au/data/message_FCAD.json', format: 'json', parse: normaliseRecords }
     ]
   },
+  /* Alert SA leads because the CFS data host is gone, not misconfigured:
+     both of the CFS page's own feeds answer 200 with a 197-byte "SA ESS -
+     File Unavailable" page. Alert SA's combined CAP feed is also the wider
+     view -- SES, CFS and MFS, where CFS alone was one agency.
+
+     The two CFS addresses stay behind it, at the capitalised .xml names the
+     CFS page itself requests rather than the lowercase .json pair that was
+     guessed here. They cost nothing while the host is down (a JSON parse of
+     an error page fails, so the source errors and the next is tried) and
+     cover the case where the host comes back. */
   sa: {
-    name: 'South Australia', agency: 'SA CFS',
+    name: 'South Australia', agency: 'Alert SA (CFS/SES/MFS)',
     sources: [
+      { url: 'https://combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml', format: 'text', parse: parseAlertSaCap },
+      { url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/CFS_Current_Incidents.xml', format: 'text', parse: parseGeoRss },
       { url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.json', format: 'json', parse: parseSa }
     ]
   },
