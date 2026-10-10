@@ -358,9 +358,22 @@ console.log('\n== the cron refreshes outages in shards ==');
   const cached = () => [...store.keys()]
     .filter(k => k.includes('/outages/'))
     .map(k => k.split('/outages/')[1].toUpperCase());
-  const runTick = async (minute) => {
+  /* Driven by TICK NUMBER, not minute-of-hour.
+  
+     This used to pass minutes -- 0, 5, 15 -- which mapped to even, odd, odd
+     only while the cron fired every five minutes. The moment it fired every
+     two, minute 5 became an even tick, the "odd tick" assertions were
+     running the incident refresh instead, and the shard coverage check
+     failed for a reason that had nothing to do with shards.
+  
+     The period is read from the Worker so this follows the cron wherever it
+     goes. The handler computes floor(scheduledTime / CRON_PERIOD_MS), so
+     multiplying gives the tick asked for exactly. */
+  const PERIOD_MS = Number(/const CRON_PERIOD_MS = (\d+)/.exec(
+    (await import('node:fs')).readFileSync('./src/worker.js', 'utf8'))[1]);
+  const runTick = async (tickNo) => {
     const waits = [];
-    await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 24, 0, minute) }, env,
+    await worker.scheduled({ scheduledTime: tickNo * PERIOD_MS }, env,
       { waitUntil: (p) => waits.push(p) });
     await Promise.allSettled(waits);
     return cached();
@@ -372,15 +385,15 @@ console.log('\n== the cron refreshes outages in shards ==');
      call are still in flight and can land in this store, which would make a
      negative assertion flap for reasons that have nothing to do with the
      cron. */
-  const even = await runTick(0);
+  const even = await runTick(100);
   const incidentKeys = [...store.keys()].filter(k => k.includes('/incidents/'));
   check('an even tick runs the incident refresh', incidentKeys.length > 0, incidentKeys.length);
 
-  const first = await runTick(5);
+  const first = await runTick(101);
   check('an odd tick refreshes outage states', first.length > 0, first);
   check('but only its own shard', first.length < 8, first);
 
-  const second = await runTick(15);
+  const second = await runTick(103);
   check('the next odd tick covers the rest', second.length === 8,
     ['NSW','QLD','VIC','SA','WA','TAS','NT','ACT'].filter(s => second.indexOf(s) === -1));
 }

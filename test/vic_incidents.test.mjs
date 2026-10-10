@@ -72,7 +72,13 @@ const incProps = (samples.incident && samples.incident.sample) || {
 };
 const i = one(incProps);
 ck('no level is invented', i && i.alertLevel === '', i && i.alertLevel);
-ck('the title is the real label', i && /Seacombe|Paradise/.test(i.title), i && i.title);
+/* Asserted by shape. This named the place in whichever incident the probe
+   captured and broke as soon as Victoria's incident list moved on. What
+   matters is that the title is a label rather than a restatement of the
+   type. */
+ck('the title is a real label, not the event type',
+  i && i.title.length > 4 && i.title !== i.type && !/^(fire|other|rescue|met)$/i.test(i.title),
+  i && i.title);
 ck('the type is kept', i && /Fire|Bushfire/i.test(i.type), i && i.type);
 
 console.log('\n== an earthquake: also a type, also not a level ==');

@@ -65,10 +65,17 @@ if (!sample) {
 } else {
   const inc = parseQldWarnings({ features: [{ properties: sample, geometry: null }] }).incidents[0];
   ck('a warning is parsed', !!inc);
-  ck('alertLevel is the agency warning level', inc && inc.alertLevel === 'Advice', inc && inc.alertLevel);
+  /* Asserted as a published level, not as today's. This named 'Advice'
+     because that is what the probe happened to capture, and broke when
+     Queensland moved to Watch and Act -- the parser was right and the test
+     was wrong, which is the least useful way to fail. */
+  ck('alertLevel is one of the published levels',
+    inc && /^(Advice|Watch and Act|Emergency Warning|All Clear)/i.test(inc.alertLevel || ''),
+    inc && inc.alertLevel);
   ck('title is the warning headline, not the level', inc && inc.title.length > 20, inc && inc.title);
   ck('type comes from EventType', inc && inc.type === 'Fire', inc && inc.type);
-  ck('status is the call to action', inc && inc.status === 'Stay Informed', inc && inc.status);
+  ck('status is a call to action, kept apart from the level',
+    inc && inc.status && inc.status !== inc.alertLevel, inc && inc.status);
   ck('coordinates come from the explicit pair', inc && isFinite(inc.lat) && isFinite(inc.lon),
     inc && { lat: inc.lat, lon: inc.lon });
   ck('the timestamp parses to ISO', inc && /^20\d\d-/.test(inc.whenIso || ''), inc && inc.whenIso);

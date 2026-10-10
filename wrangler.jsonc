@@ -8,7 +8,7 @@
   },
   "triggers": {
     // Runs the GDELT, incident and electricity-outage cache refreshes
-    // independently of visitor traffic every 5 minutes, so a page load never
+    // independently of visitor traffic every 2 minutes, so a page load never
     // waits on a live fetch.
     //
     // Caching note: the cron tick fetches AND normalises each feed, then
@@ -34,7 +34,7 @@
     // src/worker.js); the previous EMERGENCY_API_KEY binding for
     // emergencyapi.com has been retired along with that dependency, so there
     // is no longer any credential here to expire, rotate or leak.
-    "crons": ["*/5 * * * *"]
+    "crons": ["*/2 * * * *"]
   }
 
   // ---------------------------------------------------------------------
@@ -113,8 +113,8 @@
   //   2. Uncomment the block below and paste the ID.
   //   3. Redeploy.
   //
-  // Cost on the free plan: the cron writes one record per 5-minute tick
-  // (288/day against a 1,000/day limit) and each page load is one read
+  // Cost on the free plan: the cron writes one record per 2-minute tick
+  // (720/day against a 1,000/day limit) and each page load is one read
   // (against 100,000/day). The code falls back to the cache automatically if
   // the binding is absent, so this can be added at any time without a code
   // change.

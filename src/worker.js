@@ -62,6 +62,23 @@ const CACHE_ENTRY_LIFETIME_SECONDS = 7200; // 2h -- generous outer bound, not a 
    turned out to be the same problem. */
 const INCIDENT_FRESH_SECONDS = 600; // 10 min
 
+/* How often the cron fires, in milliseconds. MUST MATCH the "crons" entry in
+   wrangler.jsonc.
+
+   It is a constant because it was a magic number in the scheduled handler --
+   `Math.floor(nowMs / 300000)` -- sitting five hundred lines from the cron
+   that produced it. The tick counter is what rotates the news shards and
+   alternates the incident and outage refreshes, so if the cron fires faster
+   than this number says, two consecutive firings compute the SAME tick:
+   the same shard runs twice, the rotation never advances, and feeds at the
+   other positions are never fetched at all. Nothing would error. The feed
+   would just quietly stop filling, which is the failure this file has met
+   more than once.
+
+   test/cron_period.test.mjs reads the cron out of wrangler.jsonc and fails
+   if the two disagree, so they cannot drift apart again. */
+const CRON_PERIOD_MS = 120000; // every 2 minutes
+
 async function readSharedCache(cacheUrl) {
   const cached = await caches.default.match(cacheUrl);
   if (!cached) return null;
@@ -281,7 +298,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-10-multiword';
+const WORKER_BUILD = '2026-10-10-cron2min';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -3364,7 +3381,8 @@ async function warmColdOutages() {
    the incident feeds are not, because there are far more operators than
    agencies -- sweeping all eight states every tick would compete with the
    news and incident refreshes for the same invocation's subrequest budget.
-   Two shards at a 5-minute cron means every state is re-read every 10
+   Two shards, refreshed on alternate ticks of a 2-minute cron, means every
+   state is re-read every 8
    minutes, which is well inside how fast an operator updates its own map. */
 const OUTAGE_SHARDS = 2;
 async function refreshOutageShard(shard) {
@@ -3728,7 +3746,7 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  /* Fires on the cron schedule in wrangler.jsonc (every 5 minutes). Runs the
+  /* Fires on the cron schedule in wrangler.jsonc (every 2 minutes). Runs the
      news and incident refreshes independently via ctx.waitUntil so one
      failing doesn't stop the other, and so the Worker instance isn't
      recycled before both finish. */
@@ -3738,14 +3756,14 @@ export default {
        than kept in memory, since a Worker isn't guaranteed to be the same
        instance between ticks.
 
-       Counted in absolute 5-minute periods since the epoch, NOT as
+       Counted in absolute cron periods since the epoch, NOT as
        minute-of-hour. A minute-of-hour tick only ever takes 12 values, so a
        given shard would only ever see 3 of them -- and since the discovery
        slot rotates with the tick, feeds at the other positions in that shard
        would never get a discovery attempt at all. An absolute counter keeps
        advancing, so every position comes round. */
     const nowMs = event && event.scheduledTime ? event.scheduledTime : Date.now();
-    const tick = Math.floor(nowMs / 300000);
+    const tick = Math.floor(nowMs / CRON_PERIOD_MS);
 
     /* A Worker invocation may make at most 50 subrequests, and everything
        queued here shares one invocation. Doing all three refreshes on every
@@ -3756,9 +3774,18 @@ export default {
 
        News runs every tick, since it is the headline of the page. The
        incident and outage refreshes alternate, which halves the peak and
-       leaves both parities around 35. The cost is that each of those is
-       re-read every 10 minutes rather than every 5, well inside how fast
-       either actually changes. */
+       leaves both parities around 35.
+
+       That shape is why the cron can be sped up safely. The ceiling is
+       per-invocation, not per-day: firing more often does not add a single
+       subrequest to any one tick, it just brings each shard round sooner.
+       At two minutes the peak is still ~35 of 50, and the dashboard gets
+       incidents every 4 minutes instead of 10, and every outage shard and
+       news shard every 8 minutes instead of 20.
+
+       Against the daily allowance this is nothing: 720 invocations a day
+       out of 100,000. What would NOT be safe is doing all three refreshes
+       on one tick -- that came to 58 and is what broke the feeds before. */
     ctx.waitUntil(refreshNewsShard(tick % NEWS_SHARDS, tick, env));
     if (tick % 2 === 0) {
       ctx.waitUntil(refreshAllIncidents());
