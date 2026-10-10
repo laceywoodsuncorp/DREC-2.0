@@ -21,6 +21,7 @@ const grab = (re, what) => {
 
 const classify = new Function([
   grab(/const CAT_KEYWORDS=\{[\s\S]*?\n  \};/, 'CAT_KEYWORDS'),
+  grab(/const POLITICS_VETO=[^\n]*\n/, 'POLITICS_VETO'),
   grab(/const AMBIGUOUS_RE=[\s\S]*?const CLAIM_FATALITY_RE=[^\n]*\n/, 'ambiguous-term rules'),
   grab(/const FIRE_REGEX=[\s\S]*?;\n/, 'FIRE_REGEX'),
   grab(/const kwMatchers=\{\};/, 'kwMatchers'),
@@ -218,6 +219,68 @@ console.log('\n== and the ordinary senses of both words stay out ==');
 
 ck('a trade headline with no support is caught by the publisher',
   classify('Claims bill tops $1bn', 'insurancenews.com.au', 'insuranceNEWS').includes('insurance'));
+
+console.log('\n== politics: parties, people and campaigning ==');
+/* The original list was parliament + minister + election + industrial
+   action, which misses most political reporting. All three of these were
+   filed as General, and the third names two politicians and a party. */
+[
+  'Hanson takes aim at Coalition in fiery pitch to conservative voters',
+  'Albanese dips toe back into comedy after melon podcast gaffe',
+  'Pauline Hanson labels Angus Taylor smarmy management consultant, delivers blistering Labor attack at CPAC',
+  'Dutton announces nuclear policy',
+  'Greens push for rent freeze',
+  'By-election called for Werriwa',
+  'Question time descends into chaos',
+  'Caucus backs the leader',
+  'Voters swing against government',
+  'Senate passes bill after crossbench deal',
+  'Preselection battle in Kooyong',
+  'Teals target Liberal heartland',
+  'Jim Chalmers defends spending',
+  'Barnaby Joyce quits frontbench'
+].forEach((t) => {
+  ck('politics: ' + t.slice(0, 48),
+    classify(t, 'abc.net.au', 'ABC News').includes('politics'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+console.log('\n== and the non-political senses of those words ==');
+/* Two of these were already wrong before the list was widened: "union"
+   caught rugby and credit unions, "strike" caught air strikes and a
+   bowler's strike rate. Vetoed by the phrase that gives the other sense
+   away, rather than by dropping the term -- a trade union story and a
+   strike rate both need to land somewhere, and only one is politics. */
+[
+  'Rugby union final draws record crowd',
+  'Credit union merges with regional bank',
+  'Air strikes hit Gaza overnight',
+  'Lightning strike sparks bushfire near Stawell',
+  'Strike rate improves for young bowler',
+  'Kitchen cabinet makers face import costs',
+  'European Union agrees trade deal'
+].forEach((t) => {
+  ck('not politics: ' + t.slice(0, 48),
+    !classify(t, 'abc.net.au', 'ABC News').includes('politics'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+/* A surname is how a headline names a politician, but only unambiguous
+   ones are listed. Taylor Swift is the reason "Angus Taylor" is a full
+   name in the list rather than a surname. */
+ck('Taylor Swift is not politics',
+  !classify('Taylor Swift announces Australian tour', 'abc.net.au', '').includes('politics'));
+
+console.log('\n== industrial action is still politics ==');
+[
+  'Trade union calls strike over pay',
+  'Nurses walkout enters second day',
+  'ACTU backs wage case'
+].forEach((t) => {
+  ck('politics: ' + t.slice(0, 48),
+    classify(t, 'abc.net.au', 'ABC News').includes('politics'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
 
 console.log('\n== other outlets are unaffected ==');
 ck('an ABC bushfire story is bushfire and nothing else',

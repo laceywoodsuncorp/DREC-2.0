@@ -684,10 +684,38 @@
       'razed by fire','gutted by fire','fire rips through','fire tears through','house blaze','home blaze'],
     flood:['flood*','storm*','cyclone*','deluge','rainfall warning','severe weather','hail','hailstone*'],
     bushfire:['bushfire*','wildfire*','grassfire*','hazard reduction','fire ban','fire danger'],
+    /* Parties, people, institutions and the language of campaigning. The
+       original list was parliament + minister + election + industrial
+       action, which misses most political reporting: "Hanson takes aim at
+       Coalition in fiery pitch to conservative voters", "Albanese dips toe
+       back into comedy" and "Pauline Hanson labels Angus Taylor ... at
+       CPAC" matched none of it and were filed as General.
+
+       Surnames are here because that is how a headline refers to a
+       politician, but only ones that are not ordinary words or common
+       names. "Taylor" would catch Taylor Swift and "Wong", "Joyce" and
+       "Ley" are common surnames, so those appear as full names instead.
+       This handful needs revisiting after an election -- a dated list is
+       the cost of catching "Albanese dips toe back into comedy", which
+       carries no other political word at all. */
     politics:['politic*','parliament*','minister','ministers','senator','senators','mp','mps','election*',
-      'federal government','prime minister','premier','premiers',
-      'strike','strikes','walkout','industrial action','protest*','union','unions','ferry','train delay',
-      'bus strike','commuter*'],
+      'federal government','prime minister','premier','premiers','walkout','industrial action',
+      'protest*','ferry','train delay','bus strike','commuter*',
+      /* industrial relations, narrowed -- see POLITICS_VETO */
+      'strike','strikes','trade union','unions','union movement','actu','cfmeu',
+      /* parties */
+      'labor','coalition','liberals','liberal party','greens','one nation','nationals party',
+      'national party','teal','teals','crossbench*','independents',
+      /* people, and full names where the surname alone is ambiguous */
+      'albanese','dutton','hanson','bandt','littleproud','plibersek','pocock','lambie','mcgowan',
+      'angus taylor','jim chalmers','penny wong','barnaby joyce','sussan ley','adam bandt',
+      /* institutions and process */
+      'senate','house of representatives','cabinet','caucus','frontbench*','backbench*',
+      'opposition leader','shadow minister','shadow treasurer','treasurer','portfolio',
+      'preselection','by-election','question time','senate estimates','party room','leadership spill',
+      /* campaigning */
+      'voter*','electorate*','ballot*','polling booth','opinion poll','swing against','swing to',
+      'policy platform','cpac','party conference','conservative','progressive','left-wing','right-wing'],
     economy:['econom*','inflation','rba','interest rate*','fuel price*','cost of living','super fund','budget*','market*'],
     crime:['police','policing','stabb*','arrest*','court','courts','charged','shooting*','crime*','criminal*','jail*','sentenc*'],
     health:['health*','hospital*','virus*','flu','disease*','medicine*','vaccine*','bird flu','pbs'],
@@ -745,6 +773,19 @@
      that is what is vetoed -- and only for that sense, which is why "Flood
      claims surge" and "Hail claims top $400m" are untouched by it. */
   const CLAIM_FATALITY_RE=/\bclaim(?:s|ed|ing)?\s+(?:the\s+)?(?:\w+\s+){0,2}(?:life|lives|victim\w*|firefighter\w*|resident\w*|motorist\w*|a\s+man|a\s+woman|a\s+child|a\s+teenager)\b/i;
+
+  /* Three of the politics terms have common non-political senses, and two
+     of them were already in the list before it was widened:
+
+       union   rugby union (sport), credit union (banking), European Union
+       strike  air strike and drone strike (world), lightning strike
+               (weather), strike rate (sport)
+       cabinet kitchen cabinet, filing cabinet
+
+     Each is vetoed by the phrase that gives the other sense away, rather
+     than by dropping the term -- a trade union story and a bowler's strike
+     rate both need to land somewhere, and only one of them is politics. */
+  const POLITICS_VETO=/\b(rugby union|credit union|european union|union jack|air ?strikes?|drone strikes?|missile strikes?|lightning strikes?|strike rate|hat-?trick|kitchen cabinet|filing cabinet|cabinet maker)\b/i;
 
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
     politics:'🏛️ Politics',economy:'💰 Economy',crime:'🚔 Crime',health:'🩺 Health',sport:'🏅 Sport',world:'🌏 World',general:'📰 General'};
@@ -958,7 +999,11 @@
     const cats=sourceCats(domain,source);
     Object.keys(CAT_KEYWORDS).forEach(k=>{
       if(cats.indexOf(k)!==-1)return;
-      if(CAT_KEYWORDS[k].some(kw=>keywordHit(t,kw)))cats.push(k);
+      if(!CAT_KEYWORDS[k].some(kw=>keywordHit(t,kw)))return;
+      /* A politics match that is really about sport, banking or a bombing
+         run is dropped rather than added. */
+      if(k==='politics'&&POLITICS_VETO.test(t))return;
+      cats.push(k);
     });
     /* Corroborated claims. Checked after the keyword loop so it cannot
        double-add when an insurance term already matched. */
@@ -991,7 +1036,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-10-perils';
+  const EXPECTED_WORKER_BUILD='2026-10-10-politics';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
