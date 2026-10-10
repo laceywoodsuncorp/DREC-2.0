@@ -22,6 +22,7 @@ const grab = (re, what) => {
 const classify = new Function([
   grab(/const CAT_KEYWORDS=\{[\s\S]*?\n  \};/, 'CAT_KEYWORDS'),
   grab(/const POLITICS_VETO=[^\n]*\n/, 'POLITICS_VETO'),
+  grab(/const CRIME_VETO=[^\n]*\n/, 'CRIME_VETO'),
   grab(/const AMBIGUOUS_RE=[\s\S]*?const CLAIM_FATALITY_RE=[^\n]*\n/, 'ambiguous-term rules'),
   grab(/const FIRE_REGEX=[\s\S]*?;\n/, 'FIRE_REGEX'),
   grab(/const kwMatchers=\{\};/, 'kwMatchers'),
@@ -281,6 +282,61 @@ console.log('\n== industrial action is still politics ==');
     classify(t, 'abc.net.au', 'ABC News').includes('politics'),
     classify(t, 'abc.net.au', 'ABC News'));
 });
+
+console.log('\n== crime: the offence, not only the police response ==');
+/* The original twelve keywords were all police-and-courts process and
+   contained not one offence, so a story about the offence itself matched
+   nothing at all. */
+[
+  'Family live in fear 40 years on from unsolved death',
+  'Pedestrian injured and driver wanted after alleged hit-and-run near Brisbane',
+  'Pretty Little Liars actor shares bloody video after allegedly being robbed by armed attackers',
+  'Man charged over Perth stabbing',
+  'Police arrest two after ram raid',
+  'Murder investigation launched in Cairns',
+  'Woman jailed for fraud',
+  'Teen accused of armed robbery',
+  'Coroner finds death was suspicious',
+  'Manhunt after service station holdup',
+  'Burglary spike in inner north',
+  'Drug trafficking ring dismantled',
+  'Man found guilty of manslaughter',
+  'Suspect remanded in custody'
+].forEach((t) => {
+  ck('crime: ' + t.slice(0, 50),
+    classify(t, 'abc.net.au', 'ABC News').includes('crime'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+console.log('\n== and the words that only look criminal ==');
+/* "court" is a tennis court as often as a courtroom and "trial" is a
+   clinical trial, so both are vetoed by the phrase that gives the other
+   sense away. "death", "victim", "attack", "raid" and "wanted" are left
+   out of the list entirely and appear only inside a phrase, because each
+   is far more often something else -- a flood victim, a shark attack, an
+   air raid, a Labor attack. */
+[
+  'Tennis court resurfacing begins at Melbourne Park',
+  'Food court reopens at Westfield',
+  'Clinical trial of new cancer drug begins',
+  'Air raid sirens sound in Kyiv',
+  'Flood victims receive payments',
+  'Shark attack closes Perth beach',
+  'Pauline Hanson delivers blistering Labor attack at CPAC',
+  'Three killed in light plane crash'
+].forEach((t) => {
+  ck('not crime: ' + t.slice(0, 50),
+    !classify(t, 'abc.net.au', 'ABC News').includes('crime'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+/* The veto must not swallow a real court story that happens to mention a
+   sporting court, which is why it stands down when an unambiguous crime
+   word is also present. */
+ck('a real court story mentioning a tennis club still tags',
+  classify('Man fronts court over tennis club theft', 'abc.net.au', '').includes('crime'));
+ck('an assault at a basketball court still tags',
+  classify('Police charge man after basketball court assault', 'abc.net.au', '').includes('crime'));
 
 console.log('\n== other outlets are unaffected ==');
 ck('an ABC bushfire story is bushfire and nothing else',

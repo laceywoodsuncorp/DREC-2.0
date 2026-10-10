@@ -717,7 +717,40 @@
       'voter*','electorate*','ballot*','polling booth','opinion poll','swing against','swing to',
       'policy platform','cpac','party conference','conservative','progressive','left-wing','right-wing'],
     economy:['econom*','inflation','rba','interest rate*','fuel price*','cost of living','super fund','budget*','market*'],
-    crime:['police','policing','stabb*','arrest*','court','courts','charged','shooting*','crime*','criminal*','jail*','sentenc*'],
+    /* The original twelve were all police-and-courts process -- police,
+       arrest, charged, court, jail, sentence -- and contained not one
+       offence. So a story about the offence itself matched nothing:
+
+         Family 'live in fear' 40 years on from unsolved death
+         Pedestrian injured and driver wanted after alleged hit-and-run
+         ... after allegedly being robbed by armed attackers
+
+       Offences, the people involved and the legal process are now all
+       here. Words whose other sense is common are left out rather than
+       vetoed where a phrase will do: "death", "victim", "attack", "raid"
+       and "wanted" are all far more often something else, so each appears
+       only in the phrase that makes it criminal. */
+    crime:['police','policing','crime*','criminal*',
+      /* offences against the person */
+      'murder*','homicide*','manslaughter','killer*','stabb*','shooting*','shot dead',
+      'assault*','rape','rapist*','sexual abuse','child abuse','paedophil*','pedophil*',
+      'grooming','stalking','kidnap*','abduct*','domestic violence','coward punch',
+      /* offences against property */
+      'robbery','robberies','robbed','robbing','burglar*','break-in','break-ins','theft','thefts',
+      'stolen','shoplift*','carjack*','ram raid','ram-raid','ramraid','arson*','vandalis*',
+      /* dishonesty and drugs */
+      'fraud*','scam*','embezzl*','extortion','blackmail','money laundering','bribery','corruption',
+      'drug bust','drug ring','trafficking','smuggl*','cartel*',
+      /* the people */
+      'offender*','perpetrator*','accused','alleged','allegedly','suspect','suspects','fugitive*',
+      'detective*','magistrate*','coroner*','inquest*','manhunt*',
+      /* the process */
+      'arrest*','charged','court','courts','jail*','sentenc*','convict*','acquitt*','verdict*',
+      'guilty','bail','parole','remand','prison*','inmate*','trial',
+      /* phrases, where the single word would be something else far too often */
+      'unsolved death','suspicious death','unexplained death','death in custody',
+      'hit-and-run','hit and run','wanted by police','wanted over','police raid','drug raid',
+      'murder victim','crime victim','armed robbery','armed attacker*','armed men','firearm*'],
     health:['health*','hospital*','virus*','flu','disease*','medicine*','vaccine*','bird flu','pbs'],
     sport:['sport*','cricket','afl','nrl','rugby','olympic*','commonwealth games','tennis','swim*','golf','striker*','premiership'],
     world:['iran','ukraine','gaza','israel','china','white house','united nations','trump','war','wars','warfare']
@@ -785,6 +818,12 @@
      Each is vetoed by the phrase that gives the other sense away, rather
      than by dropping the term -- a trade union story and a bowler's strike
      rate both need to land somewhere, and only one of them is politics. */
+  /* "court" is a tennis court as often as a courtroom, and "trial" is a
+     clinical trial or a sporting trial. Both are kept, because a court
+     report and a trial really are crime, and the other senses are vetoed
+     by the phrase that gives them away. */
+  const CRIME_VETO=/\b(tennis|basketball|netball|squash|badminton|centre|center|food)\s+courts?\b|\bcourt\s+(?:case\s+)?of\s+appeal\b|\b(clinical|drug|vaccine|field|time)\s+trials?\b|\btrial\s+(?:of\s+)?(?:a\s+)?(?:new\s+)?(?:drug|vaccine|treatment|technology|scheme)\b/i;
+
   const POLITICS_VETO=/\b(rugby union|credit union|european union|union jack|air ?strikes?|drone strikes?|missile strikes?|lightning strikes?|strike rate|hat-?trick|kitchen cabinet|filing cabinet|cabinet maker)\b/i;
 
   const CAT_LABEL={insurance:'🛡️ Insurance',fire:'🔥 House Fires',flood:'🌊 Floods & Storms',bushfire:'🌲 Bushfires',
@@ -1003,6 +1042,7 @@
       /* A politics match that is really about sport, banking or a bombing
          run is dropped rather than added. */
       if(k==='politics'&&POLITICS_VETO.test(t))return;
+      if(k==='crime'&&CRIME_VETO.test(t)&&!/\b(police|arrest|charged|murder|robbery|assault|jail)/i.test(t))return;
       cats.push(k);
     });
     /* Corroborated claims. Checked after the keyword loop so it cannot
@@ -1036,7 +1076,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-10-politics';
+  const EXPECTED_WORKER_BUILD='2026-10-10-crime';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
