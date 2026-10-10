@@ -49,6 +49,32 @@ jobs:
           echo "--- is the gazetteer served?"
           curl -sS -m 25 -o /dev/null -w "  /data/gazetteer.json -> HTTP %{http_code}, %{size_download} bytes\n" "$base/data/gazetteer.json" || true
 
+      # Is the PAGE being served stale? The step above compares the Worker,
+      # which is only half the question: the page is an asset served from a
+      # per-datacentre cache, so a reader can hold an old page against a
+      # current Worker. That is what the dashboard's mismatch warning is
+      # about, and it was answered by guessing until now.
+      - name: What build is the served page on
+        run: |
+          set -e
+          base=https://drec-oncall-updates-site.lacey-wood.workers.dev
+          repo=$(grep -o "EXPECTED_WORKER_BUILD='[^']*'" index_updated_abc_emergency_map.html | sed "s/.*'\(.*\)'/\1/")
+          curl -sS -m 30 "$base/" -o /tmp/page.html || true
+          served=$(grep -o "EXPECTED_WORKER_BUILD='[^']*'" /tmp/page.html | sed "s/.*'\(.*\)'/\1/" | head -1)
+          age=$(curl -sS -m 20 -o /dev/null -D - "$base/" | tr -d '\r' | awk -F': ' 'tolower($1)=="age"{print $2}')
+          echo "page build in repo:   $repo"
+          echo "page build served:    ${served:-<none found>}"
+          echo "edge cache Age:       ${age:-<not reported>}"
+          if [ "$served" = "$repo" ]; then
+            echo "::notice::The served page matches the branch. A reader still seeing old behaviour has it cached in their own browser."
+          else
+            echo "::warning::The edge is serving $served while the branch is $repo — a hard refresh will NOT fix this for anyone; the cached asset has to age out or be purged."
+          fi
+          # The classifier rule actually in the served page, which is the
+          # thing a reader's tags come from.
+          echo "--- is the corroboration rule present in the served page?"
+          grep -c "AMBIGUOUS_RE" /tmp/page.html || echo "  0 — served page predates the claims/premiums rule"
+
       # Which feeds is the live Worker actually getting, and what does it say
       # about the ones it is not?
       #
