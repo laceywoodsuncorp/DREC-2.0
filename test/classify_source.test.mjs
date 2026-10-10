@@ -21,6 +21,7 @@ const grab = (re, what) => {
 
 const classify = new Function([
   grab(/const CAT_KEYWORDS=\{[\s\S]*?\n  \};/, 'CAT_KEYWORDS'),
+  grab(/const CLAIM_RE=[\s\S]*?\n  const CLAIM_CONTEXT=[^\n]*\n/, 'claim rules'),
   grab(/const FIRE_REGEX=[\s\S]*?;\n/, 'FIRE_REGEX'),
   grab(/const kwMatchers=\{\};/, 'kwMatchers'),
   grab(/function keywordHit\(text,kw\)\{[\s\S]*?\n  \}/, 'keywordHit'),
@@ -135,6 +136,48 @@ ck('"interest rates" matches the "interest rate" phrase',
   classify('Interest rates unchanged', 'abc.net.au', '').includes('economy'));
 ck('no keyword is matched with a literal asterisk',
   !classify('Report mentions fuel price* in a footnote', 'abc.net.au', '').includes('nonsense'));
+
+console.log('\n== "claim" needs corroboration: it is a verb far more often ==');
+/* As a bare stem this tagged every one of these Insurance. "Claim" is an
+   insurance noun and also one of the commonest verbs in a headline, where
+   it just means "asserts" -- so on its own it was pulling crime, politics
+   and sport into the Insurance tab. */
+[
+  'Man claims he was assaulted',
+  'Police claim offender fled',
+  'Teen claims victory at nationals',
+  'Minister claims budget is balanced',
+  'Group claims responsibility for attack',
+  'She claimed the title',
+  'Council claims funding shortfall'
+].forEach((t) => {
+  ck('not insurance: ' + t.slice(0, 40),
+    !classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+console.log('\n== but a real claims story still is ==');
+/* Corroborated by an insurance term or a peril, which is how a genuine
+   claims headline is written. */
+[
+  'Flood claims surge after Queensland storm',
+  'Hail claims top $400m',
+  'Storm claims pour in across Victoria',
+  'Claims assessors sent to Lismore',
+  'Bushfire claims mount for insurers',
+  'Insurance claims rejected'
+].forEach((t) => {
+  ck('insurance: ' + t.slice(0, 40),
+    classify(t, 'abc.net.au', 'ABC News').includes('insurance'),
+    classify(t, 'abc.net.au', 'ABC News'));
+});
+
+/* A trade headline naming no peril is not lost, because the publisher rule
+   runs before any keyword. That is what makes the corroboration safe. */
+ck('a bare trade claims headline is caught by the publisher',
+  classify('Claims bill tops $1bn', 'insurancenews.com.au', 'insuranceNEWS').includes('insurance'));
+ck('and the same words from a general outlet are not',
+  !classify('Claims bill tops $1bn', 'abc.net.au', 'ABC News').includes('insurance'));
 
 console.log('\n== other outlets are unaffected ==');
 ck('an ABC bushfire story is bushfire and nothing else',
