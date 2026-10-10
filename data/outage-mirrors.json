@@ -1,0 +1,131 @@
+{
+  "at": "2026-10-10T04:18:53.508Z",
+  "services": [
+    {
+      "label": "Ausgrid mirror",
+      "base": "https://services7.arcgis.com/si70weKpzPSa0BGV/arcgis/rest/services/NSW_AusGrid_Outages/FeatureServer",
+      "status": 200,
+      "layers": [
+        {
+          "id": 1,
+          "name": "NSW_AusGrid_Outages_Points",
+          "count": 12,
+          "newest": "2037-01-01T00:00:00.000Z",
+          "ageDays": -3736,
+          "sample": [
+            {
+              "OBJECTID": 1,
+              "WebId": null,
+              "Area": null,
+              "Cause": null,
+              "Classification": null,
+              "Customers": null,
+              "EstRestTime": null,
+              "OutageDisplayType": null,
+              "StartDateTime": null,
+              "Status": null,
+              "LGA_NAME": null
+            },
+            {
+              "OBJECTID": 1634,
+              "WebId": "736009999",
+              "Area": "Yagoona",
+              "Cause": "Under investigation",
+              "Classification": null,
+              "Customers": "37",
+              "EstRestTime": "2026-10-09T11:00:00Z",
+              "OutageDisplayType": "U",
+              "StartDateTime": "2026-10-08T20:50:00Z",
+              "Status": "InProgress",
+              "LGA_NAME": "Canterbury-Bankstown"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "NSW_AusGrid_Outages_Polygons",
+          "count": 4,
+          "newest": "2048-01-01T00:00:00.000Z",
+          "ageDays": -7753,
+          "sample": [
+            {
+              "OBJECTID": 1,
+              "WebId": "207025",
+              "Area": "Kings Cross, Rushcutters Bay",
+              "Cause": "Under investigation",
+              "Classification": "1",
+              "Customers": "21",
+              "EstRestTime": "2026-05-15T01:30:00",
+              "lat": "-33.87606",
+              "lng": "151.22683",
+              "OutageDisplayType": "R",
+              "StartDateTime": "2026-05-14T20:20:00",
+              "Status": "0",
+              "LGA_NAME": "Sydney",
+              "Shape__Area": 11543.57421875,
+              "Shape__Length": 385.9422442484188
+            },
+            {
+              "OBJECTID": 2,
+              "WebId": "207010",
+              "Area": "Balgowlah, North Balgowlah",
+              "Cause": "Under investigation",
+              "Classification": "1",
+              "Customers": "124",
+              "EstRestTime": "2026-05-15T00:30:00",
+              "lat": "-33.78636",
+              "lng": "151.249",
+              "OutageDisplayType": "R",
+              "StartDateTime": "2026-05-14T19:10:00",
+              "Status": "1",
+              "LGA_NAME": "Northern Beaches",
+              "Shape__Area": 182605.5078125,
+              "Shape__Length": 1970.9749567667677
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Jemena mirror (NBC)",
+      "base": "https://services7.arcgis.com/si70weKpzPSa0BGV/arcgis/rest/services/NBC_Outages_Jemena/FeatureServer",
+      "status": 200,
+      "layers": [
+        {
+          "id": 0,
+          "name": "NBC_Outages_Jemena",
+          "count": 1,
+          "newest": null,
+          "ageDays": null,
+          "sample": [
+            {
+              "OBJECTID": 1,
+              "outageType": null,
+              "outageLabel": null,
+              "suburb": null,
+              "numberOfCustomersOffSupply": null,
+              "cause": null,
+              "estimatedRestorationTime": null,
+              "postCode": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Jemena mirror (HCC)",
+      "base": "https://services7.arcgis.com/si70weKpzPSa0BGV/arcgis/rest/services/HCC_Outages_Jemena/FeatureServer",
+      "status": 200,
+      "layers": [
+        {
+          "id": 0,
+          "name": "HCC_Outages_Jemena",
+          "count": 0,
+          "newest": null,
+          "ageDays": null,
+          "sample": []
+        }
+      ]
+    }
+  ]
+}
