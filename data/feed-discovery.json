@@ -1,0 +1,275 @@
+{
+ "at": "2026-10-10T04:45:51.635Z",
+ "pages": [
+  {
+   "url": "https://www.cfs.sa.gov.au/warnings-restrictions/warnings/incidents-warnings/",
+   "page": {
+    "status": 200,
+    "type": "text/html",
+    "bytes": 51861,
+    "shape": "html",
+    "title": "Incidents &amp; warnings - CFS",
+    "carriesAlertLevel": false,
+    "carriesOutageData": false
+   },
+   "candidates": [
+    {
+     "url": "https://www.cfs.sa.gov.au/manifest.json",
+     "status": 200,
+     "type": "application/json",
+     "bytes": 730,
+     "shape": "object",
+     "items": 4,
+     "fields": [
+      "name",
+      "short_name",
+      "src",
+      "sizes",
+      "type",
+      "start_url",
+      "display",
+      "background_color",
+      "theme_color"
+     ],
+     "carriesAlertLevel": false,
+     "carriesOutageData": false
+    },
+    {
+     "url": "https://data.eso.sa.gov.au/prod/cfs/criimson/CFS_Current_Incidents.xml",
+     "status": 200,
+     "type": "text/html",
+     "bytes": 197,
+     "verdict": "soft-404: SA ESS - File Unavailable",
+     "title": "SA ESS - File Unavailable"
+    },
+    {
+     "url": "https://data.eso.sa.gov.au/prod/cfs/criimson/CFS_Fire_Warnings.xml",
+     "status": 200,
+     "type": "text/html",
+     "bytes": 197,
+     "verdict": "soft-404: SA ESS - File Unavailable",
+     "title": "SA ESS - File Unavailable"
+    }
+   ],
+   "scriptsScanned": [
+    "https://www.cfs.sa.gov.au/js/jquery/jquery.js",
+    "https://www.cfs.sa.gov.au/js/jquery/jquery-migrate.js",
+    "https://www.cfs.sa.gov.au/js/site.js",
+    "https://www.cfs.sa.gov.au/js/datatables/datatables.min.js",
+    "https://www.cfs.sa.gov.au/custom/js/addtohomescreen/src/addtohomescreen.js",
+    "https://www.cfs.sa.gov.au/custom/js/maps/jquery.modal.js"
+   ]
+  },
+  {
+   "url": "https://alert.sa.gov.au/",
+   "page": {
+    "status": 200,
+    "type": "text/html",
+    "bytes": 51621,
+    "shape": "html",
+    "title": "Incidents and warnings | Alert SA ",
+    "carriesAlertLevel": false,
+    "carriesOutageData": false
+   },
+   "candidates": [
+    {
+     "url": "https://maps.${c}apis.com/maps/api/js?",
+     "error": "fetch failed"
+    },
+    {
+     "url": "https://combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
+     "status": 200,
+     "type": "application/xml",
+     "bytes": 56622,
+     "shape": "xml",
+     "items": 48,
+     "fields": [
+      "id",
+      "title",
+      "updated",
+      "entry",
+      "identifier",
+      "sender",
+      "sent",
+      "status",
+      "msgType",
+      "scope",
+      "code",
+      "incidents",
+      "info",
+      "language",
+      "category",
+      "event",
+      "responseType",
+      "urgency",
+      "severity",
+      "certainty",
+      "eventCode",
+      "valueName",
+      "value",
+      "effective",
+      "senderName",
+      "headline",
+      "description",
+      "instruction",
+      "web",
+      "area",
+      "areaDesc",
+      "circle",
+      "geocode",
+      "parameter"
+     ],
+     "carriesAlertLevel": false,
+     "carriesOutageData": false,
+     "levelFields": [
+      "status",
+      "category",
+      "urgency",
+      "severity"
+     ]
+    },
+    {
+     "url": "https://uat.combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
+     "status": 200,
+     "type": "application/xml",
+     "bytes": 418255,
+     "shape": "xml",
+     "items": 318,
+     "fields": [
+      "id",
+      "title",
+      "updated",
+      "entry",
+      "identifier",
+      "sent",
+      "status",
+      "msgType",
+      "scope",
+      "code",
+      "incidents",
+      "info",
+      "language",
+      "category",
+      "headline",
+      "web",
+      "parameter",
+      "valueName",
+      "value",
+      "area",
+      "areaDesc",
+      "circle",
+      "geocode",
+      "sender",
+      "event",
+      "responseType",
+      "urgency",
+      "severity",
+      "certainty",
+      "eventCode",
+      "effective",
+      "senderName",
+      "description",
+      "div",
+      "ul",
+      "li",
+      "instruction",
+      "polygon",
+      "expires",
+      "br"
+     ],
+     "carriesAlertLevel": false,
+     "carriesOutageData": false,
+     "levelFields": [
+      "status",
+      "category",
+      "urgency",
+      "severity"
+     ]
+    }
+   ],
+   "scriptsScanned": [
+    "https://alert.sa.gov.au/?a=9200",
+    "https://alert.sa.gov.au/__data/assets/git_bridge/0011/9110/dist/main.js?h=2f54d9e",
+    "https://alert.sa.gov.au/__data/assets/js_file/0015/276/auth.js?v=0.3.6"
+   ]
+  },
+  {
+   "url": "https://alert.tas.gov.au/",
+   "page": {
+    "status": 200,
+    "type": "text/html",
+    "bytes": 44063,
+    "shape": "html",
+    "title": "TasALERT",
+    "carriesAlertLevel": false,
+    "carriesOutageData": false
+   },
+   "candidates": [
+    {
+     "url": "https://api.mapbox.com/geocoding/v5/mapbox.places/$%7Br%7D.json",
+     "status": 401,
+     "type": "application/json",
+     "bytes": 39,
+     "shape": "object",
+     "fields": [
+      "message"
+     ],
+     "carriesAlertLevel": false,
+     "carriesOutageData": false
+    },
+    {
+     "url": "https://alert.tas.gov.au/v4/$%7Bt.authority%7D.json",
+     "status": 404,
+     "type": "text/html",
+     "bytes": 44063,
+     "shape": "html",
+     "title": "TasALERT",
+     "carriesAlertLevel": false,
+     "carriesOutageData": false
+    }
+   ],
+   "scriptsScanned": [
+    "https://alert.tas.gov.au/assets/app-d1a720e5.js"
+   ]
+  },
+  {
+   "url": "https://alert.tas.gov.au/incidents-and-alerts",
+   "page": {
+    "status": 404,
+    "type": "text/html",
+    "bytes": 44063,
+    "shape": "html",
+    "title": "TasALERT",
+    "carriesAlertLevel": false,
+    "carriesOutageData": false
+   },
+   "candidates": [
+    {
+     "url": "https://api.mapbox.com/geocoding/v5/mapbox.places/$%7Br%7D.json",
+     "status": 401,
+     "type": "application/json",
+     "bytes": 39,
+     "shape": "object",
+     "fields": [
+      "message"
+     ],
+     "carriesAlertLevel": false,
+     "carriesOutageData": false
+    },
+    {
+     "url": "https://alert.tas.gov.au/v4/$%7Bt.authority%7D.json",
+     "status": 404,
+     "type": "text/html",
+     "bytes": 44063,
+     "shape": "html",
+     "title": "TasALERT",
+     "carriesAlertLevel": false,
+     "carriesOutageData": false
+    }
+   ],
+   "scriptsScanned": [
+    "https://alert.tas.gov.au/assets/app-d1a720e5.js"
+   ]
+  }
+ ]
+}

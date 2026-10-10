@@ -1,11 +1,11 @@
 {
   "base": "https://drec-oncall-updates-site.lacey-wood.workers.dev",
-  "at": "2026-10-10T04:29:52.269Z",
+  "at": "2026-10-10T04:42:37.652Z",
   "incidents": {
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-multiword",
+      "build": "2026-10-10-cron2min",
       "sourceUrl": "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json",
       "count": 30,
       "withAlertLevel": 30,
@@ -35,28 +35,30 @@
     "vic": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-multiword",
+      "build": "2026-10-10-cron2min",
       "sourceUrl": "https://emergency.vic.gov.au/public/events-geojson.json",
       "count": 20,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
         "Not Yet Under Control",
+        "Complete",
         "Responding",
         "Safe",
-        "Request For Assistance",
         "Warning",
-        "On Scene"
+        "On Scene",
+        "Under Control",
+        "Request For Assistance"
       ],
       "types": [
         "Bushfire",
-        "Road Accident",
-        "Other",
-        "Structure Fire",
         "Flooding",
-        "Strong Wind",
         "Building Fire",
-        "Rescue Road Trap Fire"
+        "Other",
+        "Strong Wind",
+        "Road Accident",
+        "Rescue Road Trap Fire",
+        "Tree Down"
       ],
       "attempts": []
     },
@@ -130,7 +132,7 @@
       "httpStatus": 502,
       "ok": false,
       "error": "Expected JSON, got HTML — SA ESS - File Unavailable File currently unavailable, please try again",
-      "build": "2026-10-10-multiword",
+      "build": "2026-10-10-cron2min",
       "count": 0,
       "withAlertLevel": 0,
       "alertLevels": [],
@@ -146,7 +148,7 @@
     "tas": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-multiword",
+      "build": "2026-10-10-cron2min",
       "sourceUrl": "https://alert.tas.gov.au/data/incidents-and-messages.kml",
       "count": 19,
       "withAlertLevel": 0,
@@ -208,14 +210,15 @@
     "act": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-10-multiword",
+      "build": "2026-10-10-cron2min",
       "sourceUrl": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
-      "count": 16,
+      "count": 15,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
         "Resource Allocation Pending",
-        "On Scene"
+        "On Scene",
+        "Units On Route"
       ],
       "types": [
         "HAZARD REDUCTION BURN",
@@ -228,11 +231,11 @@
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 4430,
-      "count": 206,
-      "customers": 15688,
+      "cacheAgeSeconds": 704,
+      "count": 205,
+      "customers": 15759,
       "complete": false,
-      "rows": 206,
+      "rows": 205,
       "networks": [
         {
           "name": "Ausgrid",
@@ -243,7 +246,7 @@
         {
           "name": "Endeavour Energy",
           "ok": true,
-          "count": 195,
+          "count": 194,
           "sourceUrl": "https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/exports/geojson",
           "columns": [
             "street_name",
@@ -291,12 +294,12 @@
           ]
         }
       ],
-      "withTowns": 195
+      "withTowns": 194
     },
     "vic": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 4,
+      "cacheAgeSeconds": 769,
       "count": 9,
       "customers": 1300,
       "complete": false,
@@ -356,7 +359,7 @@
     "qld": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 14,
+      "cacheAgeSeconds": 779,
       "count": 475,
       "customers": 19434,
       "complete": true,
@@ -436,7 +439,7 @@
     "wa": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 5,
+      "cacheAgeSeconds": 770,
       "count": 172,
       "customers": 15812,
       "complete": false,
@@ -488,7 +491,7 @@
     "sa": {
       "httpStatus": 200,
       "ok": false,
-      "cacheAgeSeconds": 5,
+      "cacheAgeSeconds": 770,
       "count": 0,
       "customers": 0,
       "complete": false,
@@ -532,7 +535,7 @@
     "tas": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 4,
+      "cacheAgeSeconds": 769,
       "count": 1,
       "customers": 38,
       "complete": true,
@@ -568,7 +571,7 @@
     "nt": {
       "httpStatus": 200,
       "ok": false,
-      "cacheAgeSeconds": 4,
+      "cacheAgeSeconds": 769,
       "count": 0,
       "customers": 0,
       "complete": false,
@@ -597,7 +600,7 @@
     "act": {
       "httpStatus": 200,
       "ok": true,
-      "cacheAgeSeconds": 2,
+      "cacheAgeSeconds": 767,
       "count": 0,
       "customers": 0,
       "complete": true,

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-10T04:30:09.024Z",
+  "at": "2026-10-10T04:42:39.564Z",
   "states": {
     "qld": [
       {
@@ -255,9 +255,9 @@
         "url": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
         "status": 200,
         "type": "text/xml",
-        "bytes": 62256,
+        "bytes": 58377,
         "shape": "xml",
-        "items": 16,
+        "items": 15,
         "fields": {
           "distributionStatus": [
             "Actual"
@@ -311,90 +311,90 @@
         "url": "https://emergency.vic.gov.au/public/events-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 20415,
+        "bytes": 20892,
         "shape": "object",
-        "items": 19,
+        "items": 20,
         "fields": {
           "status": [
             "Not Yet Under Control",
+            "Complete",
             "Responding",
             "Safe",
-            "Complete",
             "Warning",
-            "Request For Assistance",
-            "On Scene"
+            "On Scene",
+            "Under Control",
+            "Request For Assistance"
           ],
           "category1": [
             "Fire",
-            "Accident / Rescue",
-            "Other",
             "Flooding",
+            "Other",
             "Met",
+            "Accident / Rescue",
             "Rescue",
             "Tree Down"
           ],
           "category2": [
             "Bushfire",
-            "Road Accident",
-            "Other",
             "Flooding",
-            "Structure Fire",
-            "Strong Wind",
             "Building Fire",
+            "Other",
+            "Strong Wind",
+            "Road Accident",
             "Rescue Road Trap Fire",
             "Tree Down"
           ]
         },
-        "verdict": "operational status only: Responding | Safe | On Scene"
+        "verdict": "operational status only: Responding | Safe | On Scene | Under Control"
       },
       {
         "url": "https://emergency.vic.gov.au/public/warnings-geojson.json",
         "status": 404,
         "title": "404 Not Found",
-        "bytes": 383
+        "bytes": 363
       },
       {
         "url": "https://emergency.vic.gov.au/public/osom-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 39841,
+        "bytes": 40318,
         "shape": "object",
-        "items": 33,
+        "items": 34,
         "fields": {
           "status": [
             "Not Yet Under Control",
+            "Complete",
             "Responding",
             "Safe",
-            "Complete",
             "Warning",
             "Unknown",
-            "Request For Assistance",
-            "On Scene"
+            "On Scene",
+            "Under Control",
+            "Request For Assistance"
           ],
           "category1": [
             "Fire",
-            "Accident / Rescue",
-            "Other",
             "Flooding",
+            "Other",
             "Met",
             "Burn Area",
+            "Accident / Rescue",
             "Rescue",
             "Tree Down"
           ],
           "category2": [
             "Bushfire",
-            "Road Accident",
-            "Other",
             "Flooding",
-            "Structure Fire",
+            "Building Fire",
+            "Other",
             "Strong Wind",
             "Burn Area",
-            "Building Fire",
+            "Road Accident",
             "Rescue Road Trap Fire",
             "Tree Down"
           ]
         },
-        "verdict": "operational status only: Responding | Safe | On Scene"
+        "verdict": "operational status only: Responding | Safe | On Scene | Under Control"
       }
     ],
     "tas": [
@@ -439,6 +439,24 @@
         "shape": "html",
         "title": "SA ESS - File Unavailable",
         "verdict": "no level-like field found"
+      },
+      {
+        "url": "https://www.cfs.sa.gov.au/warnings-restrictions/warnings/incidents-warnings/",
+        "status": 200,
+        "type": "text/html",
+        "bytes": 51861,
+        "shape": "html",
+        "title": "Incidents &amp; warnings - CFS",
+        "verdict": "no level-like field found"
+      },
+      {
+        "url": "https://alert.sa.gov.au/",
+        "status": 200,
+        "type": "text/html",
+        "bytes": 51621,
+        "shape": "html",
+        "title": "Incidents and warnings | Alert SA ",
+        "verdict": "no level-like field found"
       }
     ],
     "nt": [
@@ -458,7 +476,7 @@
         "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 51571,
+        "bytes": 51572,
         "shape": "object",
         "fields": {
           "_category": [
@@ -499,7 +517,7 @@
         "url": "http://www.bom.gov.au/fwo/IDZ00054.warnings_land_nsw.xml",
         "status": 403,
         "title": "",
-        "bytes": 1386
+        "bytes": 1385
       }
     ]
   }
