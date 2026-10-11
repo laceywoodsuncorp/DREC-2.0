@@ -1,20 +1,20 @@
 {
-  "capturedAt": 1791761674824,
+  "capturedAt": 1791762481625,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 11,
-      "customers": 5448,
-      "unplannedCount": 11,
-      "unplannedCustomers": 5448,
+      "count": 10,
+      "customers": 5427,
+      "unplannedCount": 10,
+      "unplannedCustomers": 5427,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 10,
+          "count": 9,
           "shape": "table",
           "labels": [
             "Date",
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 6,
-            "customers": 49
+            "outages": 7,
+            "customers": 53
           }
         },
         {
@@ -70,12 +70,6 @@
           "location": "Matraville",
           "customers": 25,
           "start": "10:30 pm (Sun 11 Oct) to 11:55 pm (Sun 11 Oct)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Matraville",
-          "customers": 25,
-          "start": "10:30 pm (Sun 11 Oct) to 10:38 pm (Sun 11 Oct)"
         },
         {
           "network": "Ausgrid",
@@ -118,7 +112,7 @@
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 49
+          "customers": 53
         }
       ]
     },
@@ -385,8 +379,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 1644,
-            "customers": 1644
+            "outages": 1734,
+            "customers": 1734
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -425,29 +419,94 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 0,
-      "customers": 0,
-      "unplannedCount": 0,
-      "unplannedCustomers": 0,
-      "plannedCount": 0,
-      "plannedCustomers": 0,
+      "count": 9,
+      "customers": 753,
+      "unplannedCount": 2,
+      "unplannedCustomers": 26,
+      "plannedCount": 7,
+      "plannedCustomers": 727,
       "networks": [
         {
           "name": "TasNetworks",
-          "ok": false,
-          "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
-          "labels": [],
-          "reported": {
-            "outages": 753,
-            "customers": 753
-          },
-          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
-          "reportedVia": "Power Outages Australia"
+          "ok": true,
+          "count": 9,
+          "shape": "cards",
+          "labels": [
+            "North-West region affecting",
+            "Estimated restoration",
+            "Customers affected",
+            "South region affecting",
+            "North region affecting",
+            "Cause of the outage",
+            "King Island region affecting"
+          ]
         }
       ],
-      "outages": []
+      "outages": [
+        {
+          "network": "TasNetworks",
+          "location": "Wynyard",
+          "kind": "planned",
+          "customers": 331,
+          "restore": "Monday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Glenorchy",
+          "kind": "planned",
+          "customers": 120,
+          "restore": "Monday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Devonport",
+          "kind": "planned",
+          "customers": 64,
+          "restore": "Monday 1:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Devonport",
+          "kind": "planned",
+          "customers": 61,
+          "restore": "Monday 1:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "West Launceston",
+          "kind": "planned",
+          "customers": 60,
+          "restore": "Monday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Dee, London Lakes",
+          "kind": "planned",
+          "customers": 55,
+          "restore": "Monday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Orford",
+          "kind": "planned",
+          "customers": 36,
+          "restore": "Monday 4:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Forcett",
+          "cause": "Under investigation",
+          "customers": 26,
+          "restore": "To be confirmed - Please check back after 11:30 AM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Loorana, Lymwood, Naracoopa, Nugara, Pegarah, Sea Elephant, Yarra Creek",
+          "cause": "Pole fire",
+          "customers": null,
+          "restore": "Monday 4:00 PM"
+        }
+      ]
     },
     "nt": {
       "state": "NT",
