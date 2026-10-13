@@ -79,39 +79,25 @@ const INCIDENT_FRESH_SECONDS = 600; // 10 min
    if the two disagree, so they cannot drift apart again. */
 const CRON_PERIOD_MS = 120000; // every 2 minutes
 
-/* Outages run on their own cron trigger, not on the one above.
+/* WITHDRAWN: outages briefly ran on a second cron trigger, firing every
+   minute, which made every state refresh every 2 minutes instead of every
+   8. Cloudflare then reported the account hitting the free plan's CPU time
+   limit, so it is back to one trigger.
 
-   The binding limit here is NOT the daily allowance -- 2,160 invocations a
-   day against 100,000 is nothing. It is the 50 external subrequests a single
-   invocation may make, and that is per invocation, so a second trigger comes
-   with a second budget rather than dividing the first. Doing all three
-   refreshes in one invocation came to 58 and the last fetches issued simply
-   threw, which is how feeds stopped filling with nothing in the log.
+   The subrequest arithmetic was right -- a second trigger does come with
+   its own 50-subrequest budget, measured at 19-22 against the main cron's
+   35-37 -- but subrequests were not the only ceiling and CPU was never
+   costed. Fetching is I/O and free; PARSING is CPU, and the change tripled
+   the number of invocations doing it (720/day to 2,160) while also doubling
+   the parsing inside the main one. Three multipliers in one session, none
+   of them measured against the limit they actually spent.
 
-   Measured from the config: all eight states of outages are 41 endpoints
-   worst case, which is why they were sharded in the first place. Split in
-   two, a shard is at most 22 -- comfortable inside one invocation's 50 even
-   if every endpoint fails over to its last fallback.
-
-   So outages fire every minute, one shard at a time, and every state is
-   re-read every 2 minutes instead of every 8. Nothing else shares that
-   invocation.
-
-   Two things make this safe rather than merely faster. Outages never write
-   KV -- only the news record does -- so the 1,000 writes/day free-tier
-   ceiling is untouched by this. And the free plan allows 5 cron triggers;
-   this Worker now uses 2. That allowance is per ACCOUNT, so another Worker
-   with its own schedules draws on the same five. */
-const OUTAGE_CRON_PERIOD_MS = 60000; // every 1 minute
-
-/* The two schedules, spelled exactly as wrangler.jsonc declares them --
-   event.cron is matched against these to decide what a firing is for.
-   test/cron_period.test.mjs parses both out of the config and fails if they
-   drift, because a string that stops matching would mean a whole refresh
-   path silently doing nothing, which is this project's most expensive
-   recurring failure. */
+   Kept here as a comment because the reasoning is sound and only the
+   budget was wrong: on the Workers Paid plan the CPU ceiling per
+   invocation goes from 10ms to 30s and this becomes available again. The
+   schedule to restore is "* * * * *" alongside the main one, with
+   OUTAGE_CRON_PERIOD_MS = 60000 and the branch in scheduled(). */
 const MAIN_CRON = '*/2 * * * *';
-const OUTAGE_CRON = '* * * * *';
 
 /* How many main ticks make an hour. Derived, not written out: this was the
    literal 12 that meant "hourly" at a five-minute cron, and speeding the
@@ -399,7 +385,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-13-outagefresh';
+const WORKER_BUILD = '2026-10-13-cpurevert';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -3597,27 +3583,21 @@ const OUTAGE_WARM_MIN_INTERVAL_S = 60;
    that nobody fixed. Anything older than this gets rebuilt, oldest first.
 
    This number, not the cron, is what sets how fresh outages look to a
-   reader. The cron runs in ONE datacentre and the Cache API is per
-   datacentre, so speeding the cron up makes outages fresher there and
-   nowhere else; everywhere else it is this threshold and the warm sweep
-   that decide, driven by the reader's own traffic. At 15 minutes a reader
-   outside the cron's location was looking at figures up to a quarter of an
-   hour old no matter how often the cron fired.
+   reader: the cron runs in ONE datacentre and the Cache API is per
+   datacentre, so everywhere else it is this threshold and the warm sweep,
+   driven by the reader's own traffic, that decide.
 
-   4 minutes is not an arbitrary reduction -- it is where the threshold
-   stops being the constraint. The sweep refreshes at most
-   OUTAGE_WARM_PER_REQUEST states and runs at most once every
-   OUTAGE_WARM_MIN_INTERVAL_S, so eight states take at least
-   8 / 2 * 60s = 4 minutes to come round whatever this is set to. Setting it
-   lower would promise a freshness the rate limit cannot deliver; leaving it
-   at 15 minutes left the structure idle two thirds of the time. Upstream
-   load is unchanged either way -- it is the rate limit that caps it, at two
-   states a minute per datacentre.
-
-   test/cron_period.test.mjs ties the three together, so lowering this on
-   its own (or raising the rate limit without revisiting this) fails rather
-   than quietly promising something. */
-const OUTAGE_STALE_S = 4 * 60;
+   It was briefly lowered to 4 minutes -- the point at which the sweep's own
+   rate limit, not this number, becomes the constraint. That reasoning still
+   holds for subrequests and for upstream politeness, both of which the rate
+   limit caps either way. What it missed is that a warm sweep runs inside a
+   VISITOR's invocation and spends that invocation's CPU parsing two states
+   of outage data, and the free plan allows 10ms. At 15 minutes most sweeps
+   find nothing to do and cost nothing; at 4 minutes a sweep has work almost
+   every time, continuously, on page loads. That is the one of today's three
+   changes that spent CPU on the request path rather than the cron path, and
+   it is the first to go back. */
+const OUTAGE_STALE_S = 15 * 60;
 
 async function warmColdOutages() {
   /* Rate limit per datacentre, so a burst of visitors doesn't each start
@@ -3977,8 +3957,8 @@ async function handleApi(url, env, ctx, request) {
     if (cached) { try { log = await cached.response.json(); } catch (e) { log = null; } }
     return new Response(JSON.stringify({
       ok: true, build: WORKER_BUILD,
-      expected: { main: MAIN_CRON, outages: OUTAGE_CRON },
-      expectedGapSeconds: { main: CRON_PERIOD_MS / 1000, outages: OUTAGE_CRON_PERIOD_MS / 1000 },
+      expected: { main: MAIN_CRON },
+      expectedGapSeconds: { main: CRON_PERIOD_MS / 1000 },
       /* null, not {} -- "this location has seen no firing" and "the cron
          fired and logged nothing" are different answers. */
       seen: log ? cronLogReport(log) : null,
@@ -4047,52 +4027,28 @@ export default {
     const nowMs = event && event.scheduledTime ? event.scheduledTime : Date.now();
     const tick = Math.floor(nowMs / CRON_PERIOD_MS);
 
-    /* Which schedule fired. The 50-external-subrequest ceiling is per
-       invocation, so splitting the work across two triggers gives each its
-       own budget instead of dividing one -- that is the whole reason
-       outages moved off the main cron. */
+    /* One trigger again, so one shape: news every tick, and the incident
+       and outage refreshes on alternating ticks.
+
+       This alternation is doing two jobs, which is why it is back. It
+       halves the peak subrequests -- all three refreshes together measured
+       59 against a ceiling of 50 -- and it halves the CPU, because parsing
+       eight incident feeds and four states of outage data in the same
+       invocation is the expensive part and a 10ms CPU budget on the free
+       plan is not generous. Running incidents on EVERY tick, which is what
+       this did until the CPU limit was hit, doubled that cost for a
+       freshness gain nobody had asked for. */
     const cron = (event && event.cron) || '';
-    /* Logged first and on every path, so an unrecognised schedule shows up
-       as itself rather than as silence. */
+    /* Logged on every path, so an unrecognised schedule shows up as itself
+       rather than as silence. Writes to the per-datacentre cache, which
+       costs no KV write and no subrequest. */
     ctx.waitUntil(recordCronFiring(cron, nowMs));
 
-    /* The outage trigger does one shard and nothing else. Counted in its
-       OWN period, so the shard advances once a minute; counting it in the
-       main period would hold the same shard for two firings and leave the
-       other one never refreshed. */
-    if (cron === OUTAGE_CRON) {
-      const outageTick = Math.floor(nowMs / OUTAGE_CRON_PERIOD_MS);
-      ctx.waitUntil(refreshOutageShard(outageTick % OUTAGE_SHARDS));
-      return;
-    }
-
-    /* News leads on every main tick either way -- it is the headline of the
-       page. */
     ctx.waitUntil(refreshNewsShard(tick % NEWS_SHARDS, tick, env));
-
-    if (cron === MAIN_CRON) {
-      /* Incidents used to alternate with outages, which is why they were
-         only re-read every other tick. With outages gone from this
-         invocation they run every tick: about 31 subrequests together with
-         the news shard, below the peak that has been running all along, and
-         now reached every 2 minutes instead of every 4. Nothing new is
-         risked; a slot was freed. */
+    if (tick % 2 === 0) {
       ctx.waitUntil(refreshAllIncidents());
     } else {
-      /* An unrecognised schedule. The cron strings are asserted against
-         wrangler.jsonc by test/cron_period.test.mjs, so this should be
-         unreachable -- but the failure it guards against is a whole refresh
-         path silently doing nothing, and this project has paid for that kind
-         twice, so there is a fallback.
-
-         It is the OLD single-cron shape: news every tick, incidents and
-         outages on alternating ticks. Deliberately not "do all three",
-         which is what the first version of this fallback did -- measured at
-         59 subrequests against a ceiling of 50, which is precisely the
-         starvation it was written to avoid. Degrading to the known-safe
-         shape is the only fallback worth having. */
-      if (tick % 2 === 0) ctx.waitUntil(refreshAllIncidents());
-      else ctx.waitUntil(refreshOutageShard(Math.floor(tick / 2) % OUTAGE_SHARDS));
+      ctx.waitUntil(refreshOutageShard(Math.floor(tick / 2) % OUTAGE_SHARDS));
     }
 
     /* GDELT is only a fallback for /api/gdelt -- the page reads /api/news

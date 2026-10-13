@@ -590,73 +590,68 @@ console.log('\n== one cron tick stays inside the subrequest ceiling ==');
   check('both tick parities do real work', ticks.every(t => t > 10), ticks);
 }
 
-console.log('\n== each cron trigger, costed on its own ==');
+console.log('\n== the named schedule, costed against both ceilings ==');
 {
   /* The block above fires scheduled() with no cron, which exercises the
-     FALLBACK path and not what production runs. Both real schedules need
-     measuring separately, because the whole reason there are two is that
-     together they exceed one invocation's budget -- the first version of
-     the fallback did run all three and came to 59 against a ceiling of 50.
+     FALLBACK path. The named schedule is what production runs and needs
+     measuring too.
 
-     Read out of the Worker rather than written here, so renaming a schedule
-     cannot leave this test quietly measuring nothing. */
+     This section used to cost TWO triggers, because outages briefly had
+     their own every-minute one. Cloudflare reported the account hitting the
+     free plan's CPU limit and it was withdrawn: the subrequest arithmetic
+     was right and CPU was never costed. Fetching is I/O and free; parsing
+     is CPU, and a second trigger tripled the invocations doing it.
+
+     Read out of the Worker rather than written here, so renaming the
+     schedule cannot leave this quietly measuring nothing. */
   const src = (await import('node:fs')).readFileSync('./src/worker.js', 'utf8');
   const MAIN_CRON = /const MAIN_CRON = '([^']+)'/.exec(src)[1];
-  const OUTAGE_CRON = /const OUTAGE_CRON = '([^']+)'/.exec(src)[1];
   const CEILING = 50;
 
-  const costOf = async (cron, minute) => {
+  const costOf = async (minute) => {
     reset();
     upstream.http = () => new Response('down', { status: 503 });
     fetchLog = [];
     const waits = [];
-    await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 24, 0, minute), cron }, env,
-      { waitUntil: (p) => waits.push(p) });
+    await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 24, 0, minute), cron: MAIN_CRON },
+      env, { waitUntil: (p) => waits.push(p) });
     await Promise.allSettled(waits);
     return fetchLog.length;
   };
 
-  const mainCosts = [await costOf(MAIN_CRON, 0), await costOf(MAIN_CRON, 2),
-                     await costOf(MAIN_CRON, 4)];
-  const outageCosts = [await costOf(OUTAGE_CRON, 0), await costOf(OUTAGE_CRON, 1),
-                       await costOf(OUTAGE_CRON, 2), await costOf(OUTAGE_CRON, 3)];
-  console.log('  main cron:   ' + JSON.stringify(mainCosts));
-  console.log('  outage cron: ' + JSON.stringify(outageCosts));
-
-  check('the main cron stays well inside the ceiling',
-    Math.max.apply(null, mainCosts) <= CEILING - 8, { mainCosts, CEILING });
-  check('the outage cron stays well inside the ceiling',
-    Math.max.apply(null, outageCosts) <= CEILING - 8, { outageCosts, CEILING });
-  /* The point of splitting them. If either grew enough that the sum fit in
-     one invocation again, the two triggers would be unnecessary complexity
-     -- and if the sum is over, they must stay separate. */
-  check('together they would exceed one invocation, which is why they are two',
-    Math.max.apply(null, mainCosts) + Math.max.apply(null, outageCosts) > CEILING,
-    { main: Math.max.apply(null, mainCosts), outage: Math.max.apply(null, outageCosts) });
-
-  /* Every tick must do real work. An outage cron that fetched nothing on
-     some minutes would be the silent-stall this design is meant to end. */
-  check('every outage firing fetches something', outageCosts.every(c => c > 0), outageCosts);
-  check('every main firing fetches something', mainCosts.every(c => c > 0), mainCosts);
-
-  /* The shard must ADVANCE minute to minute. Counted in the main period it
-     would hold the same shard for two firings and the other shard would
-     never be refreshed -- no error, just half the country's outages frozen. */
-  const shardStates = async (minute) => {
-    reset();
-    upstream.http = () => new Response('down', { status: 503 });
-    fetchLog = [];
-    const waits = [];
-    await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 24, 0, minute), cron: OUTAGE_CRON },
-      env, { waitUntil: (p) => waits.push(p) });
-    await Promise.allSettled(waits);
-    return fetchLog.join(' ');
-  };
-  const m0 = await shardStates(0), m1 = await shardStates(1), m2 = await shardStates(2);
-  check('consecutive outage firings fetch different shards', m0 !== m1, { m0: m0.length, m1: m1.length });
-  check('and the rotation comes back round', m0 === m2, { m0: m0.length, m2: m2.length });
+  /* Four consecutive ticks, so both parities are covered twice. */
+  const hostsOf = (log) => [...new Set(log.map((u) => {
+    try { return new URL(u).host; } catch (e) { return String(u); }
+  }))].sort().join(',');
+  const logs = [];
+  const costOfLogging = async (minute) => { const n = await costOf(minute); logs.push(fetchLog.slice()); return n; };
+  const costs = [await costOfLogging(0), await costOfLogging(2),
+                 await costOfLogging(4), await costOfLogging(6)];
+  console.log('  per tick: ' + JSON.stringify(costs));
+  check('every tick stays well inside the subrequest ceiling',
+    Math.max.apply(null, costs) <= CEILING - 8, { costs, CEILING });
+  /* Both halves must be affordable, not just the average -- a cheap tick
+     does not pay for an expensive one. */
+  check('every tick does real work', costs.every((c) => c > 10), costs);
+  /* The alternation, asserted by WHAT is fetched rather than by how much.
+     Counts vary legitimately between ticks because the news shard rotates
+     through four shards of differing size -- an earlier version of this
+     compared counts by parity and failed on that, which was the test being
+     wrong about a property the code never had. Hosts are the real signal:
+     consecutive ticks must hit different ones, or something is running on
+     every tick that should be alternating. */
+  const h = logs.map(hostsOf);
+  check('consecutive ticks fetch different sets of hosts',
+    h[0] !== h[1] && h[1] !== h[2] && h[2] !== h[3], h.map((x) => x.length));
+  /* And the rotation must come back round rather than drifting off. */
+  check('the same parity two ticks later fetches a comparable set',
+    Math.abs(costs[0] - costs[2]) <= 6 && Math.abs(costs[1] - costs[3]) <= 6, costs);
+  /* The CPU regression to catch by name. If incidents AND outages both ran
+     every tick the cost would jump toward the 59 that broke it before --
+     on subrequests, and on the CPU nobody was counting. */
+  check('no tick runs both the incident sweep and an outage shard',
+    Math.max.apply(null, costs) < 45, costs);
 }
-
 
 console.log('\n== the cron log, because every other way of asking measures the asker ==');
 {
@@ -672,7 +667,6 @@ console.log('\n== the cron log, because every other way of asking measures the a
      recording works, the gaps are computed, and -- most importantly -- that
      a location which has seen NO firing says so instead of looking fine. */
   const src = (await import('node:fs')).readFileSync('./src/worker.js', 'utf8');
-  const OUTAGE_CRON = /const OUTAGE_CRON = '([^']+)'/.exec(src)[1];
   const MAIN_CRON = /const MAIN_CRON = '([^']+)'/.exec(src)[1];
 
   const fire = async (cron, atMs) => {
@@ -694,33 +688,31 @@ console.log('\n== the cron log, because every other way of asking measures the a
   const cold = await crons();
   check('a location with no firing reports null, not an empty success',
     cold.seen === null, cold.seen);
-  check('and still says which schedules it expects',
-    cold.expected.outages === OUTAGE_CRON && cold.expected.main === MAIN_CRON, cold.expected);
-  check('and what gap those schedules imply',
-    cold.expectedGapSeconds.outages === 60 && cold.expectedGapSeconds.main === 120,
-    cold.expectedGapSeconds);
+  check('and still says which schedule it expects',
+    cold.expected.main === MAIN_CRON, cold.expected);
+  check('and what gap that schedule implies',
+    cold.expectedGapSeconds.main === 120, cold.expectedGapSeconds);
 
-  /* Three outage firings a minute apart, as the trigger would. */
+  /* Three firings two minutes apart, as the trigger would. */
   const t0 = Date.UTC(2026, 9, 13, 22, 0, 0);
-  await fire(OUTAGE_CRON, t0);
-  await fire(OUTAGE_CRON, t0 + 60000);
-  await fire(OUTAGE_CRON, t0 + 120000);
+  await fire(MAIN_CRON, t0);
   await fire(MAIN_CRON, t0 + 120000);
+  await fire(MAIN_CRON, t0 + 240000);
 
   const seen = (await crons()).seen;
-  check('the outage cron is logged', !!seen && !!seen[OUTAGE_CRON], Object.keys(seen || {}));
-  check('the main cron is logged separately', !!seen && !!seen[MAIN_CRON], Object.keys(seen || {}));
-  const oc = (seen || {})[OUTAGE_CRON] || {};
-  check('all three outage firings are counted', oc.count === 3, oc.count);
-  /* The number the question actually wanted. */
-  check('the measured gap is 60 seconds', oc.medianGapSeconds === 60, oc);
-  check('newest firing first', oc.lastFiredAt === new Date(t0 + 120000).toISOString(), oc.lastFiredAt);
-  check('the main cron is counted apart from it', (seen[MAIN_CRON] || {}).count === 1, seen[MAIN_CRON]);
+  check('the cron is logged', !!seen && !!seen[MAIN_CRON], Object.keys(seen || {}));
+  const oc = (seen || {})[MAIN_CRON] || {};
+  check('all three firings are counted', oc.count === 3, oc.count);
+  /* The number the question actually wanted -- and the number that would
+     reveal a second trigger quietly left registered at Cloudflare after
+     being removed from the config, which would keep spending CPU. */
+  check('the measured gap is 120 seconds', oc.medianGapSeconds === 120, oc);
+  check('newest firing first', oc.lastFiredAt === new Date(t0 + 240000).toISOString(), oc.lastFiredAt);
 
   /* An unrecognised schedule must appear as itself. If it were silently
      folded into one of the known keys, the one failure this whole design
      guards against would be invisible in the very report meant to show it. */
-  await fire('', t0 + 180000);
+  await fire('', t0 + 300000);
   const seen2 = (await crons()).seen;
   check('a firing with no cron field is logged under its own key',
     Object.keys(seen2).some((k) => /no cron field/.test(k)), Object.keys(seen2));
@@ -734,7 +726,7 @@ console.log('\n== the cron log, because every other way of asking measures the a
   const realCaches = globalThis.caches;
   globalThis.caches = brokenCaches;
   let threw = false;
-  try { await fire(OUTAGE_CRON, t0 + 240000); } catch (e) { threw = true; }
+  try { await fire(MAIN_CRON, t0 + 360000); } catch (e) { threw = true; }
   globalThis.caches = realCaches;
   check('a failing cache does not make the scheduled handler throw', !threw);
 }

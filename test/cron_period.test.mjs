@@ -1,33 +1,31 @@
-/* The cron schedules and the code that reads them have to agree.
+/* The cron schedule, and the two ceilings the refresh shape has to live
+   inside.
 
    The scheduled handler turns the clock into a tick number, and that number
    is what rotates the news shards and the outage shards:
 
      const tick = Math.floor(nowMs / CRON_PERIOD_MS);
 
-   If a cron fires faster than its period says, two consecutive firings
+   If the cron fires faster than CRON_PERIOD_MS says, two consecutive firings
    compute the SAME tick. The same shard runs twice, the rotation never
    advances, and the feeds at every other position are never fetched at all.
-   Nothing errors. The feed just quietly stops filling -- which is a failure
-   this project has met more than once and is slow to spot.
+   Nothing errors. The feed just quietly stops filling -- a failure this
+   project has met more than once and is slow to spot.
 
-   There are now TWO triggers, which adds a second way to fail silently: the
-   handler decides what a firing is for by matching event.cron against a
-   string constant, so a schedule edited in wrangler.jsonc and not in the
-   Worker would mean a whole refresh path doing nothing. Both strings are
-   checked here.
+   There are TWO ceilings, and only one of them was being watched.
 
-   Why two triggers at all: the 50-external-subrequest ceiling is per
-   INVOCATION, not per day. A second schedule therefore comes with its own
-   budget rather than dividing the first, which is what lets outages refresh
-   every 2 minutes instead of every 8 while the peak per invocation goes
-   DOWN. The daily allowance was never the constraint -- 2,160 invocations
-   against 100,000.
+   Subrequests: 50 external per invocation on the free plan. All three
+   refreshes in one invocation measured 59, so the last fetches issued simply
+   threw, which is what "some feeds populate and some never do" looked like.
 
-   The last section is the one that earns its keep over time: it adds up the
-   worst-case endpoint count from the real config and fails if either
-   invocation could exceed 50. Adding an operator or a feed is a one-line
-   change, and the limit it eats into is five hundred lines away.
+   CPU: 10ms per invocation on the free plan. Fetching is I/O and costs none
+   of it; PARSING is what spends it. This ceiling was never costed, and a
+   change that gave outages their own every-minute trigger tripled the
+   invocations doing that parsing (720/day to 2,160) while also doubling the
+   parsing inside the main one. Cloudflare reported the account hitting the
+   CPU limit. The second trigger is withdrawn, incidents are back to
+   alternating with outages, and the assertions below exist so neither
+   ceiling can be spent again without it showing up here.
 
    Run: node test/cron_period.test.mjs */
 import { readFileSync } from 'node:fs';
@@ -35,13 +33,19 @@ import { readFileSync } from 'node:fs';
 const worker = readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8');
 const wrangler = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
 /* The Worker with its comments removed, for the checks that must not be
-   satisfied -- or broken -- by what a comment happens to say. */
+   satisfied -- or broken -- by what a comment happens to say. The withdrawn
+   second trigger is described at length in a comment, deliberately. */
 const code = worker.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
 let pass = 0, fail = 0;
 const ck = (n, c, e) => {
   if (c) { pass++; console.log('  ok   ' + n); }
   else { fail++; console.log('  FAIL ' + n + (e !== undefined ? '  -> ' + JSON.stringify(e) : '')); }
+};
+const num = (re, what) => {
+  const m = re.exec(worker);
+  ck('the Worker declares ' + what, !!m);
+  return m ? Number(m[1]) : 0;
 };
 
 /* Read the crons out of the jsonc without parsing it -- the file has
@@ -50,24 +54,16 @@ const cronsM = /"crons"\s*:\s*\[([^\]]*)\]/.exec(wrangler);
 ck('wrangler.jsonc declares crons', !!cronsM);
 const crons = cronsM ? [...cronsM[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]) : [];
 console.log('  crons: ' + JSON.stringify(crons));
-ck('there are exactly two', crons.length === 2, crons);
+/* Exactly ONE. A second trigger dedicated to outages was added and withdrawn
+   after the CPU limit was hit, so restoring it has to come back through this
+   test rather than being a quiet edit to the config. */
+ck('there is exactly one cron', crons.length === 1, crons);
 
-const num = (re, what) => {
-  const m = re.exec(worker);
-  ck('the Worker declares ' + what, !!m);
-  return m ? Number(m[1]) : 0;
-};
-const str = (re, what) => {
-  const m = re.exec(worker);
-  ck('the Worker declares ' + what, !!m);
-  return m ? m[1] : '';
-};
-
+const mainCronM = /const MAIN_CRON = '([^']+)'/.exec(worker);
+ck('the Worker declares MAIN_CRON', !!mainCronM);
+const mainCron = mainCronM ? mainCronM[1] : '';
 const periodMs = num(/const CRON_PERIOD_MS = (\d+)/, 'CRON_PERIOD_MS');
-const outagePeriodMs = num(/const OUTAGE_CRON_PERIOD_MS = (\d+)/, 'OUTAGE_CRON_PERIOD_MS');
-const mainCron = str(/const MAIN_CRON = '([^']+)'/, 'MAIN_CRON');
-const outageCron = str(/const OUTAGE_CRON = '([^']+)'/, 'OUTAGE_CRON');
-console.log('  CRON_PERIOD_MS: ' + periodMs + '   OUTAGE_CRON_PERIOD_MS: ' + outagePeriodMs);
+console.log('  MAIN_CRON: ' + JSON.stringify(mainCron) + '   CRON_PERIOD_MS: ' + periodMs);
 
 /* Minutes between firings, for the two shapes this project uses: a step
    minute field (star slash N) and a bare star. Anything else is rejected
@@ -83,39 +79,28 @@ function cronMinutes(expr) {
   if (/^\d+$/.test(minuteField)) return 60;
   return null;
 }
-
-console.log('\n== the strings the handler matches are the strings configured ==');
-/* This is the new failure mode. If event.cron stops matching, the branch for
-   that schedule never runs and the refresh it owns silently stops. */
-ck('MAIN_CRON is one of the configured crons', crons.includes(mainCron), { mainCron, crons });
-ck('OUTAGE_CRON is one of the configured crons', crons.includes(outageCron), { outageCron, crons });
-ck('and they are different schedules', mainCron !== outageCron, { mainCron, outageCron });
-ck('between them they account for every configured cron',
-  crons.every((c) => c === mainCron || c === outageCron), crons);
-
-console.log('\n== each period matches its own cron ==');
 const mainMin = cronMinutes(mainCron);
-const outageMin = cronMinutes(outageCron);
-ck('the main cron is a shape this test understands', mainMin !== null, mainCron);
-ck('the outage cron is a shape this test understands', outageMin !== null, outageCron);
-ck('CRON_PERIOD_MS matches the main cron', mainMin !== null && periodMs === mainMin * 60000,
+
+console.log('\n== the string the handler matches is the string configured ==');
+/* The handler decides what a firing is for by comparing event.cron against
+   MAIN_CRON. If that stops matching, every firing takes the fallback branch
+   -- which still works, but a schedule nobody can see is how this project
+   has lost refresh paths before. */
+ck('MAIN_CRON is the configured cron', crons.includes(mainCron), { mainCron, crons });
+ck('the withdrawn outage-cron constants are gone from the code',
+  !/const OUTAGE_CRON\b/.test(code) && !/const OUTAGE_CRON_PERIOD_MS\b/.test(code));
+
+console.log('\n== the period matches the cron ==');
+ck('the cron is a shape this test understands', mainMin !== null, mainCron);
+ck('CRON_PERIOD_MS matches the cron', mainMin !== null && periodMs === mainMin * 60000,
   { mainCron, mainMin, periodMs });
-ck('OUTAGE_CRON_PERIOD_MS matches the outage cron',
-  outageMin !== null && outagePeriodMs === outageMin * 60000,
-  { outageCron, outageMin, outagePeriodMs });
 
 console.log('\n== the handler uses the constants, not literals ==');
-ck('the main tick is derived from CRON_PERIOD_MS',
+ck('the tick is derived from CRON_PERIOD_MS',
   /Math\.floor\(nowMs \/ CRON_PERIOD_MS\)/.test(worker));
-/* The outage shard MUST be counted in its own period. Counted in the main
-   one it would hold the same shard for two firings and the other shard
-   would never be refreshed -- the exact silent-stall this file exists for. */
-ck('the outage tick is derived from OUTAGE_CRON_PERIOD_MS',
-  /Math\.floor\(nowMs \/ OUTAGE_CRON_PERIOD_MS\)/.test(worker));
-/* Checked against the CODE, not the prose. The comment above the constant
-   quotes the old literal on purpose, to record what went wrong; a test that
-   cannot tell an explanation from the thing it explains would force the
-   explanation to be deleted. */
+/* Checked against the CODE, not the prose. The comments quote the old
+   literals on purpose, to record what went wrong; a test that cannot tell an
+   explanation from the thing it explains would force the explanation out. */
 ck('no bare literal period left in the scheduled handler',
   !/Math\.floor\(nowMs \/ \d+\)/.test(code), (/Math\.floor\(nowMs \/ \d+\)/.exec(code) || [])[0]);
 /* "Hourly" written as a tick count was 12 at a five-minute cron and became
@@ -127,62 +112,65 @@ const gdeltTicks = Math.max(1, Math.round(3600000 / periodMs));
 ck('and it still works out to about an hour',
   Math.abs(gdeltTicks * periodMs - 3600000) < 60000, { gdeltTicks, periodMs });
 
-console.log('\n== outages get their own invocation, and nothing else shares it ==');
-ck('the outage cron returns before the news and incident work',
-  /cron === OUTAGE_CRON\)\s*\{[\s\S]{0,400}?refreshOutageShard[\s\S]{0,200}?return;/.test(worker));
-/* Incidents alternated with outages only because they shared an invocation.
-   With outages moved off, holding them to every other tick would be giving
-   up the improvement for no reason. */
-ck('incidents now run on every main tick',
-  /ctx\.waitUntil\(refreshAllIncidents\(\)\);/.test(worker)
-  && !/tick % 2 === 0\)\s*\{\s*ctx\.waitUntil\(refreshAllIncidents/.test(worker));
-/* An unmatched cron must degrade to the OLD alternating shape, which is
-   known to fit, and never to "run all three". The first version of this
-   fallback did run all three and measured 59 subrequests against a ceiling
-   of 50 -- it reproduced the starvation it was written to prevent, and
-   test/worker_outages.test.mjs caught it because that test fires
-   scheduled() without a cron and so exercises this very branch. */
-const elseBranch = /cron === MAIN_CRON\)\s*\{[\s\S]*?\n    \} else \{([\s\S]*?)\n    \}/.exec(code);
-ck('there is a fallback branch for an unrecognised cron', !!elseBranch);
-const fb = elseBranch ? elseBranch[1] : '';
-ck('the fallback still refreshes outages', /refreshOutageShard/.test(fb), fb.slice(0, 160));
-ck('and still refreshes incidents', /refreshAllIncidents/.test(fb), fb.slice(0, 160));
-ck('but ALTERNATES them rather than running both', /tick % 2 === 0/.test(fb), fb.slice(0, 160));
+console.log('\n== incidents and outages alternate, which halves BOTH ceilings ==');
+/* Not only subrequests. Parsing eight incident feeds next to four states of
+   outage data is also the CPU cost, against 10ms. Running incidents on every
+   tick is what this did until the CPU limit was hit. */
+ck('the refreshes alternate by tick parity', /tick % 2 === 0/.test(code));
+ck('incidents are on one parity',
+  /tick % 2 === 0\)\s*\{[\s\S]{0,160}?refreshAllIncidents/.test(code));
+ck('outages are on the other', /\} else \{[\s\S]{0,200}?refreshOutageShard/.test(code));
+ck('news runs on every tick',
+  /refreshNewsShard\(tick % NEWS_SHARDS/.test(code));
+/* The regression to guard against by name: incidents unconditionally on
+   every tick, which is twice the CPU for freshness nobody asked for. */
+ck('incidents are NOT queued unconditionally every tick',
+  !/refreshNewsShard\([^)]*\)\);\s*ctx\.waitUntil\(refreshAllIncidents\(\)\);/.test(code));
 
-console.log('\n== what the cadence actually is now ==');
+console.log('\n== what the cadence actually is ==');
 const OUTAGE_SHARDS = num(/const OUTAGE_SHARDS = (\d+)/, 'OUTAGE_SHARDS');
 const NEWS_SHARDS = num(/const NEWS_SHARDS = (\d+)/, 'NEWS_SHARDS');
-const everyState = outageMin * OUTAGE_SHARDS;
+const everyState = mainMin * 2 * OUTAGE_SHARDS;
+const everyIncident = mainMin * 2;
 const everyFeed = mainMin * NEWS_SHARDS;
 console.log('  a given state\'s outages: every ' + everyState + ' min');
+console.log('  all incident feeds:      every ' + everyIncident + ' min');
 console.log('  a given news feed:       every ' + everyFeed + ' min');
-console.log('  all incident feeds:      every ' + mainMin + ' min');
-/* The point of the change. Outages were every 8 minutes; anything slower
-   than that would be a regression dressed as a refactor. */
-ck('a state\'s outages refresh at least every 4 minutes', everyState <= 4, everyState);
-ck('incidents refresh at least every 2 minutes', mainMin <= 2, mainMin);
+/* The original was a 5-minute cron: outages every 20 minutes, incidents
+   every 10. The CPU revert gave back today's gains, not the ones before it,
+   so this must stay better than the original. */
+ck('outages stay better than the original 20 minutes', everyState <= 8, everyState);
+ck('incidents stay better than the original 10 minutes', everyIncident <= 4, everyIncident);
 
-console.log('\n== the limits this cadence has to live inside ==');
-const perDay = Math.round((24 * 60) / mainMin) + Math.round((24 * 60) / outageMin);
-console.log('  invocations/day (both crons): ' + perDay);
+console.log('\n== the ceiling that was actually hit: CPU per invocation ==');
+const perDay = Math.round((24 * 60) / mainMin);
+console.log('  invocations/day: ' + perDay);
 ck('invocations stay well inside the 100,000/day request allowance',
   perDay < 100000 / 10, perDay);
+/* CPU is spent per invocation, on parsing, so the count of invocations doing
+   it is the number that matters. It reached 2,160 with a second trigger and
+   is back to 720 -- the level that ran for days without a CPU complaint. */
+ck('invocations/day are back to the level that ran without a CPU complaint',
+  perDay <= 720, perDay);
 
-/* The KV ceiling applies to the NEWS record only -- the outage path never
-   writes KV, which is why it can fire every minute. Once NEWS_KV is bound
-   the news refresh writes one record per MAIN tick, against 1,000/day free. */
-const newsWritesPerDay = Math.round((24 * 60) / mainMin);
-console.log('  KV writes/day (news only):   ' + newsWritesPerDay);
-ck('one KV write per main tick stays under the 1,000/day free limit',
+/* KV applies to the NEWS record only; the outage path never writes it. */
+const newsWritesPerDay = perDay;
+console.log('  KV writes/day (news only): ' + newsWritesPerDay);
+ck('one KV write per tick stays under the 1,000/day free limit',
   newsWritesPerDay <= 1000, { newsWritesPerDay, limit: 1000 });
-ck('the outage path writes no KV, which is what lets it fire every minute',
+ck('the outage path writes no KV',
   !/refreshStateOutages[\s\S]{0,4000}?NEWS_KV/.test(worker));
 
-console.log('\n== the real ceiling: 50 external subrequests per invocation ==');
+console.log('\n== the other ceiling: 50 external subrequests per invocation ==');
 /* Counted from the shipped config rather than from a comment, because the
    comment was written once and the config changes every time an operator is
    added. Worst case assumes every endpoint is tried -- which is what happens
-   when each one fails and falls through to the next. */
+   when each fails and falls through to the next.
+
+   A floor, not the truth: it cannot see a feed's discovery attempt or a
+   merge source, and measures about six under what the handler really does
+   (test/worker_outages.test.mjs measures the real figure). It is kept
+   because it is what rises the moment the config grows. */
 const stub = (block) => {
   const names = new Set([...block.matchAll(/parse: (\w+)/g)].map((m) => m[1]));
   return [...names].map((n) => 'const ' + n + '=()=>{};').join('\n') + '\n';
@@ -192,7 +180,6 @@ const grab = (re, what) => {
   if (!m) throw new Error('not found in worker.js: ' + what);
   return m[0];
 };
-
 const netBlock = grab(/export const OUTAGE_NETWORKS = \{[\s\S]*?\n\};/, 'OUTAGE_NETWORKS');
 const NETWORKS = new Function(stub(netBlock) + netBlock.replace('export ', '')
   + '; return OUTAGE_NETWORKS;')();
@@ -204,101 +191,74 @@ const endpointsFor = (st) => {
   return (Array.isArray(arr) ? arr : []).reduce((n, op) =>
     n + (op.endpoints ? op.endpoints.length : (op.sources ? op.sources.length : (op.url ? 1 : 0))), 0);
 };
-/* Shards are assigned by index, exactly as refreshOutageShard does it. */
 const shardCost = [];
 for (let sh = 0; sh < OUTAGE_SHARDS; sh++) {
   shardCost.push(OUTAGE_STATES.filter((_, i) => i % OUTAGE_SHARDS === sh)
     .reduce((n, st) => n + endpointsFor(st), 0));
 }
 const worstShard = Math.max(...shardCost);
-console.log('  outage endpoints per shard: ' + JSON.stringify(shardCost)
-  + '  (all states: ' + OUTAGE_STATES.reduce((n, s) => n + endpointsFor(s), 0) + ')');
-ck('the worst outage shard fits in one invocation', worstShard <= 50, { shardCost, limit: 50 });
-/* Leaving headroom, not just fitting. An operator added tomorrow should not
-   be the thing that silently starves a fetch. */
-ck('and leaves at least a third of the budget free', worstShard <= 34, worstShard);
-
 const incBlock = grab(/const INCIDENT_FEEDS = \{[\s\S]*?\n\};/, 'INCIDENT_FEEDS');
 const INCIDENT_FEEDS = new Function(stub(incBlock) + incBlock + '; return INCIDENT_FEEDS;')();
 const incidentCost = Object.values(INCIDENT_FEEDS)
   .reduce((n, f) => n + (f.sources || []).length, 0);
 const feedsBlock = grab(/const NEWS_FEEDS = \[[\s\S]*?\n\];/, 'NEWS_FEEDS');
 const NEWS_FEEDS = new Function(feedsBlock + '; return NEWS_FEEDS;')();
-/* The news shard, plus the one discovery attempt a tick makes, plus the
-   hourly GDELT fetch which lands on a main tick. */
 const newsCost = Math.ceil(NEWS_FEEDS.length / NEWS_SHARDS) + 1;
-const mainCost = newsCost + incidentCost + 1;
-/* A FLOOR, not the true cost. Counting the config cannot see the extra
-   fetches a run makes -- a feed's discovery attempt, a merge source added
-   to a state that already succeeded, a redirect followed. Measured against
-   the real handler in test/worker_outages.test.mjs the main cron comes to
-   35-37 where this arithmetic says 31, so this number is about six light.
-   It is kept because it is the one that rises the moment an operator or a
-   feed is added to the config, which is the change that would eat the
-   margin; the measured figure is the one to trust for how close we are. */
-console.log('  main invocation, counted from config: ' + newsCost + ' news + ' + incidentCost
-  + ' incidents + 1 gdelt = ' + mainCost + '  (measured: 35-37)');
-ck('the main invocation fits in one invocation', mainCost <= 50, { mainCost, limit: 50 });
-/* 42 leaves the same 8-subrequest margin the measured test insists on,
-   against a count known to run about six under. */
-ck('and leaves a real margin once the undercount is allowed for',
-  mainCost + 8 <= 42, { mainCost, allowedFloor: 34 });
-/* The number that broke it before. Both paths together exceeded the limit,
-   which is precisely why they are now two invocations. */
-console.log('  both together, counted from config: ' + (mainCost + worstShard)
-  + '  (measured: 59) -- over the limit, which is why they are separate invocations');
-/* The justification for two triggers rather than one. If this ever comes
-   comfortably under 50, the split is unnecessary complexity and should go. */
-ck('the two paths together do NOT fit in one invocation',
-  mainCost + worstShard > 50, { combined: mainCost + worstShard });
+
+console.log('  outage endpoints per shard: ' + JSON.stringify(shardCost)
+  + '  (all states: ' + OUTAGE_STATES.reduce((n, s) => n + endpointsFor(s), 0) + ')');
+console.log('  incident endpoints: ' + incidentCost + '   news per shard: ' + newsCost);
+const evenTick = newsCost + incidentCost + 1;   // news + incidents + gdelt
+const oddTick = newsCost + worstShard;          // news + one outage shard
+console.log('  even tick (news + incidents + gdelt): ' + evenTick);
+console.log('  odd tick  (news + outage shard):      ' + oddTick);
+ck('the incident tick fits', evenTick <= 50, { evenTick, limit: 50 });
+ck('the outage tick fits', oddTick <= 50, { oddTick, limit: 50 });
+/* Margin, allowing for the known undercount. */
+ck('the incident tick keeps a real margin', evenTick + 8 <= 42, evenTick);
+ck('the outage tick keeps a real margin', oddTick + 8 <= 42, oddTick);
+/* Why they alternate at all. If all three fitted comfortably, the
+   alternation would be unnecessary -- it does not, on either ceiling. */
+console.log('  all three together: ' + (evenTick + worstShard) + ' (measured 59)');
+ck('all three together do NOT fit, which is why they alternate',
+  evenTick + worstShard > 50, { combined: evenTick + worstShard });
 
 console.log('\n== what a READER sees, which the cron does not decide ==');
 {
   /* The cron runs in one datacentre and the Cache API is per datacentre, so
      a faster cron makes outages fresher there and nowhere else. Everywhere
-     else it is the warm sweep on the reader's own traffic, and that is
-     governed by three numbers that have to agree.
+     else it is the warm sweep on the reader's own traffic.
 
-     This was worth finding: the cron went from 8 minutes to 2 while the
-     threshold that decides what a reader outside that one location sees was
-     sitting at 15 minutes, untouched. The cadence improved and the
-     dashboard would not have. */
-  const staleS = (() => {
-    const m = /const OUTAGE_STALE_S = ([^;]+);/.exec(worker);
-    ck('the Worker declares OUTAGE_STALE_S', !!m);
-    return m ? Function('return ' + m[1])() : 0;
-  })();
+     That sweep runs inside a VISITOR's invocation and spends that
+     invocation's CPU parsing outage data. OUTAGE_STALE_S was briefly
+     lowered to 4 minutes, which is where the sweep's rate limit rather than
+     the threshold becomes the constraint -- right for subrequests and for
+     upstream politeness, wrong for CPU: at 15 minutes most sweeps find
+     nothing to do and cost nothing, at 4 minutes a sweep has work almost
+     every time, on page loads. It is the one of today's changes that spent
+     CPU on the REQUEST path. */
+  const staleM = /const OUTAGE_STALE_S = ([^;]+);/.exec(worker);
+  ck('the Worker declares OUTAGE_STALE_S', !!staleM);
+  const staleS = staleM ? Function('return ' + staleM[1])() : 0;
   const perReq = num(/const OUTAGE_WARM_PER_REQUEST = (\d+)/, 'OUTAGE_WARM_PER_REQUEST');
   const minIntervalS = num(/const OUTAGE_WARM_MIN_INTERVAL_S = (\d+)/, 'OUTAGE_WARM_MIN_INTERVAL_S');
-  const states = OUTAGE_STATES.length;
 
-  /* How long a full pass must take, given the sweep refreshes at most
-     perReq states and runs at most once per minIntervalS. */
-  const floorS = Math.ceil(states / perReq) * minIntervalS;
-  console.log('  states: ' + states + ', ' + perReq + ' per sweep, one sweep per '
-    + minIntervalS + 's');
-  console.log('  structural floor on a full pass: ' + floorS + 's');
-  console.log('  staleness threshold:             ' + staleS + 's');
-
-  /* Promising more than the rate limit can deliver is the failure in one
-     direction: the threshold says "refresh anything older than this" and
-     the sweep cannot keep up, so the real freshness is the floor and the
-     number is fiction. */
+  const floorS = Math.ceil(OUTAGE_STATES.length / perReq) * minIntervalS;
+  console.log('  ' + OUTAGE_STATES.length + ' states, ' + perReq + ' per sweep, one sweep per '
+    + minIntervalS + 's  ->  floor on a full pass: ' + floorS + 's');
+  console.log('  staleness threshold: ' + staleS + 's');
+  /* Promising more than the rate limit can deliver would make the number
+     fiction. This direction still holds. */
   ck('the threshold does not promise more than the sweep can deliver',
     staleS >= floorS, { staleS, floorS });
-  /* Idling is the failure in the other direction, and is the one that was
-     actually happening -- 15 minutes against a 4-minute floor meant the
-     structure sat unused two thirds of the time. */
-  ck('and does not leave the sweep idle for most of its cycle',
-    staleS <= floorS * 1.5, { staleS, floorS });
-  /* Upstream politeness, which is capped by the rate limit rather than by
-     the threshold -- stated so a future change to perReq has to think
-     about it. */
+  /* And the CPU bound, which is why it is not set to the floor: a visitor's
+     invocation must not be parsing outage data on most page loads. */
+  ck('the threshold stays high enough that most sweeps find nothing to do',
+    staleS >= floorS * 2, { staleS, floorS });
+
   const fetchesPerMin = perReq * (60 / minIntervalS);
   console.log('  upstream: at most ' + fetchesPerMin + ' states/min per datacentre');
   ck('the sweep stays polite to the operators', fetchesPerMin <= 4, fetchesPerMin);
-  /* A warm sweep runs inside a VISITOR's invocation and shares its 50
-     subrequests, so the batch has to fit there too. */
   const worstStates = OUTAGE_STATES.map((st) => endpointsFor(st))
     .sort((a, b) => b - a).slice(0, perReq).reduce((a, b) => a + b, 0);
   console.log('  worst warm sweep: ' + worstStates + ' endpoints inside a visitor request');

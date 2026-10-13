@@ -34,22 +34,22 @@
     // src/worker.js); the previous EMERGENCY_API_KEY binding for
     // emergencyapi.com has been retired along with that dependency, so there
     // is no longer any credential here to expire, rotate or leak.
-    // Two triggers, because the 50-external-subrequest ceiling is per
-    // INVOCATION. A second schedule comes with its own budget rather than
-    // dividing the first, which is what lets outages refresh four times
-    // faster without going anywhere near a limit.
+    // ONE trigger. A second one firing every minute, dedicated to outages,
+    // was added and then withdrawn: Cloudflare reported the account hitting
+    // the free plan's CPU time limit.
     //
-    //   */2  news + all eight incident feeds   (~35 of 50 subrequests)
-    //   *    one outage shard, nothing else    (~22 of 50 subrequests)
+    // The subrequest reasoning behind it was right -- the 50-subrequest
+    // ceiling is per invocation, so a second trigger brings its own budget,
+    // measured at 19-22 against the main cron's 35-37. But subrequests were
+    // not the only ceiling. Fetching is I/O and free; PARSING is CPU, and
+    // the change tripled the invocations doing it (720/day to 2,160) while
+    // also doubling the parsing inside the main one.
     //
-    // Both strings are matched against event.cron in src/worker.js and
-    // asserted by test/cron_period.test.mjs, so editing one here without
-    // the other fails CI instead of silently stopping a refresh path.
-    //
-    // The free plan allows 5 cron triggers and this uses 2 -- but that
-    // allowance is per ACCOUNT, so another Worker with its own schedules
-    // draws on the same five.
-    "crons": ["*/2 * * * *", "* * * * *"]
+    // On the Workers Paid plan the per-invocation CPU ceiling goes from
+    // 10ms to 30s and the second trigger becomes available again; the
+    // schedule to restore is "* * * * *" and src/worker.js says what else
+    // goes with it.
+    "crons": ["*/2 * * * *"]
   }
 
   // ---------------------------------------------------------------------

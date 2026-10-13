@@ -166,6 +166,12 @@ jobs:
               console.log("\nthis datacentre has logged no firing yet.");
               process.exit(0);
             }
+            // Only the schedules the code expects. A second trigger for
+            // outages was withdrawn after the CPU limit was hit, so a
+            // firing logged under any OTHER schedule now matters a great
+            // deal: it would mean a trigger still registered at Cloudflare
+            // after being removed from wrangler.jsonc, quietly spending the
+            // CPU this revert was meant to give back.
             let missing = [];
             for (const [name, cron] of Object.entries(d.expected)) {
               const s = d.seen[cron];
@@ -191,7 +197,10 @@ jobs:
             const unknown = Object.keys(d.seen).filter(c =>
               !Object.values(d.expected).includes(c));
             if (unknown.length) {
-              console.log("\n::warning::firings logged under unrecognised schedules: "
-                + JSON.stringify(unknown));
+              console.log("\n::warning::firings logged under schedules this code does"
+                + " not expect: " + JSON.stringify(unknown)
+                + " -- a trigger may still be registered at Cloudflare after"
+                + " being removed from wrangler.jsonc, and would still be"
+                + " spending CPU");
             }
           '
