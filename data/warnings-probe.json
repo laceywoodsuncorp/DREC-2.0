@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T21:58:56.972Z",
+  "at": "2026-10-13T23:43:16.779Z",
   "states": {
     "qld": [
       {
@@ -267,9 +267,9 @@
         "url": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
         "status": 200,
         "type": "text/xml",
-        "bytes": 42990,
+        "bytes": 15985,
         "shape": "xml",
-        "items": 11,
+        "items": 4,
         "fields": {
           "distributionStatus": [
             "Actual"
@@ -323,38 +323,37 @@
         "url": "https://emergency.vic.gov.au/public/events-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 14936,
+        "bytes": 15492,
         "shape": "object",
-        "items": 15,
+        "items": 19,
         "fields": {
           "status": [
-            "Under Control",
-            "Complete",
             "Safe",
+            "Under Control",
+            "Unknown",
             "Request For Assistance",
-            "Warning"
+            "Complete",
+            "Responding"
           ],
           "category1": [
             "Fire",
-            "Building Damage",
-            "Other",
+            "Rescue",
             "Tree Down",
-            "Met",
-            "Accident / Rescue",
-            "Rescue"
+            "Other",
+            "Hazardous Material",
+            "Accident / Rescue"
           ],
           "category2": [
             "Bushfire",
-            "Building Damage",
-            "Other",
-            "Tree Down",
-            "Strong Wind",
             "Building Fire",
-            "Road Accident",
-            "Rescue Vehicle Into Structure"
+            "Rescue Road Trap",
+            "Tree Down",
+            "Other",
+            "Hazardous Material",
+            "Road Accident"
           ]
         },
-        "verdict": "operational status only: Under Control | Safe"
+        "verdict": "operational status only: Safe | Under Control | Responding"
       },
       {
         "url": "https://emergency.vic.gov.au/public/warnings-geojson.json",
@@ -366,41 +365,39 @@
         "url": "https://emergency.vic.gov.au/public/osom-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 42950,
+        "bytes": 43506,
         "shape": "object",
-        "items": 36,
+        "items": 40,
         "fields": {
           "status": [
-            "Under Control",
-            "Complete",
             "Safe",
+            "Under Control",
+            "Unknown",
             "Request For Assistance",
-            "Warning",
-            "Unknown"
+            "Complete",
+            "Responding"
           ],
           "category1": [
             "Fire",
-            "Building Damage",
-            "Other",
+            "Rescue",
             "Tree Down",
-            "Met",
+            "Other",
+            "Hazardous Material",
             "Burn Area",
-            "Accident / Rescue",
-            "Rescue"
+            "Accident / Rescue"
           ],
           "category2": [
             "Bushfire",
-            "Building Damage",
-            "Other",
-            "Tree Down",
-            "Strong Wind",
-            "Burn Area",
             "Building Fire",
-            "Road Accident",
-            "Rescue Vehicle Into Structure"
+            "Rescue Road Trap",
+            "Tree Down",
+            "Other",
+            "Hazardous Material",
+            "Burn Area",
+            "Road Accident"
           ]
         },
-        "verdict": "operational status only: Under Control | Safe"
+        "verdict": "operational status only: Safe | Under Control | Responding"
       }
     ],
     "tas": [
@@ -482,23 +479,22 @@
         "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 52763,
+        "bytes": 53076,
         "shape": "object",
         "fields": {
           "_category": [
             "fire",
-            "alarm",
             "roadcrash",
+            "alarm",
             "other",
             "advice",
             "bushfire-advice"
           ],
           "_status": [
-            "active",
-            "closed"
+            "closed",
+            "active"
           ],
           "Status": [
-            "Active",
             "Closed",
             "Being Controlled",
             "Going"
@@ -523,7 +519,7 @@
         "url": "http://www.bom.gov.au/fwo/IDZ00054.warnings_land_nsw.xml",
         "status": 403,
         "title": "",
-        "bytes": 1385
+        "bytes": 1384
       }
     ]
   }

@@ -1,0 +1,212 @@
+{
+ "at": "2026-10-13T23:46:52.470Z",
+ "ceilingMs": 10,
+ "rows": [
+  {
+   "label": "cron tick, even parity (news shard + all 8 incident feeds)",
+   "cpuMs": 212.8,
+   "wallMs": 9709,
+   "subrequests": 28,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "cron tick, odd parity (news shard + one outage shard)",
+   "cpuMs": 561.4,
+   "wallMs": 10174,
+   "subrequests": 32,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "cron tick, even parity (warm)",
+   "cpuMs": 109.9,
+   "wallMs": 2012,
+   "subrequests": 20,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "cron tick, odd parity (warm)",
+   "cpuMs": 129.1,
+   "wallMs": 2612,
+   "subrequests": 19,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "incidents: nsw",
+   "cpuMs": 4.6,
+   "wallMs": 63,
+   "subrequests": 1,
+   "overCeiling": false,
+   "error": null
+  },
+  {
+   "label": "incidents: vic",
+   "cpuMs": 6.1,
+   "wallMs": 463,
+   "subrequests": 1,
+   "overCeiling": false,
+   "error": null
+  },
+  {
+   "label": "incidents: qld",
+   "cpuMs": 15.4,
+   "wallMs": 401,
+   "subrequests": 2,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "incidents: wa",
+   "cpuMs": 11.1,
+   "wallMs": 220,
+   "subrequests": 3,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "incidents: sa",
+   "cpuMs": 5.2,
+   "wallMs": 842,
+   "subrequests": 1,
+   "overCeiling": false,
+   "error": null
+  },
+  {
+   "label": "incidents: tas",
+   "cpuMs": 4.9,
+   "wallMs": 208,
+   "subrequests": 1,
+   "overCeiling": false,
+   "error": null
+  },
+  {
+   "label": "incidents: nt",
+   "cpuMs": 19.7,
+   "wallMs": 1440,
+   "subrequests": 3,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "incidents: act",
+   "cpuMs": 5.9,
+   "wallMs": 897,
+   "subrequests": 1,
+   "overCeiling": false,
+   "error": null
+  },
+  {
+   "label": "outages: nsw",
+   "cpuMs": 313.7,
+   "wallMs": 3664,
+   "subrequests": 5,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "outages: vic",
+   "cpuMs": 68.3,
+   "wallMs": 8620,
+   "subrequests": 7,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "outages: qld",
+   "cpuMs": 34.4,
+   "wallMs": 391,
+   "subrequests": 6,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "outages: wa",
+   "cpuMs": 66.5,
+   "wallMs": 2130,
+   "subrequests": 3,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "outages: sa",
+   "cpuMs": 29.1,
+   "wallMs": 455,
+   "subrequests": 4,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "outages: tas",
+   "cpuMs": 5.6,
+   "wallMs": 1037,
+   "subrequests": 1,
+   "overCeiling": false,
+   "error": null
+  },
+  {
+   "label": "outages: nt",
+   "cpuMs": 9.2,
+   "wallMs": 188,
+   "subrequests": 2,
+   "overCeiling": false,
+   "error": null
+  },
+  {
+   "label": "outages: act",
+   "cpuMs": 6.8,
+   "wallMs": 964,
+   "subrequests": 1,
+   "overCeiling": false,
+   "error": null
+  },
+  {
+   "label": "GET /api/outages (cold: warms behind the response)",
+   "cpuMs": 340.2,
+   "wallMs": 3214,
+   "subrequests": 11,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "GET /api/outages (warm)",
+   "cpuMs": 0.3,
+   "wallMs": 0,
+   "subrequests": 0,
+   "overCeiling": false,
+   "error": null
+  },
+  {
+   "label": "GET /api/incidents (all states, from cache)",
+   "cpuMs": 78.8,
+   "wallMs": 2261,
+   "subrequests": 13,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "GET /api/news (cold: bootstraps feeds)",
+   "cpuMs": 17,
+   "wallMs": 615,
+   "subrequests": 4,
+   "overCeiling": true,
+   "error": null
+  },
+  {
+   "label": "GET /api/news (warm)",
+   "cpuMs": 23.1,
+   "wallMs": 1514,
+   "subrequests": 6,
+   "overCeiling": true,
+   "error": null
+  }
+ ],
+ "summary": {
+  "over": 16,
+  "total": 25,
+  "cronOver": 4,
+  "readOver": 4
+ }
+}
