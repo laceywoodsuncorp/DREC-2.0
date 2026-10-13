@@ -97,6 +97,13 @@ jobs:
       - name: Alert SA combined feed contents
         run: node scripts/probe-alert-sa.mjs
 
+      # Where the CPU goes. Cloudflare reported the free plan's 10ms
+      # per-invocation limit being hit 100+ times a day, and every budget
+      # argument on this project so far has been about subrequests, which
+      # are countable from the config. CPU is not, so it was never counted.
+      - name: CPU cost per invocation
+        run: node scripts/cpu-bench.mjs
+
       # Committed because a probe whose findings are not written down gets run
       # again from scratch next time the question comes up -- which has
       # happened on this project more than once.
@@ -110,4 +117,4 @@ jobs:
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh 'Record live state health and the feed probes' \
               data/state-health.json data/nt-power-probe.json \
-              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json data/feed-discovery.json data/alert-sa-probe.json
+              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json data/feed-discovery.json data/alert-sa-probe.json data/cpu-bench.json
