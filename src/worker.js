@@ -399,7 +399,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-13-cronlog';
+const WORKER_BUILD = '2026-10-13-outagefresh';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -3594,8 +3594,30 @@ const OUTAGE_WARM_MIN_INTERVAL_S = 60;
    deploy will still be served after it, with the old build's attempts and
    URLs inside, in every datacentre the cron does not run in. That is a
    permanent freeze, not a delay, and it reads exactly like a broken feed
-   that nobody fixed. Anything older than this gets rebuilt, oldest first. */
-const OUTAGE_STALE_S = 15 * 60;
+   that nobody fixed. Anything older than this gets rebuilt, oldest first.
+
+   This number, not the cron, is what sets how fresh outages look to a
+   reader. The cron runs in ONE datacentre and the Cache API is per
+   datacentre, so speeding the cron up makes outages fresher there and
+   nowhere else; everywhere else it is this threshold and the warm sweep
+   that decide, driven by the reader's own traffic. At 15 minutes a reader
+   outside the cron's location was looking at figures up to a quarter of an
+   hour old no matter how often the cron fired.
+
+   4 minutes is not an arbitrary reduction -- it is where the threshold
+   stops being the constraint. The sweep refreshes at most
+   OUTAGE_WARM_PER_REQUEST states and runs at most once every
+   OUTAGE_WARM_MIN_INTERVAL_S, so eight states take at least
+   8 / 2 * 60s = 4 minutes to come round whatever this is set to. Setting it
+   lower would promise a freshness the rate limit cannot deliver; leaving it
+   at 15 minutes left the structure idle two thirds of the time. Upstream
+   load is unchanged either way -- it is the rate limit that caps it, at two
+   states a minute per datacentre.
+
+   test/cron_period.test.mjs ties the three together, so lowering this on
+   its own (or raising the rate limit without revisiting this) fails rather
+   than quietly promising something. */
+const OUTAGE_STALE_S = 4 * 60;
 
 async function warmColdOutages() {
   /* Rate limit per datacentre, so a burst of visitors doesn't each start

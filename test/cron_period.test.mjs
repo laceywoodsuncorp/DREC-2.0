@@ -252,6 +252,59 @@ console.log('  both together, counted from config: ' + (mainCost + worstShard)
 ck('the two paths together do NOT fit in one invocation',
   mainCost + worstShard > 50, { combined: mainCost + worstShard });
 
+console.log('\n== what a READER sees, which the cron does not decide ==');
+{
+  /* The cron runs in one datacentre and the Cache API is per datacentre, so
+     a faster cron makes outages fresher there and nowhere else. Everywhere
+     else it is the warm sweep on the reader's own traffic, and that is
+     governed by three numbers that have to agree.
+
+     This was worth finding: the cron went from 8 minutes to 2 while the
+     threshold that decides what a reader outside that one location sees was
+     sitting at 15 minutes, untouched. The cadence improved and the
+     dashboard would not have. */
+  const staleS = (() => {
+    const m = /const OUTAGE_STALE_S = ([^;]+);/.exec(worker);
+    ck('the Worker declares OUTAGE_STALE_S', !!m);
+    return m ? Function('return ' + m[1])() : 0;
+  })();
+  const perReq = num(/const OUTAGE_WARM_PER_REQUEST = (\d+)/, 'OUTAGE_WARM_PER_REQUEST');
+  const minIntervalS = num(/const OUTAGE_WARM_MIN_INTERVAL_S = (\d+)/, 'OUTAGE_WARM_MIN_INTERVAL_S');
+  const states = OUTAGE_STATES.length;
+
+  /* How long a full pass must take, given the sweep refreshes at most
+     perReq states and runs at most once per minIntervalS. */
+  const floorS = Math.ceil(states / perReq) * minIntervalS;
+  console.log('  states: ' + states + ', ' + perReq + ' per sweep, one sweep per '
+    + minIntervalS + 's');
+  console.log('  structural floor on a full pass: ' + floorS + 's');
+  console.log('  staleness threshold:             ' + staleS + 's');
+
+  /* Promising more than the rate limit can deliver is the failure in one
+     direction: the threshold says "refresh anything older than this" and
+     the sweep cannot keep up, so the real freshness is the floor and the
+     number is fiction. */
+  ck('the threshold does not promise more than the sweep can deliver',
+    staleS >= floorS, { staleS, floorS });
+  /* Idling is the failure in the other direction, and is the one that was
+     actually happening -- 15 minutes against a 4-minute floor meant the
+     structure sat unused two thirds of the time. */
+  ck('and does not leave the sweep idle for most of its cycle',
+    staleS <= floorS * 1.5, { staleS, floorS });
+  /* Upstream politeness, which is capped by the rate limit rather than by
+     the threshold -- stated so a future change to perReq has to think
+     about it. */
+  const fetchesPerMin = perReq * (60 / minIntervalS);
+  console.log('  upstream: at most ' + fetchesPerMin + ' states/min per datacentre');
+  ck('the sweep stays polite to the operators', fetchesPerMin <= 4, fetchesPerMin);
+  /* A warm sweep runs inside a VISITOR's invocation and shares its 50
+     subrequests, so the batch has to fit there too. */
+  const worstStates = OUTAGE_STATES.map((st) => endpointsFor(st))
+    .sort((a, b) => b - a).slice(0, perReq).reduce((a, b) => a + b, 0);
+  console.log('  worst warm sweep: ' + worstStates + ' endpoints inside a visitor request');
+  ck('a warm sweep fits inside a visitor invocation', worstStates <= 34, worstStates);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: ' + pass + '   failed: ' + fail);
 process.exit(fail ? 1 : 0);
