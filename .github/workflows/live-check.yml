@@ -157,8 +157,12 @@ jobs:
             const d = JSON.parse(require("fs").readFileSync("/tmp/crons.json", "utf8"));
             console.log("build:    " + d.build);
             console.log("expected: " + JSON.stringify(d.expected));
-            console.log("          main every " + d.expectedGapSeconds.main
-              + "s, outages every " + d.expectedGapSeconds.outages + "s");
+            // Printed from whatever the Worker reports, not from a fixed
+            // list of schedule names. The previous version named "outages"
+            // explicitly and printed "every undefineds" the moment that
+            // trigger was withdrawn.
+            console.log("          " + Object.entries(d.expectedGapSeconds)
+              .map(([k, v]) => k + " every " + v + "s").join(", "));
             if (!d.seen) {
               // Not a failure. caches.default is per-datacentre, and a
               // runner can easily reach a location no cron has run in --
