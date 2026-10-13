@@ -79,6 +79,47 @@ const INCIDENT_FRESH_SECONDS = 600; // 10 min
    if the two disagree, so they cannot drift apart again. */
 const CRON_PERIOD_MS = 120000; // every 2 minutes
 
+/* Outages run on their own cron trigger, not on the one above.
+
+   The binding limit here is NOT the daily allowance -- 2,160 invocations a
+   day against 100,000 is nothing. It is the 50 external subrequests a single
+   invocation may make, and that is per invocation, so a second trigger comes
+   with a second budget rather than dividing the first. Doing all three
+   refreshes in one invocation came to 58 and the last fetches issued simply
+   threw, which is how feeds stopped filling with nothing in the log.
+
+   Measured from the config: all eight states of outages are 41 endpoints
+   worst case, which is why they were sharded in the first place. Split in
+   two, a shard is at most 22 -- comfortable inside one invocation's 50 even
+   if every endpoint fails over to its last fallback.
+
+   So outages fire every minute, one shard at a time, and every state is
+   re-read every 2 minutes instead of every 8. Nothing else shares that
+   invocation.
+
+   Two things make this safe rather than merely faster. Outages never write
+   KV -- only the news record does -- so the 1,000 writes/day free-tier
+   ceiling is untouched by this. And the free plan allows 5 cron triggers;
+   this Worker now uses 2. That allowance is per ACCOUNT, so another Worker
+   with its own schedules draws on the same five. */
+const OUTAGE_CRON_PERIOD_MS = 60000; // every 1 minute
+
+/* The two schedules, spelled exactly as wrangler.jsonc declares them --
+   event.cron is matched against these to decide what a firing is for.
+   test/cron_period.test.mjs parses both out of the config and fails if they
+   drift, because a string that stops matching would mean a whole refresh
+   path silently doing nothing, which is this project's most expensive
+   recurring failure. */
+const MAIN_CRON = '*/2 * * * *';
+const OUTAGE_CRON = '* * * * *';
+
+/* How many main ticks make an hour. Derived, not written out: this was the
+   literal 12 that meant "hourly" at a five-minute cron, and speeding the
+   cron to two minutes turned it into every 24 minutes without anyone
+   noticing. Anything tied to wall-clock time and expressed in ticks has to
+   be computed from the period. */
+const GDELT_EVERY_TICKS = Math.max(1, Math.round(3600000 / CRON_PERIOD_MS));
+
 async function readSharedCache(cacheUrl) {
   const cached = await caches.default.match(cacheUrl);
   if (!cached) return null;
@@ -298,7 +339,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-10-alertsa';
+const WORKER_BUILD = '2026-10-13-outagecron';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -3906,39 +3947,56 @@ export default {
     const nowMs = event && event.scheduledTime ? event.scheduledTime : Date.now();
     const tick = Math.floor(nowMs / CRON_PERIOD_MS);
 
-    /* A Worker invocation may make at most 50 subrequests, and everything
-       queued here shares one invocation. Doing all three refreshes on every
-       tick came to 58 in the worst case, so the last requests issued simply
-       threw -- and because the three run concurrently, which one got starved
-       varied from tick to tick. That is the intermittent "some feeds populate,
-       some never do" behaviour.
+    /* Which schedule fired. The 50-external-subrequest ceiling is per
+       invocation, so splitting the work across two triggers gives each its
+       own budget instead of dividing one -- that is the whole reason
+       outages moved off the main cron. */
+    const cron = (event && event.cron) || '';
 
-       News runs every tick, since it is the headline of the page. The
-       incident and outage refreshes alternate, which halves the peak and
-       leaves both parities around 35.
+    /* The outage trigger does one shard and nothing else. Counted in its
+       OWN period, so the shard advances once a minute; counting it in the
+       main period would hold the same shard for two firings and leave the
+       other one never refreshed. */
+    if (cron === OUTAGE_CRON) {
+      const outageTick = Math.floor(nowMs / OUTAGE_CRON_PERIOD_MS);
+      ctx.waitUntil(refreshOutageShard(outageTick % OUTAGE_SHARDS));
+      return;
+    }
 
-       That shape is why the cron can be sped up safely. The ceiling is
-       per-invocation, not per-day: firing more often does not add a single
-       subrequest to any one tick, it just brings each shard round sooner.
-       At two minutes the peak is still ~35 of 50, and the dashboard gets
-       incidents every 4 minutes instead of 10, and every outage shard and
-       news shard every 8 minutes instead of 20.
-
-       Against the daily allowance this is nothing: 720 invocations a day
-       out of 100,000. What would NOT be safe is doing all three refreshes
-       on one tick -- that came to 58 and is what broke the feeds before. */
+    /* News leads on every main tick either way -- it is the headline of the
+       page. */
     ctx.waitUntil(refreshNewsShard(tick % NEWS_SHARDS, tick, env));
-    if (tick % 2 === 0) {
+
+    if (cron === MAIN_CRON) {
+      /* Incidents used to alternate with outages, which is why they were
+         only re-read every other tick. With outages gone from this
+         invocation they run every tick: about 31 subrequests together with
+         the news shard, below the peak that has been running all along, and
+         now reached every 2 minutes instead of every 4. Nothing new is
+         risked; a slot was freed. */
       ctx.waitUntil(refreshAllIncidents());
     } else {
-      ctx.waitUntil(refreshOutageShard(Math.floor(tick / 2) % OUTAGE_SHARDS));
+      /* An unrecognised schedule. The cron strings are asserted against
+         wrangler.jsonc by test/cron_period.test.mjs, so this should be
+         unreachable -- but the failure it guards against is a whole refresh
+         path silently doing nothing, and this project has paid for that kind
+         twice, so there is a fallback.
+
+         It is the OLD single-cron shape: news every tick, incidents and
+         outages on alternating ticks. Deliberately not "do all three",
+         which is what the first version of this fallback did -- measured at
+         59 subrequests against a ceiling of 50, which is precisely the
+         starvation it was written to avoid. Degrading to the known-safe
+         shape is the only fallback worth having. */
+      if (tick % 2 === 0) ctx.waitUntil(refreshAllIncidents());
+      else ctx.waitUntil(refreshOutageShard(Math.floor(tick / 2) % OUTAGE_SHARDS));
     }
-    /* GDELT stays on the cron only as a fallback for /api/gdelt; the page
-       reads /api/news first. Its refresh failing is expected and harmless. */
-    /* GDELT is only a fallback for /api/gdelt and rejects most attempts
-       anyway; running it every tick alongside the news shard and all eight
-       incident feeds pushes one invocation toward the subrequest and CPU
-       ceilings. Once an hour is plenty for a backstop. */
-    if (tick % 12 === 0) ctx.waitUntil(refreshGdeltCache().catch(() => {}));
+
+    /* GDELT is only a fallback for /api/gdelt -- the page reads /api/news
+       first -- and it rejects most attempts anyway, so once an hour is
+       plenty for a backstop. Derived from the period rather than written as
+       a tick count: it was 12 when a tick was five minutes, and speeding
+       the cron to two quietly turned "hourly" into every 24 minutes. */
+    if (tick % GDELT_EVERY_TICKS === 0) ctx.waitUntil(refreshGdeltCache().catch(() => {}));
   }
 };

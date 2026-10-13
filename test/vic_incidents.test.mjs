@@ -59,10 +59,27 @@ const warnProps = (samples.warning && samples.warning.sample) || {
   status: 'Minor', updated: '2026-10-05T13:44:34+11:00'
 };
 const w = one(warnProps);
-ck('the level is read', w && w.alertLevel === 'Advice', w && w.alertLevel);
-ck('the title is the place, not the level', w && /Barwon River/.test(w.title), w && w.title);
-ck('the title is never just the level', w && w.title.toLowerCase() !== 'advice', w && w.title);
-ck('status stays separate from the level', w && w.status === 'Minor', w && w.status);
+/* Asserted by shape, not by value. These three pinned the exact strings of
+   whichever warning the probe happened to capture -- Advice, "Barwon
+   River", Minor -- and failed the moment Victoria's warning list moved on
+   to a Watch and Act somewhere else. That is the parser working and the
+   test complaining, which is the wrong way round, and it is the third time
+   this file has done it. */
+const LEVELS = /^(advice|watch and act|watch & act|emergency warning|all clear|evacuate|prepare to (leave|evacuate))$/i;
+ck('a warning carries a published level', w && LEVELS.test(String(w.alertLevel).trim()),
+  w && w.alertLevel);
+ck('the title is a place, not a restatement of the level',
+  w && w.title.length > 4
+    && w.title.toLowerCase().replace(/&/g, 'and').trim()
+       !== String(w.alertLevel).toLowerCase().replace(/&/g, 'and').trim(),
+  w && { title: w.title, level: w.alertLevel });
+/* The distinction the whole parser exists for: how it is behaving is not
+   what the public is told to do. Status may legitimately be empty; what it
+   must never be is a copy of the level. */
+ck('status stays separate from the level',
+  w && String(w.status).toLowerCase() !== String(w.alertLevel).toLowerCase(),
+  w && { status: w.status, level: w.alertLevel });
+ck('and is not itself a level', w && !LEVELS.test(String(w.status).trim()), w && w.status);
 
 console.log('\n== an incident: category1 is a TYPE and must not become a level ==');
 const incProps = (samples.incident && samples.incident.sample) || {

@@ -590,6 +590,73 @@ console.log('\n== one cron tick stays inside the subrequest ceiling ==');
   check('both tick parities do real work', ticks.every(t => t > 10), ticks);
 }
 
+console.log('\n== each cron trigger, costed on its own ==');
+{
+  /* The block above fires scheduled() with no cron, which exercises the
+     FALLBACK path and not what production runs. Both real schedules need
+     measuring separately, because the whole reason there are two is that
+     together they exceed one invocation's budget -- the first version of
+     the fallback did run all three and came to 59 against a ceiling of 50.
+
+     Read out of the Worker rather than written here, so renaming a schedule
+     cannot leave this test quietly measuring nothing. */
+  const src = (await import('node:fs')).readFileSync('./src/worker.js', 'utf8');
+  const MAIN_CRON = /const MAIN_CRON = '([^']+)'/.exec(src)[1];
+  const OUTAGE_CRON = /const OUTAGE_CRON = '([^']+)'/.exec(src)[1];
+  const CEILING = 50;
+
+  const costOf = async (cron, minute) => {
+    reset();
+    upstream.http = () => new Response('down', { status: 503 });
+    fetchLog = [];
+    const waits = [];
+    await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 24, 0, minute), cron }, env,
+      { waitUntil: (p) => waits.push(p) });
+    await Promise.allSettled(waits);
+    return fetchLog.length;
+  };
+
+  const mainCosts = [await costOf(MAIN_CRON, 0), await costOf(MAIN_CRON, 2),
+                     await costOf(MAIN_CRON, 4)];
+  const outageCosts = [await costOf(OUTAGE_CRON, 0), await costOf(OUTAGE_CRON, 1),
+                       await costOf(OUTAGE_CRON, 2), await costOf(OUTAGE_CRON, 3)];
+  console.log('  main cron:   ' + JSON.stringify(mainCosts));
+  console.log('  outage cron: ' + JSON.stringify(outageCosts));
+
+  check('the main cron stays well inside the ceiling',
+    Math.max.apply(null, mainCosts) <= CEILING - 8, { mainCosts, CEILING });
+  check('the outage cron stays well inside the ceiling',
+    Math.max.apply(null, outageCosts) <= CEILING - 8, { outageCosts, CEILING });
+  /* The point of splitting them. If either grew enough that the sum fit in
+     one invocation again, the two triggers would be unnecessary complexity
+     -- and if the sum is over, they must stay separate. */
+  check('together they would exceed one invocation, which is why they are two',
+    Math.max.apply(null, mainCosts) + Math.max.apply(null, outageCosts) > CEILING,
+    { main: Math.max.apply(null, mainCosts), outage: Math.max.apply(null, outageCosts) });
+
+  /* Every tick must do real work. An outage cron that fetched nothing on
+     some minutes would be the silent-stall this design is meant to end. */
+  check('every outage firing fetches something', outageCosts.every(c => c > 0), outageCosts);
+  check('every main firing fetches something', mainCosts.every(c => c > 0), mainCosts);
+
+  /* The shard must ADVANCE minute to minute. Counted in the main period it
+     would hold the same shard for two firings and the other shard would
+     never be refreshed -- no error, just half the country's outages frozen. */
+  const shardStates = async (minute) => {
+    reset();
+    upstream.http = () => new Response('down', { status: 503 });
+    fetchLog = [];
+    const waits = [];
+    await worker.scheduled({ scheduledTime: Date.UTC(2026, 8, 24, 0, minute), cron: OUTAGE_CRON },
+      env, { waitUntil: (p) => waits.push(p) });
+    await Promise.allSettled(waits);
+    return fetchLog.join(' ');
+  };
+  const m0 = await shardStates(0), m1 = await shardStates(1), m2 = await shardStates(2);
+  check('consecutive outage firings fetch different shards', m0 !== m1, { m0: m0.length, m1: m1.length });
+  check('and the rotation comes back round', m0 === m2, { m0: m0.length, m2: m2.length });
+}
+
 
 console.log('\n== a day-first date is never silently transposed ==');
 {

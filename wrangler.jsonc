@@ -34,7 +34,22 @@
     // src/worker.js); the previous EMERGENCY_API_KEY binding for
     // emergencyapi.com has been retired along with that dependency, so there
     // is no longer any credential here to expire, rotate or leak.
-    "crons": ["*/2 * * * *"]
+    // Two triggers, because the 50-external-subrequest ceiling is per
+    // INVOCATION. A second schedule comes with its own budget rather than
+    // dividing the first, which is what lets outages refresh four times
+    // faster without going anywhere near a limit.
+    //
+    //   */2  news + all eight incident feeds   (~35 of 50 subrequests)
+    //   *    one outage shard, nothing else    (~22 of 50 subrequests)
+    //
+    // Both strings are matched against event.cron in src/worker.js and
+    // asserted by test/cron_period.test.mjs, so editing one here without
+    // the other fails CI instead of silently stopping a refresh path.
+    //
+    // The free plan allows 5 cron triggers and this uses 2 -- but that
+    // allowance is per ACCOUNT, so another Worker with its own schedules
+    // draws on the same five.
+    "crons": ["*/2 * * * *", "* * * * *"]
   }
 
   // ---------------------------------------------------------------------
