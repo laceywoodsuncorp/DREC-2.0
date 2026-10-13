@@ -136,3 +136,62 @@ jobs:
             items=$(grep -c "<item" /tmp/f.xml 2>/dev/null || echo 0)
             echo "  $u -> HTTP $code, $items items"
           done
+
+      # Is the cron actually firing, and how often? Asked here because every
+      # other way of asking measures the asker: every outage read warms the
+      # cache behind the response, so a diagnostic that sweeps the states
+      # sees ages it created itself. And cron triggers live in
+      # wrangler.jsonc, so a deployed build stamp proves the code shipped
+      # and says nothing about whether the second schedule was registered.
+      - name: What the cron has actually been doing
+        run: |
+          set -e
+          code=$(curl -sS -m 25 -o /tmp/crons.json -w '%{http_code}' \
+            https://drec-oncall-updates-site.lacey-wood.workers.dev/api/crons || echo 000)
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::/api/crons did not answer (HTTP $code)"
+            exit 0
+          fi
+          node -e '
+            const d = JSON.parse(require("fs").readFileSync("/tmp/crons.json", "utf8"));
+            console.log("build:    " + d.build);
+            console.log("expected: " + JSON.stringify(d.expected));
+            console.log("          main every " + d.expectedGapSeconds.main
+              + "s, outages every " + d.expectedGapSeconds.outages + "s");
+            if (!d.seen) {
+              // Not a failure. caches.default is per-datacentre, and a
+              // runner can easily reach a location no cron has run in --
+              // which is a known property of this setup, not a regression.
+              console.log("\nthis datacentre has logged no firing yet.");
+              process.exit(0);
+            }
+            let missing = [];
+            for (const [name, cron] of Object.entries(d.expected)) {
+              const s = d.seen[cron];
+              if (!s) { missing.push(name + " (" + cron + ")"); continue; }
+              console.log("\n" + name + "  " + cron);
+              console.log("  firings logged: " + s.count
+                + "   last: " + s.lastFiredAt);
+              console.log("  gaps (s):       " + JSON.stringify(s.gapsSeconds)
+                + "   median: " + s.medianGapSeconds);
+              const want = d.expectedGapSeconds[name];
+              // One missed firing doubles a gap and is not worth a warning;
+              // a median far off the schedule means the trigger is not
+              // running as configured.
+              if (s.medianGapSeconds !== null && s.medianGapSeconds > want * 1.5) {
+                console.log("::warning::" + name + " cron median gap "
+                  + s.medianGapSeconds + "s against an expected " + want + "s");
+              }
+            }
+            for (const m of missing) {
+              console.log("\n::warning::no firing logged for the " + m
+                + " schedule in this datacentre");
+            }
+            const unknown = Object.keys(d.seen).filter(c =>
+              !Object.values(d.expected).includes(c));
+            if (unknown.length) {
+              console.log("\n::warning::firings logged under unrecognised schedules: "
+                + JSON.stringify(unknown));
+            }
+          '

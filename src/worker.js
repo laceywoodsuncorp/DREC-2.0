@@ -120,6 +120,66 @@ const OUTAGE_CRON = '* * * * *';
    be computed from the period. */
 const GDELT_EVERY_TICKS = Math.max(1, Math.round(3600000 / CRON_PERIOD_MS));
 
+/* A log of what the cron actually fired, written by the scheduled handler
+   and served at /api/crons.
+
+   It exists because "are outages refreshing more often now" could not be
+   answered. Every read path calls warmColdOutages() behind the response, so
+   reading a state refreshes it -- which means the cacheAgeSeconds a
+   diagnostic sees is a measurement of the diagnostic. Sweeping eight states
+   produced ages of 1 to 15 seconds and looked like proof of a fast cron; it
+   was proof of nothing except that the sweep had just warmed them.
+
+   A cron trigger is also configured in wrangler.jsonc rather than in the
+   code, so a deployed build stamp proves the code shipped and says nothing
+   about whether the second schedule was registered. This says it.
+
+   Cache, not KV: a cron firing must not spend one of the 1,000 daily KV
+   writes, and Cache API calls do not count against the 50-subrequest
+   ceiling either. Per-datacentre, like every other cache entry here, so it
+   describes the location answering -- which is the right scope for the
+   question "is the cron running where I am". */
+const CRON_LOG_URL = 'https://drec-cache.internal/cron-log';
+const CRON_LOG_KEEP = 12;
+
+async function recordCronFiring(cron, atMs) {
+  try {
+    const cached = await readSharedCache(CRON_LOG_URL);
+    let log = {};
+    if (cached) { try { log = await cached.response.json(); } catch (e) { log = {}; } }
+    const key = cron || '(no cron field)';
+    const entry = log[key] || { firings: [], count: 0 };
+    /* Newest first, and capped -- this is a sanity check, not a history. */
+    entry.firings = [new Date(atMs).toISOString()].concat(entry.firings).slice(0, CRON_LOG_KEEP);
+    entry.count = (entry.count || 0) + 1;
+    log[key] = entry;
+    /* Two args only -- the third is the content type, not a TTL. Entry
+       lifetime is CACHE_ENTRY_LIFETIME_SECONDS, set by writeSharedCache
+       for every entry here. */
+    await writeSharedCache(CRON_LOG_URL, JSON.stringify(log));
+  } catch (e) { /* never let bookkeeping break a refresh */ }
+}
+
+/* The gaps between consecutive firings, in seconds, so the answer is a
+   number rather than a list of timestamps to subtract by hand. */
+function cronLogReport(log) {
+  const out = {};
+  for (const [cron, entry] of Object.entries(log || {})) {
+    const times = (entry.firings || []).map((t) => Date.parse(t)).filter((n) => isFinite(n));
+    const gaps = [];
+    for (let i = 0; i + 1 < times.length; i++) gaps.push(Math.round((times[i] - times[i + 1]) / 1000));
+    out[cron] = {
+      firings: entry.firings || [],
+      count: entry.count || 0,
+      gapsSeconds: gaps,
+      medianGapSeconds: gaps.length
+        ? gaps.slice().sort((a, b) => a - b)[Math.floor(gaps.length / 2)] : null,
+      lastFiredAt: (entry.firings || [])[0] || null
+    };
+  }
+  return out;
+}
+
 async function readSharedCache(cacheUrl) {
   const cached = await caches.default.match(cacheUrl);
   if (!cached) return null;
@@ -339,7 +399,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-13-outagecron';
+const WORKER_BUILD = '2026-10-13-cronlog';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -3887,6 +3947,24 @@ async function handleApi(url, env, ctx, request) {
       ? handleScrapeRun(request, env)
       : handleScrapeStatus(env);
   }
+  /* What the cron has actually been doing in this datacentre. See
+     recordCronFiring -- every other way of asking this measures the asker. */
+  if (url.pathname === '/api/crons') {
+    const cached = await readSharedCache(CRON_LOG_URL);
+    let log = null;
+    if (cached) { try { log = await cached.response.json(); } catch (e) { log = null; } }
+    return new Response(JSON.stringify({
+      ok: true, build: WORKER_BUILD,
+      expected: { main: MAIN_CRON, outages: OUTAGE_CRON },
+      expectedGapSeconds: { main: CRON_PERIOD_MS / 1000, outages: OUTAGE_CRON_PERIOD_MS / 1000 },
+      /* null, not {} -- "this location has seen no firing" and "the cron
+         fired and logged nothing" are different answers. */
+      seen: log ? cronLogReport(log) : null,
+      cacheAgeSeconds: cached ? Math.round(cached.ageSeconds) : null
+    }, null, 1), { status: 200, headers: {
+      'Content-Type': 'application/json', 'Cache-Control': 'no-store',
+      'X-Worker-Build': WORKER_BUILD } });
+  }
   if (url.pathname === '/api/news') return handleNews(env, ctx);
   if (url.pathname === '/api/gdelt') return handleGdelt();
 
@@ -3952,6 +4030,9 @@ export default {
        own budget instead of dividing one -- that is the whole reason
        outages moved off the main cron. */
     const cron = (event && event.cron) || '';
+    /* Logged first and on every path, so an unrecognised schedule shows up
+       as itself rather than as silence. */
+    ctx.waitUntil(recordCronFiring(cron, nowMs));
 
     /* The outage trigger does one shard and nothing else. Counted in its
        OWN period, so the shard advances once a minute; counting it in the

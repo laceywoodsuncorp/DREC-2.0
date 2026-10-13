@@ -658,6 +658,87 @@ console.log('\n== each cron trigger, costed on its own ==');
 }
 
 
+console.log('\n== the cron log, because every other way of asking measures the asker ==');
+{
+  /* "Are outages refreshing more often now" had no honest answer. Every
+     outage read calls warmColdOutages() behind the response, so reading a
+     state refreshes it: a diagnostic that swept eight states saw cache ages
+     of 1 to 15 seconds and that was a measurement of the sweep, not of the
+     cron. And because cron triggers are configured in wrangler.jsonc rather
+     than in the code, a deployed build stamp proves the code shipped while
+     saying nothing about whether the second schedule was registered.
+
+     So the Worker records its own firings and serves them. This checks the
+     recording works, the gaps are computed, and -- most importantly -- that
+     a location which has seen NO firing says so instead of looking fine. */
+  const src = (await import('node:fs')).readFileSync('./src/worker.js', 'utf8');
+  const OUTAGE_CRON = /const OUTAGE_CRON = '([^']+)'/.exec(src)[1];
+  const MAIN_CRON = /const MAIN_CRON = '([^']+)'/.exec(src)[1];
+
+  const fire = async (cron, atMs) => {
+    const waits = [];
+    await worker.scheduled({ scheduledTime: atMs, cron }, env, { waitUntil: (p) => waits.push(p) });
+    await Promise.allSettled(waits);
+  };
+  const crons = async () => {
+    const r = await worker.fetch(new Request('https://example.test/api/crons'), env,
+      { waitUntil: () => {} });
+    return r.json();
+  };
+
+  reset();
+  upstream.http = () => new Response('down', { status: 503 });
+
+  /* Before any firing. This is the assertion that matters most: a cold
+     location must not present as healthy. */
+  const cold = await crons();
+  check('a location with no firing reports null, not an empty success',
+    cold.seen === null, cold.seen);
+  check('and still says which schedules it expects',
+    cold.expected.outages === OUTAGE_CRON && cold.expected.main === MAIN_CRON, cold.expected);
+  check('and what gap those schedules imply',
+    cold.expectedGapSeconds.outages === 60 && cold.expectedGapSeconds.main === 120,
+    cold.expectedGapSeconds);
+
+  /* Three outage firings a minute apart, as the trigger would. */
+  const t0 = Date.UTC(2026, 9, 13, 22, 0, 0);
+  await fire(OUTAGE_CRON, t0);
+  await fire(OUTAGE_CRON, t0 + 60000);
+  await fire(OUTAGE_CRON, t0 + 120000);
+  await fire(MAIN_CRON, t0 + 120000);
+
+  const seen = (await crons()).seen;
+  check('the outage cron is logged', !!seen && !!seen[OUTAGE_CRON], Object.keys(seen || {}));
+  check('the main cron is logged separately', !!seen && !!seen[MAIN_CRON], Object.keys(seen || {}));
+  const oc = (seen || {})[OUTAGE_CRON] || {};
+  check('all three outage firings are counted', oc.count === 3, oc.count);
+  /* The number the question actually wanted. */
+  check('the measured gap is 60 seconds', oc.medianGapSeconds === 60, oc);
+  check('newest firing first', oc.lastFiredAt === new Date(t0 + 120000).toISOString(), oc.lastFiredAt);
+  check('the main cron is counted apart from it', (seen[MAIN_CRON] || {}).count === 1, seen[MAIN_CRON]);
+
+  /* An unrecognised schedule must appear as itself. If it were silently
+     folded into one of the known keys, the one failure this whole design
+     guards against would be invisible in the very report meant to show it. */
+  await fire('', t0 + 180000);
+  const seen2 = (await crons()).seen;
+  check('a firing with no cron field is logged under its own key',
+    Object.keys(seen2).some((k) => /no cron field/.test(k)), Object.keys(seen2));
+
+  /* Bookkeeping must never be the thing that breaks a refresh. */
+  reset();
+  upstream.http = () => new Response('down', { status: 503 });
+  const brokenCaches = { default: {
+    match: () => { throw new Error('cache exploded'); },
+    put: () => { throw new Error('cache exploded'); } } };
+  const realCaches = globalThis.caches;
+  globalThis.caches = brokenCaches;
+  let threw = false;
+  try { await fire(OUTAGE_CRON, t0 + 240000); } catch (e) { threw = true; }
+  globalThis.caches = realCaches;
+  check('a failing cache does not make the scheduled handler throw', !threw);
+}
+
 console.log('\n== a day-first date is never silently transposed ==');
 {
   reset();
