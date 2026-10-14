@@ -1,20 +1,20 @@
 {
-  "capturedAt": 1791957544999,
+  "capturedAt": 1791960187628,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 31,
-      "customers": 9857,
-      "unplannedCount": 31,
-      "unplannedCustomers": 9857,
+      "count": 32,
+      "customers": 9737,
+      "unplannedCount": 32,
+      "unplannedCustomers": 9737,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 30,
+          "count": 31,
           "shape": "table",
           "labels": [
             "Date",
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 11,
-            "customers": 211
+            "outages": 12,
+            "customers": 129
           }
         },
         {
@@ -45,8 +45,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 464,
-            "customers": 464
+            "outages": 81,
+            "customers": 81
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -112,12 +112,6 @@
           "location": "Horsfield Bay, Woy Woy",
           "customers": 35,
           "start": "1:45 am (Wed 14 Oct) to 1:10 pm (Wed 14 Oct)"
-        },
-        {
-          "network": "Ausgrid",
-          "location": "Jannali",
-          "customers": 48,
-          "start": "3:45 am (Wed 14 Oct) to 5:14 am (Wed 14 Oct)"
         },
         {
           "network": "Ausgrid",
@@ -234,11 +228,23 @@
           "start": "3:40 pm (Wed 14 Oct) to 4:24 pm (Wed 14 Oct)"
         },
         {
+          "network": "Ausgrid",
+          "location": "Muswellbrook",
+          "customers": null,
+          "start": "3:50 pm (Wed 14 Oct) to 5:21 pm (Wed 14 Oct)"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Wiley Park",
+          "customers": 10,
+          "start": "4:00 pm (Wed 14 Oct) to 10:30 pm (Wed 14 Oct)"
+        },
+        {
           "network": "Endeavour Energy",
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 211
+          "customers": 129
         }
       ]
     },
@@ -276,9 +282,9 @@
       "name": "Victoria",
       "count": 16,
       "customers": 1300,
-      "unplannedCount": 10,
+      "unplannedCount": 12,
       "unplannedCustomers": 1300,
-      "plannedCount": 6,
+      "plannedCount": 4,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -300,7 +306,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 292
+            "customers": 305
           }
         },
         {
@@ -313,7 +319,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 292
+            "customers": 305
           },
           "mergedInto": "Powercor"
         },
@@ -351,31 +357,10 @@
         },
         {
           "network": "Powercor",
-          "location": "Tarrington",
+          "location": "Collingwood",
           "kind": "planned",
           "customers": null,
-          "restore": "14:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Keely",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "14:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Meredith",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:15"
-        },
-        {
-          "network": "Powercor",
-          "location": "Kyabram",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:30"
+          "restore": "17:00"
         },
         {
           "network": "Powercor",
@@ -389,14 +374,7 @@
           "location": "Ballarat Central",
           "kind": "unplanned",
           "customers": null,
-          "restore": "17:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Sebastopol",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "18:00"
+          "restore": "18:30"
         },
         {
           "network": "Powercor",
@@ -414,10 +392,38 @@
         },
         {
           "network": "Powercor",
+          "location": "Keely",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "20:30"
+        },
+        {
+          "network": "Powercor",
           "location": "Cocoroc",
           "kind": "unplanned",
           "customers": null,
           "restore": "20:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Kyabram",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "21:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Sebastopol",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "22:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Mildura",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "22:00"
         },
         {
           "network": "Powercor",
@@ -470,8 +476,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 226,
-            "customers": 226
+            "outages": 222,
+            "customers": 222
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -510,32 +516,43 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 0,
-      "customers": 0,
-      "unplannedCount": 0,
-      "unplannedCustomers": 0,
+      "count": 2,
+      "customers": 19,
+      "unplannedCount": 2,
+      "unplannedCustomers": 19,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "TasNetworks",
-          "ok": false,
-          "count": 0,
-          "error": "Rendered, but no outage list could be recognised on the page",
-          "shape": "none",
+          "ok": true,
+          "count": 2,
+          "shape": "cards",
           "labels": [
+            "North region affecting",
             "Estimated restoration",
-            "Customers affected"
-          ],
-          "reported": {
-            "outages": 12,
-            "customers": 12
-          },
-          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
-          "reportedVia": "Power Outages Australia"
+            "Customers affected",
+            "Cause of the outage",
+            "North-West region affecting"
+          ]
         }
       ],
-      "outages": []
+      "outages": [
+        {
+          "network": "TasNetworks",
+          "location": "Underwood",
+          "cause": "Wires down",
+          "customers": 12,
+          "restore": "To be confirmed - Please check back after 6:00 PM"
+        },
+        {
+          "network": "TasNetworks",
+          "location": "Abbotsham, Spalford",
+          "cause": "Under investigation",
+          "customers": 7,
+          "restore": "To be confirmed - Please check back after 7:00 PM"
+        }
+      ]
     },
     "nt": {
       "state": "NT",
