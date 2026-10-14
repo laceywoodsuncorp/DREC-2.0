@@ -1,20 +1,20 @@
 {
-  "capturedAt": 1791935003964,
+  "capturedAt": 1791938466537,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 25,
-      "customers": 11482,
-      "unplannedCount": 25,
-      "unplannedCustomers": 11482,
+      "count": 27,
+      "customers": 11619,
+      "unplannedCount": 27,
+      "unplannedCustomers": 11619,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 24,
+          "count": 26,
           "shape": "table",
           "labels": [
             "Date",
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 10,
-            "customers": 175
+            "outages": 14,
+            "customers": 201
           }
         },
         {
@@ -45,8 +45,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 5069,
-            "customers": 5069
+            "outages": 4873,
+            "customers": 4873
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -97,15 +97,15 @@
         },
         {
           "network": "Ausgrid",
-          "location": "Wyoming",
-          "customers": 22,
-          "start": "10:25 pm (Tue 13 Oct) to 3:00 pm (Wed 14 Oct)"
-        },
-        {
-          "network": "Ausgrid",
           "location": "Cherrybrook",
           "customers": 32,
           "start": "10:25 pm (Tue 13 Oct) to 12:00 pm (Wed 14 Oct)"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Wyoming",
+          "customers": 22,
+          "start": "10:25 pm (Tue 13 Oct) to 10:48 am (Wed 14 Oct)"
         },
         {
           "network": "Ausgrid",
@@ -182,8 +182,8 @@
         {
           "network": "Ausgrid",
           "location": "Bass Hill, Georges Hall, Yagoona",
-          "customers": 1224,
-          "start": "8:30 am (Wed 14 Oct) to 12:00 pm (Wed 14 Oct)"
+          "customers": 1222,
+          "start": "8:30 am (Wed 14 Oct) to 10:50 am (Wed 14 Oct)"
         },
         {
           "network": "Ausgrid",
@@ -198,11 +198,23 @@
           "start": "9:35 am (Wed 14 Oct) to 3:00 pm (Wed 14 Oct)"
         },
         {
+          "network": "Ausgrid",
+          "location": "Roseville, Roseville Chase",
+          "customers": 81,
+          "start": "11:10 am (Wed 14 Oct) to 4:30 pm (Wed 14 Oct)"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Wahroonga",
+          "customers": 32,
+          "start": "11:30 am (Wed 14 Oct) to 5:00 pm (Wed 14 Oct)"
+        },
+        {
           "network": "Endeavour Energy",
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 175
+          "customers": 201
         }
       ]
     },
@@ -240,9 +252,9 @@
       "name": "Victoria",
       "count": 26,
       "customers": 1300,
-      "unplannedCount": 11,
+      "unplannedCount": 10,
       "unplannedCustomers": 1300,
-      "plannedCount": 15,
+      "plannedCount": 16,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -264,7 +276,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 35
+            "customers": 33
           }
         },
         {
@@ -277,7 +289,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 35
+            "customers": 33
           },
           "mergedInto": "Powercor"
         },
@@ -300,8 +312,8 @@
           "shape": "none",
           "labels": [],
           "reported": {
-            "outages": 443,
-            "customers": 443
+            "outages": 347,
+            "customers": 347
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -329,17 +341,10 @@
         },
         {
           "network": "Powercor",
-          "location": "Kyvalley",
-          "kind": "unplanned",
+          "location": "Koonoomoo",
+          "kind": "planned",
           "customers": null,
-          "restore": "10:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Toolern Vale",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "11:30"
+          "restore": "12:00"
         },
         {
           "network": "Powercor",
@@ -347,13 +352,6 @@
           "kind": "unplanned",
           "customers": null,
           "restore": "12:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Ballarat Central",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "12:30"
         },
         {
           "network": "Powercor",
@@ -371,17 +369,24 @@
         },
         {
           "network": "Powercor",
-          "location": "Marungi",
-          "kind": "planned",
-          "customers": null,
-          "restore": "13:00"
-        },
-        {
-          "network": "Powercor",
           "location": "St Albans",
           "kind": "planned",
           "customers": null,
           "restore": "13:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Mepunga",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "13:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Bellbrae",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "14:00"
         },
         {
           "network": "Powercor",
@@ -392,7 +397,7 @@
         },
         {
           "network": "Powercor",
-          "location": "Brunswick East",
+          "location": "Balwyn North",
           "kind": "unplanned",
           "customers": null,
           "restore": "14:30"
@@ -403,6 +408,13 @@
           "kind": "unplanned",
           "customers": null,
           "restore": "14:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Ballan and surrounds",
+          "kind": "planned",
+          "customers": null,
+          "restore": "15:00"
         },
         {
           "network": "Powercor",
@@ -504,8 +516,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 2633,
-            "customers": 2633
+            "outages": 2363,
+            "customers": 2363
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -544,107 +556,29 @@
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 11,
-      "customers": 618,
-      "unplannedCount": 2,
-      "unplannedCustomers": 251,
-      "plannedCount": 9,
-      "plannedCustomers": 367,
+      "count": 0,
+      "customers": 0,
+      "unplannedCount": 0,
+      "unplannedCustomers": 0,
+      "plannedCount": 0,
+      "plannedCustomers": 0,
       "networks": [
         {
           "name": "TasNetworks",
-          "ok": true,
-          "count": 11,
-          "shape": "cards",
-          "labels": [
-            "North-West region affecting",
-            "Estimated restoration",
-            "Customers affected",
-            "Cause of the outage",
-            "South region affecting",
-            "North region affecting"
-          ]
+          "ok": false,
+          "count": 0,
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": [],
+          "reported": {
+            "outages": 618,
+            "customers": 618
+          },
+          "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
+          "reportedVia": "Power Outages Australia"
         }
       ],
-      "outages": [
-        {
-          "network": "TasNetworks",
-          "location": "Eugenana, Spreyton",
-          "cause": "Overhead line damage",
-          "customers": 222,
-          "restore": "To be confirmed - Please check back after 2:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Bradys Lake",
-          "kind": "planned",
-          "customers": 120,
-          "restore": "Wednesday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Turners Beach",
-          "kind": "planned",
-          "customers": 106,
-          "restore": "Wednesday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Pipers River",
-          "kind": "planned",
-          "customers": 43,
-          "restore": "Wednesday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Newnham",
-          "kind": "planned",
-          "customers": 38,
-          "restore": "Wednesday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Gravelly Beach",
-          "cause": "Wires down",
-          "customers": 29,
-          "restore": "Wednesday Afternoon"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Cygnet",
-          "kind": "planned",
-          "customers": 20,
-          "restore": "Wednesday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Old Beach",
-          "kind": "planned",
-          "customers": 17,
-          "restore": "Wednesday 3:30 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "North region affecting",
-          "kind": "planned",
-          "customers": 10,
-          "restore": "Wednesday 3:30 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Bronte Park",
-          "kind": "planned",
-          "customers": 8,
-          "restore": "Wednesday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "North Bruny",
-          "kind": "planned",
-          "customers": 5,
-          "restore": "Wednesday 4:00 PM"
-        }
-      ]
+      "outages": []
     },
     "nt": {
       "state": "NT",
@@ -687,8 +621,8 @@
             "Move left"
           ],
           "reported": {
-            "outages": 4,
-            "customers": 130
+            "outages": 3,
+            "customers": 108
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
         }
