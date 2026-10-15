@@ -1,20 +1,20 @@
 {
-  "capturedAt": 1792019144207,
+  "capturedAt": 1792042971643,
   "states": {
     "nsw": {
       "state": "NSW",
       "name": "New South Wales",
-      "count": 5,
-      "customers": 211,
-      "unplannedCount": 5,
-      "unplannedCustomers": 211,
+      "count": 7,
+      "customers": 248,
+      "unplannedCount": 7,
+      "unplannedCustomers": 248,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 4,
+          "count": 6,
           "shape": "table",
           "labels": [
             "Date",
@@ -34,8 +34,8 @@
             "Affected customers"
           ],
           "reported": {
-            "outages": 9,
-            "customers": 73
+            "outages": 8,
+            "customers": 161
           }
         },
         {
@@ -45,8 +45,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 3364,
-            "customers": 3364
+            "outages": 483,
+            "customers": 483
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -55,9 +55,9 @@
       "outages": [
         {
           "network": "Ausgrid",
-          "location": "Beacon Hill",
-          "customers": 37,
-          "start": "12:40 pm (Sat 10 Oct) Est. restore time expired"
+          "location": "Rose Bay",
+          "customers": null,
+          "start": "5:25 pm (Wed 14 Oct) to 11:04 am (Thu 15 Oct)"
         },
         {
           "network": "Ausgrid",
@@ -67,22 +67,34 @@
         },
         {
           "network": "Ausgrid",
-          "location": "Arcadia, Fiddletown",
-          "customers": 101,
-          "start": "8:30 pm (Wed 14 Oct) to 9:58 pm (Wed 14 Oct)"
+          "location": "Gymea",
+          "customers": null,
+          "start": "9:25 am (Thu 15 Oct) to 10:58 am (Thu 15 Oct)"
         },
         {
           "network": "Ausgrid",
-          "location": "Gymea",
+          "location": "Cessnock",
           "customers": null,
-          "start": "9:25 am (Thu 15 Oct) to 3:00 pm (Thu 15 Oct)"
+          "start": "11:25 am (Thu 15 Oct) to 1:59 pm (Thu 15 Oct)"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Rutherford",
+          "customers": 87,
+          "start": "12:45 pm (Thu 15 Oct) to 6:00 pm (Thu 15 Oct)"
+        },
+        {
+          "network": "Ausgrid",
+          "location": "Yagoona",
+          "customers": null,
+          "start": "3:50 pm (Thu 15 Oct) to 9:00 pm (Thu 15 Oct)"
         },
         {
           "network": "Endeavour Energy",
           "location": "Search",
           "cause": "Outage list",
           "kind": "unplanned",
-          "customers": 73
+          "customers": 161
         }
       ]
     },
@@ -118,11 +130,11 @@
     "vic": {
       "state": "VIC",
       "name": "Victoria",
-      "count": 25,
+      "count": 18,
       "customers": 1300,
-      "unplannedCount": 11,
+      "unplannedCount": 10,
       "unplannedCustomers": 1300,
-      "plannedCount": 14,
+      "plannedCount": 8,
       "plannedCustomers": 0,
       "networks": [
         {
@@ -137,14 +149,14 @@
         {
           "name": "Powercor",
           "ok": true,
-          "count": 22,
+          "count": 15,
           "shape": "cards",
           "labels": [
             "Estimated restoration"
           ],
           "reported": {
             "outages": null,
-            "customers": 108
+            "customers": 149
           }
         },
         {
@@ -157,7 +169,7 @@
           ],
           "reported": {
             "outages": null,
-            "customers": 108
+            "customers": 149
           },
           "mergedInto": "Powercor"
         },
@@ -180,8 +192,8 @@
           "shape": "none",
           "labels": [],
           "reported": {
-            "outages": 125,
-            "customers": 125
+            "outages": 0,
+            "customers": 0
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -195,48 +207,6 @@
         },
         {
           "network": "Powercor",
-          "location": "Picola",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "11:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Birchip",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "12:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Yarroweyah and surrounds",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "12:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Shepparton",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "12:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Myrniong and surrounds",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "12:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Traynors Lagoon",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "12:30"
-        },
-        {
-          "network": "Powercor",
           "location": "Werribee",
           "kind": "unplanned",
           "customers": null,
@@ -244,35 +214,7 @@
         },
         {
           "network": "Powercor",
-          "location": "Thornbury",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "13:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Mildura",
-          "kind": "planned",
-          "customers": null,
-          "restore": "14:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Bacchus Marsh",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Smokeytown",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Newbury",
+          "location": "Robinvale and surrounds",
           "kind": "planned",
           "customers": null,
           "restore": "15:00"
@@ -286,38 +228,17 @@
         },
         {
           "network": "Powercor",
-          "location": "Melton West",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:00"
-        },
-        {
-          "network": "Powercor",
-          "location": "Moggs Creek and surrounds",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Colac",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Beeac",
-          "kind": "planned",
-          "customers": null,
-          "restore": "15:30"
-        },
-        {
-          "network": "Powercor",
-          "location": "Elingamite and surrounds",
+          "location": "Tol Tol",
           "kind": "planned",
           "customers": null,
           "restore": "16:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Cooma",
+          "kind": "planned",
+          "customers": null,
+          "restore": "16:30"
         },
         {
           "network": "Powercor",
@@ -325,6 +246,48 @@
           "kind": "planned",
           "customers": null,
           "restore": "17:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Lancefield",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "18:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Laverton North and surrounds",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "18:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Winchelsea",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "18:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Brimpaen and surrounds",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "18:30"
+        },
+        {
+          "network": "Powercor",
+          "location": "Shepparton",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "20:00"
+        },
+        {
+          "network": "Powercor",
+          "location": "Mortlake",
+          "kind": "unplanned",
+          "customers": null,
+          "restore": "20:00"
         },
         {
           "network": "Powercor",
@@ -377,8 +340,8 @@
           "blocked": true,
           "error": "Operator blocks automated access (bot challenge); not bypassed",
           "reported": {
-            "outages": 2021,
-            "customers": 2021
+            "outages": 184,
+            "customers": 184
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page",
           "reportedVia": "Power Outages Australia"
@@ -389,27 +352,20 @@
     "wa": {
       "state": "WA",
       "name": "Western Australia",
-      "count": 4,
+      "count": 0,
       "customers": 0,
-      "unplannedCount": 4,
+      "unplannedCount": 0,
       "unplannedCustomers": 0,
       "plannedCount": 0,
       "plannedCustomers": 0,
       "networks": [
         {
           "name": "Western Power",
-          "ok": true,
-          "count": 4,
-          "shape": "cards",
-          "labels": [
-            "Estimated restoration time is 11",
-            "Estimated restoration time is 12",
-            "Estimated restoration time is 1"
-          ],
-          "reported": {
-            "outages": 99,
-            "customers": null
-          }
+          "ok": false,
+          "count": 0,
+          "error": "Rendered, but no outage list could be recognised on the page",
+          "shape": "none",
+          "labels": []
         },
         {
           "name": "Horizon Power",
@@ -419,59 +375,29 @@
           "error": "Operator blocks automated access (bot challenge); not bypassed"
         }
       ],
-      "outages": [
-        {
-          "network": "Western Power",
-          "location": "West Busselton and Busselton",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "30 am today"
-        },
-        {
-          "network": "Western Power",
-          "location": "Joondalup",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "00 pm today"
-        },
-        {
-          "network": "Western Power",
-          "location": "Balingup",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "00 pm today"
-        },
-        {
-          "network": "Western Power",
-          "location": "Mount Pleasant",
-          "kind": "unplanned",
-          "customers": null,
-          "restore": "30 am today"
-        }
-      ]
+      "outages": []
     },
     "tas": {
       "state": "TAS",
       "name": "Tasmania",
-      "count": 15,
-      "customers": 821,
-      "unplannedCount": 1,
-      "unplannedCustomers": 13,
-      "plannedCount": 14,
-      "plannedCustomers": 808,
+      "count": 3,
+      "customers": 186,
+      "unplannedCount": 0,
+      "unplannedCustomers": 0,
+      "plannedCount": 3,
+      "plannedCustomers": 186,
       "networks": [
         {
           "name": "TasNetworks",
           "ok": true,
-          "count": 15,
+          "count": 3,
           "shape": "cards",
           "labels": [
             "North region affecting",
             "Estimated restoration",
             "Customers affected",
             "North-West region affecting",
-            "South region affecting",
-            "Cause of the outage"
+            "South region affecting"
           ]
         }
       ],
@@ -481,63 +407,7 @@
           "location": "Coles Bay",
           "kind": "planned",
           "customers": 126,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Dunorlan, Kimberley, Moltema, Weegena",
-          "kind": "planned",
-          "customers": 125,
-          "restore": "Thursday 4:30 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Somerset",
-          "kind": "planned",
-          "customers": 93,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Ulverstone",
-          "kind": "planned",
-          "customers": 63,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Somerset",
-          "kind": "planned",
-          "customers": 56,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "New Norfolk",
-          "kind": "planned",
-          "customers": 55,
-          "restore": "Thursday 1:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Somerset",
-          "kind": "planned",
-          "customers": 53,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Bridgewater",
-          "kind": "planned",
-          "customers": 45,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "North-West region affecting",
-          "kind": "planned",
-          "customers": 45,
-          "restore": "Thursday 4:30 PM"
+          "restore": "Thursday 6:00 PM"
         },
         {
           "network": "TasNetworks",
@@ -548,38 +418,10 @@
         },
         {
           "network": "TasNetworks",
-          "location": "Derwent Bridge, Lake St Clair",
-          "kind": "planned",
-          "customers": 41,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Brighton, Pontville",
-          "kind": "planned",
-          "customers": 24,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Brighton, Pontville",
-          "kind": "planned",
-          "customers": 22,
-          "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
           "location": "Brighton",
           "kind": "planned",
           "customers": 16,
           "restore": "Thursday 4:00 PM"
-        },
-        {
-          "network": "TasNetworks",
-          "location": "Stonehenge, Swanston",
-          "cause": "Under investigation",
-          "customers": 13,
-          "restore": "To be confirmed - Please check back after 11:00 AM"
         }
       ]
     },
@@ -624,8 +466,8 @@
             "Move left"
           ],
           "reported": {
-            "outages": 5,
-            "customers": 252
+            "outages": 0,
+            "customers": 0
           },
           "viaError": "Power Outages Australia: Rendered, but no outage list could be recognised on the page"
         }
