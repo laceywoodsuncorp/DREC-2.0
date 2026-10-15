@@ -1,12 +1,12 @@
 {
- "at": "2026-10-13T23:46:40.810Z",
+ "at": "2026-10-15T23:48:13.945Z",
  "pages": [
   {
    "url": "https://www.cfs.sa.gov.au/warnings-restrictions/warnings/incidents-warnings/",
    "page": {
     "status": 200,
     "type": "text/html",
-    "bytes": 51814,
+    "bytes": 51657,
     "shape": "html",
     "title": "Incidents &amp; warnings - CFS",
     "carriesAlertLevel": false,
@@ -35,20 +35,76 @@
      "carriesOutageData": false
     },
     {
-     "url": "https://data.eso.sa.gov.au/prod/cfs/criimson/CFS_Current_Incidents.xml",
+     "url": "https://data.eso.sa.gov.au/feeds/prod/cap-au.xml",
      "status": 200,
-     "type": "text/html",
-     "bytes": 197,
-     "verdict": "soft-404: SA ESS - File Unavailable",
-     "title": "SA ESS - File Unavailable"
+     "type": "application/xml",
+     "bytes": 35475,
+     "shape": "xml",
+     "items": 33,
+     "fields": [
+      "id",
+      "title",
+      "updated",
+      "entry",
+      "identifier",
+      "sender",
+      "sent",
+      "status",
+      "msgType",
+      "scope",
+      "code",
+      "incidents",
+      "info",
+      "language",
+      "category",
+      "event",
+      "responseType",
+      "urgency",
+      "severity",
+      "certainty",
+      "eventCode",
+      "valueName",
+      "value",
+      "effective",
+      "senderName",
+      "headline",
+      "description",
+      "instruction",
+      "web",
+      "parameter",
+      "area",
+      "areaDesc",
+      "circle",
+      "geocode"
+     ],
+     "carriesAlertLevel": false,
+     "carriesOutageData": false,
+     "levelFields": [
+      "status",
+      "category",
+      "urgency",
+      "severity"
+     ]
     },
     {
-     "url": "https://data.eso.sa.gov.au/prod/cfs/criimson/CFS_Fire_Warnings.xml",
+     "url": "https://data.eso.sa.gov.au/prod/cfs/criimson/fireDangerRating.xml",
      "status": 200,
-     "type": "text/html",
-     "bytes": 197,
-     "verdict": "soft-404: SA ESS - File Unavailable",
-     "title": "SA ESS - File Unavailable"
+     "type": "binary/octet-stream",
+     "bytes": 30587,
+     "shape": "xml",
+     "items": 0,
+     "fields": [
+      "updated",
+      "ID",
+      "Title",
+      "header",
+      "feedAvailable",
+      "forecastActive",
+      "forecast",
+      "link"
+     ],
+     "carriesAlertLevel": false,
+     "carriesOutageData": false
     }
    ],
    "scriptsScanned": [
@@ -65,7 +121,7 @@
    "page": {
     "status": 200,
     "type": "text/html",
-    "bytes": 51657,
+    "bytes": 55863,
     "shape": "html",
     "title": "Incidents and warnings | Alert SA ",
     "carriesAlertLevel": false,
@@ -80,7 +136,7 @@
      "url": "https://combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
      "status": 200,
      "type": "application/xml",
-     "bytes": 46628,
+     "bytes": 46797,
      "shape": "xml",
      "items": 39,
      "fields": [
@@ -129,12 +185,22 @@
      ]
     },
     {
+     "url": "https://dataportal.alertsa-prd.aws.managedcloud.solutions/fireDangerRating.xml",
+     "status": 200,
+     "type": "application/xml",
+     "bytes": 30850,
+     "shape": "other",
+     "title": "SA Country Fire Service Fire Danger and Total Fire Ban Information",
+     "carriesAlertLevel": false,
+     "carriesOutageData": false
+    },
+    {
      "url": "https://uat.combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
      "status": 200,
      "type": "application/xml",
-     "bytes": 428407,
+     "bytes": 460805,
      "shape": "xml",
-     "items": 339,
+     "items": 372,
      "fields": [
       "id",
       "title",
@@ -189,9 +255,12 @@
     }
    ],
    "scriptsScanned": [
+    "https://alert.sa.gov.au/__data/assets/js_file/0009/11511/dayjs.min.js?v=0.1.0",
+    "https://alert.sa.gov.au/__data/assets/js_file/0016/11608/constant.js?v=0.1.0",
+    "https://alert.sa.gov.au/__data/assets/js_file/0016/11716/cognito_config.js?v=0.1.0",
     "https://alert.sa.gov.au/?a=9200",
-    "https://alert.sa.gov.au/__data/assets/git_bridge/0011/9110/dist/main.js?h=1acbdef",
-    "https://alert.sa.gov.au/__data/assets/js_file/0015/276/auth.js?v=0.3.6"
+    "https://alert.sa.gov.au/__data/assets/git_bridge/0011/9110/dist/main.js?h=440615f",
+    "https://alert.sa.gov.au/__data/assets/js_file/0015/276/auth_menu.js?v=0.4.0"
    ]
   },
   {
