@@ -82,10 +82,24 @@ if (all.json && Array.isArray(all.json.features)) {
     for (const n of names) if (r[n] !== undefined && r[n] !== null) return r[n];
     return null;
   };
+  /* These fields are esriFieldTypeString, NOT dates -- "31/05/2026 12:08 PM",
+     day first. The first version of this probe ran Number() over them, got
+     NaN for all 120 records and reported "noStart: 120", which hid the very
+     distribution it was written to measure. Day-first matters: 05/06 is the
+     fifth of June here and would be the sixth of May read the other way. */
+  const parseWhen = (v) => {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'number' && isFinite(v) && v > 0) return v;           // TIMEADDED
+    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/i.exec(String(v));
+    if (!m) { const n = Date.parse(String(v)); return isFinite(n) ? n : null; }
+    let hour = Number(m[4]);
+    if (m[6]) { const pm = /pm/i.test(m[6]); if (hour === 12) hour = pm ? 12 : 0; else if (pm) hour += 12; }
+    return Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1]), hour, Number(m[5]));
+  };
   const START = ['OUTAGESTARTTIME', 'OUTAGE_START_TIME', 'STARTTIME', 'START_TIME'];
   const END = ['ESTIMATEDRESTORATIONTIME', 'ESTIMATED_RESTORATION_TIME', 'ETR', 'RESTORATIONTIME'];
-  const starts = rows.map((r) => Number(pick(r, START))).filter((n) => isFinite(n) && n > 0);
-  const ends = rows.map((r) => Number(pick(r, END))).filter((n) => isFinite(n) && n > 0);
+  const starts = rows.map((r) => parseWhen(pick(r, START))).filter((n) => n);
+  const ends = rows.map((r) => parseWhen(pick(r, END))).filter((n) => n);
   const now = Date.now();
   const DAY = 86400000;
 
@@ -96,8 +110,8 @@ if (all.json && Array.isArray(all.json.features)) {
   /* The question the screenshot asks: how much of this is history? */
   const buckets = { today: 0, lastWeek: 0, lastMonth: 0, older: 0, noStart: 0 };
   rows.forEach((r) => {
-    const s = Number(pick(r, START));
-    if (!isFinite(s) || s <= 0) { buckets.noStart++; return; }
+    const s = parseWhen(pick(r, START));
+    if (!s) { buckets.noStart++; return; }
     const age = now - s;
     if (age < DAY) buckets.today++;
     else if (age < 7 * DAY) buckets.lastWeek++;
@@ -109,6 +123,27 @@ if (all.json && Array.isArray(all.json.features)) {
   const endedCount = ends.filter((e) => e < now).length;
   report.restorationInPast = endedCount;
   console.log('  restoration time already past: ' + endedCount + ' of ' + ends.length);
+
+  /* The distribution that decides a safe cut-off. A real outage can run for
+     days -- a cyclone response legitimately does -- so the threshold has to
+     be set from what this operator actually publishes, not from a guess. */
+  const DAYS = (ms) => Math.round((now - ms) / DAY * 10) / 10;
+  const staleBy = (d) => rows.filter((r) => {
+    const e = parseWhen(pick(r, END));
+    return e !== null && (now - e) > d * DAY;
+  }).length;
+  report.staleByEtrDays = { 1: staleBy(1), 3: staleBy(3), 7: staleBy(7), 30: staleBy(30) };
+  console.log('  records whose ETR is already past by more than N days: '
+    + JSON.stringify(report.staleByEtrDays));
+  const oldest = rows.map((r) => ({ r, s: parseWhen(pick(r, START)) }))
+    .filter((x) => x.s).sort((a, b) => a.s - b.s).slice(0, 5);
+  report.oldestFive = oldest.map((x) => ({
+    started: fmt(x.s), ageDays: DAYS(x.s), etr: fmt(parseWhen(pick(x.r, END))),
+    customers: x.r.NOCUSTOMERSIMPACTED, area: String(x.r.AFFECTED_AREA || '').slice(0, 60)
+  }));
+  console.log('  oldest five:');
+  report.oldestFive.forEach((x) => console.log('    ' + x.started + '  ' + x.ageDays
+    + 'd old   etr ' + x.etr + '   ' + x.customers + ' cust   ' + x.area));
 
   /* Any field that marks a record closed. If one exists, the fix is a where
      clause rather than a date filter, which is both cheaper and the
@@ -127,7 +162,8 @@ if (all.json && Array.isArray(all.json.features)) {
   console.log('  NAIRIBIN records still in the layer: ' + nai.length);
   if (nai.length) {
     const r = nai[0];
-    console.log('    start: ' + fmt(Number(pick(r, START))) + '   etr: ' + fmt(Number(pick(r, END))));
+    console.log('    start: ' + fmt(parseWhen(pick(r, START))) + '   etr: ' + fmt(parseWhen(pick(r, END)))
+      + '   timeAdded: ' + fmt(r.TIMEADDED));
     console.log('    ' + JSON.stringify(r).slice(0, 320));
   }
 
@@ -135,7 +171,7 @@ if (all.json && Array.isArray(all.json.features)) {
   const firstPage = await get(BASE + '/query?where=1%3D1&outFields=*&returnGeometry=false&resultRecordCount=400&f=json');
   if (firstPage.json && Array.isArray(firstPage.json.features)) {
     const fr = firstPage.json.features.map((f) => f.attributes || {});
-    const fs2 = fr.map((r) => Number(pick(r, START))).filter((n) => isFinite(n) && n > 0);
+    const fs2 = fr.map((r) => parseWhen(pick(r, START))).filter((n) => n);
     report.ourPage = { rows: fr.length, oldest: fmt(Math.min(...fs2)), newest: fmt(Math.max(...fs2)) };
     console.log('\n  the page WE take (400, default order):');
     console.log('    rows ' + fr.length + '   oldest ' + report.ourPage.oldest
@@ -150,7 +186,7 @@ if (all.json && Array.isArray(all.json.features)) {
   console.log('\n  orderByFields supported: ' + report.orderBySupported);
   if (report.orderBySupported) {
     const or = ordered.json.features.map((f) => f.attributes || {});
-    console.log('    newest five: ' + or.map((r) => fmt(Number(pick(r, START)))).join(', '));
+    console.log('    newest five: ' + or.map((r) => fmt(parseWhen(pick(r, START)))).join(', '));
   }
 } else {
   report.fetchError = all.error || all.snippet;
