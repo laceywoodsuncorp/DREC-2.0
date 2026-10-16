@@ -28,6 +28,9 @@ const grab = (re) => { const m = re.exec(src); if (!m) throw new Error('not foun
 const parseWa = new Function([
   grab(/const WA_LEVELS = \{[\s\S]*?\n\};/),
   grab(/function geometryPoint\(geometry, depth = 0\) \{[\s\S]*?\n\}/),
+  /* normaliseWhen refuses to invent an ISO from a local d/m/y or d-m-y
+     date, and the pattern it checks lives in this constant. */
+  grab(/const LOCAL_DATE_RE = [^\n]*\n/, 'LOCAL_DATE_RE'),
   grab(/function normaliseWhen\([\s\S]*?\n\}/),
   grab(/function parseWa\(json\) \{[\s\S]*?\n\}/)
 ].join('\n') + '; return parseWa;')();

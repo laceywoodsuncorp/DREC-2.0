@@ -30,6 +30,8 @@ const grab = (re, what) => {
   return m[0];
 };
 const fns = new Function([
+  grab(/const LOCAL_DATE_RE = [^\n]*\n/, 'LOCAL_DATE_RE'),
+  grab(/function parseLocalDateParts\([\s\S]*?\n\}/, 'parseLocalDateParts'),
   grab(/const OUTAGE_STATE_MAX_UTC_OFFSET_H = \{[\s\S]*?\n\};/, 'OUTAGE_STATE_MAX_UTC_OFFSET_H'),
   grab(/function outageStartInstantMs\([\s\S]*?\n\}/, 'outageStartInstantMs'),
   grab(/function markUpcoming\([\s\S]*?\n\}/, 'markUpcoming'),
@@ -121,6 +123,18 @@ console.log('\n== month-first operators still work ==');
 const evo = { kind: 'unplanned', start: '10/20/2026 8:00:00 AM' };
 fns.markUpcoming([evo], 'act', NOW);
 ck('a month-first future date is upcoming', evo.upcoming === true, evo);
+
+console.log('\n== the dash format, from CitiPower and Powercor ==');
+{
+  /* 14:00 in Melbourne (AEDT) is 03:00 UTC. */
+  const melb2pm = Date.UTC(2026, 9, 16, 3, 0);
+  const begun = { kind: 'unplanned', start: '13:51 16-10-2026' };
+  fns.markUpcoming([begun], 'vic', melb2pm);
+  ck('a Powercor job that started nine minutes ago is not upcoming', !begun.upcoming, begun);
+  const later = { kind: 'unplanned', start: '07:00 05-11-2026' };
+  fns.markUpcoming([later], 'vic', melb2pm);
+  ck('one dated 05-11 is three weeks away, not six months ago', later.upcoming === true, later);
+}
 
 console.log('\n== on every response, against the clock at that moment ==');
 /* The first version did this inside applyOutageSnapshot, which returns

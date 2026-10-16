@@ -34,11 +34,14 @@ const grab = (re, what) => {
   return m[0];
 };
 const fns = new Function([
+  grab(/const LOCAL_DATE_RE = [^\n]*\n/, 'LOCAL_DATE_RE'),
+  grab(/function parseLocalDateParts\([\s\S]*?\n\}/, 'parseLocalDateParts'),
   grab(/const OUTAGE_STALE_AFTER_RESTORE_MS = [^\n]*\n/, 'OUTAGE_STALE_AFTER_RESTORE_MS'),
   grab(/const OUTAGE_STALE_AFTER_START_MS = [^\n]*\n/, 'OUTAGE_STALE_AFTER_START_MS'),
   grab(/function latestPossibleMs\([\s\S]*?\n\}/, 'latestPossibleMs'),
-  grab(/function outageIsStale\([\s\S]*?\n\}/, 'outageIsStale')
-].join('\n') + '; return { latestPossibleMs, outageIsStale, OUTAGE_STALE_AFTER_RESTORE_MS, OUTAGE_STALE_AFTER_START_MS };')();
+  grab(/function outageIsStale\([\s\S]*?\n\}/, 'outageIsStale'),
+  grab(/function normaliseWhen\([\s\S]*?\n\}/, 'normaliseWhen')
+].join('\n') + '; return { latestPossibleMs, outageIsStale, normaliseWhen, parseLocalDateParts, OUTAGE_STALE_AFTER_RESTORE_MS, OUTAGE_STALE_AFTER_START_MS };')();
 
 let pass = 0, fail = 0;
 const ck = (n, c, e) => {
@@ -140,6 +143,35 @@ ck('an old start with no restoration is stale',
   fns.outageIsStale('25/09/2026 06:00 AM', '', NOW));
 ck('a recent start with no restoration is kept',
   !fns.outageIsStale('14/10/2026 06:00 AM', '', NOW));
+
+console.log('\n== the dash format, which Date.parse silently transposes ==');
+/* CitiPower and Powercor's feed writes "17:00 16-10-2026": time first,
+   dashes. Measured: Date.parse("07:00 05-11-2026") is 2026-05-11 -- month
+   first -- and Date.parse("16-10-2026") is NaN. So in the first twelve days
+   of every month, a current outage would have been dated six months ago and
+   dropped by this very filter. */
+{
+  const nov5 = Date.UTC(2026, 10, 5, 2, 0);   // 1pm in Melbourne, 5 November
+  ck('a CitiPower outage on 5 November is NOT stale on 5 November',
+    !fns.outageIsStale('07:00 05-11-2026', '17:00 05-11-2026', nov5));
+  ck('"17:00 05-11-2026" reads as 5 November, not 11 May',
+    iso(fns.latestPossibleMs('17:00 05-11-2026')).startsWith('2026-11-05'),
+    iso(fns.latestPossibleMs('17:00 05-11-2026')));
+  ck('"13:51 16-10-2026" reads at all', iso(fns.latestPossibleMs('13:51 16-10-2026')) === '2026-10-16T13:51:00.000Z',
+    iso(fns.latestPossibleMs('13:51 16-10-2026')));
+  /* And the display side: no ISO is invented from it, so nothing downstream
+     can trust a transposed timestamp. */
+  const w = fns.normaliseWhen('07:00 05-11-2026');
+  ck('normaliseWhen keeps the string', w.when === '07:00 05-11-2026', w);
+  ck('and emits no transposed ISO', w.whenIso === undefined, w);
+  /* A real ISO timestamp must not be mistaken for a local date. */
+  ck('an ISO date is not read as day-first', fns.parseLocalDateParts('2026-10-16T10:00:00Z') === null,
+    fns.parseLocalDateParts('2026-10-16T10:00:00Z'));
+  ck('and still gets its ISO', fns.normaliseWhen('2026-10-16T10:00:00Z').whenIso === '2026-10-16T10:00:00.000Z');
+  /* Time after the date, with seconds and a meridiem: Evoenergy. */
+  const evo = fns.parseLocalDateParts('9/24/2026 6:05:00 PM');
+  ck('Evoenergy\'s month-first form still reads', evo && evo.month === 9 && evo.day === 24 && evo.hour === 18, evo);
+}
 
 console.log('\n== the thresholds are the measured ones ==');
 ck('restoration threshold is 2 days',

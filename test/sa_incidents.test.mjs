@@ -37,6 +37,9 @@ const grab = (re, what) => {
    against a copy that has drifted from what the Worker runs. */
 const fns = new Function([
   grab(/function stripTags\(/.source ? /function stripTags\([\s\S]*?\n\}/ : null, 'stripTags'),
+  /* normaliseWhen refuses to invent an ISO from a local d/m/y or d-m-y
+     date, and the pattern it checks lives in this constant. */
+  grab(/const LOCAL_DATE_RE = [^\n]*\n/, 'LOCAL_DATE_RE'),
   grab(/function normaliseWhen\([\s\S]*?\n\}/, 'normaliseWhen'),
   grab(/const SA_PUBLIC_LEVELS = [^\n]*\n/, 'SA_PUBLIC_LEVELS'),
   grab(/function capParameters\([\s\S]*?\n\}/, 'capParameters'),

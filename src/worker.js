@@ -385,7 +385,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-16-upcoming2';
+const WORKER_BUILD = '2026-10-16-cppcfeed';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -1086,13 +1086,63 @@ function pickCoords(record, geometry) {
    already-formatted local string. Keep the raw value for display, and add an
    ISO form whenever one can actually be derived so the browser can render it
    in the visitor's own timezone. Never invents a timestamp it can't parse. */
+/* The date part of an Australian operator's local timestamp, whichever of
+   the shapes they publish:
+
+     "31/05/2026 12:08 PM"      Western Power        day/month/year, time after
+     "9/24/2026 6:05:00 AM"     Evoenergy            month/day/year
+     "17:00 16-10-2026"         CitiPower/Powercor   time FIRST, dashes
+
+   The dash form is the one that bites. Date.parse reads "05-11-2026" as 11
+   May -- month first -- and "16-10-2026" not at all, so every date in the
+   first twelve days of a month comes back confidently wrong and the rest
+   come back empty. Measured, not assumed: "07:00 05-11-2026" parsed to
+   2026-05-11. Fed into the staleness filter, a CitiPower outage on 5
+   November would have been read as six months old and dropped.
+
+   Day first, as these operators write it; month first only when day-first
+   is not a real calendar date, which is how Evoenergy's 9/24 still reads.
+   A leading four-digit year (ISO) never matches, so real timestamps are left
+   to Date.parse, which handles them correctly. Returns null for anything it
+   does not recognise -- including an impossible date like 31/02. */
+const LOCAL_DATE_RE = /\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})\b/;
+function parseLocalDateParts(raw) {
+  const text = raw ? String(raw).trim() : '';
+  const dm = LOCAL_DATE_RE.exec(text);
+  if (!dm) return null;
+  const a = Number(dm[1]), b = Number(dm[2]);
+  let year = Number(dm[3]);
+  if (year < 100) year += 2000;
+  /* The time may sit before or after the date. Searched outside the date
+     itself, which carries no colon, so the two cannot be confused. */
+  const tm = /\b(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i.exec(text);
+  let hour = null, minute = null;
+  if (tm) {
+    hour = Number(tm[1]); minute = Number(tm[2]);
+    if (tm[3]) { const pm = /pm/i.test(tm[3]); if (hour === 12) hour = pm ? 12 : 0; else if (pm) hour += 12; }
+  }
+  const valid = (day, month) => {
+    if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+    const d = new Date(Date.UTC(year, month - 1, day));
+    return d.getUTCMonth() === month - 1 && d.getUTCDate() === day;
+  };
+  let day, month;
+  if (valid(a, b)) { day = a; month = b; }
+  else if (valid(b, a)) { day = b; month = a; }
+  else return null;
+  return { year, month, day, hour, minute, hasTime: hour !== null };
+}
+
 function normaliseWhen(raw) {
   const out = { when: raw ? String(raw).trim() : '' };
   if (!out.when) return out;
   let ms = null;
   if (/^\d{13}$/.test(out.when)) ms = Number(out.when);
   else if (/^\d{10}$/.test(out.when)) ms = Number(out.when) * 1000;
-  else if (/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/.test(out.when)) {
+  else if (LOCAL_DATE_RE.test(out.when)) {
+    /* Dashes as well as slashes: Date.parse reads "05-11-2026" as 11 May,
+       the same transposition described below, just with a different
+       separator -- see parseLocalDateParts. */
     /* Australian sources write the day first, and Date.parse reads d/m/y as
        US month-first: "09/03/2026" is 3 March here and comes back as 3
        September. A silently wrong date is worse than no date, and the raw
@@ -1142,29 +1192,15 @@ function latestPossibleMs(raw) {
   if (!text) return null;
   if (/^\d{13}$/.test(text)) return Number(text);
   if (/^\d{10}$/.test(text)) return Number(text) * 1000;
-
-  const m = /\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b(?:[\sT]+(\d{1,2}):(\d{2}))?\s*(AM|PM)?/i.exec(text);
-  if (m) {
-    const a = Number(m[1]), b = Number(m[2]);
-    let year = Number(m[3]);
-    if (year < 100) year += 2000;
-    let hour = m[4] === undefined ? 12 : Number(m[4]);
-    const minute = m[5] === undefined ? 0 : Number(m[5]);
-    if (m[6]) { const pm = /pm/i.test(m[6]); if (hour === 12) hour = pm ? 12 : 0; else if (pm) hour += 12; }
-    const mk = (day, month) => {
-      if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-      const d = new Date(Date.UTC(year, month - 1, day, hour, minute));
-      /* Rejects 31 February, which Date would otherwise roll into March. */
-      if (d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) return null;
-      return d.getTime();
-    };
-    /* Day first, as these feeds are documented to write it; month-first
-       only when that is not a real date, which is how a feed that does the
-       other thing still produces something rather than nothing. */
-    const dayFirst = mk(a, b);
-    return dayFirst !== null ? dayFirst : mk(b, a);
+  const parts = parseLocalDateParts(text);
+  if (parts) {
+    /* A date with no time is taken as midday: the question here is whether
+       it is DAYS old, and noon is the reading least wrong either way. */
+    return Date.UTC(parts.year, parts.month - 1, parts.day,
+      parts.hasTime ? parts.hour : 12, parts.hasTime ? parts.minute : 0);
   }
-
+  /* Only reached for strings with no d/m/y or d-m-y date in them -- ISO and
+     RFC forms, which Date.parse reads correctly. */
   const parsed = Date.parse(text);
   return isNaN(parsed) ? null : parsed;
 }
@@ -1246,24 +1282,12 @@ function outageStartInstantMs(o, state) {
   if (!text) return null;
   const offsetH = OUTAGE_STATE_MAX_UTC_OFFSET_H[state];
   if (offsetH === undefined) return null;   // unknown state: claim nothing
-  const m = /\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b(?:[\sT]+(\d{1,2}):(\d{2}))?\s*(AM|PM)?/i.exec(text);
-  if (!m) return null;
-  const a = Number(m[1]), b = Number(m[2]);
-  let year = Number(m[3]);
-  if (year < 100) year += 2000;
-  let hour = m[4] === undefined ? 0 : Number(m[4]);
-  const minute = m[5] === undefined ? 0 : Number(m[5]);
-  if (m[6]) { const pm = /pm/i.test(m[6]); if (hour === 12) hour = pm ? 12 : 0; else if (pm) hour += 12; }
-  const mk = (day, month) => {
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    const d = new Date(Date.UTC(year, month - 1, day, hour, minute));
-    if (d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) return null;
-    return d.getTime();
-  };
-  /* Day first, as Australian operators write it; month-first only when
-     day-first is not a real date. Same rule as latestPossibleMs. */
-  const local = mk(a, b) !== null ? mk(a, b) : mk(b, a);
-  if (local === null) return null;
+  const parts = parseLocalDateParts(text);
+  if (!parts) return null;
+  /* No time of day means midnight -- the earliest reading -- so "starts
+     20/10/2026" is not called upcoming on the 20th itself. */
+  const local = Date.UTC(parts.year, parts.month - 1, parts.day,
+    parts.hasTime ? parts.hour : 0, parts.hasTime ? parts.minute : 0);
   return local - offsetH * 3600000;
 }
 
@@ -2764,7 +2788,9 @@ const OUTAGE_FIELDS = {
   location: ['affected_area', 'affectedarea', 'suburb', 'suburbs', 'locality', 'localities',
     'location', 'locationname', 'location_name', 'area', 'areas', 'town', 'place',
     'street', 'streets', 'address', 'region', 'name', 'title'],
-  status: ['status', 'outagestatus', 'currentstatus', 'jobstatus', 'stage', 'progress', 'phase'],
+  status: ['status', 'outagestatus', 'currentstatus', 'jobstatus', 'stage', 'progress', 'phase',
+    /* CitiPower and Powercor: "Crews Attending", "Partially Restored". */
+    'crewstatus'],
   cause: ['cause', 'reason', 'outagecause', 'causedescription', 'causedesc', 'faulttype',
     'description', 'comment', 'comments', 'details', 'event', 'eventdescription'],
   /* The total first: Western Power also carries AFFECTED_AREA_NOCUSTOMERS,
@@ -2784,6 +2810,8 @@ const OUTAGE_FIELDS = {
   kind: ['plannedoutage', 'outagetype', 'type', 'plannedtype', 'worktype', 'jobtype',
     'category', 'classification', 'kind'],
   id: ['incidentref', 'event_id', 'outageid', 'jobid', 'eventid', 'incidentid', 'enarnumber',
+    /* CitiPower and Powercor's ORDER_ID. */
+    'orderid',
     'id', 'reference', 'ref', 'objectid']
 };
 
@@ -3149,6 +3177,49 @@ function parseOutageCsv(text, opts) {
 /* Exported so the scraper agent (scripts/scrape-outages.mjs) works from the
    same list as the Worker. Two copies of "who the operators are and where
    their page lives" would drift the first time one changed. */
+/* CitiPower and Powercor's live outage feed: one public JSON file on S3
+   behind both companies' outage maps,
+
+     https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json
+
+   found by the browser scraper among the requests their map pages make for
+   themselves. Shape: { ROWSET: { createDateTime, ROW: [ ... ] } }, each row
+   carrying BUSINESS, TOWN, POSTCODE, CUSTOMERS, CAUSE, CREW_STATUS,
+   START_TIME, ETR and a polygon. On 16 October it held 22 outages -- Powercor
+   18, CitiPower 4 -- where the browser, reading the rendered list pages, had
+   17 and 0, and the Worker's plain fetch of those pages had nothing at all.
+
+   ONE file for TWO operators, so each takes only its own rows by BUSINESS.
+   The scraper once read this platform's shared list from both sites and
+   showed every outage twice with the customer totals doubled; a filter
+   here is what prevents the same thing.
+
+   Rows are passed on GeoJSON-shaped so the polygon goes through the same
+   geometryPoint every other operator's does. A file without a ROWSET is
+   reported as unrecognised rather than as a quiet zero -- an empty list and
+   a changed format look identical otherwise. Times are "17:00 16-10-2026",
+   which parseLocalDateParts exists to read correctly. */
+function parseCppcOutages(business) {
+  const want = String(business).toLowerCase();
+  return function (json) {
+    if (!json || typeof json !== 'object' || !json.ROWSET || typeof json.ROWSET !== 'object') {
+      return { outages: [], diagnostics: { envelope: 'unrecognised', expected: 'ROWSET.ROW',
+        sampleKeys: Object.keys(json || {}).slice(0, 10) } };
+    }
+    const rows = Array.isArray(json.ROWSET.ROW) ? json.ROWSET.ROW : [];
+    const mine = rows.filter((r) => r && String(r.BUSINESS || '').toLowerCase() === want);
+    const fc = { features: mine.map((r) => {
+      const { geometry, centre, ...props } = r;
+      return { properties: props, geometry };
+    }) };
+    const result = normaliseOutages(fc);
+    /* When the file is fine but holds nothing for this business,
+       normaliseOutages has nothing to diagnose -- and nothing should be
+       diagnosed: zero outages in one of the two areas is an ordinary day. */
+    return result;
+  };
+}
+
 export const OUTAGE_NETWORKS = {
   nsw: {
     name: 'New South Wales',
@@ -3274,14 +3345,20 @@ export const OUTAGE_NETWORKS = {
         ] },
       /* CitiPower, Powercor and United Energy are one operator group on one
          platform, and each publishes the same "full outage list" page. */
-      { name: 'Powercor', area: 'Western Victoria',
+      /* Both read the shared feed behind their maps first (see
+         parseCppcOutages), each taking its own rows; the rendered list page
+         stays behind it as a fallback. confirmed, because it is a published
+         machine-readable feed rather than a page being scraped. */
+      { name: 'Powercor', area: 'Western Victoria', confirmed: true,
         site: 'https://www.powercor.com.au/power-outages-and-emergencies/full-outage-list/',
         sources: [
+          { url: 'https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json', format: 'json', parse: parseCppcOutages('Powercor') },
           { url: 'https://www.powercor.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable }
         ] },
-      { name: 'CitiPower', area: 'Inner Melbourne',
+      { name: 'CitiPower', area: 'Inner Melbourne', confirmed: true,
         site: 'https://www.citipower.com.au/power-outages-and-emergencies/full-outage-list/',
         sources: [
+          { url: 'https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json', format: 'json', parse: parseCppcOutages('CitiPower') },
           { url: 'https://www.citipower.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable }
         ] },
       { name: 'United Energy', area: 'South-eastern Melbourne and the Mornington Peninsula',

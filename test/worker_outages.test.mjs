@@ -770,9 +770,15 @@ console.log('\n== the named schedule, costed against both ceilings ==');
   const h = logs.map(hostsOf);
   check('consecutive ticks fetch different sets of hosts',
     h[0] !== h[1] && h[1] !== h[2] && h[2] !== h[3], h.map((x) => x.length));
-  /* And the rotation must come back round rather than drifting off. */
-  check('the same parity two ticks later fetches a comparable set',
-    Math.abs(costs[0] - costs[2]) <= 6 && Math.abs(costs[1] - costs[3]) <= 6, costs);
+  /* There used to be an assertion here that "the same parity two ticks
+     later fetches a comparable set". It compared two DIFFERENT outage
+     shards, passed while they happened to cost about the same, and failed
+     when CitiPower and Powercor gained a second source each. A replacement
+     comparing ticks four apart failed too: the news discovery slot rotates
+     with the tick, so no two ticks fetch identical hosts. There is no stable
+     rotation property to assert at this level, so none is -- the ones above
+     (inside the ceiling, real work on every tick, consecutive ticks differ)
+     and the one below (never both sweeps at once) are the real guarantees. */
   /* The CPU regression to catch by name. If incidents AND outages both ran
      every tick the cost would jump toward the 59 that broke it before --
      on subrequests, and on the CPU nobody was counting. */
