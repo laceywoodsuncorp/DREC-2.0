@@ -1,6 +1,6 @@
 {
- "at": "2026-10-16T00:47:21.944Z",
- "nowMs": 1792111641944,
+ "at": "2026-10-16T02:13:04.315Z",
+ "nowMs": 1792116784316,
  "layer": {
   "name": "Outage_Areas",
   "maxRecordCount": 2000,
@@ -21,14 +21,14 @@
    "SHAPE__Length:esriFieldTypeDouble"
   ]
  },
- "totalRecords": 130,
- "fetched": 130,
+ "totalRecords": 128,
+ "fetched": 128,
  "startRange": {
   "oldest": "2026-05-31T10:29:00.000Z",
   "newest": "2026-10-25T07:00:00.000Z"
  },
  "ageBuckets": {
-  "today": 127,
+  "today": 125,
   "lastWeek": 1,
   "lastMonth": 0,
   "older": 2,
@@ -44,35 +44,35 @@
  "oldestFive": [
   {
    "started": "2026-05-31T10:29:00.000Z",
-   "ageDays": 137.6,
+   "ageDays": 137.7,
    "etr": "2026-06-01T18:30:00.000Z",
    "customers": 55,
    "area": "RED GULLY,REGANS FORD,YATHROO,MINDARRA"
   },
   {
    "started": "2026-05-31T12:08:00.000Z",
-   "ageDays": 137.5,
+   "ageDays": 137.6,
    "etr": "2026-06-01T18:30:00.000Z",
    "customers": 134,
    "area": "KUKERIN,MOULYINNING,NAIRIBIN,DUMBLEYUNG,NORTH KUKERIN,NORTH "
   },
   {
    "started": "2026-10-14T17:35:00.000Z",
-   "ageDays": 1.3,
-   "etr": "2026-10-16T11:30:00.000Z",
+   "ageDays": 1.4,
+   "etr": "2026-10-16T15:00:00.000Z",
    "customers": 4,
    "area": "BALINGUP"
   },
   {
    "started": "2026-10-15T19:22:00.000Z",
-   "ageDays": 0.2,
-   "etr": "2026-10-16T09:30:00.000Z",
+   "ageDays": 0.3,
+   "etr": null,
    "customers": 6,
    "area": "HARVEY"
   },
   {
    "started": "2026-10-15T19:49:00.000Z",
-   "ageDays": 0.2,
+   "ageDays": 0.3,
    "etr": "2026-10-16T15:00:00.000Z",
    "customers": 6,
    "area": "HYDEN"
@@ -81,9 +81,7 @@
  "statusLikeFields": {
   "ESTIMATEDRESTORATIONTIME": [
    "01/06/2026 06:30 PM",
-   "16/10/2026 05:00 PM",
    "16/10/2026 03:00 PM",
-   "16/10/2026 03:30 PM",
    "17/10/2026 05:30 PM",
    "18/10/2026 06:00 AM",
    "17/10/2026 10:00 AM",
@@ -91,7 +89,9 @@
    "18/10/2026 04:00 PM",
    "18/10/2026 09:00 AM",
    "18/10/2026 12:30 PM",
-   "18/10/2026 05:30 PM"
+   "18/10/2026 05:30 PM",
+   "18/10/2026 01:00 PM",
+   "18/10/2026 06:30 PM"
   ]
  },
  "nairibin": [
@@ -113,9 +113,127 @@
   }
  ],
  "ourPage": {
-  "rows": 130,
+  "rows": 128,
   "oldest": "2026-05-31T10:29:00.000Z",
   "newest": "2026-10-25T07:00:00.000Z"
  },
- "orderBySupported": true
+ "orderBySupported": true,
+ "kindValues": {
+  "PLANNEDOUTAGE": {
+   "\"Unplanned\"": 112,
+   "\"Planned\"": 16
+  },
+  "OUTAGETYPE": {
+   "\"F\"": 105,
+   "\"P\"": 16,
+   "\"U\"": 7
+  }
+ },
+ "futureStart": {
+  "count": 123,
+  "byOurKind": {
+   "unplanned": 107,
+   "planned": 16
+  },
+  "samples": [
+   {
+    "area": "OAKFORD,BANJUP,FORRESTDALE",
+    "start": "16/10/2026 11:00 AM",
+    "etr": "16/10/2026 03:00 PM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-508392-V",
+    "customers": 142,
+    "ours": "unplanned"
+   },
+   {
+    "area": "MORLEY",
+    "start": "17/10/2026 07:30 AM",
+    "etr": "17/10/2026 05:30 PM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-202974-X",
+    "customers": 167,
+    "ours": "unplanned"
+   },
+   {
+    "area": "WOODLANDS",
+    "start": "17/10/2026 08:00 PM",
+    "etr": "18/10/2026 06:00 AM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-82513-W",
+    "customers": 104,
+    "ours": "unplanned"
+   },
+   {
+    "area": "CAMILLO,CHAMPION LAKES",
+    "start": "17/10/2026 07:00 AM",
+    "etr": "17/10/2026 10:00 AM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-2157821-U",
+    "customers": 72,
+    "ours": "unplanned"
+   },
+   {
+    "area": "AUSTRALIND",
+    "start": "17/10/2026 07:30 AM",
+    "etr": "17/10/2026 02:00 PM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-202784-X",
+    "customers": 3,
+    "ours": "unplanned"
+   },
+   {
+    "area": "BUNBURY",
+    "start": "18/10/2026 08:00 AM",
+    "etr": "18/10/2026 04:00 PM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-505332-V",
+    "customers": 27,
+    "ours": "unplanned"
+   },
+   {
+    "area": "DUNSBOROUGH",
+    "start": "18/10/2026 06:00 AM",
+    "etr": "18/10/2026 09:00 AM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-202854-X",
+    "customers": 92,
+    "ours": "unplanned"
+   },
+   {
+    "area": "PALMYRA",
+    "start": "18/10/2026 07:30 AM",
+    "etr": "18/10/2026 12:30 PM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-505862-V",
+    "customers": 197,
+    "ours": "unplanned"
+   }
+  ]
+ },
+ "holtRock": [
+  {
+   "OBJECTID": 545807,
+   "OUTAGETYPE": "F",
+   "INCIDENTREF": "INCD-2163641-U",
+   "ENARNUMBER": "641746",
+   "OUTAGESTARTTIME": "20/10/2026 08:00 AM",
+   "ESTIMATEDRESTORATIONTIME": "20/10/2026 04:00 PM",
+   "PLANNEDOUTAGE": "Unplanned",
+   "NOCUSTOMERSIMPACTED": 4,
+   "TIMEADDED": 1791903007000,
+   "AFFECTED_AREA": "HOLT ROCK",
+   "AFFECTED_AREA_NOCUSTOMERS": "4",
+   "Tags": "",
+   "SHAPE__Area": 20902241.9375,
+   "SHAPE__Length": 20820.304378841887
+  }
+ ]
 }
