@@ -385,7 +385,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-16-upcoming';
+const WORKER_BUILD = '2026-10-16-upcoming2';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -3917,6 +3917,73 @@ function sanitiseReported(reported) {
   return reported;
 }
 
+/* Re-decides "has this job started" against the clock at the moment of the
+   request, on every response, and corrects the counts to match.
+
+   A state payload is cached for minutes, and whether a job has started is a
+   question about now: a row marked upcoming at 07:59 is a live outage at
+   08:01, and the cache would keep calling it scheduled until the next
+   refresh. The first version did this inside applyOutageSnapshot, which
+   returns early for any state without snapshot data -- WA among them -- so
+   the pass never ran where the problem was found. It runs here instead,
+   unconditionally.
+
+   Counts are ADJUSTED by the rows whose status changed, never recomputed
+   from the rows. The row list is capped at 400 while the counts cover every
+   outage -- Queensland regularly hits the cap -- so recounting from the
+   list would quietly understate a big state. Rows beyond the cap keep the
+   classification they were given at refresh time, minutes ago.
+
+   It also means a payload cached by an older build, which never marked
+   anything, is corrected on its first request rather than after a refresh. */
+function applyUpcoming(payload, state, nowMs) {
+  if (!payload || !Array.isArray(payload.outages) || !payload.outages.length) return payload;
+  const now = nowMs === undefined ? Date.now() : nowMs;
+  const before = payload.outages;
+  const after = before.map((o) => {
+    const c = Object.assign({}, o);
+    /* Undo the earlier decision first, so a job that has begun since is
+       back to whatever the operator called it. */
+    if (c.upcoming) {
+      delete c.upcoming;
+      if (c.kindReported) {
+        if (c.kindReported === 'unlabelled') delete c.kind; else c.kind = c.kindReported;
+        delete c.kindReported;
+      }
+    }
+    return c;
+  });
+  markUpcoming(after, state, now);
+
+  let dU = 0, dUC = 0, dP = 0, dPC = 0, dUp = 0, dUpC = 0;
+  for (let i = 0; i < before.length; i++) {
+    const o = before[i], c = after[i];
+    const cust = o.customers || 0;
+    const wasPlanned = o.kind === 'planned', isPlanned = c.kind === 'planned';
+    if (wasPlanned !== isPlanned) {
+      if (isPlanned) { dP++; dPC += cust; dU--; dUC -= cust; }
+      else { dP--; dPC -= cust; dU++; dUC += cust; }
+    }
+    const wasUp = !!o.upcoming, isUp = !!c.upcoming;
+    if (wasUp !== isUp) { dUp += isUp ? 1 : -1; dUpC += isUp ? cust : -cust; }
+  }
+  const n = (v) => (typeof v === 'number' && isFinite(v) ? v : 0);
+  const reclassified = after.filter((c) => c.kindReported).length;
+  const out = Object.assign({}, payload, { outages: after });
+  /* Only touch counts the payload already carries, so an error payload or
+     a pre-split one does not sprout fields it never had. */
+  if (payload.unplannedCount !== undefined) {
+    out.unplannedCount = n(payload.unplannedCount) + dU;
+    out.unplannedCustomers = n(payload.unplannedCustomers) + dUC;
+    out.plannedCount = n(payload.plannedCount) + dP;
+    out.plannedCustomers = n(payload.plannedCustomers) + dPC;
+  }
+  out.upcomingCount = n(payload.upcomingCount) + dUp;
+  out.upcomingCustomers = n(payload.upcomingCustomers) + dUpC;
+  out.reclassifiedUpcoming = reclassified || undefined;
+  return out;
+}
+
 function applyOutageSnapshot(payload, snapshot, state) {
   const snap = snapshot && snapshot.states && snapshot.states[state];
   if (!snap) return payload;
@@ -3975,25 +4042,10 @@ function applyOutageSnapshot(payload, snapshot, state) {
     return cb - ca;
   });
 
-  /* Snapshot rows come from the scraper, which does not apply this rule,
-     and a live row reaching here may have been marked when it was cached
-     and since started. So it is recomputed here, against now, for every
-     row -- clearing first, so a job that has begun stops reading as
-     upcoming. */
-  outages.forEach((o) => {
-    if (o.upcoming) {
-      delete o.upcoming;
-      if (o.kindReported) { o.kind = o.kindReported === 'unlabelled' ? undefined : o.kindReported; delete o.kindReported; }
-    }
-  });
-  markUpcoming(outages, state);
-  const upcoming = outages.filter((o) => o.upcoming);
   const sum = (rows) => rows.reduce((t, o) => t + (o.customers || 0), 0);
   const unplanned = outages.filter((o) => o.kind !== 'planned');
   const planned = outages.filter((o) => o.kind === 'planned');
   return Object.assign({}, payload, {
-    upcomingCount: upcoming.length,
-    upcomingCustomers: sum(upcoming),
     ok: networks.some((n) => n.ok),
     complete: networks.every((n) => n.ok),
     count: outages.length,
@@ -4017,7 +4069,7 @@ async function handleOutagesState(state, ctx, env) {
   }
   const snapshot = await readOutageSnapshot(env);
   const send = (payload, extraHeaders) => new Response(
-    JSON.stringify(applyOutageSnapshot(payload, snapshot, state)),
+    JSON.stringify(applyUpcoming(applyOutageSnapshot(payload, snapshot, state), state)),
     { status: 200, headers: Object.assign({
       'Content-Type': 'application/json', 'Cache-Control': 'no-store',
       'X-Worker-Build': WORKER_BUILD }, extraHeaders || {}) });
