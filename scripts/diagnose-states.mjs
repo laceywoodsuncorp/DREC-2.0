@@ -134,6 +134,14 @@ for (const s of STATES) {
        whether a stale row is still reaching the dashboard is the actual
        question, and it is answerable straight from the rows. Anything whose
        start is more than 30 days ago should not be here at all. */
+    /* Scheduled jobs that have not started, and how many of them the
+       operator had labelled as something other than planned. Western Power
+       labelled 107 future jobs "Unplanned" on 16 October, which put them
+       all in the customers-off headline; unplannedCustomers is the number
+       that was wrong on the dashboard. */
+    unplannedCount: b.unplannedCount, unplannedCustomers: b.unplannedCustomers,
+    upcomingCount: b.upcomingCount, upcomingCustomers: b.upcomingCustomers,
+    reclassifiedUpcoming: b.reclassifiedUpcoming,
     staleRowsStillShown: oldRows(out).length,
     oldestRows: oldRows(out).slice(0, 3)
   };

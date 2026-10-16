@@ -385,7 +385,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-16-outagebuild';
+const WORKER_BUILD = '2026-10-16-upcoming';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -1198,6 +1198,92 @@ function outageIsStale(startRaw, restoreRaw, nowMs) {
   /* No usable date is not evidence of staleness. Most operators publish
      none, and dropping those would empty the map. */
   return false;
+}
+
+/* Has this outage actually started yet?
+
+   Reported from the live dashboard on 16 October: HOLT ROCK, Western
+   Power, 4 customers, "Started 20/10/2026 08:00 AM" -- drawn as a red
+   fault, four days before it was due to begin. Measured on the live layer
+   that day, 123 of Western Power's 128 records started in the FUTURE, and
+   its PLANNEDOUTAGE flag called 107 of those "Unplanned". It also uses an
+   OUTAGETYPE of "F" on 105 records, a value beside "P" and "U" that this
+   file had never handled. So the operator's own label cannot be trusted to
+   separate scheduled work from live faults, and following it faithfully
+   put a hundred future jobs into the "customers off" headline.
+
+   This does not try to decode "F". It relies on something that does not
+   need the operator's vocabulary: a job that has not started cannot be a
+   current fault. Whatever the flag says, a future start means scheduled.
+
+   The times are local and carry no timezone, so a naive parse reads WA's
+   08:00 as 08:00 UTC -- eight hours late -- and would call a job that
+   started an hour ago "not yet started", hiding a live outage. The offset
+   is the state's, and deliberately the LARGEST it can be (daylight time
+   where the state observes it): that makes the computed instant the
+   earliest the job could have meant, so a job is only ever marked
+   upcoming when it certainly has not begun. The cost is that outside
+   daylight time a job can show as current for up to an hour before it
+   truly starts -- the right side to err on, because hiding a real outage
+   is the expensive mistake. */
+const OUTAGE_STATE_MAX_UTC_OFFSET_H = {
+  nsw: 11, act: 11, vic: 11, tas: 11,   // AEDT
+  sa: 10.5,                              // ACDT
+  qld: 10,                               // AEST, no daylight saving
+  nt: 9.5,                               // ACST, no daylight saving
+  wa: 8                                  // AWST, no daylight saving
+};
+
+/* The earliest instant a local start string could mean, or null. A string
+   with no time of day is taken as midnight, again the earliest reading, so
+   "starts 20/10/2026" is not called upcoming on the 20th itself. */
+function outageStartInstantMs(o, state) {
+  if (o && o.startIso) {
+    const t = Date.parse(o.startIso);
+    if (!isNaN(t)) return t;               // a real timestamp needs no offset
+  }
+  const text = o && o.start ? String(o.start).trim() : '';
+  if (!text) return null;
+  const offsetH = OUTAGE_STATE_MAX_UTC_OFFSET_H[state];
+  if (offsetH === undefined) return null;   // unknown state: claim nothing
+  const m = /\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b(?:[\sT]+(\d{1,2}):(\d{2}))?\s*(AM|PM)?/i.exec(text);
+  if (!m) return null;
+  const a = Number(m[1]), b = Number(m[2]);
+  let year = Number(m[3]);
+  if (year < 100) year += 2000;
+  let hour = m[4] === undefined ? 0 : Number(m[4]);
+  const minute = m[5] === undefined ? 0 : Number(m[5]);
+  if (m[6]) { const pm = /pm/i.test(m[6]); if (hour === 12) hour = pm ? 12 : 0; else if (pm) hour += 12; }
+  const mk = (day, month) => {
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const d = new Date(Date.UTC(year, month - 1, day, hour, minute));
+    if (d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) return null;
+    return d.getTime();
+  };
+  /* Day first, as Australian operators write it; month-first only when
+     day-first is not a real date. Same rule as latestPossibleMs. */
+  const local = mk(a, b) !== null ? mk(a, b) : mk(b, a);
+  if (local === null) return null;
+  return local - offsetH * 3600000;
+}
+
+/* Marks jobs that have not started as scheduled work, whatever the operator
+   called them, and keeps the operator's own label beside it so nothing is
+   rewritten invisibly. Returns how many were reclassified. */
+function markUpcoming(outages, state, nowMs) {
+  const now = nowMs === undefined ? Date.now() : nowMs;
+  let reclassified = 0;
+  (outages || []).forEach((o) => {
+    const startMs = outageStartInstantMs(o, state);
+    if (startMs === null || startMs <= now) return;
+    o.upcoming = true;
+    if (o.kind !== 'planned') {
+      o.kindReported = o.kind || 'unlabelled';
+      o.kind = 'planned';
+      reclassified++;
+    }
+  });
+  return reclassified;
 }
 
 /* Finds the list of incident records inside whatever envelope a feed uses:
@@ -3569,6 +3655,11 @@ async function refreshStateOutages(state) {
     }
   });
 
+  /* Before anything is counted: a job that has not started is scheduled
+     work, not a fault, whatever the operator's flag says. See markUpcoming. */
+  const reclassifiedUpcoming = markUpcoming(outages, state);
+  const upcoming = outages.filter((o) => o.upcoming);
+
   const reporting = networks.filter((n) => n.ok);
   const customers = outages.reduce((sum, o) => sum + (o.customers || 0), 0);
   /* "Customers affected" has to mean people without power now. Planned work
@@ -3600,6 +3691,14 @@ async function refreshStateOutages(state) {
     unplannedCustomers,
     plannedCount: planned.length,
     plannedCustomers,
+    /* The scheduled jobs that have not started, a subset of planned. Kept
+       visible because they are useful to know about -- they just are not
+       people without power. reclassifiedUpcoming is how many the operator
+       had labelled as something other than planned, so the override is
+       counted rather than silent. */
+    upcomingCount: upcoming.length,
+    upcomingCustomers: upcoming.reduce((sum, o) => sum + (o.customers || 0), 0),
+    reclassifiedUpcoming: reclassifiedUpcoming || undefined,
     /* Only meaningful if every operator reported, so the client can say
        "partial" instead of quoting a total that silently excludes a network. */
     complete: reporting.length === networks.length,
@@ -3860,12 +3959,14 @@ function applyOutageSnapshot(payload, snapshot, state) {
     };
   });
 
+  /* Copies, not the objects themselves: the snapshot is memoized across
+     requests, and the upcoming marking below writes to each row. */
   const outages = [];
   networks.forEach((n) => {
     if (n.source === 'snapshot') {
-      (snap.outages || []).filter((o) => o.network === n.name).forEach((o) => outages.push(o));
+      (snap.outages || []).filter((o) => o.network === n.name).forEach((o) => outages.push(Object.assign({}, o)));
     } else {
-      (payload.outages || []).filter((o) => o.network === n.name).forEach((o) => outages.push(o));
+      (payload.outages || []).filter((o) => o.network === n.name).forEach((o) => outages.push(Object.assign({}, o)));
     }
   });
   outages.sort((a, b) => {
@@ -3874,10 +3975,25 @@ function applyOutageSnapshot(payload, snapshot, state) {
     return cb - ca;
   });
 
+  /* Snapshot rows come from the scraper, which does not apply this rule,
+     and a live row reaching here may have been marked when it was cached
+     and since started. So it is recomputed here, against now, for every
+     row -- clearing first, so a job that has begun stops reading as
+     upcoming. */
+  outages.forEach((o) => {
+    if (o.upcoming) {
+      delete o.upcoming;
+      if (o.kindReported) { o.kind = o.kindReported === 'unlabelled' ? undefined : o.kindReported; delete o.kindReported; }
+    }
+  });
+  markUpcoming(outages, state);
+  const upcoming = outages.filter((o) => o.upcoming);
   const sum = (rows) => rows.reduce((t, o) => t + (o.customers || 0), 0);
   const unplanned = outages.filter((o) => o.kind !== 'planned');
   const planned = outages.filter((o) => o.kind === 'planned');
   return Object.assign({}, payload, {
+    upcomingCount: upcoming.length,
+    upcomingCustomers: sum(upcoming),
     ok: networks.some((n) => n.ok),
     complete: networks.every((n) => n.ok),
     count: outages.length,

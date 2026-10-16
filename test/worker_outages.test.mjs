@@ -496,6 +496,37 @@ console.log('\n== Western Power: a boolean flag, not a word ==');
   check('INCIDENTREF is carried as the id', one.id === 'WP-1', one.id);
 }
 
+console.log('\n== a job that has not started is not a fault ==');
+{
+  /* Seen live on 16 October: HOLT ROCK, "Customers off 4, Started
+     20/10/2026", a red fault four days early. Western Power flagged it
+     "Unplanned" with OUTAGETYPE "F", as it did 107 of the 123 future jobs
+     in its layer that day -- so a hundred scheduled jobs were counted as
+     people without power. End to end here, because the point is the
+     headline number, not the flag. */
+  reset();
+  upstream['WP_Outage_Prod'] = json({ type: 'FeatureCollection', features: [
+    { properties: { INCIDENTREF: 'INCD-2163641-U', AFFECTED_AREA: 'HOLT ROCK', NOCUSTOMERSIMPACTED: 4,
+      PLANNEDOUTAGE: 'Unplanned', OUTAGETYPE: 'F',
+      OUTAGESTARTTIME: DAY_FIRST(4 * 24), ESTIMATEDRESTORATIONTIME: DAY_FIRST(4 * 24 + 8) } },
+    { properties: { INCIDENTREF: 'WP-LIVE', AFFECTED_AREA: 'Harvey', NOCUSTOMERSIMPACTED: 6,
+      PLANNEDOUTAGE: 'Unplanned', OUTAGETYPE: 'U',
+      OUTAGESTARTTIME: Date.now() - 3600000, ESTIMATEDRESTORATIONTIME: Date.now() + 3600000 } }]});
+  const b = await (await call('/api/outages/wa')).json();
+  const holt = b.outages.find(o => o.location === 'HOLT ROCK');
+  const harvey = b.outages.find(o => o.location === 'Harvey');
+  check('the future job is still listed', !!holt, b.outages.map(o => o.location));
+  check('as scheduled work, not a fault', holt && holt.kind === 'planned' && holt.upcoming === true, holt);
+  check('with Western Power\'s own label kept', holt && holt.kindReported === 'unplanned', holt && holt.kindReported);
+  check('the live fault is untouched', harvey && harvey.kind === 'unplanned' && !harvey.upcoming, harvey);
+  /* The number that was wrong on the dashboard. */
+  check('"customers off" counts only the live fault', b.unplannedCustomers === 6, b.unplannedCustomers);
+  check('one unplanned outage, not two', b.unplannedCount === 1, b.unplannedCount);
+  check('the scheduled job is counted as upcoming', b.upcomingCount === 1 && b.upcomingCustomers === 4,
+    { upcomingCount: b.upcomingCount, upcomingCustomers: b.upcomingCustomers });
+  check('and the override is reported, not silent', b.reclassifiedUpcoming === 1, b.reclassifiedUpcoming);
+}
+
 console.log('\n== an outage payload says which build made it ==');
 {
   /* The incident payloads gained a build stamp after a mismatch was

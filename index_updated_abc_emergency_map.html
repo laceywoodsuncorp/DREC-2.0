@@ -1287,7 +1287,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-16-outagebuild';
+  const EXPECTED_WORKER_BUILD='2026-10-16-upcoming';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
@@ -2437,8 +2437,13 @@ window.addEventListener('resize',()=>map.invalidateSize());
      other's suburb. */
   function mergeStates(results){
     const outages=[],networks=[],failed=[];
+    /* Every summed field is listed by hand here, so a new one has to be
+       added in three places in this function or the national view quietly
+       drops it -- the same explicit-list trap that has swallowed five
+       fields elsewhere in this project. upcomingCount is the latest. */
     let count=0,customers=0,unplannedCount=0,unplannedCustomers=0,
-        plannedCount=0,plannedCustomers=0,cacheAge=0,snapshotAge;
+        plannedCount=0,plannedCustomers=0,upcomingCount=0,upcomingCustomers=0,
+        cacheAge=0,snapshotAge;
     results.forEach(({st,payload})=>{
       if(!payload||payload.error&&!payload.networks){failed.push(st);return;}
       (payload.outages||[]).forEach(o=>outages.push(Object.assign({},o,{state:st})));
@@ -2449,6 +2454,8 @@ window.addEventListener('resize',()=>map.invalidateSize());
       unplannedCustomers+=payload.unplannedCustomers||0;
       plannedCount+=payload.plannedCount||0;
       plannedCustomers+=payload.plannedCustomers||0;
+      upcomingCount+=payload.upcomingCount||0;
+      upcomingCustomers+=payload.upcomingCustomers||0;
       /* The oldest state is how old the national picture is: a total is only
          as current as its stalest part. */
       if(payload.cacheAgeSeconds>cacheAge)cacheAge=payload.cacheAgeSeconds;
@@ -2467,6 +2474,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       complete:!failed.length&&networks.every(n=>n.ok),
       count:outages.length,customers,
       unplannedCount,unplannedCustomers,plannedCount,plannedCustomers,
+      upcomingCount,upcomingCustomers,
       outages,networks,failedStates:failed,
       cacheAgeSeconds:cacheAge,
       snapshotAgeSeconds:snapshotAge};
@@ -2486,7 +2494,8 @@ window.addEventListener('resize',()=>map.invalidateSize());
       bits.push('<span><b>'+num(up)+'</b> unplanned outage'+(up===1?'':'s')+
         (payload.unplannedCustomers?' · '+num(payload.unplannedCustomers)+' customers off':'')+'</span>');
       bits.push('<span>'+num(pl)+' planned'+
-        (payload.plannedCustomers?' · '+num(payload.plannedCustomers)+' customers':'')+'</span>');
+        (payload.plannedCustomers?' · '+num(payload.plannedCustomers)+' customers':'')+
+        (payload.upcomingCount?' ('+num(payload.upcomingCount)+' not started yet)':'')+'</span>');
     }
     const nets=payload.networks||[];
     const down=nets.filter(n=>(!n.ok&&!n.unconfirmed)||(n.ok&&n.diagnostics));
@@ -2800,18 +2809,25 @@ window.addEventListener('resize',()=>map.invalidateSize());
     return Math.max(5,Math.min(22,4+Math.sqrt(c)*0.9));
   }
 
+  /* A job that has not started is described as one. The Worker marks these
+     `upcoming` (see markUpcoming), because Western Power flags most of its
+     future scheduled work "Unplanned" -- HOLT ROCK was shown on 16 October
+     as "Customers off 4, Started 20/10/2026", a red fault four days before
+     it was due. "Started" and "Customers off" are both false for such a
+     row, so neither is used. */
   function popupHtml(p){
     const o=p.outage;
+    const up=!!o.upcoming;
     const rows=[];
-    if(o.customers!=null)rows.push(['Customers off',num(o.customers)]);
+    if(o.customers!=null)rows.push([up?'Customers affected':'Customers off',num(o.customers)]);
     if(o.status)rows.push(['Status',escapeHtml(o.status)]);
     if(o.cause)rows.push(['Cause',escapeHtml(o.cause)]);
-    const started=when(o.startIso,o.start);if(started)rows.push(['Started',escapeHtml(started)]);
-    const back=when(o.restoreIso,o.restore);if(back)rows.push(['Estimated back',escapeHtml(back)]);
+    const started=when(o.startIso,o.start);if(started)rows.push([up?'Scheduled for':'Started',escapeHtml(started)]);
+    const back=when(o.restoreIso,o.restore);if(back)rows.push([up?'Due back':'Estimated back',escapeHtml(back)]);
     if(o.towns&&o.towns.length>1)rows.push(['Also affects',escapeHtml(o.towns.filter(t=>t!==p.town).join(', '))]);
     return '<div class="outage-pop"><h4>'+escapeHtml(p.town||'Outage')+'</h4>'+
       '<div class="op">'+escapeHtml(o.network||'')+
-      (o.kind==='planned'?' · planned work':'')+'</div>'+
+      (up?' · scheduled, not started yet':(o.kind==='planned'?' · planned work':''))+'</div>'+
       (rows.length?'<dl>'+rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('')+'</dl>':'')+
       '</div>';
   }
@@ -2848,10 +2864,13 @@ window.addEventListener('resize',()=>map.invalidateSize());
     }
     pts.forEach(p=>{
       const planned=p.outage.kind==='planned';
+      /* Not started yet: an outline only, so a map full of next week's
+         maintenance does not read as a map full of outages. */
+      const up=!!p.outage.upcoming;
       L.circleMarker([p.lat,p.lon],{
         radius:dotRadius(p.outage.customers),className:'outage-dot',
-        color:planned?'#6a7d8c':'#8a2f14',weight:1,
-        fillColor:planned?'#9fb3c2':'#d9522c',fillOpacity:planned?0.45:0.62
+        color:planned?'#6a7d8c':'#8a2f14',weight:up?1.5:1,dashArray:up?'3 3':null,
+        fillColor:planned?'#9fb3c2':'#d9522c',fillOpacity:up?0.08:(planned?0.45:0.62)
       }).bindPopup(popupHtml(p)).addTo(oLayer);
     });
     if(pts.length){
@@ -2966,9 +2985,9 @@ window.addEventListener('resize',()=>map.invalidateSize());
       meta.push('<span>'+escapeHtml(o.network||'')+'</span>');
       if(o.customers!==null&&o.customers!==undefined)meta.push('<span class="cust">'+num(o.customers)+' customers</span>');
       const started=when(o.startIso,o.start);
-      if(started)meta.push('<span>Started '+escapeHtml(started)+'</span>');
+      if(started)meta.push('<span>'+(o.upcoming?'Scheduled for ':'Started ')+escapeHtml(started)+'</span>');
       const back=when(o.restoreIso,o.restore);
-      if(back)meta.push('<span>Est. restored '+escapeHtml(back)+'</span>');
+      if(back)meta.push('<span>'+(o.upcoming?'Due back ':'Est. restored ')+escapeHtml(back)+'</span>');
       /* Every town spelled out, so a four-town outage is readable as such
          rather than hiding three of them behind a comma. */
       const towns=rowTowns(o);
@@ -2980,7 +2999,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       }
       return '<div class="outage'+(planned?' planned':'')+'">'+
         '<div class="bar"></div><div class="body">'+
-        '<h4>'+escapeHtml(o.location||'Outage')+(o.kind?' <span class="tag">'+escapeHtml(o.kind)+'</span>':'')+'</h4>'+
+        '<h4>'+escapeHtml(o.location||'Outage')+(o.upcoming?' <span class="tag">scheduled</span>':(o.kind?' <span class="tag">'+escapeHtml(o.kind)+'</span>':''))+'</h4>'+
         (detail?'<p>'+escapeHtml(detail)+'</p>':'')+
         townLine+
         '<div class="meta">'+meta.join('')+'</div>'+

@@ -110,12 +110,17 @@ if (all.json && Array.isArray(all.json.features)) {
   console.log('  start times:  oldest ' + report.startRange.oldest + '   newest ' + report.startRange.newest);
 
   /* The question the screenshot asks: how much of this is history? */
-  const buckets = { today: 0, lastWeek: 0, lastMonth: 0, older: 0, noStart: 0 };
+  /* `future` is its own bucket. Without it a negative age fell into
+     "today", and this probe reported 121 of 124 records as started today
+     when in fact they had not started at all -- they were next week's
+     scheduled jobs, which was the real story and was hidden by the bucket. */
+  const buckets = { future: 0, today: 0, lastWeek: 0, lastMonth: 0, older: 0, noStart: 0 };
   rows.forEach((r) => {
     const s = parseWhen(pick(r, START));
     if (!s) { buckets.noStart++; return; }
     const age = now - s;
-    if (age < DAY) buckets.today++;
+    if (age < 0) buckets.future++;
+    else if (age < DAY) buckets.today++;
     else if (age < 7 * DAY) buckets.lastWeek++;
     else if (age < 31 * DAY) buckets.lastMonth++;
     else buckets.older++;
