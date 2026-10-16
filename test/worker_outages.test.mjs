@@ -496,6 +496,22 @@ console.log('\n== Western Power: a boolean flag, not a word ==');
   check('INCIDENTREF is carried as the id', one.id === 'WP-1', one.id);
 }
 
+console.log('\n== an outage payload says which build made it ==');
+{
+  /* The incident payloads gained a build stamp after a mismatch was
+     repeatedly mistaken for a code fault. The outage payloads were left
+     without one, and it cost a diagnosis: when the staleness filter
+     shipped, WA still reported the same row count and there was no way to
+     tell a payload cached from before the deploy from a filter that was
+     not working. */
+  reset();
+  upstream.http = () => new Response('down', { status: 503 });
+  const b = await (await call('/api/outages/wa')).json();
+  const build = /const WORKER_BUILD = '([^']+)'/
+    .exec((await import('node:fs')).readFileSync('./src/worker.js', 'utf8'))[1];
+  check('the state payload carries the build', b.build === build, b.build);
+}
+
 console.log('\n== an outage the operator never took down ==');
 {
   /* Seen live: Western Power still publishes a record from 31 May, and it

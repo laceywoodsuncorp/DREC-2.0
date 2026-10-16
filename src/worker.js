@@ -385,7 +385,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-16-staleoutage';
+const WORKER_BUILD = '2026-10-16-outagebuild';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -3583,6 +3583,14 @@ async function refreshStateOutages(state) {
   const payload = {
     state: state.toUpperCase(),
     name: group.name,
+    /* Which code produced this payload. The incident payloads gained this
+       after a build mismatch was repeatedly mistaken for a code fault, and
+       the outage payloads were left without it -- so when the staleness
+       filter shipped and WA still showed the same row count, there was no
+       way to tell a stale cached payload from a filter that was not
+       working. A payload that cannot say which build built it cannot be
+       debugged after a deploy. */
+    build: WORKER_BUILD,
     /* ok means at least one operator answered. A state is never all-or-
        nothing here: the per-network list below says exactly who is in. */
     ok: reporting.length > 0,
