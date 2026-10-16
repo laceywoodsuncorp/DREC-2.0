@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-16T00:15:06.982Z",
+  "at": "2026-10-16T00:22:17.268Z",
   "states": {
     "qld": [
       {
@@ -262,9 +262,9 @@
         "url": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
         "status": 200,
         "type": "text/xml",
-        "bytes": 89331,
+        "bytes": 93183,
         "shape": "xml",
-        "items": 23,
+        "items": 24,
         "fields": {
           "distributionStatus": [
             "Actual"
@@ -319,9 +319,9 @@
         "url": "https://emergency.vic.gov.au/public/events-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 25574,
+        "bytes": 26113,
         "shape": "object",
-        "items": 14,
+        "items": 15,
         "fields": {
           "category": [
             "Health"
@@ -341,9 +341,9 @@
             "Planned Burn",
             "Fire",
             "Accident / Rescue",
+            "Building Damage",
             "Met",
-            "Rescue",
-            "Building Damage"
+            "Rescue"
           ],
           "category2": [
             "Health",
@@ -352,17 +352,20 @@
             "Bushfire",
             "Building Fire",
             "Road Accident",
+            "Building Damage",
+            "Rescue",
             "Non Structure Fire",
             "Strong Wind",
             "Other",
             "Rescue Road Trap",
-            "Building Damage"
+            "Rescue Persons Trapped"
           ],
           "status": [
             "Minor",
             "Patrolled",
             "Under Control",
             "Safe",
+            "Complete",
             "Responding",
             "Warning",
             "On Scene",
@@ -390,9 +393,9 @@
         "url": "https://emergency.vic.gov.au/public/osom-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 53588,
+        "bytes": 54127,
         "shape": "object",
-        "items": 35,
+        "items": 36,
         "fields": {
           "category": [
             "Health"
@@ -412,10 +415,10 @@
             "Planned Burn",
             "Fire",
             "Accident / Rescue",
+            "Building Damage",
             "Met",
             "Burn Area",
-            "Rescue",
-            "Building Damage"
+            "Rescue"
           ],
           "category2": [
             "Health",
@@ -424,18 +427,21 @@
             "Bushfire",
             "Building Fire",
             "Road Accident",
+            "Building Damage",
+            "Rescue",
             "Non Structure Fire",
             "Strong Wind",
             "Burn Area",
             "Other",
             "Rescue Road Trap",
-            "Building Damage"
+            "Rescue Persons Trapped"
           ],
           "status": [
             "Minor",
             "Patrolled",
             "Under Control",
             "Safe",
+            "Complete",
             "Responding",
             "Warning",
             "Unknown",
@@ -534,7 +540,7 @@
         "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 24011,
+        "bytes": 24831,
         "shape": "object",
         "fields": {
           "_category": [
@@ -550,6 +556,7 @@
           ],
           "Status": [
             "Closed",
+            "Active",
             "Going"
           ],
           "Alert Level": [
@@ -572,7 +579,7 @@
         "url": "http://www.bom.gov.au/fwo/IDZ00054.warnings_land_nsw.xml",
         "status": 403,
         "title": "",
-        "bytes": 1388
+        "bytes": 1387
       }
     ]
   }
