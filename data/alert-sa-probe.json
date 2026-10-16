@@ -1,59 +1,63 @@
 {
- "at": "2026-10-16T03:39:17.084Z",
+ "at": "2026-10-16T08:50:11.145Z",
  "feeds": [
   {
    "url": "https://combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
    "use": "production",
    "status": 200,
-   "bytes": 57451,
-   "entries": 16,
-   "withGeometry": 16,
-   "insideAustralia": 16,
+   "bytes": 92921,
+   "entries": 26,
+   "withGeometry": 26,
+   "insideAustralia": 26,
    "events": {
-    "Burn Off": 8,
-    "Burn Off Prescribed": 4,
+    "Burn Off": 14,
+    "TREE DOWN": 4,
+    "Burn Off Prescribed": 3,
     "Structure Fire": 2,
-    "TREE DOWN": 2
+    "Grass Fire": 1,
+    "Hazardous materials": 1,
+    "Rubbish Or Waste": 1
    },
    "severities": {
-    "Unknown": 14
+    "Unknown": 22
    },
    "urgencies": {
-    "Unknown": 14
+    "Unknown": 22
    },
    "categories": {
-    "Burn off": 12,
-    "Fire": 2,
-    "TREE DOWN": 2
+    "Burn off": 17,
+    "Fire": 4,
+    "TREE DOWN": 4,
+    "Hazardous materials": 1
    },
    "senders": {
-    "South Australian Country Fire Service": 9,
+    "South Australian Country Fire Service": 17,
     "South Australian Metropolitan Fire Service": 5,
-    "SES.State.PublicInfo@eso.sa.gov.au": 2
+    "SES.State.PublicInfo@eso.sa.gov.au": 4
    },
    "responseTypes": {
-    "Monitor": 14
+    "Monitor": 22
    },
    "parameterNames": {
-    "Location": 16,
-    "Status": 16,
-    "WarningLevel": 16,
-    "ControlAuthority": 16,
-    "FireBanDistrict": 16,
-    "RespondingUnit": 16,
-    "Source": 16,
-    "IncidentName": 14,
-    "IncidentLevel": 14,
-    "CallToAction": 14,
-    "SubCategory": 14,
-    "WarningLevelExt": 14,
-    "Risk": 14,
-    "IncidentPrimaryUnit": 2,
-    "Icon": 2,
-    "Uniseqnumber": 2,
-    "Globalid": 2,
-    "IncidentAddressStreetName": 2,
-    "IncidentAddressStreetType": 2
+    "Location": 26,
+    "Status": 26,
+    "WarningLevel": 26,
+    "ControlAuthority": 26,
+    "FireBanDistrict": 26,
+    "RespondingUnit": 26,
+    "Source": 26,
+    "IncidentName": 22,
+    "IncidentLevel": 22,
+    "CallToAction": 22,
+    "SubCategory": 22,
+    "WarningLevelExt": 22,
+    "Risk": 22,
+    "IncidentPrimaryUnit": 4,
+    "Icon": 4,
+    "Uniseqnumber": 4,
+    "Globalid": 4,
+    "IncidentAddressStreetName": 4,
+    "IncidentAddressStreetType": 4
    },
    "outageEntriesByEvent": 0,
    "outageEntriesByText": 0,
@@ -91,6 +95,38 @@
      "web": "https://www.cfs.sa.gov.au/incidents"
     },
     {
+     "event": "Grass Fire",
+     "category": "Fire",
+     "severity": "Unknown",
+     "urgency": "Unknown",
+     "certainty": "Observed",
+     "responseType": "Monitor",
+     "senderName": "South Australian Country Fire Service",
+     "headline": "REEVES PLAINS : Grass fire",
+     "areaDesc": "REEVES PLAINS",
+     "parameters": [
+      "IncidentName=REEVES PLAINS",
+      "Location=REEVES PLAINS",
+      "IncidentLevel=1",
+      "Status=Safe",
+      "WarningLevel=Incident",
+      "ControlAuthority=South Australian Country Fire Service",
+      "FireBanDistrict=MID NORTH",
+      "CallToAction=",
+      "SubCategory=Grass Fire",
+      "RespondingUnit=",
+      "WarningLevelExt=",
+      "Risk=",
+      "Source=SA"
+     ],
+     "hasPoint": true,
+     "point": [
+      -34.525136,
+      138.609814
+     ],
+     "web": "https://www.cfs.sa.gov.au/incidents"
+    },
+    {
      "event": "Burn Off Prescribed",
      "category": "Burn off",
      "severity": "Unknown",
@@ -119,38 +155,6 @@
      "point": [
       -35.217954,
       138.700335
-     ],
-     "web": "https://www.cfs.sa.gov.au/incidents"
-    },
-    {
-     "event": "Burn Off Prescribed",
-     "category": "Burn off",
-     "severity": "Unknown",
-     "urgency": "Unknown",
-     "certainty": "Observed",
-     "responseType": "Monitor",
-     "senderName": "South Australian Country Fire Service",
-     "headline": "MOUNT GEORGE : BURNOFF PRESCRIBED",
-     "areaDesc": "MOUNT GEORGE",
-     "parameters": [
-      "IncidentName=MOUNT GEORGE",
-      "Location=MOUNT GEORGE",
-      "IncidentLevel=1",
-      "Status=Controlled",
-      "WarningLevel=Incident",
-      "ControlAuthority=South Australian Country Fire Service",
-      "FireBanDistrict=MOUNT LOFTY RANGES",
-      "CallToAction=",
-      "SubCategory=Burn Off Prescribed",
-      "RespondingUnit=",
-      "WarningLevelExt=",
-      "Risk=",
-      "Source=SA"
-     ],
-     "hasPoint": true,
-     "point": [
-      -34.985872,
-      138.77818
      ],
      "web": "https://www.cfs.sa.gov.au/incidents"
     },
@@ -257,12 +261,12 @@
    "url": "https://uat.combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
    "use": "UAT -- NOT FOR USE, contents are test data",
    "status": 200,
-   "bytes": 457103,
-   "entries": 123,
-   "withGeometry": 123,
-   "insideAustralia": 123,
+   "bytes": 463951,
+   "entries": 125,
+   "withGeometry": 125,
+   "insideAustralia": 125,
    "events": {
-    "TREE DOWN": 23,
+    "TREE DOWN": 25,
     "FLOODING SALVAGE": 9,
     "SEVERE WEATHER": 6,
     "Hazardous materials": 5,
@@ -295,7 +299,7 @@
    },
    "categories": {
     "Fire": 27,
-    "TREE DOWN": 23,
+    "TREE DOWN": 25,
     "Relief And Recovery Centre": 17,
     "Recovery Centre": 14,
     "Relief Centre": 13,
@@ -308,7 +312,7 @@
     "Heatwave": 1
    },
    "senders": {
-    "SES.State.PublicInfo@eso.sa.gov.au": 38,
+    "SES.State.PublicInfo@eso.sa.gov.au": 40,
     "South Australian Country Fire Service": 15,
     "South Australian Metropolitan Fire Service": 12,
     "Department of Fire and Emergency Services WA": 4,
@@ -327,28 +331,28 @@
     "Evacuate": 1
    },
    "parameterNames": {
-    "WarningLevel": 123,
-    "Location": 123,
-    "ControlAuthority": 123,
-    "FireBanDistrict": 123,
-    "Source": 123,
-    "Status": 78,
-    "RespondingUnit": 78,
+    "WarningLevel": 125,
+    "Location": 125,
+    "ControlAuthority": 125,
+    "FireBanDistrict": 125,
+    "Source": 125,
+    "Status": 80,
+    "RespondingUnit": 80,
     "Opens": 45,
     "Closes": 45,
     "Services": 45,
+    "IncidentPrimaryUnit": 40,
+    "Icon": 40,
+    "Uniseqnumber": 40,
+    "Globalid": 40,
+    "IncidentAddressStreetName": 40,
+    "IncidentAddressStreetType": 40,
     "IncidentName": 40,
     "IncidentLevel": 40,
     "CallToAction": 40,
     "SubCategory": 40,
     "WarningLevelExt": 40,
-    "Risk": 40,
-    "IncidentPrimaryUnit": 38,
-    "Icon": 38,
-    "Uniseqnumber": 38,
-    "Globalid": 38,
-    "IncidentAddressStreetName": 38,
-    "IncidentAddressStreetType": 38
+    "Risk": 40
    },
    "outageEntriesByEvent": 0,
    "outageEntriesByText": 0,
