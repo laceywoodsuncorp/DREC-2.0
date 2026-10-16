@@ -385,7 +385,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-16-capture2';
+const WORKER_BUILD = '2026-10-16-capture3';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -4145,7 +4145,15 @@ function applyOutageSnapshot(payload, snapshot, state) {
   const sum = (rows) => rows.reduce((t, o) => t + (o.customers || 0), 0);
   const unplanned = outages.filter((o) => o.kind !== 'planned');
   const planned = outages.filter((o) => o.kind === 'planned');
+  /* Counted from the rows like the others. Rows from the capture arrive
+     already marked upcoming, and applyUpcoming adjusts counts only by what
+     CHANGES -- so without a starting count here, a capture whose 105 WA jobs
+     were all still upcoming reported upcomingCount 0: nothing changed, and
+     zero plus nothing is zero. */
+  const upcomingRows = outages.filter((o) => o.upcoming);
   return Object.assign({}, payload, {
+    upcomingCount: upcomingRows.length,
+    upcomingCustomers: sum(upcomingRows),
     ok: networks.some((n) => n.ok),
     complete: networks.every((n) => n.ok),
     count: outages.length,

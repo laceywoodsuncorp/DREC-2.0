@@ -553,7 +553,7 @@ console.log('\n== capture mode: the deployed default ==');
   const ausnetReadAt = Date.now() - 4 * H;
   const snapshot = { capturedAt, states: {
     wa: { networks: [
-      { name: 'Western Power', ok: true, count: 2, source: 'feed', origin: 'feed', capturedAt, staleDropped: 2 },
+      { name: 'Western Power', ok: true, count: 3, source: 'feed', origin: 'feed', capturedAt, staleDropped: 2 },
       { name: 'Horizon Power', ok: false, count: 0, source: 'none', error: 'Their site blocks automated access', blocked: true }],
       outages: [
         { network: 'Western Power', location: 'Harvey', towns: ['Harvey'], customers: 6, kind: 'unplanned',
@@ -563,7 +563,11 @@ console.log('\n== capture mode: the deployed default ==');
            "scheduled", which is the request-time rule's whole reason. */
         { network: 'Western Power', location: 'Kelmscott', towns: ['Kelmscott'], customers: 10,
           kind: 'planned', kindReported: 'unplanned', upcoming: true,
-          start: DAY_FIRST(-0.1), restore: DAY_FIRST(5) }] },
+          start: DAY_FIRST(-0.1), restore: DAY_FIRST(5) },
+        /* Marked upcoming at capture, and still is. */
+        { network: 'Western Power', location: 'Holt Rock', towns: ['Holt Rock'], customers: 4,
+          kind: 'planned', kindReported: 'unplanned', upcoming: true,
+          start: DAY_FIRST(96), restore: DAY_FIRST(104) }] },
     vic: { networks: [
       { name: 'AusNet Services', ok: true, count: 1, source: 'previous', origin: 'browser', capturedAt: ausnetReadAt }],
       outages: [{ network: 'AusNet Services', location: 'Lilydale', customers: 30, kind: 'unplanned' }] }
@@ -584,7 +588,7 @@ console.log('\n== capture mode: the deployed default ==');
     res.headers.get('X-Outage-Source'));
   check('and carries the build', b.build && res.headers.get('X-Worker-Build') === b.build, b.build);
   const wp = b.networks.find((n) => n.name === 'Western Power');
-  check('Western Power is served from the capture', wp && wp.ok && wp.count === 2 && wp.source === 'snapshot', wp);
+  check('Western Power is served from the capture', wp && wp.ok && wp.count === 3 && wp.source === 'snapshot', wp);
   check('with its staleDropped count', wp && wp.staleDropped === 2, wp);
   const hz = b.networks.find((n) => n.name === 'Horizon Power');
   check('an operator the capture could not read keeps its reason', hz && !hz.ok && /blocks/.test(hz.error || '') && hz.blocked, hz);
@@ -594,6 +598,11 @@ console.log('\n== capture mode: the deployed default ==');
   check('a job that has started since the capture is no longer "scheduled"', kel && !kel.upcoming, kel);
   check('and is back to what the operator called it', kel && kel.kind === 'unplanned', kel && kel.kind);
   check('so it counts as customers off again', b.unplannedCustomers === 16, b.unplannedCustomers);
+  /* Seen live on the first deploy: every state served upcomingCount 0
+     while the capture held 105 upcoming WA jobs, because the count was only
+     ever adjusted by changes and rows marked at capture time did not change. */
+  check('a job still upcoming from the capture is counted as upcoming',
+    b.upcomingCount === 1 && b.upcomingCustomers === 4, { upcomingCount: b.upcomingCount, upcomingCustomers: b.upcomingCustomers });
 
   fetchLog = [];
   const v = await (await hit('/api/outages/vic', capEnv(snapshot))).json();
