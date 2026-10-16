@@ -1,14 +1,14 @@
 {
   "base": "https://drec-oncall-updates-site.lacey-wood.workers.dev",
-  "at": "2026-10-16T03:10:59.668Z",
+  "at": "2026-10-16T03:20:50.266Z",
   "incidents": {
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-upcoming2",
+      "build": "2026-10-16-capture",
       "sourceUrl": "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json",
-      "count": 8,
-      "withAlertLevel": 8,
+      "count": 11,
+      "withAlertLevel": 11,
       "alertLevels": [
         "Advice",
         "Planned Burn",
@@ -22,6 +22,7 @@
         "Bush Fire",
         "Hazard Reduction",
         "Grass Fire",
+        "MVA/Transport",
         "Burn off",
         "Structure Fire"
       ],
@@ -30,7 +31,7 @@
     "vic": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-upcoming2",
+      "build": "2026-10-16-capture",
       "sourceUrl": "https://emergency.vic.gov.au/public/events-geojson.json",
       "count": 20,
       "withAlertLevel": 1,
@@ -41,9 +42,8 @@
         "Minor",
         "Patrolled",
         "Under Control",
-        "Responding",
         "Safe",
-        "Complete",
+        "Responding",
         "Warning",
         "Request For Assistance",
         "On Scene"
@@ -52,23 +52,23 @@
         "Drinking Water",
         "Planned Burn",
         "Bushfire",
-        "Other",
         "Structure Fire",
-        "Building Damage",
+        "Other",
+        "Hazardous Material",
         "Strong Wind",
-        "Rescue"
+        "Road Accident"
       ],
       "attempts": []
     },
     "qld": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-upcoming2",
+      "build": "2026-10-16-capture",
       "sourceUrl": "https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services/ESCAD_Current_Incidents_Public/FeatureServer/0/query?f=geojson&where=1%3D1&outFields=*",
       "mergedFrom": [
         "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json"
       ],
-      "count": 85,
+      "count": 84,
       "withAlertLevel": 41,
       "alertLevels": [
         "Information"
@@ -85,7 +85,6 @@
         "FIRE OTHER",
         "FIRE VEHICLE",
         "RESCUE ROAD CRASH",
-        "RESCUE TECHNICAL",
         "Fire"
       ],
       "attempts": [
@@ -97,7 +96,7 @@
     "wa": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-upcoming2",
+      "build": "2026-10-16-capture",
       "sourceUrl": "https://api.emergency.wa.gov.au/v1/rss/warnings",
       "mergedFrom": [
         "https://api.emergency.wa.gov.au/v1/warnings"
@@ -129,7 +128,7 @@
     "sa": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-upcoming2",
+      "build": "2026-10-16-capture",
       "sourceUrl": "https://combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
       "count": 15,
       "withAlertLevel": 0,
@@ -150,15 +149,16 @@
     "tas": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-upcoming2",
+      "build": "2026-10-16-capture",
       "sourceUrl": "https://alert.tas.gov.au/data/incidents-and-messages.kml",
       "count": 16,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
         "Patrol",
-        "Investigating",
-        "Going"
+        "Stop",
+        "Going",
+        "Investigating"
       ],
       "types": [
         "Bushfire",
@@ -175,10 +175,10 @@
     "nt": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-upcoming2",
+      "build": "2026-10-16-capture",
       "sourceUrl": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
-      "count": 26,
-      "withAlertLevel": 26,
+      "count": 25,
+      "withAlertLevel": 25,
       "alertLevels": [
         "Advice"
       ],
@@ -209,7 +209,7 @@
     "act": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-upcoming2",
+      "build": "2026-10-16-capture",
       "sourceUrl": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
       "count": 28,
       "withAlertLevel": 0,
@@ -231,7 +231,7 @@
     "nsw": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-capture",
+      "build": "2026-10-16-capture2",
       "count": 203,
       "customers": 10300,
       "complete": false,
@@ -242,7 +242,8 @@
           "ok": true,
           "count": 10,
           "source": "snapshot",
-          "capturedAt": 1792119891411,
+          "origin": "feed",
+          "capturedAt": 1792120798766,
           "attempts": []
         },
         {
@@ -251,7 +252,8 @@
           "count": 193,
           "staleDropped": 37,
           "source": "snapshot",
-          "capturedAt": 1792119891411,
+          "origin": "feed",
+          "capturedAt": 1792120798766,
           "attempts": []
         },
         {
@@ -269,18 +271,18 @@
       "upcomingCount": 0,
       "upcomingCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 369,
+      "snapshotAgeSeconds": 52,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
     "vic": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-capture",
-      "count": 16,
-      "customers": 260,
+      "build": "2026-10-16-capture2",
+      "count": 17,
+      "customers": 261,
       "complete": false,
-      "rows": 16,
+      "rows": 17,
       "networks": [
         {
           "name": "AusNet Services",
@@ -292,9 +294,10 @@
         {
           "name": "Powercor",
           "ok": true,
-          "count": 12,
+          "count": 13,
           "source": "snapshot",
-          "capturedAt": 1792119891411,
+          "origin": "feed",
+          "capturedAt": 1792120798766,
           "attempts": []
         },
         {
@@ -302,7 +305,8 @@
           "ok": true,
           "count": 4,
           "source": "snapshot",
-          "capturedAt": 1792119891411,
+          "origin": "feed",
+          "capturedAt": 1792120798766,
           "attempts": []
         },
         {
@@ -320,68 +324,72 @@
           "attempts": []
         }
       ],
-      "withTowns": 16,
-      "unplannedCount": 9,
-      "unplannedCustomers": 148,
+      "withTowns": 17,
+      "unplannedCount": 10,
+      "unplannedCustomers": 149,
       "upcomingCount": 0,
       "upcomingCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 369,
+      "snapshotAgeSeconds": 52,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
     "qld": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-capture",
-      "count": 385,
-      "customers": 13672,
+      "build": "2026-10-16-capture2",
+      "count": 386,
+      "customers": 13413,
       "complete": true,
-      "rows": 385,
+      "rows": 386,
       "networks": [
         {
           "name": "Energex",
           "ok": true,
           "count": 116,
           "source": "snapshot",
-          "capturedAt": 1792119891411,
+          "origin": "feed",
+          "capturedAt": 1792120798766,
           "attempts": []
         },
         {
           "name": "Ergon Energy",
           "ok": true,
-          "count": 269,
+          "count": 270,
           "source": "snapshot",
-          "capturedAt": 1792119891411,
+          "origin": "feed",
+          "capturedAt": 1792120798766,
           "attempts": []
         }
       ],
-      "withTowns": 385,
-      "unplannedCount": 8,
-      "unplannedCustomers": 194,
+      "withTowns": 386,
+      "unplannedCount": 11,
+      "unplannedCustomers": 273,
       "upcomingCount": 0,
       "upcomingCustomers": 0,
       "reclassifiedUpcoming": 15,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 370,
+      "snapshotAgeSeconds": 52,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
     "wa": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-capture",
-      "count": 145,
-      "customers": 14801,
+      "build": "2026-10-16-capture2",
+      "count": 132,
+      "customers": 13804,
       "complete": false,
-      "rows": 145,
+      "rows": 132,
       "networks": [
         {
           "name": "Western Power",
           "ok": true,
-          "count": 145,
+          "count": 132,
+          "staleDropped": 2,
           "source": "snapshot",
-          "capturedAt": 1792119891411,
+          "origin": "feed",
+          "capturedAt": 1792120798766,
           "attempts": []
         },
         {
@@ -392,20 +400,21 @@
           "attempts": []
         }
       ],
-      "withTowns": 145,
-      "unplannedCount": 145,
-      "unplannedCustomers": 14801,
+      "withTowns": 132,
+      "unplannedCount": 10,
+      "unplannedCustomers": 866,
       "upcomingCount": 0,
       "upcomingCustomers": 0,
+      "reclassifiedUpcoming": 105,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 370,
+      "snapshotAgeSeconds": 52,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
     "sa": {
       "httpStatus": 200,
       "ok": false,
-      "build": "2026-10-16-capture",
+      "build": "2026-10-16-capture2",
       "count": 0,
       "customers": 0,
       "complete": false,
@@ -423,14 +432,14 @@
       "unplannedCount": 0,
       "unplannedCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 370,
+      "snapshotAgeSeconds": 52,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
     "tas": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-capture",
+      "build": "2026-10-16-capture2",
       "count": 1,
       "customers": 50,
       "complete": true,
@@ -441,7 +450,8 @@
           "ok": true,
           "count": 1,
           "source": "snapshot",
-          "capturedAt": 1792119891411,
+          "origin": "feed",
+          "capturedAt": 1792120798766,
           "attempts": []
         }
       ],
@@ -451,14 +461,14 @@
       "upcomingCount": 0,
       "upcomingCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 370,
+      "snapshotAgeSeconds": 52,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
     "nt": {
       "httpStatus": 200,
       "ok": false,
-      "build": "2026-10-16-capture",
+      "build": "2026-10-16-capture2",
       "count": 0,
       "customers": 0,
       "complete": false,
@@ -477,14 +487,14 @@
       "unplannedCount": 0,
       "unplannedCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 370,
+      "snapshotAgeSeconds": 52,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
     "act": {
       "httpStatus": 200,
       "ok": true,
-      "build": "2026-10-16-capture",
+      "build": "2026-10-16-capture2",
       "count": 2,
       "customers": 85,
       "complete": true,
@@ -495,7 +505,8 @@
           "ok": true,
           "count": 2,
           "source": "snapshot",
-          "capturedAt": 1792119891411,
+          "origin": "feed",
+          "capturedAt": 1792120798766,
           "attempts": []
         }
       ],
@@ -505,7 +516,7 @@
       "upcomingCount": 0,
       "upcomingCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 370,
+      "snapshotAgeSeconds": 52,
       "staleRowsStillShown": 0,
       "oldestRows": []
     }

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-16T03:11:01.218Z",
+  "at": "2026-10-16T03:20:51.278Z",
   "states": {
     "qld": [
       {
@@ -132,7 +132,21 @@
       },
       {
         "url": "https://services1.arcgis.com/vkTwD8kHw2woKBqV/arcgis/rest/services?f=json",
-        "error": "fetch failed"
+        "status": 200,
+        "type": "application/json",
+        "bytes": 33780,
+        "shape": "object",
+        "fields": {
+          "name": [
+            "Evacuation_Routes",
+            "Livingstone_Evacuation_Routes",
+            "Mackay_Evacuation_Routes"
+          ],
+          "url": [
+            "https://services1.arcgis.com/vkTwD8kHw2woKBqV/ArcGIS/rest/se"
+          ]
+        },
+        "verdict": "CARRIES ALERT LEVELS: Evacuation_Routes | Livingstone_Evacuation_Routes | Mackay_Evacuation_Routes"
       },
       {
         "url": "https://www.qld.gov.au/emergency/dealing-disasters/current-warnings",
@@ -221,9 +235,9 @@
         "url": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
         "status": 200,
         "type": "text/xml",
-        "bytes": 112336,
+        "bytes": 100808,
         "shape": "xml",
-        "items": 29,
+        "items": 26,
         "fields": {
           "distributionStatus": [
             "Actual"
@@ -278,9 +292,9 @@
         "url": "https://emergency.vic.gov.au/public/events-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 28112,
+        "bytes": 28600,
         "shape": "object",
-        "items": 19,
+        "items": 20,
         "fields": {
           "category": [
             "Health"
@@ -299,7 +313,7 @@
             "Health",
             "Planned Burn",
             "Fire",
-            "Building Damage",
+            "Hazardous Material",
             "Met",
             "Other",
             "Accident / Rescue",
@@ -310,9 +324,9 @@
             "Drinking Water",
             "Planned Burn",
             "Bushfire",
-            "Building Damage",
-            "Structure Fire",
+            "Hazardous Material",
             "Other",
+            "Non Structure Fire",
             "Strong Wind",
             "Road Accident",
             "Tree Down"
@@ -321,9 +335,9 @@
             "Minor",
             "Patrolled",
             "Under Control",
-            "Complete",
-            "Safe",
             "Responding",
+            "Safe",
+            "Not Yet Under Control",
             "Warning",
             "Request For Assistance",
             "On Scene"
@@ -350,9 +364,9 @@
         "url": "https://emergency.vic.gov.au/public/osom-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 56126,
+        "bytes": 56614,
         "shape": "object",
-        "items": 40,
+        "items": 41,
         "fields": {
           "category": [
             "Health"
@@ -371,7 +385,7 @@
             "Health",
             "Planned Burn",
             "Fire",
-            "Building Damage",
+            "Hazardous Material",
             "Met",
             "Burn Area",
             "Other",
@@ -383,9 +397,9 @@
             "Drinking Water",
             "Planned Burn",
             "Bushfire",
-            "Building Damage",
-            "Structure Fire",
+            "Hazardous Material",
             "Other",
+            "Non Structure Fire",
             "Strong Wind",
             "Burn Area",
             "Road Accident",
@@ -395,9 +409,9 @@
             "Minor",
             "Patrolled",
             "Under Control",
-            "Complete",
-            "Safe",
             "Responding",
+            "Safe",
+            "Not Yet Under Control",
             "Warning",
             "Unknown",
             "Request For Assistance",
@@ -533,7 +547,7 @@
         "url": "http://www.bom.gov.au/fwo/IDZ00054.warnings_land_nsw.xml",
         "status": 403,
         "title": "",
-        "bytes": 1387
+        "bytes": 1386
       }
     ]
   }
