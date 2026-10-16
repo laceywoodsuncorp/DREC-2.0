@@ -1,5 +1,5 @@
 {
- "capturedAt": 1792119891411,
+ "capturedAt": 1792120798766,
  "states": {
   "nsw": {
    "state": "NSW",
@@ -16,17 +16,44 @@
      "ok": true,
      "count": 10,
      "source": "feed",
-     "capturedAt": 1792119891411,
-     "sourceUrl": "https://www.ausgrid.com.au/outages-list"
+     "origin": "feed",
+     "capturedAt": 1792120798766,
+     "sourceUrl": "https://www.ausgrid.com.au/outages-list",
+     "columns": [
+      ".css-1puqryl{cursor:pointer;display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-box-pack:start;-ms-flex-pack:start;-webkit-justify-content:fle",
+      "Start and Est. Finish Time",
+      "Suburb",
+      "Customers affected"
+     ]
     },
     {
      "name": "Endeavour Energy",
      "ok": true,
      "count": 193,
      "source": "feed",
-     "capturedAt": 1792119891411,
+     "origin": "feed",
+     "capturedAt": 1792120798766,
      "staleDropped": 37,
      "sourceUrl": "https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/exports/geojson",
+     "columns": [
+      "street_name",
+      "start_date_time",
+      "postcode",
+      "outage_type",
+      "outage_cause_sub",
+      "outage_cause_main",
+      "incident_status",
+      "incident_id",
+      "longitude",
+      "latitude",
+      "est_restore_time",
+      "end_date_time",
+      "cityname",
+      "cause",
+      "customers_affected",
+      "uid",
+      "updated_at"
+     ],
      "reported": {
       "outages": 7,
       "customers": 9
@@ -38,11 +65,21 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792119891411,
+     "capturedAt": 1792120798766,
      "error": "This operator blocks automated access to its outage page (bot challenge), and the third-party fallback did not answer either. Their own map is linked and still works in a browser.",
      "blocked": true,
      "unreadable": true,
      "sourceUrl": "https://poweroutagesaustralia.com.au/distributors/essential-energy/",
+     "attempts": [
+      {
+       "url": "https://www.essentialenergy.com.au/outages-and-faults/power-outages",
+       "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+      },
+      {
+       "url": "https://poweroutagesaustralia.com.au/distributors/essential-energy/",
+       "error": "Responded, but no recognisable outage fields"
+      }
+     ],
      "reported": {
       "outages": 1861,
       "customers": 1861
@@ -3847,28 +3884,84 @@
   "qld": {
    "state": "QLD",
    "name": "Queensland",
-   "count": 385,
-   "customers": 13672,
-   "unplannedCount": 8,
-   "unplannedCustomers": 194,
-   "plannedCount": 377,
-   "plannedCustomers": 13478,
+   "count": 386,
+   "customers": 13413,
+   "unplannedCount": 11,
+   "unplannedCustomers": 273,
+   "plannedCount": 375,
+   "plannedCustomers": 13140,
    "networks": [
     {
      "name": "Energex",
      "ok": true,
      "count": 116,
      "source": "feed",
-     "capturedAt": 1792119891411,
-     "sourceUrl": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson"
+     "origin": "feed",
+     "capturedAt": 1792120798766,
+     "sourceUrl": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
+     "columns": [
+      "OBJECTID",
+      "EVENT_ID",
+      "TYPE",
+      "STATUS",
+      "CUSTOMERS_AFFECTED",
+      "SUBURBS",
+      "STREETS",
+      "START",
+      "FINISH",
+      "EST_FIX_TIME",
+      "REASON",
+      "CRC",
+      "EXTRACTED",
+      "SHAPE__Area",
+      "SHAPE__Length"
+     ],
+     "attempts": [
+      {
+       "url": "https://www.energex.com.au/static/Energex/energex_po_current_unplanned.geojson",
+       "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+      },
+      {
+       "url": "https://www.energex.com.au/static/Energex/energex_po_current_planned.geojson",
+       "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+      }
+     ]
     },
     {
      "name": "Ergon Energy",
      "ok": true,
-     "count": 269,
+     "count": 270,
      "source": "feed",
-     "capturedAt": 1792119891411,
-     "sourceUrl": "https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson"
+     "origin": "feed",
+     "capturedAt": 1792120798766,
+     "sourceUrl": "https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
+     "columns": [
+      "OBJECTID",
+      "EVENT_ID",
+      "TYPE",
+      "STATUS",
+      "CUSTOMERS_AFFECTED",
+      "SUBURBS",
+      "STREETS",
+      "START",
+      "FINISH",
+      "EST_FIX_TIME",
+      "REASON",
+      "CRC",
+      "EXTRACTED",
+      "SHAPE__Area",
+      "SHAPE__Length"
+     ],
+     "attempts": [
+      {
+       "url": "https://www.ergon.com.au/static/Ergon/ergon_po_current_unplanned.geojson",
+       "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+      },
+      {
+       "url": "https://www.ergon.com.au/static/Ergon/ergon_po_current_planned.geojson",
+       "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+      }
+     ]
     }
    ],
    "outages": [
@@ -4159,8 +4252,8 @@
      "customers": 75,
      "start": "1792103340872",
      "startIso": "2026-10-15T22:29:00.872Z",
-     "restore": "1792123200000",
-     "restoreIso": "2026-10-16T04:00:00.000Z",
+     "restore": "1792128600000",
+     "restoreIso": "2026-10-16T05:30:00.000Z",
      "lon": 153.053450916129,
      "lat": -27.5746830115913
     },
@@ -5035,7 +5128,7 @@
      "towns": [
       "REGENTS PARK"
      ],
-     "status": "In Progress",
+     "status": "Completed",
      "cause": "Planned Maintenance",
      "kind": "planned",
      "customers": 21,
@@ -5507,7 +5600,7 @@
      "towns": [
       "BELLBOWRIE"
      ],
-     "status": "In Progress",
+     "status": "Completed",
      "cause": "Planned Maintenance",
      "kind": "planned",
      "customers": 8,
@@ -6293,24 +6386,6 @@
     },
     {
      "network": "Ergon Energy",
-     "id": "26SW11756",
-     "location": "HARRISTOWN",
-     "towns": [
-      "HARRISTOWN"
-     ],
-     "status": "Crews working on-site",
-     "cause": "The loss of supply is to upgrade equipment to meet customer demand for electricity and to improve reliability of supply in the area",
-     "kind": "planned",
-     "customers": 191,
-     "start": "1792104000000",
-     "startIso": "2026-10-15T22:40:00.000Z",
-     "restore": "1792125000000",
-     "restoreIso": "2026-10-16T04:30:00.000Z",
-     "lon": 151.932267165246,
-     "lat": -27.5796863451456
-    },
-    {
-     "network": "Ergon Energy",
      "id": "26MK5884",
      "location": "GLENELLA, MOUNT PLEASANT",
      "towns": [
@@ -6370,24 +6445,6 @@
      "lon": 151.85651326805,
      "lat": -24.2159855857831,
      "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26FN9087",
-     "location": "WOREE",
-     "towns": [
-      "WOREE"
-     ],
-     "status": "Crews working on-site",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 147,
-     "start": "1792103400000",
-     "startIso": "2026-10-15T22:30:00.000Z",
-     "restore": "1792125000000",
-     "restoreIso": "2026-10-16T04:30:00.000Z",
-     "lon": 145.738121201971,
-     "lat": -16.9535678494771
     },
     {
      "network": "Ergon Energy",
@@ -6797,8 +6854,8 @@
      "cause": "The loss of supply is to allow maintenance of the electricity network",
      "kind": "planned",
      "customers": 79,
-     "start": "1792117800000",
-     "startIso": "2026-10-16T02:30:00.000Z",
+     "start": "1792117920000",
+     "startIso": "2026-10-16T02:32:00.000Z",
      "restore": "1792126800000",
      "restoreIso": "2026-10-16T05:00:00.000Z",
      "lon": 149.189758380833,
@@ -7100,6 +7157,22 @@
      "lon": 151.917424549222,
      "lat": -27.5964465325403,
      "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26NQ12479",
+     "location": "TAYLORS BEACH",
+     "towns": [
+      "TAYLORS BEACH"
+     ],
+     "status": "Crews working on-site",
+     "cause": "The loss of supply is due to damage requiring emergency repairs.",
+     "kind": "unplanned",
+     "customers": 50,
+     "start": "1792113629000",
+     "startIso": "2026-10-16T01:20:29.000Z",
+     "lon": 146.323616100124,
+     "lat": -18.6323258310127
     },
     {
      "network": "Ergon Energy",
@@ -7692,6 +7765,22 @@
      "lon": 151.945243763007,
      "lat": -27.5503601201335,
      "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26NQ12480",
+     "location": "ALICE RIVER",
+     "towns": [
+      "ALICE RIVER"
+     ],
+     "status": "Outage reported",
+     "cause": "The loss of supply is due to damage requiring emergency repairs. Fault finding is in progress.",
+     "kind": "unplanned",
+     "customers": 23,
+     "start": "1792117149000",
+     "startIso": "2026-10-16T02:19:09.000Z",
+     "lon": 146.597171579814,
+     "lat": -19.3290911991026
     },
     {
      "network": "Ergon Energy",
@@ -9333,6 +9422,24 @@
      "lon": 145.246676396538,
      "lat": -15.4760319506349,
      "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26CA11762",
+     "location": "ILFRACOMBE",
+     "towns": [
+      "ILFRACOMBE"
+     ],
+     "status": "Crews working on-site",
+     "cause": "The loss of supply is to allow emergency maintenance of the electricity network.",
+     "kind": "unplanned",
+     "customers": 6,
+     "start": "1792116780000",
+     "startIso": "2026-10-16T02:13:00.000Z",
+     "restore": "1792121400000",
+     "restoreIso": "2026-10-16T03:30:00.000Z",
+     "lon": 144.504455949654,
+     "lat": -23.4924159326954
     },
     {
      "network": "Ergon Energy",
@@ -11321,10 +11428,10 @@
   "vic": {
    "state": "VIC",
    "name": "Victoria",
-   "count": 16,
-   "customers": 260,
-   "unplannedCount": 9,
-   "unplannedCustomers": 148,
+   "count": 17,
+   "customers": 261,
+   "unplannedCount": 10,
+   "unplannedCustomers": 149,
    "plannedCount": 7,
    "plannedCustomers": 112,
    "networks": [
@@ -11333,19 +11440,43 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792119891411,
+     "capturedAt": 1792120798766,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "unreadable": true,
      "sourceUrl": "https://ausnetservices.my.salesforce-sites.com/OutageTracker/",
-     "unconfirmed": true
+     "unconfirmed": true,
+     "attempts": [
+      {
+       "url": "https://ausnetservices.my.salesforce-sites.com/OutageTracker/",
+       "error": "Responded, but no recognisable outage fields"
+      },
+      {
+       "url": "https://www.ausnetservices.com.au/outages",
+       "error": "Responded, but no recognisable outage fields"
+      }
+     ]
     },
     {
      "name": "Powercor",
      "ok": true,
-     "count": 12,
+     "count": 13,
      "source": "feed",
-     "capturedAt": 1792119891411,
+     "origin": "feed",
+     "capturedAt": 1792120798766,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
+     "columns": [
+      "ORDER_ID",
+      "BUSINESS",
+      "AREA",
+      "TOWN",
+      "POSTCODE",
+      "CUSTOMERS",
+      "ETR",
+      "CREW_STATUS",
+      "CAUSE",
+      "START_TIME",
+      "PRIVATISED"
+     ],
      "reported": {
       "outages": null,
       "customers": 100
@@ -11357,8 +11488,22 @@
      "ok": true,
      "count": 4,
      "source": "feed",
-     "capturedAt": 1792119891411,
+     "origin": "feed",
+     "capturedAt": 1792120798766,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
+     "columns": [
+      "ORDER_ID",
+      "BUSINESS",
+      "AREA",
+      "TOWN",
+      "POSTCODE",
+      "CUSTOMERS",
+      "ETR",
+      "CREW_STATUS",
+      "CAUSE",
+      "START_TIME",
+      "PRIVATISED"
+     ],
      "reported": {
       "outages": null,
       "customers": 100
@@ -11370,20 +11515,36 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792119891411,
+     "capturedAt": 1792120798766,
      "error": "HTTP 404 — United Energy | Home @charset \"UTF-8\";.TopLinks-module--root--16b37{align-items:center;display:flex;flex-flow:row nowrap;grid-area:top-links;justify-content:fle…",
-     "unconfirmed": true
+     "unconfirmed": true,
+     "attempts": [
+      {
+       "url": "https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/",
+       "error": "HTTP 404 — United Energy | Home @charset \"UTF-8\";.TopLinks-module--root--16b37{align-items:center;display:flex;flex-flow:row nowrap;grid-area:top-links;justify-content:fle…"
+      }
+     ]
     },
     {
      "name": "Jemena",
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792119891411,
+     "capturedAt": 1792120798766,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "unreadable": true,
      "sourceUrl": "https://www.jemena.com.au/outages/electricity-outages/",
      "unconfirmed": true,
+     "attempts": [
+      {
+       "url": "https://www.jemena.com.au/outages/electricity-outages/",
+       "error": "Responded, but no recognisable outage fields"
+      },
+      {
+       "url": "https://poweroutagesaustralia.com.au/distributors/jemena/",
+       "error": "Responded, but no recognisable outage fields"
+      }
+     ],
      "reported": {
       "outages": 202,
       "customers": 202
@@ -11549,7 +11710,7 @@
      "cause": "Under investigation",
      "customers": 1,
      "start": "10:53 16-10-2026",
-     "restore": "14:00 16-10-2026",
+     "restore": "16:30 16-10-2026",
      "lon": 142.9677933963209,
      "lat": -38.4830565344197
     },
@@ -11584,6 +11745,21 @@
      "restore": "16:30 16-10-2026",
      "lon": 144.777848649719,
      "lat": -37.8768285880434
+    },
+    {
+     "network": "Powercor",
+     "id": "2399543-1",
+     "location": "TRUGANINA",
+     "towns": [
+      "TRUGANINA"
+     ],
+     "status": "Outage Reported",
+     "cause": "Under investigation",
+     "customers": 1,
+     "start": "13:28 16-10-2026",
+     "restore": "17:30 16-10-2026",
+     "lon": 144.7113418347829,
+     "lat": -37.8232793065696
     },
     {
      "network": "CitiPower",
@@ -11664,11 +11840,29 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792119891411,
+     "capturedAt": 1792120798766,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "unreadable": true,
      "sourceUrl": "https://www.sapowernetworks.com.au/outages/",
      "unconfirmed": true,
+     "attempts": [
+      {
+       "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/OutageList",
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 100000340773185445-1119955423003412662"
+      },
+      {
+       "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/api/outages",
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 100000340773185445-118788135305087134"
+      },
+      {
+       "url": "https://www.sapowernetworks.com.au/outages/",
+       "error": "Responded, but no recognisable outage fields"
+      },
+      {
+       "url": "https://poweroutagesaustralia.com.au/distributors/sa-power-networks/",
+       "error": "Responded, but no recognisable outage fields"
+      }
+     ],
      "reported": {
       "outages": 1085,
       "customers": 1085
@@ -11682,83 +11876,121 @@
   "wa": {
    "state": "WA",
    "name": "Western Australia",
-   "count": 145,
-   "customers": 14801,
-   "unplannedCount": 145,
-   "unplannedCustomers": 14801,
-   "plannedCount": 0,
-   "plannedCustomers": 0,
+   "count": 132,
+   "customers": 13804,
+   "unplannedCount": 10,
+   "unplannedCustomers": 866,
+   "plannedCount": 122,
+   "plannedCustomers": 12938,
    "networks": [
     {
      "name": "Western Power",
      "ok": true,
-     "count": 145,
+     "count": 132,
      "source": "feed",
-     "capturedAt": 1792119891411,
-     "sourceUrl": "https://www.westernpower.com.au/api/corp/outage/all-outages"
+     "origin": "feed",
+     "capturedAt": 1792120798766,
+     "staleDropped": 2,
+     "sourceUrl": "https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
+     "columns": [
+      "OBJECTID",
+      "OUTAGETYPE",
+      "INCIDENTREF",
+      "ENARNUMBER",
+      "OUTAGESTARTTIME",
+      "ESTIMATEDRESTORATIONTIME",
+      "PLANNEDOUTAGE",
+      "NOCUSTOMERSIMPACTED",
+      "TIMEADDED",
+      "AFFECTED_AREA",
+      "AFFECTED_AREA_NOCUSTOMERS",
+      "Tags",
+      "SHAPE__Area",
+      "SHAPE__Length"
+     ]
     },
     {
      "name": "Horizon Power",
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792119891411,
+     "capturedAt": 1792120798766,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "unreadable": true,
      "sourceUrl": "https://www.horizonpower.com.au/faults-outages/",
-     "unconfirmed": true
+     "unconfirmed": true,
+     "attempts": [
+      {
+       "url": "https://www.horizonpower.com.au/faults-outages/power-outages/",
+       "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+      },
+      {
+       "url": "https://www.horizonpower.com.au/faults-outages/",
+       "error": "Responded, but no recognisable outage fields"
+      }
+     ]
     }
    ],
    "outages": [
     {
      "network": "Western Power",
-     "id": "INCD-2165881-U(1)",
-     "location": "CULLALLA, GRANVILLE, COONABIDGEE, GINGIN, WILBINGA, MUCKENBURRA, GINGINUP, GABBADAH, WOODRIDGE, GUILDERTON, YEAL, NEERGABBY, BEERMULLAH, CARABAN",
-     "towns": [
-      "CULLALLA",
-      "GRANVILLE",
-      "COONABIDGEE",
-      "GINGIN",
-      "WILBINGA",
-      "MUCKENBURRA",
-      "GINGINUP",
-      "GABBADAH",
-      "WOODRIDGE",
-      "GUILDERTON",
-      "YEAL",
-      "NEERGABBY",
-      "BEERMULLAH",
-      "CARABAN"
-     ],
-     "customers": 1546,
-     "start": "20261016T105427+08:00",
-     "restore": "20261016T180000+08:00"
-    },
-    {
-     "network": "Western Power",
      "id": "INCD-2165851-U",
-     "location": "GLENFIELD, DRUMMOND COVE, SUNSET BEACH",
+     "location": "DRUMMOND COVE,GLENFIELD,SUNSET BEACH",
      "towns": [
-      "GLENFIELD",
       "DRUMMOND COVE",
+      "GLENFIELD",
       "SUNSET BEACH"
      ],
-     "customers": 1150,
-     "start": "20261021T070000+08:00",
-     "restore": "20261021T173000+08:00"
+     "kind": "planned",
+     "customers": 1152,
+     "start": "21/10/2026 07:00 AM",
+     "restore": "21/10/2026 05:30 PM",
+     "lon": 114.60774811477,
+     "lat": -28.6840580682843,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-508832-V",
-     "location": "JOONDANNA, YOKINE, TUART HILL",
+     "location": "TUART HILL,JOONDANNA,YOKINE",
      "towns": [
+      "TUART HILL",
       "JOONDANNA",
-      "YOKINE",
-      "TUART HILL"
+      "YOKINE"
      ],
-     "customers": 803,
-     "start": "20261018T073000+08:00",
-     "restore": "20261018T173000+08:00"
+     "kind": "planned",
+     "customers": 798,
+     "start": "18/10/2026 07:30 AM",
+     "restore": "18/10/2026 05:30 PM",
+     "lon": 115.834582608234,
+     "lat": -31.9044884403013,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2165881-U",
+     "location": "GINGIN,MUCKENBURRA,GINGINUP,COONABIDGEE,NEERGABBY,WOODRIDGE,GRANVILLE,BEERMULLAH,CULLALLA,WILBINGA,YEAL",
+     "towns": [
+      "GINGIN",
+      "MUCKENBURRA",
+      "GINGINUP",
+      "COONABIDGEE",
+      "NEERGABBY",
+      "WOODRIDGE",
+      "GRANVILLE",
+      "BEERMULLAH",
+      "CULLALLA",
+      "WILBINGA",
+      "YEAL"
+     ],
+     "kind": "unplanned",
+     "customers": 754,
+     "start": "16/10/2026 10:54 AM",
+     "restore": "16/10/2026 06:00 PM",
+     "lon": 115.595083916585,
+     "lat": -31.3229023246729
     },
     {
      "network": "Western Power",
@@ -11767,33 +11999,48 @@
      "towns": [
       "BASSENDEAN"
      ],
-     "customers": 724,
-     "start": "20261020T073000+08:00",
-     "restore": "20261020T173000+08:00"
+     "kind": "planned",
+     "customers": 723,
+     "start": "20/10/2026 07:30 AM",
+     "restore": "20/10/2026 05:30 PM",
+     "lon": 115.948451231866,
+     "lat": -31.908169811799,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-2162841-U",
-     "location": "MOUNT LAWLEY, INGLEWOOD",
+     "location": "MOUNT LAWLEY,INGLEWOOD",
      "towns": [
       "MOUNT LAWLEY",
       "INGLEWOOD"
      ],
+     "kind": "planned",
      "customers": 659,
-     "start": "20261018T190000+08:00",
-     "restore": "20261019T050000+08:00"
+     "start": "18/10/2026 07:00 PM",
+     "restore": "19/10/2026 05:00 AM",
+     "lon": 115.878078956138,
+     "lat": -31.9251551861517,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-2162961-U",
-     "location": "PALMYRA, MELVILLE",
+     "location": "PALMYRA,MELVILLE",
      "towns": [
       "PALMYRA",
       "MELVILLE"
      ],
-     "customers": 541,
-     "start": "20261018T073000+08:00",
-     "restore": "20261018T150000+08:00"
+     "kind": "planned",
+     "customers": 543,
+     "start": "18/10/2026 07:30 AM",
+     "restore": "18/10/2026 03:00 PM",
+     "lon": 115.785579257957,
+     "lat": -32.0421459770792,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -11802,48 +12049,66 @@
      "towns": [
       "BECKENHAM"
      ],
-     "customers": 415,
-     "start": "20261020T073000+08:00",
-     "restore": "20261020T180000+08:00"
+     "kind": "planned",
+     "customers": 416,
+     "start": "20/10/2026 07:30 AM",
+     "restore": "20/10/2026 06:00 PM",
+     "lon": 115.948735437262,
+     "lat": -32.0319447750174,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-508952-V",
-     "location": "CHURCHLANDS, OSBORNE PARK, HERDSMAN, WOODLANDS",
+     "location": "WOODLANDS,CHURCHLANDS,OSBORNE PARK,HERDSMAN",
      "towns": [
+      "WOODLANDS",
       "CHURCHLANDS",
       "OSBORNE PARK",
-      "HERDSMAN",
-      "WOODLANDS"
+      "HERDSMAN"
      ],
-     "customers": 363,
-     "start": "20261017T200000+08:00",
-     "restore": "20261018T060000+08:00"
+     "kind": "planned",
+     "customers": 362,
+     "start": "17/10/2026 08:00 PM",
+     "restore": "18/10/2026 06:00 AM",
+     "lon": 115.793740626586,
+     "lat": -31.9151819895744,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-508322-V",
-     "location": "SOUTH BUNBURY, CAREY PARK, EAST BUNBURY",
+     "location": "EAST BUNBURY,CAREY PARK,SOUTH BUNBURY",
      "towns": [
-      "SOUTH BUNBURY",
+      "EAST BUNBURY",
       "CAREY PARK",
-      "EAST BUNBURY"
+      "SOUTH BUNBURY"
      ],
-     "customers": 354,
-     "start": "20261016T075050+08:00",
-     "restore": "20261016T160000+08:00"
+     "kind": "planned",
+     "customers": 353,
+     "start": "16/10/2026 07:50 AM",
+     "restore": "16/10/2026 04:00 PM",
+     "lon": 115.651960788325,
+     "lat": -33.3421644158709
     },
     {
      "network": "Western Power",
      "id": "INCD-2161721-U",
-     "location": "BICTON, PALMYRA",
+     "location": "PALMYRA,BICTON",
      "towns": [
-      "BICTON",
-      "PALMYRA"
+      "PALMYRA",
+      "BICTON"
      ],
-     "customers": 320,
-     "start": "20261018T080000+08:00",
-     "restore": "20261018T110000+08:00"
+     "kind": "planned",
+     "customers": 324,
+     "start": "18/10/2026 08:00 AM",
+     "restore": "18/10/2026 11:00 AM",
+     "lon": 115.784536799002,
+     "lat": -32.0400556540427,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -11852,9 +12117,14 @@
      "towns": [
       "HAMILTON HILL"
      ],
+     "kind": "planned",
      "customers": 304,
-     "start": "20261018T070000+08:00",
-     "restore": "20261018T170000+08:00"
+     "start": "18/10/2026 07:00 AM",
+     "restore": "18/10/2026 05:00 PM",
+     "lon": 115.764331280778,
+     "lat": -32.0822264935892,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -11863,21 +12133,29 @@
      "towns": [
       "THORNLIE"
      ],
-     "customers": 279,
-     "start": "20261017T073000+08:00",
-     "restore": "20261017T173000+08:00"
+     "kind": "planned",
+     "customers": 278,
+     "start": "17/10/2026 07:30 AM",
+     "restore": "17/10/2026 05:30 PM",
+     "lon": 115.954419165201,
+     "lat": -32.0560902520562,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-508362-V",
-     "location": "MOUNT HAWTHORN, JOONDANNA",
+     "location": "JOONDANNA,MOUNT HAWTHORN",
      "towns": [
-      "MOUNT HAWTHORN",
-      "JOONDANNA"
+      "JOONDANNA",
+      "MOUNT HAWTHORN"
      ],
+     "kind": "planned",
      "customers": 254,
-     "start": "20261016T080402+08:00",
-     "restore": "20261016T173000+08:00"
+     "start": "16/10/2026 08:04 AM",
+     "restore": "16/10/2026 05:30 PM",
+     "lon": 115.836334853044,
+     "lat": -31.9116900387768
     },
     {
      "network": "Western Power",
@@ -11886,21 +12164,14 @@
      "towns": [
       "KELMSCOTT"
      ],
-     "customers": 238,
-     "start": "20261017T073000+08:00",
-     "restore": "20261017T110000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-508942-V",
-     "location": "KELMSCOTT, CAMILLO",
-     "towns": [
-      "KELMSCOTT",
-      "CAMILLO"
-     ],
-     "customers": 232,
-     "start": "20261017T110000+08:00",
-     "restore": "20261017T160000+08:00"
+     "kind": "planned",
+     "customers": 239,
+     "start": "17/10/2026 07:30 AM",
+     "restore": "17/10/2026 11:00 AM",
+     "lon": 116.005042824722,
+     "lat": -32.1179570173543,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -11909,9 +12180,31 @@
      "towns": [
       "BASSENDEAN"
      ],
+     "kind": "planned",
      "customers": 230,
-     "start": "20261019T073000+08:00",
-     "restore": "20261019T173000+08:00"
+     "start": "19/10/2026 07:30 AM",
+     "restore": "19/10/2026 05:30 PM",
+     "lon": 115.938207924141,
+     "lat": -31.9115721221882,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-508942-V",
+     "location": "KELMSCOTT,CAMILLO",
+     "towns": [
+      "KELMSCOTT",
+      "CAMILLO"
+     ],
+     "kind": "planned",
+     "customers": 229,
+     "start": "17/10/2026 11:00 AM",
+     "restore": "17/10/2026 04:00 PM",
+     "lon": 116.001641416781,
+     "lat": -32.1130978483449,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -11920,9 +12213,14 @@
      "towns": [
       "DUNSBOROUGH"
      ],
-     "customers": 218,
-     "start": "20261018T080000+08:00",
-     "restore": "20261018T170000+08:00"
+     "kind": "planned",
+     "customers": 217,
+     "start": "18/10/2026 08:00 AM",
+     "restore": "18/10/2026 05:00 PM",
+     "lon": 115.106857617554,
+     "lat": -33.6128776558385,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -11931,20 +12229,14 @@
      "towns": [
       "NORTH PERTH"
      ],
-     "customers": 209,
-     "start": "20261021T073000+08:00",
-     "restore": "20261021T180000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-505862-V",
-     "location": "PALMYRA",
-     "towns": [
-      "PALMYRA"
-     ],
-     "customers": 199,
-     "start": "20261018T073000+08:00",
-     "restore": "20261018T123000+08:00"
+     "kind": "planned",
+     "customers": 204,
+     "start": "21/10/2026 07:30 AM",
+     "restore": "21/10/2026 06:00 PM",
+     "lon": 115.85272051639,
+     "lat": -31.9329126671109,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -11953,69 +12245,111 @@
      "towns": [
       "HIGH WYCOMBE"
      ],
+     "kind": "planned",
+     "customers": 198,
+     "start": "16/10/2026 08:08 AM",
+     "restore": "16/10/2026 05:00 PM",
+     "lon": 116.004145338583,
+     "lat": -31.9393174252194
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-505862-V",
+     "location": "PALMYRA",
+     "towns": [
+      "PALMYRA"
+     ],
+     "kind": "planned",
      "customers": 197,
-     "start": "20261016T080815+08:00",
-     "restore": "20261016T170000+08:00"
+     "start": "18/10/2026 07:30 AM",
+     "restore": "18/10/2026 12:30 PM",
+     "lon": 115.789069047546,
+     "lat": -32.036862821076,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-2164711-U",
-     "location": "WOODBRIDGE, MIDLAND",
+     "location": "MIDLAND,WOODBRIDGE",
      "towns": [
-      "WOODBRIDGE",
-      "MIDLAND"
+      "MIDLAND",
+      "WOODBRIDGE"
      ],
+     "kind": "planned",
      "customers": 191,
-     "start": "20261020T200000+08:00",
-     "restore": "20261021T060000+08:00"
+     "start": "20/10/2026 08:00 PM",
+     "restore": "21/10/2026 06:00 AM",
+     "lon": 115.995946442833,
+     "lat": -31.8892018017024,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-509242-V",
-     "location": "CANNINGTON, BENTLEY",
+     "location": "CANNINGTON,BENTLEY",
      "towns": [
       "CANNINGTON",
       "BENTLEY"
      ],
-     "customers": 187,
-     "start": "20261021T070000+08:00",
-     "restore": "20261021T173000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-202834-X",
-     "location": "BALLAJURA, WHITEMAN",
-     "towns": [
-      "BALLAJURA",
-      "WHITEMAN"
-     ],
-     "customers": 180,
-     "start": "20261016T102909+08:00",
-     "restore": "20261016T170000+08:00"
+     "kind": "planned",
+     "customers": 186,
+     "start": "21/10/2026 07:00 AM",
+     "restore": "21/10/2026 05:30 PM",
+     "lon": 115.924681389935,
+     "lat": -32.0081914150844,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-507932-V",
-     "location": "MIDLAND, MIDVALE",
+     "location": "MIDVALE,MIDLAND",
      "towns": [
-      "MIDLAND",
-      "MIDVALE"
+      "MIDVALE",
+      "MIDLAND"
      ],
-     "customers": 179,
-     "start": "20261019T073000+08:00",
-     "restore": "20261019T140000+08:00"
+     "kind": "planned",
+     "customers": 178,
+     "start": "19/10/2026 07:30 AM",
+     "restore": "19/10/2026 02:00 PM",
+     "lon": 116.018128782892,
+     "lat": -31.8887725578238,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-202834-X",
+     "location": "BALLAJURA,WHITEMAN",
+     "towns": [
+      "BALLAJURA",
+      "WHITEMAN"
+     ],
+     "kind": "planned",
+     "customers": 172,
+     "start": "16/10/2026 10:29 AM",
+     "restore": "16/10/2026 05:00 PM",
+     "lon": 115.911096064587,
+     "lat": -31.8420253445961
     },
     {
      "network": "Western Power",
      "id": "INCD-497012-V",
-     "location": "SORRENTO, MARMION",
+     "location": "MARMION,SORRENTO",
      "towns": [
-      "SORRENTO",
-      "MARMION"
+      "MARMION",
+      "SORRENTO"
      ],
-     "customers": 171,
-     "start": "20261023T070000+08:00",
-     "restore": "20261023T150000+08:00"
+     "kind": "planned",
+     "customers": 170,
+     "start": "23/10/2026 07:00 AM",
+     "restore": "23/10/2026 03:00 PM",
+     "lon": 115.74945125134,
+     "lat": -31.8380315026979,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12024,9 +12358,14 @@
      "towns": [
       "MORLEY"
      ],
-     "customers": 165,
-     "start": "20261017T073000+08:00",
-     "restore": "20261017T173000+08:00"
+     "kind": "planned",
+     "customers": 167,
+     "start": "17/10/2026 07:30 AM",
+     "restore": "17/10/2026 05:30 PM",
+     "lon": 115.90655070603,
+     "lat": -31.890741735188,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12035,9 +12374,14 @@
      "towns": [
       "WILLETTON"
      ],
-     "customers": 160,
-     "start": "20261018T080000+08:00",
-     "restore": "20261018T130000+08:00"
+     "kind": "planned",
+     "customers": 161,
+     "start": "18/10/2026 08:00 AM",
+     "restore": "18/10/2026 01:00 PM",
+     "lon": 115.88044914215,
+     "lat": -32.0463448608641,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12046,9 +12390,12 @@
      "towns": [
       "BAYSWATER"
      ],
+     "kind": "planned",
      "customers": 157,
-     "start": "20261016T082855+08:00",
-     "restore": "20261016T180000+08:00"
+     "start": "16/10/2026 08:28 AM",
+     "restore": "16/10/2026 06:00 PM",
+     "lon": 115.907924013605,
+     "lat": -31.9233007452886
     },
     {
      "network": "Western Power",
@@ -12057,9 +12404,14 @@
      "towns": [
       "HANNANS"
      ],
-     "customers": 151,
-     "start": "20261022T080000+08:00",
-     "restore": "20261022T160000+08:00"
+     "kind": "planned",
+     "customers": 152,
+     "start": "22/10/2026 08:00 AM",
+     "restore": "22/10/2026 04:00 PM",
+     "lon": 121.446842363897,
+     "lat": -30.721745555262,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12068,9 +12420,12 @@
      "towns": [
       "ROCKINGHAM"
      ],
+     "kind": "planned",
      "customers": 149,
-     "start": "20261016T072508+08:00",
-     "restore": "20261016T170000+08:00"
+     "start": "16/10/2026 07:25 AM",
+     "restore": "16/10/2026 05:00 PM",
+     "lon": 115.72764564405,
+     "lat": -32.2905957926263
     },
     {
      "network": "Western Power",
@@ -12079,35 +12434,31 @@
      "towns": [
       "BEECHBORO"
      ],
+     "kind": "planned",
      "customers": 146,
-     "start": "20261023T073000+08:00",
-     "restore": "20261023T153000+08:00"
+     "start": "23/10/2026 07:30 AM",
+     "restore": "23/10/2026 03:30 PM",
+     "lon": 115.942177344921,
+     "lat": -31.8694433232911,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-508392-V",
-     "location": "BANJUP, OAKFORD, FORRESTDALE",
+     "id": "INCD-507852-V",
+     "location": "HERNE HILL,MIDDLE SWAN",
      "towns": [
-      "BANJUP",
-      "OAKFORD",
-      "FORRESTDALE"
+      "HERNE HILL",
+      "MIDDLE SWAN"
      ],
-     "customers": 142,
-     "start": "20261016T110000+08:00",
-     "restore": "20261016T150000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2161561-U",
-     "location": "CULLALLA, GINGINUP, GINGIN",
-     "towns": [
-      "CULLALLA",
-      "GINGINUP",
-      "GINGIN"
-     ],
-     "customers": 114,
-     "start": "20261017T070000+08:00",
-     "restore": "20261017T180000+08:00"
+     "kind": "planned",
+     "customers": 121,
+     "start": "20/10/2026 07:00 PM",
+     "restore": "21/10/2026 06:00 AM",
+     "lon": 115.998129142361,
+     "lat": -31.8508050787462,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12116,34 +12467,32 @@
      "towns": [
       "BAKERS HILL"
      ],
-     "customers": 114,
-     "start": "20261021T083000+08:00",
-     "restore": "20261021T153000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-507852-V",
-     "location": "HERNE HILL, MIDDLE SWAN",
-     "towns": [
-      "HERNE HILL",
-      "MIDDLE SWAN"
-     ],
-     "customers": 114,
-     "start": "20261020T190000+08:00",
-     "restore": "20261021T060000+08:00"
+     "kind": "planned",
+     "customers": 112,
+     "start": "21/10/2026 08:30 AM",
+     "restore": "21/10/2026 03:30 PM",
+     "lon": 116.428722677764,
+     "lat": -31.740964616289,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-509072-V",
-     "location": "COOKERNUP, HOFFMAN, YARLOOP",
+     "location": "COOKERNUP,YARLOOP,HOFFMAN",
      "towns": [
       "COOKERNUP",
-      "HOFFMAN",
-      "YARLOOP"
+      "YARLOOP",
+      "HOFFMAN"
      ],
-     "customers": 109,
-     "start": "20261018T080000+08:00",
-     "restore": "20261018T170000+08:00"
+     "kind": "planned",
+     "customers": 106,
+     "start": "18/10/2026 08:00 AM",
+     "restore": "18/10/2026 05:00 PM",
+     "lon": 115.878956585916,
+     "lat": -32.9851959773067,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12152,9 +12501,14 @@
      "towns": [
       "DUNCRAIG"
      ],
-     "customers": 107,
-     "start": "20261023T073000+08:00",
-     "restore": "20261023T153000+08:00"
+     "kind": "planned",
+     "customers": 106,
+     "start": "23/10/2026 07:30 AM",
+     "restore": "23/10/2026 03:30 PM",
+     "lon": 115.774727753055,
+     "lat": -31.8228751037277,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12163,20 +12517,14 @@
      "towns": [
       "WOODLANDS"
      ],
-     "customers": 103,
-     "start": "20261017T200000+08:00",
-     "restore": "20261018T060000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-81313-W",
-     "location": "MADORA BAY",
-     "towns": [
-      "MADORA BAY"
-     ],
-     "customers": 94,
-     "start": "20261022T080000+08:00",
-     "restore": "20261022T160000+08:00"
+     "kind": "planned",
+     "customers": 104,
+     "start": "17/10/2026 08:00 PM",
+     "restore": "18/10/2026 06:00 AM",
+     "lon": 115.793966655288,
+     "lat": -31.9048972905742,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12185,9 +12533,48 @@
      "towns": [
       "DUNSBOROUGH"
      ],
+     "kind": "planned",
      "customers": 92,
-     "start": "20261018T060000+08:00",
-     "restore": "20261018T090000+08:00"
+     "start": "18/10/2026 06:00 AM",
+     "restore": "18/10/2026 09:00 AM",
+     "lon": 115.106134485429,
+     "lat": -33.615137019926,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2161561-U",
+     "location": "GINGINUP,GINGIN,CULLALLA",
+     "towns": [
+      "GINGINUP",
+      "GINGIN",
+      "CULLALLA"
+     ],
+     "kind": "planned",
+     "customers": 91,
+     "start": "17/10/2026 07:00 AM",
+     "restore": "17/10/2026 06:00 PM",
+     "lon": 115.907933348,
+     "lat": -31.336456164198,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-81313-W",
+     "location": "MADORA BAY",
+     "towns": [
+      "MADORA BAY"
+     ],
+     "kind": "planned",
+     "customers": 91,
+     "start": "22/10/2026 08:00 AM",
+     "restore": "22/10/2026 04:00 PM",
+     "lon": 115.746674548017,
+     "lat": -32.4748953007552,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12196,9 +12583,31 @@
      "towns": [
       "LESMURDIE"
      ],
-     "customers": 90,
-     "start": "20261017T073000+08:00",
-     "restore": "20261017T160000+08:00"
+     "kind": "planned",
+     "customers": 89,
+     "start": "17/10/2026 07:30 AM",
+     "restore": "17/10/2026 04:00 PM",
+     "lon": 116.039750660452,
+     "lat": -32.0002278962042,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-82123-W",
+     "location": "CLAREMONT,DALKEITH",
+     "towns": [
+      "CLAREMONT",
+      "DALKEITH"
+     ],
+     "kind": "planned",
+     "customers": 83,
+     "start": "21/10/2026 07:00 AM",
+     "restore": "21/10/2026 05:00 PM",
+     "lon": 115.784871310055,
+     "lat": -31.9897245323112,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12207,21 +12616,14 @@
      "towns": [
       "KELMSCOTT"
      ],
+     "kind": "planned",
      "customers": 82,
-     "start": "20261017T100000+08:00",
-     "restore": "20261017T140000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-82123-W",
-     "location": "DALKEITH, CLAREMONT",
-     "towns": [
-      "DALKEITH",
-      "CLAREMONT"
-     ],
-     "customers": 82,
-     "start": "20261021T070000+08:00",
-     "restore": "20261021T170000+08:00"
+     "start": "17/10/2026 10:00 AM",
+     "restore": "17/10/2026 02:00 PM",
+     "lon": 116.001488618741,
+     "lat": -32.1298600085208,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12230,9 +12632,12 @@
      "towns": [
       "SCARBOROUGH"
      ],
+     "kind": "planned",
      "customers": 77,
-     "start": "20261016T075407+08:00",
-     "restore": "20261016T170000+08:00"
+     "start": "16/10/2026 07:54 AM",
+     "restore": "16/10/2026 05:00 PM",
+     "lon": 115.770952073729,
+     "lat": -31.8927845133584
     },
     {
      "network": "Western Power",
@@ -12241,9 +12646,14 @@
      "towns": [
       "MUCHEA"
      ],
-     "customers": 77,
-     "start": "20261019T100000+08:00",
-     "restore": "20261019T170000+08:00"
+     "kind": "planned",
+     "customers": 76,
+     "start": "19/10/2026 10:00 AM",
+     "restore": "19/10/2026 05:00 PM",
+     "lon": 115.948698026024,
+     "lat": -31.5706015434963,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12252,9 +12662,14 @@
      "towns": [
       "SOUTH KALGOORLIE"
      ],
-     "customers": 76,
-     "start": "20261020T073000+08:00",
-     "restore": "20261020T160000+08:00"
+     "kind": "planned",
+     "customers": 74,
+     "start": "20/10/2026 07:30 AM",
+     "restore": "20/10/2026 04:00 PM",
+     "lon": 121.470625702117,
+     "lat": -30.7720397271249,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12263,45 +12678,48 @@
      "towns": [
       "BULL CREEK"
      ],
-     "customers": 73,
-     "start": "20261019T080000+08:00",
-     "restore": "20261019T140000+08:00"
+     "kind": "planned",
+     "customers": 74,
+     "start": "19/10/2026 08:00 AM",
+     "restore": "19/10/2026 02:00 PM",
+     "lon": 115.852011907328,
+     "lat": -32.056023837346,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-2157821-U",
-     "location": "CHAMPION LAKES, CAMILLO",
+     "location": "CAMILLO,CHAMPION LAKES",
      "towns": [
-      "CHAMPION LAKES",
-      "CAMILLO"
+      "CAMILLO",
+      "CHAMPION LAKES"
      ],
+     "kind": "planned",
      "customers": 72,
-     "start": "20261017T070000+08:00",
-     "restore": "20261017T100000+08:00"
+     "start": "17/10/2026 07:00 AM",
+     "restore": "17/10/2026 10:00 AM",
+     "lon": 115.989746609407,
+     "lat": -32.1192127025879,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-509112-V",
-     "location": "MOONDYNE, LOWER CHITTERING",
+     "location": "LOWER CHITTERING,MOONDYNE",
      "towns": [
-      "MOONDYNE",
-      "LOWER CHITTERING"
+      "LOWER CHITTERING",
+      "MOONDYNE"
      ],
-     "customers": 71,
-     "start": "20261019T070000+08:00",
-     "restore": "20261019T173000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2163551-U",
-     "location": "JOONDALUP, CONNOLLY",
-     "towns": [
-      "JOONDALUP",
-      "CONNOLLY"
-     ],
-     "customers": 64,
-     "start": "20261021T210000+08:00",
-     "restore": "20261022T010000+08:00"
+     "kind": "planned",
+     "customers": 68,
+     "start": "19/10/2026 07:00 AM",
+     "restore": "19/10/2026 05:30 PM",
+     "lon": 116.081224356272,
+     "lat": -31.5607525267108,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12310,9 +12728,31 @@
      "towns": [
       "SOUTH GUILDFORD"
      ],
+     "kind": "planned",
      "customers": 64,
-     "start": "20261021T180000+08:00",
-     "restore": "20261022T060000+08:00"
+     "start": "21/10/2026 06:00 PM",
+     "restore": "22/10/2026 06:00 AM",
+     "lon": 115.96494356027,
+     "lat": -31.9078130732234,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2163551-U",
+     "location": "JOONDALUP,CONNOLLY",
+     "towns": [
+      "JOONDALUP",
+      "CONNOLLY"
+     ],
+     "kind": "planned",
+     "customers": 64,
+     "start": "21/10/2026 09:00 PM",
+     "restore": "22/10/2026 01:00 AM",
+     "lon": 115.756603868499,
+     "lat": -31.7401008344513,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12321,9 +12761,14 @@
      "towns": [
       "BECKENHAM"
      ],
+     "kind": "planned",
      "customers": 61,
-     "start": "20261021T090000+08:00",
-     "restore": "20261021T173000+08:00"
+     "start": "21/10/2026 09:00 AM",
+     "restore": "21/10/2026 05:30 PM",
+     "lon": 115.962613992482,
+     "lat": -32.0226244811871,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12332,25 +12777,12 @@
      "towns": [
       "ARMADALE"
      ],
+     "kind": "planned",
      "customers": 60,
-     "start": "20261016T075032+08:00",
-     "restore": "20261016T153000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-509062-V",
-     "location": "RED GULLY, MINDARRA, MOGUMBER, REGANS FORD, DANDARAGAN, YATHROO",
-     "towns": [
-      "RED GULLY",
-      "MINDARRA",
-      "MOGUMBER",
-      "REGANS FORD",
-      "DANDARAGAN",
-      "YATHROO"
-     ],
-     "customers": 60,
-     "start": "20261018T080000+08:00",
-     "restore": "20261018T160000+08:00"
+     "start": "16/10/2026 07:50 AM",
+     "restore": "16/10/2026 03:30 PM",
+     "lon": 115.99455815585,
+     "lat": -32.1436932667512
     },
     {
      "network": "Western Power",
@@ -12359,46 +12791,30 @@
      "towns": [
       "BULL CREEK"
      ],
+     "kind": "planned",
      "customers": 57,
-     "start": "20261016T103951+08:00",
-     "restore": "20261016T143000+08:00"
+     "start": "16/10/2026 10:39 AM",
+     "restore": "16/10/2026 02:30 PM",
+     "lon": 115.859103666321,
+     "lat": -32.0646391775264
     },
     {
      "network": "Western Power",
      "id": "INCD-2162851-U",
-     "location": "COOKERNUP, HOFFMAN, YARLOOP",
+     "location": "COOKERNUP,YARLOOP,HOFFMAN",
      "towns": [
       "COOKERNUP",
-      "HOFFMAN",
-      "YARLOOP"
+      "YARLOOP",
+      "HOFFMAN"
      ],
+     "kind": "planned",
      "customers": 56,
-     "start": "20261020T090000+08:00",
-     "restore": "20261020T170000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2162921-U",
-     "location": "MULLEWA",
-     "towns": [
-      "MULLEWA"
-     ],
-     "customers": 56,
-     "start": "20261020T083000+08:00",
-     "restore": "20261020T143000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2163591-U",
-     "location": "HODDYS WELL, CLACKLINE, BAKERS HILL",
-     "towns": [
-      "HODDYS WELL",
-      "CLACKLINE",
-      "BAKERS HILL"
-     ],
-     "customers": 56,
-     "start": "20261021T083000+08:00",
-     "restore": "20261021T153000+08:00"
+     "start": "20/10/2026 09:00 AM",
+     "restore": "20/10/2026 05:00 PM",
+     "lon": 115.893344387985,
+     "lat": -33.0013259251243,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12407,9 +12823,14 @@
      "towns": [
       "BICTON"
      ],
+     "kind": "planned",
      "customers": 55,
-     "start": "20261018T073000+08:00",
-     "restore": "20261018T123000+08:00"
+     "start": "18/10/2026 07:30 AM",
+     "restore": "18/10/2026 12:30 PM",
+     "lon": 115.789115202087,
+     "lat": -32.0281548721783,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12418,20 +12839,51 @@
      "towns": [
       "LESMURDIE"
      ],
-     "customers": 54,
-     "start": "20261020T073000+08:00",
-     "restore": "20261020T103000+08:00"
+     "kind": "planned",
+     "customers": 55,
+     "start": "20/10/2026 07:30 AM",
+     "restore": "20/10/2026 10:30 AM",
+     "lon": 116.052983484188,
+     "lat": -31.9919229247766,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2162821-U",
-     "location": "WOODBRIDGE",
+     "id": "INCD-2163591-U",
+     "location": "BAKERS HILL,HODDYS WELL,CLACKLINE",
      "towns": [
-      "WOODBRIDGE"
+      "BAKERS HILL",
+      "HODDYS WELL",
+      "CLACKLINE"
      ],
+     "kind": "planned",
      "customers": 54,
-     "start": "20261020T170000+08:00",
-     "restore": "20261021T020000+08:00"
+     "start": "21/10/2026 08:30 AM",
+     "restore": "21/10/2026 03:30 PM",
+     "lon": 116.408879442009,
+     "lat": -31.6544682344582,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-509062-V",
+     "location": "RED GULLY,REGANS FORD,YATHROO,MINDARRA",
+     "towns": [
+      "RED GULLY",
+      "REGANS FORD",
+      "YATHROO",
+      "MINDARRA"
+     ],
+     "kind": "planned",
+     "customers": 54,
+     "start": "18/10/2026 08:00 AM",
+     "restore": "18/10/2026 04:00 PM",
+     "lon": 115.651144155952,
+     "lat": -30.9342857904455,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12440,43 +12892,46 @@
      "towns": [
       "KENWICK"
      ],
+     "kind": "planned",
+     "customers": 54,
+     "start": "20/10/2026 08:30 AM",
+     "restore": "20/10/2026 06:30 PM",
+     "lon": 115.97335109783,
+     "lat": -32.0224360256468,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2162921-U",
+     "location": "MULLEWA",
+     "towns": [
+      "MULLEWA"
+     ],
+     "kind": "planned",
      "customers": 53,
-     "start": "20261020T083000+08:00",
-     "restore": "20261020T183000+08:00"
+     "start": "20/10/2026 08:30 AM",
+     "restore": "20/10/2026 02:30 PM",
+     "lon": 115.507338020243,
+     "lat": -28.5364218672188,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-508412-V(2)",
-     "location": "DROME",
+     "id": "INCD-2162821-U",
+     "location": "WOODBRIDGE",
      "towns": [
-      "DROME"
+      "WOODBRIDGE"
      ],
+     "kind": "planned",
      "customers": 52,
-     "start": "20261019T083000+08:00",
-     "restore": "20261019T140000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-202614-X",
-     "location": "FREMANTLE",
-     "towns": [
-      "FREMANTLE"
-     ],
-     "customers": 50,
-     "start": "20261022T070000+08:00",
-     "restore": "20261022T153000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2161711-U",
-     "location": "TOODYAY, HODDYS WELL",
-     "towns": [
-      "TOODYAY",
-      "HODDYS WELL"
-     ],
-     "customers": 50,
-     "start": "20261018T073000+08:00",
-     "restore": "20261018T163000+08:00"
+     "start": "20/10/2026 05:00 PM",
+     "restore": "21/10/2026 02:00 AM",
+     "lon": 115.986275366435,
+     "lat": -31.892941635591,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12485,9 +12940,46 @@
      "towns": [
       "SWAN VIEW"
      ],
+     "kind": "planned",
      "customers": 50,
-     "start": "20261019T073000+08:00",
-     "restore": "20261019T163000+08:00"
+     "start": "19/10/2026 07:30 AM",
+     "restore": "19/10/2026 04:30 PM",
+     "lon": 116.060741892835,
+     "lat": -31.8877630672533,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-202614-X",
+     "location": "FREMANTLE",
+     "towns": [
+      "FREMANTLE"
+     ],
+     "kind": "planned",
+     "customers": 50,
+     "start": "22/10/2026 07:00 AM",
+     "restore": "22/10/2026 03:30 PM",
+     "lon": 115.756374620235,
+     "lat": -32.0620435491353,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-508412-V(2)",
+     "location": "DROME",
+     "towns": [
+      "DROME"
+     ],
+     "kind": "planned",
+     "customers": 50,
+     "start": "19/10/2026 08:30 AM",
+     "restore": "19/10/2026 02:00 PM",
+     "lon": 117.777966829257,
+     "lat": -34.9515561929985,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12496,9 +12988,31 @@
      "towns": [
       "LESCHENAULT"
      ],
+     "kind": "planned",
      "customers": 49,
-     "start": "20261019T073000+08:00",
-     "restore": "20261019T143000+08:00"
+     "start": "19/10/2026 07:30 AM",
+     "restore": "19/10/2026 02:30 PM",
+     "lon": 115.726853428784,
+     "lat": -33.2441614166596,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2161711-U",
+     "location": "HODDYS WELL,TOODYAY",
+     "towns": [
+      "HODDYS WELL",
+      "TOODYAY"
+     ],
+     "kind": "planned",
+     "customers": 48,
+     "start": "18/10/2026 07:30 AM",
+     "restore": "18/10/2026 04:30 PM",
+     "lon": 116.445360293395,
+     "lat": -31.6291322546853,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12507,9 +13021,14 @@
      "towns": [
       "CARINE"
      ],
-     "customers": 43,
-     "start": "20261020T080000+08:00",
-     "restore": "20261020T170000+08:00"
+     "kind": "planned",
+     "customers": 44,
+     "start": "20/10/2026 08:00 AM",
+     "restore": "20/10/2026 05:00 PM",
+     "lon": 115.781229554266,
+     "lat": -31.8478722183055,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12518,9 +13037,14 @@
      "towns": [
       "CHAMPION LAKES"
      ],
+     "kind": "planned",
      "customers": 41,
-     "start": "20261023T070000+08:00",
-     "restore": "20261023T160000+08:00"
+     "start": "23/10/2026 07:00 AM",
+     "restore": "23/10/2026 04:00 PM",
+     "lon": 115.985598599057,
+     "lat": -32.1227795800625,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12529,33 +13053,14 @@
      "towns": [
       "PARKERVILLE"
      ],
+     "kind": "planned",
      "customers": 39,
-     "start": "20261021T073000+08:00",
-     "restore": "20261021T170000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-509232-V",
-     "location": "RED HILL, HERNE HILL",
-     "towns": [
-      "RED HILL",
-      "HERNE HILL"
-     ],
-     "customers": 39,
-     "start": "20261020T190000+08:00",
-     "restore": "20261021T060000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2161441-U",
-     "location": "ROBINSON, TORNDIRRUP",
-     "towns": [
-      "ROBINSON",
-      "TORNDIRRUP"
-     ],
-     "customers": 38,
-     "start": "20261016T093350+08:00",
-     "restore": "20261016T120000+08:00"
+     "start": "21/10/2026 07:30 AM",
+     "restore": "21/10/2026 05:00 PM",
+     "lon": 116.142308998787,
+     "lat": -31.8699542616615,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12564,9 +13069,29 @@
      "towns": [
       "YANGEBUP"
      ],
+     "kind": "planned",
      "customers": 38,
-     "start": "20261020T073000+08:00",
-     "restore": "20261020T143000+08:00"
+     "start": "20/10/2026 07:30 AM",
+     "restore": "20/10/2026 02:30 PM",
+     "lon": 115.819197347416,
+     "lat": -32.1157366288064,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2161441-U",
+     "location": "ROBINSON,TORNDIRRUP",
+     "towns": [
+      "ROBINSON",
+      "TORNDIRRUP"
+     ],
+     "kind": "planned",
+     "customers": 38,
+     "start": "16/10/2026 09:33 AM",
+     "restore": "16/10/2026 12:00 PM",
+     "lon": 117.842566230932,
+     "lat": -35.0460436459311
     },
     {
      "network": "Western Power",
@@ -12575,31 +13100,31 @@
      "towns": [
       "YANGEBUP"
      ],
+     "kind": "planned",
+     "customers": 37,
+     "start": "20/10/2026 07:30 AM",
+     "restore": "20/10/2026 02:30 PM",
+     "lon": 115.819107426056,
+     "lat": -32.1230542281034,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-509232-V",
+     "location": "RED HILL,HERNE HILL",
+     "towns": [
+      "RED HILL",
+      "HERNE HILL"
+     ],
+     "kind": "planned",
      "customers": 36,
-     "start": "20261020T073000+08:00",
-     "restore": "20261020T143000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2160741-U",
-     "location": "PARKERVILLE",
-     "towns": [
-      "PARKERVILLE"
-     ],
-     "customers": 33,
-     "start": "20261016T074410+08:00",
-     "restore": "20261016T170000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2163291-U",
-     "location": "PARKERVILLE",
-     "towns": [
-      "PARKERVILLE"
-     ],
-     "customers": 33,
-     "start": "20261020T073000+08:00",
-     "restore": "20261020T170000+08:00"
+     "start": "20/10/2026 07:00 PM",
+     "restore": "21/10/2026 06:00 AM",
+     "lon": 116.04994177606,
+     "lat": -31.8551089255588,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12608,34 +13133,57 @@
      "towns": [
       "LESMURDIE"
      ],
-     "customers": 33,
-     "start": "20261016T094914+08:00",
-     "restore": "20261016T153000+08:00"
+     "kind": "unplanned",
+     "customers": 34,
+     "start": "16/10/2026 09:49 AM",
+     "restore": "16/10/2026 03:30 PM",
+     "lon": 116.052983484188,
+     "lat": -31.9919229247766
     },
     {
      "network": "Western Power",
-     "id": "INCD-509032-V",
-     "location": "MUCHEA",
+     "id": "INCD-2163291-U",
+     "location": "PARKERVILLE",
      "towns": [
-      "MUCHEA"
+      "PARKERVILLE"
      ],
+     "kind": "planned",
      "customers": 33,
-     "start": "20261019T070000+08:00",
-     "restore": "20261019T120000+08:00"
+     "start": "20/10/2026 07:30 AM",
+     "restore": "20/10/2026 05:00 PM",
+     "lon": 116.122026579384,
+     "lat": -31.8508218017824,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2161401-U",
-     "location": "CROOKED BROOK, DARDANUP, FERGUSON, BOYANUP",
+     "id": "INCD-2160741-U",
+     "location": "PARKERVILLE",
      "towns": [
-      "CROOKED BROOK",
-      "DARDANUP",
-      "FERGUSON",
-      "BOYANUP"
+      "PARKERVILLE"
      ],
+     "kind": "planned",
+     "customers": 33,
+     "start": "16/10/2026 07:44 AM",
+     "restore": "16/10/2026 05:00 PM",
+     "lon": 116.122026579384,
+     "lat": -31.8508218017824
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-508312-V",
+     "location": "HERNE HILL,MILLENDON",
+     "towns": [
+      "HERNE HILL",
+      "MILLENDON"
+     ],
+     "kind": "planned",
      "customers": 31,
-     "start": "20261016T074603+08:00",
-     "restore": "20261016T160000+08:00"
+     "start": "16/10/2026 10:01 AM",
+     "restore": "16/10/2026 03:30 PM",
+     "lon": 116.025420302951,
+     "lat": -31.8113496775398
     },
     {
      "network": "Western Power",
@@ -12644,21 +13192,44 @@
      "towns": [
       "ROLEYSTONE"
      ],
+     "kind": "planned",
      "customers": 30,
-     "start": "20261020T080000+08:00",
-     "restore": "20261020T150000+08:00"
+     "start": "20/10/2026 08:00 AM",
+     "restore": "20/10/2026 03:00 PM",
+     "lon": 116.059131315939,
+     "lat": -32.1170432942872,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-508312-V",
-     "location": "MILLENDON, HERNE HILL",
+     "id": "INCD-509032-V",
+     "location": "MUCHEA",
      "towns": [
-      "MILLENDON",
-      "HERNE HILL"
+      "MUCHEA"
      ],
+     "kind": "planned",
+     "customers": 29,
+     "start": "19/10/2026 07:00 AM",
+     "restore": "19/10/2026 12:00 PM",
+     "lon": 115.958454543883,
+     "lat": -31.5583025035878,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2165921-U",
+     "location": "DAWESVILLE",
+     "towns": [
+      "DAWESVILLE"
+     ],
+     "kind": "unplanned",
      "customers": 28,
-     "start": "20261016T100146+08:00",
-     "restore": "20261016T153000+08:00"
+     "start": "16/10/2026 11:04 AM",
+     "restore": "16/10/2026 04:00 PM",
+     "lon": 115.633878953009,
+     "lat": -32.6331308001129
     },
     {
      "network": "Western Power",
@@ -12667,9 +13238,14 @@
      "towns": [
       "BUNBURY"
      ],
+     "kind": "planned",
      "customers": 27,
-     "start": "20261018T080000+08:00",
-     "restore": "20261018T160000+08:00"
+     "start": "18/10/2026 08:00 AM",
+     "restore": "18/10/2026 04:00 PM",
+     "lon": 115.634911697582,
+     "lat": -33.3285683235289,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12678,34 +13254,63 @@
      "towns": [
       "LESMURDIE"
      ],
+     "kind": "planned",
      "customers": 27,
-     "start": "20261020T090000+08:00",
-     "restore": "20261020T130000+08:00"
+     "start": "20/10/2026 09:00 AM",
+     "restore": "20/10/2026 01:00 PM",
+     "lon": 116.046188480055,
+     "lat": -32.0039007165605,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2161401-U",
+     "location": "CROOKED BROOK,BOYANUP,FERGUSON",
+     "towns": [
+      "CROOKED BROOK",
+      "BOYANUP",
+      "FERGUSON"
+     ],
+     "kind": "planned",
+     "customers": 27,
+     "start": "16/10/2026 07:46 AM",
+     "restore": "16/10/2026 04:00 PM",
+     "lon": 115.764971967323,
+     "lat": -33.4459526984942
     },
     {
      "network": "Western Power",
      "id": "INCD-509092-V",
-     "location": "COLLIE, MUNGALUP, PRESTON SETTLEMENT",
+     "location": "MUNGALUP,COLLIE,PRESTON SETTLEMENT",
      "towns": [
-      "COLLIE",
       "MUNGALUP",
+      "COLLIE",
       "PRESTON SETTLEMENT"
      ],
-     "customers": 26,
-     "start": "20261019T070000+08:00",
-     "restore": "20261019T150000+08:00"
+     "kind": "planned",
+     "customers": 25,
+     "start": "19/10/2026 07:00 AM",
+     "restore": "19/10/2026 03:00 PM",
+     "lon": 116.096612497089,
+     "lat": -33.3989712417049,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-508352-V",
-     "location": "WALLISTON, BICKLEY",
+     "location": "WALLISTON,BICKLEY",
      "towns": [
       "WALLISTON",
       "BICKLEY"
      ],
+     "kind": "planned",
      "customers": 25,
-     "start": "20261016T075008+08:00",
-     "restore": "20261016T160000+08:00"
+     "start": "16/10/2026 07:50 AM",
+     "restore": "16/10/2026 04:00 PM",
+     "lon": 116.076196068809,
+     "lat": -31.9948585579459
     },
     {
      "network": "Western Power",
@@ -12714,9 +13319,12 @@
      "towns": [
       "WILLIAM BAY"
      ],
+     "kind": "unplanned",
      "customers": 23,
-     "start": "20261016T090000+08:00",
-     "restore": "20261016T160000+08:00"
+     "start": "16/10/2026 09:00 AM",
+     "restore": "16/10/2026 04:00 PM",
+     "lon": 117.210260602346,
+     "lat": -35.009608674302
     },
     {
      "network": "Western Power",
@@ -12725,9 +13333,14 @@
      "towns": [
       "GRASS VALLEY"
      ],
+     "kind": "planned",
      "customers": 22,
-     "start": "20261020T083000+08:00",
-     "restore": "20261020T153000+08:00"
+     "start": "20/10/2026 08:30 AM",
+     "restore": "20/10/2026 03:30 PM",
+     "lon": 116.793528654783,
+     "lat": -31.6351602124173,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12736,9 +13349,14 @@
      "towns": [
       "BELLEVUE"
      ],
+     "kind": "planned",
      "customers": 21,
-     "start": "20261017T080000+08:00",
-     "restore": "20261017T150000+08:00"
+     "start": "17/10/2026 08:00 AM",
+     "restore": "17/10/2026 03:00 PM",
+     "lon": 116.017693383847,
+     "lat": -31.8992537551076,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12747,33 +13365,14 @@
      "towns": [
       "GRACETOWN"
      ],
+     "kind": "planned",
      "customers": 19,
-     "start": "20261022T083000+08:00",
-     "restore": "20261022T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2161861-U",
-     "location": "DARLING DOWNS",
-     "towns": [
-      "DARLING DOWNS"
-     ],
-     "customers": 18,
-     "start": "20261019T073000+08:00",
-     "restore": "20261019T143000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2165411-U",
-     "location": "ELABBIN, NUNGARIN, TALGOMINE",
-     "towns": [
-      "ELABBIN",
-      "NUNGARIN",
-      "TALGOMINE"
-     ],
-     "customers": 18,
-     "start": "20261021T080000+08:00",
-     "restore": "20261021T153000+08:00"
+     "start": "22/10/2026 08:30 AM",
+     "restore": "22/10/2026 04:00 PM",
+     "lon": 115.010200865684,
+     "lat": -33.8553924589974,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12782,9 +13381,30 @@
      "towns": [
       "GREENFIELDS"
      ],
+     "kind": "planned",
      "customers": 18,
-     "start": "20261020T080000+08:00",
-     "restore": "20261020T150000+08:00"
+     "start": "20/10/2026 08:00 AM",
+     "restore": "20/10/2026 03:00 PM",
+     "lon": 115.763791574752,
+     "lat": -32.5220831505842,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2161861-U",
+     "location": "DARLING DOWNS",
+     "towns": [
+      "DARLING DOWNS"
+     ],
+     "kind": "planned",
+     "customers": 18,
+     "start": "19/10/2026 07:30 AM",
+     "restore": "19/10/2026 02:30 PM",
+     "lon": 115.987140502445,
+     "lat": -32.1823054970719,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12793,9 +13413,12 @@
      "towns": [
       "ORANGE GROVE"
      ],
+     "kind": "planned",
      "customers": 18,
-     "start": "20261016T073620+08:00",
-     "restore": "20261016T170000+08:00"
+     "start": "16/10/2026 07:36 AM",
+     "restore": "16/10/2026 05:00 PM",
+     "lon": 116.017450814466,
+     "lat": -32.0324693581934
     },
     {
      "network": "Western Power",
@@ -12804,9 +13427,32 @@
      "towns": [
       "JANE BROOK"
      ],
+     "kind": "planned",
      "customers": 16,
-     "start": "20261020T080000+08:00",
-     "restore": "20261020T170000+08:00"
+     "start": "20/10/2026 08:00 AM",
+     "restore": "20/10/2026 05:00 PM",
+     "lon": 116.056753039699,
+     "lat": -31.8634050222264,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2165411-U",
+     "location": "TALGOMINE,NUNGARIN,ELABBIN",
+     "towns": [
+      "TALGOMINE",
+      "NUNGARIN",
+      "ELABBIN"
+     ],
+     "kind": "planned",
+     "customers": 16,
+     "start": "21/10/2026 08:00 AM",
+     "restore": "21/10/2026 03:30 PM",
+     "lon": 118.12431598182,
+     "lat": -31.1440451891068,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12815,32 +13461,14 @@
      "towns": [
       "KWINANA BEACH"
      ],
+     "kind": "planned",
      "customers": 15,
-     "start": "20261018T070000+08:00",
-     "restore": "20261018T183000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-506172-V",
-     "location": "WELSHPOOL, KEWDALE",
-     "towns": [
-      "WELSHPOOL",
-      "KEWDALE"
-     ],
-     "customers": 12,
-     "start": "20261025T070000+08:00",
-     "restore": "20261025T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-507392-V",
-     "location": "NEDLANDS",
-     "towns": [
-      "NEDLANDS"
-     ],
-     "customers": 12,
-     "start": "20261025T070000+08:00",
-     "restore": "20261025T120000+08:00"
+     "start": "18/10/2026 07:00 AM",
+     "restore": "18/10/2026 06:30 PM",
+     "lon": 115.777589091153,
+     "lat": -32.237097542225,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12849,57 +13477,65 @@
      "towns": [
       "GOSNELLS"
      ],
+     "kind": "planned",
      "customers": 12,
-     "start": "20261021T073000+08:00",
-     "restore": "20261021T143000+08:00"
+     "start": "21/10/2026 07:30 AM",
+     "restore": "21/10/2026 02:30 PM",
+     "lon": 115.998864670339,
+     "lat": -32.0884877832748,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-2163661-U",
-     "location": "SOUTHERN BROOK, MALABAINE, GRASS VALLEY",
+     "location": "SOUTHERN BROOK,MALABAINE,GRASS VALLEY",
      "towns": [
       "SOUTHERN BROOK",
       "MALABAINE",
       "GRASS VALLEY"
      ],
-     "customers": 11,
-     "start": "20261020T083000+08:00",
-     "restore": "20261020T160000+08:00"
+     "kind": "planned",
+     "customers": 12,
+     "start": "20/10/2026 08:30 AM",
+     "restore": "20/10/2026 04:00 PM",
+     "lon": 116.779108617568,
+     "lat": -31.6131455884504,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2135931-U",
-     "location": "KELMSCOTT",
+     "id": "INCD-506172-V",
+     "location": "KEWDALE,WELSHPOOL",
      "towns": [
-      "KELMSCOTT"
+      "KEWDALE",
+      "WELSHPOOL"
      ],
-     "customers": 10,
-     "start": "20261016T082253+08:00",
-     "restore": "20261016T150000+08:00"
+     "kind": "planned",
+     "customers": 12,
+     "start": "25/10/2026 07:00 AM",
+     "restore": "25/10/2026 04:00 PM",
+     "lon": 115.935051320589,
+     "lat": -31.9859512397976,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2163581-U",
-     "location": "CHERRY TREE POOL, KOJONUP, BOSCABEL",
+     "id": "INCD-507392-V",
+     "location": "NEDLANDS",
      "towns": [
-      "CHERRY TREE POOL",
-      "KOJONUP",
-      "BOSCABEL"
+      "NEDLANDS"
      ],
-     "customers": 10,
-     "start": "20261021T083000+08:00",
-     "restore": "20261021T153000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2165301-U",
-     "location": "PARKERVILLE",
-     "towns": [
-      "PARKERVILLE"
-     ],
-     "customers": 10,
-     "start": "20261022T073000+08:00",
-     "restore": "20261022T170000+08:00"
+     "kind": "planned",
+     "customers": 12,
+     "start": "25/10/2026 07:00 AM",
+     "restore": "25/10/2026 12:00 PM",
+     "lon": 115.813415340191,
+     "lat": -31.9728044731325,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12908,32 +13544,61 @@
      "towns": [
       "KENSINGTON"
      ],
+     "kind": "planned",
      "customers": 10,
-     "start": "20261019T073000+08:00",
-     "restore": "20261019T150000+08:00"
+     "start": "19/10/2026 07:30 AM",
+     "restore": "19/10/2026 03:00 PM",
+     "lon": 115.878474319966,
+     "lat": -31.9857823080515,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-508992-V",
-     "location": "MIDLAND, BELLEVUE",
+     "location": "BELLEVUE,MIDLAND",
      "towns": [
-      "MIDLAND",
-      "BELLEVUE"
+      "BELLEVUE",
+      "MIDLAND"
      ],
+     "kind": "planned",
      "customers": 10,
-     "start": "20261019T080000+08:00",
-     "restore": "20261019T150000+08:00"
+     "start": "19/10/2026 08:00 AM",
+     "restore": "19/10/2026 03:00 PM",
+     "lon": 116.016503001111,
+     "lat": -31.9029745735393,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-202804-X",
-     "location": "ANKETELL",
+     "id": "INCD-2165301-U",
+     "location": "PARKERVILLE",
      "towns": [
-      "ANKETELL"
+      "PARKERVILLE"
      ],
-     "customers": 9,
-     "start": "20261023T080000+08:00",
-     "restore": "20261023T150000+08:00"
+     "kind": "planned",
+     "customers": 10,
+     "start": "22/10/2026 07:30 AM",
+     "restore": "22/10/2026 05:00 PM",
+     "lon": 116.124666688478,
+     "lat": -31.8540553127965,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2135931-U",
+     "location": "KELMSCOTT",
+     "towns": [
+      "KELMSCOTT"
+     ],
+     "kind": "planned",
+     "customers": 10,
+     "start": "16/10/2026 08:22 AM",
+     "restore": "16/10/2026 03:00 PM",
+     "lon": 116.038868064787,
+     "lat": -32.1268873818068
     },
     {
      "network": "Western Power",
@@ -12942,45 +13607,30 @@
      "towns": [
       "WILLETTON"
      ],
+     "kind": "planned",
      "customers": 9,
-     "start": "20261018T073000+08:00",
-     "restore": "20261018T123000+08:00"
+     "start": "18/10/2026 07:30 AM",
+     "restore": "18/10/2026 12:30 PM",
+     "lon": 115.885608341998,
+     "lat": -32.0428960322302,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2162111-U(2)",
-     "location": "SANDPATCH",
+     "id": "INCD-202804-X",
+     "location": "ANKETELL",
      "towns": [
-      "SANDPATCH"
+      "ANKETELL"
      ],
-     "customers": 8,
-     "start": "20261019T080000+08:00",
-     "restore": "20261019T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2164061-U",
-     "location": "SCOTT RIVER, WARNER GLEN, ALEXANDRA BRIDGE, COURTENAY",
-     "towns": [
-      "SCOTT RIVER",
-      "WARNER GLEN",
-      "ALEXANDRA BRIDGE",
-      "COURTENAY"
-     ],
-     "customers": 8,
-     "start": "20261020T060000+08:00",
-     "restore": "20261021T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2165721-U",
-     "location": "HYDEN",
-     "towns": [
-      "HYDEN"
-     ],
-     "customers": 8,
-     "start": "20261015T194919+08:00",
-     "restore": "20261016T150000+08:00"
+     "kind": "planned",
+     "customers": 9,
+     "start": "23/10/2026 08:00 AM",
+     "restore": "23/10/2026 03:00 PM",
+     "lon": 115.853878869695,
+     "lat": -32.2133774226368,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -12989,32 +13639,47 @@
      "towns": [
       "MADORA BAY"
      ],
+     "kind": "planned",
      "customers": 8,
-     "start": "20261021T060000+08:00",
-     "restore": "20261021T150000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-81333-W",
-     "location": "BYFORD",
-     "towns": [
-      "BYFORD"
-     ],
-     "customers": 8,
-     "start": "20261023T073000+08:00",
-     "restore": "20261023T160000+08:00"
+     "start": "21/10/2026 06:00 AM",
+     "restore": "21/10/2026 03:00 PM",
+     "lon": 115.752178619187,
+     "lat": -32.4620830719677,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
      "id": "INCD-2160081-U",
-     "location": "MAYA, BUNTINE",
+     "location": "BUNTINE,MAYA",
      "towns": [
-      "MAYA",
-      "BUNTINE"
+      "BUNTINE",
+      "MAYA"
      ],
+     "kind": "planned",
      "customers": 7,
-     "start": "20261019T073000+08:00",
-     "restore": "20261019T163000+08:00"
+     "start": "19/10/2026 07:30 AM",
+     "restore": "19/10/2026 04:30 PM",
+     "lon": 116.545615692701,
+     "lat": -29.9653119054491,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2162111-U(2)",
+     "location": "SANDPATCH",
+     "towns": [
+      "SANDPATCH"
+     ],
+     "kind": "planned",
+     "customers": 7,
+     "start": "19/10/2026 08:00 AM",
+     "restore": "19/10/2026 04:00 PM",
+     "lon": 117.777273967662,
+     "lat": -35.0451429651281,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -13023,30 +13688,48 @@
      "towns": [
       "HARVEY"
      ],
-     "customers": 6,
-     "start": "20261020T073000+08:00",
-     "restore": "20261020T160000+08:00"
+     "kind": "planned",
+     "customers": 7,
+     "start": "20/10/2026 07:30 AM",
+     "restore": "20/10/2026 04:00 PM",
+     "lon": 115.8779633753,
+     "lat": -33.0432167262578,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2165601-U",
-     "location": "HARVEY",
+     "id": "INCD-2163581-U",
+     "location": "BOSCABEL,KOJONUP,CHERRY TREE POOL",
      "towns": [
-      "HARVEY"
+      "BOSCABEL",
+      "KOJONUP",
+      "CHERRY TREE POOL"
      ],
-     "customers": 6,
-     "start": "20261015T192218+08:00"
+     "kind": "planned",
+     "customers": 7,
+     "start": "21/10/2026 08:30 AM",
+     "restore": "21/10/2026 03:30 PM",
+     "lon": 117.102342889873,
+     "lat": -33.727957649576,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2165861-U",
-     "location": "NAIRIBIN",
+     "id": "INCD-81333-W",
+     "location": "BYFORD",
      "towns": [
-      "NAIRIBIN"
+      "BYFORD"
      ],
-     "customers": 6,
-     "start": "20261016T104415+08:00",
-     "restore": "20261016T153000+08:00"
+     "kind": "planned",
+     "customers": 7,
+     "start": "23/10/2026 07:30 AM",
+     "restore": "23/10/2026 04:00 PM",
+     "lon": 115.983982486741,
+     "lat": -32.2347794569177,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -13055,9 +13738,56 @@
      "towns": [
       "EGLINTON"
      ],
+     "kind": "planned",
      "customers": 6,
-     "start": "20261023T073000+08:00",
-     "restore": "20261023T150000+08:00"
+     "start": "23/10/2026 07:30 AM",
+     "restore": "23/10/2026 03:00 PM",
+     "lon": 115.659669517442,
+     "lat": -31.5952682363091,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2165601-U",
+     "location": "HARVEY",
+     "towns": [
+      "HARVEY"
+     ],
+     "kind": "unplanned",
+     "customers": 6,
+     "start": "15/10/2026 07:22 PM",
+     "restore": "Unknown",
+     "lon": 115.866329373107,
+     "lat": -33.0691849475992
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2165861-U",
+     "location": "NAIRIBIN",
+     "towns": [
+      "NAIRIBIN"
+     ],
+     "kind": "unplanned",
+     "customers": 6,
+     "start": "16/10/2026 10:44 AM",
+     "restore": "16/10/2026 03:30 PM",
+     "lon": 117.956031812835,
+     "lat": -33.2907236551666
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2165721-U",
+     "location": "HYDEN",
+     "towns": [
+      "HYDEN"
+     ],
+     "kind": "unplanned",
+     "customers": 6,
+     "start": "15/10/2026 07:49 PM",
+     "restore": "16/10/2026 03:00 PM",
+     "lon": 119.31212692991,
+     "lat": -32.4351252356121
     },
     {
      "network": "Western Power",
@@ -13066,9 +13796,31 @@
      "towns": [
       "BEDFORDALE"
      ],
+     "kind": "planned",
      "customers": 5,
-     "start": "20261019T073000+08:00",
-     "restore": "20261019T140000+08:00"
+     "start": "19/10/2026 07:30 AM",
+     "restore": "19/10/2026 02:00 PM",
+     "lon": 116.049290871178,
+     "lat": -32.2041711950993,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2164061-U",
+     "location": "COURTENAY,SCOTT RIVER",
+     "towns": [
+      "COURTENAY",
+      "SCOTT RIVER"
+     ],
+     "kind": "planned",
+     "customers": 5,
+     "start": "20/10/2026 06:00 AM",
+     "restore": "21/10/2026 04:00 PM",
+     "lon": 115.227742523729,
+     "lat": -34.2082031498031,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -13077,42 +13829,14 @@
      "towns": [
       "WYALKATCHEM"
      ],
+     "kind": "planned",
      "customers": 5,
-     "start": "20261020T083000+08:00",
-     "restore": "20261020T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2162141-U",
-     "location": "BINNINGUP",
-     "towns": [
-      "BINNINGUP"
-     ],
-     "customers": 4,
-     "start": "20261019T073000+08:00",
-     "restore": "20261019T143000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2163641-U",
-     "location": "HOLT ROCK",
-     "towns": [
-      "HOLT ROCK"
-     ],
-     "customers": 4,
-     "start": "20261020T080000+08:00",
-     "restore": "20261020T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2164761-U",
-     "location": "BALINGUP",
-     "towns": [
-      "BALINGUP"
-     ],
-     "customers": 4,
-     "start": "20261014T173503+08:00",
-     "restore": "20261016T150000+08:00"
+     "start": "20/10/2026 08:30 AM",
+     "restore": "20/10/2026 04:00 PM",
+     "lon": 117.374818694279,
+     "lat": -31.1722188305555,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -13121,9 +13845,60 @@
      "towns": [
       "NORTHAMPTON"
      ],
+     "kind": "planned",
      "customers": 4,
-     "start": "20261020T080000+08:00",
-     "restore": "20261020T160000+08:00"
+     "start": "20/10/2026 08:00 AM",
+     "restore": "20/10/2026 04:00 PM",
+     "lon": 114.638771029764,
+     "lat": -28.3596680031076,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2162141-U",
+     "location": "BINNINGUP",
+     "towns": [
+      "BINNINGUP"
+     ],
+     "kind": "planned",
+     "customers": 4,
+     "start": "19/10/2026 07:30 AM",
+     "restore": "19/10/2026 02:30 PM",
+     "lon": 115.738272442569,
+     "lat": -33.132863034988,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2163641-U",
+     "location": "HOLT ROCK",
+     "towns": [
+      "HOLT ROCK"
+     ],
+     "kind": "planned",
+     "customers": 4,
+     "start": "20/10/2026 08:00 AM",
+     "restore": "20/10/2026 04:00 PM",
+     "lon": 119.591024155174,
+     "lat": -32.667447748873,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2164761-U",
+     "location": "BALINGUP",
+     "towns": [
+      "BALINGUP"
+     ],
+     "kind": "unplanned",
+     "customers": 4,
+     "start": "14/10/2026 05:35 PM",
+     "restore": "16/10/2026 03:00 PM",
+     "lon": 115.99153079741,
+     "lat": -33.7791459747371
     },
     {
      "network": "Western Power",
@@ -13132,42 +13907,14 @@
      "towns": [
       "AUSTRALIND"
      ],
+     "kind": "planned",
      "customers": 3,
-     "start": "20261017T073000+08:00",
-     "restore": "20261017T140000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2165761-U",
-     "location": "MIDDLESEX",
-     "towns": [
-      "MIDDLESEX"
-     ],
-     "customers": 3,
-     "start": "20261016T054240+08:00",
-     "restore": "20261016T130000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-507512-V",
-     "location": "INNALOO",
-     "towns": [
-      "INNALOO"
-     ],
-     "customers": 3,
-     "start": "20261022T070000+08:00",
-     "restore": "20261022T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-508412-V(1)",
-     "location": "ALBANY",
-     "towns": [
-      "ALBANY"
-     ],
-     "customers": 3,
-     "start": "20261019T083000+08:00",
-     "restore": "20261019T140000+08:00"
+     "start": "17/10/2026 07:30 AM",
+     "restore": "17/10/2026 02:00 PM",
+     "lon": 115.740004837307,
+     "lat": -33.2895036162553,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -13176,53 +13923,30 @@
      "towns": [
       "O'CONNOR"
      ],
+     "kind": "planned",
      "customers": 3,
-     "start": "20261021T180000+08:00",
-     "restore": "20261022T050000+08:00"
+     "start": "21/10/2026 06:00 PM",
+     "restore": "22/10/2026 05:00 AM",
+     "lon": 115.795261144681,
+     "lat": -32.0583742932187,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2161781-U",
-     "location": "DIAMOND TREE",
+     "id": "INCD-507512-V",
+     "location": "INNALOO",
      "towns": [
-      "DIAMOND TREE"
+      "INNALOO"
      ],
-     "customers": 2,
-     "start": "20261018T080000+08:00",
-     "restore": "20261018T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2162111-U(1)",
-     "location": "ALBANY",
-     "towns": [
-      "ALBANY"
-     ],
-     "customers": 2,
-     "start": "20261019T080000+08:00",
-     "restore": "20261019T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2162151-U",
-     "location": "GRACETOWN",
-     "towns": [
-      "GRACETOWN"
-     ],
-     "customers": 2,
-     "start": "20261019T090000+08:00",
-     "restore": "20261019T150000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2165391-U",
-     "location": "MALEBELLING",
-     "towns": [
-      "MALEBELLING"
-     ],
-     "customers": 2,
-     "start": "20261022T083000+08:00",
-     "restore": "20261022T153000+08:00"
+     "kind": "planned",
+     "customers": 3,
+     "start": "22/10/2026 07:00 AM",
+     "restore": "22/10/2026 04:00 PM",
+     "lon": 115.787979667787,
+     "lat": -31.8899568599626,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -13231,20 +13955,44 @@
      "towns": [
       "SUBIACO"
      ],
-     "customers": 2,
-     "start": "20261025T070000+08:00",
-     "restore": "20261025T160000+08:00"
+     "kind": "planned",
+     "customers": 3,
+     "start": "25/10/2026 07:00 AM",
+     "restore": "25/10/2026 04:00 PM",
+     "lon": 115.823685219184,
+     "lat": -31.9476644095522,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-508372-V",
-     "location": "BINDULI",
+     "id": "INCD-2165761-U",
+     "location": "MIDDLESEX",
      "towns": [
-      "BINDULI"
+      "MIDDLESEX"
      ],
+     "kind": "unplanned",
+     "customers": 3,
+     "start": "16/10/2026 05:42 AM",
+     "restore": "16/10/2026 01:00 PM",
+     "lon": 116.167028008732,
+     "lat": -34.3286110444367
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2162151-U",
+     "location": "GRACETOWN",
+     "towns": [
+      "GRACETOWN"
+     ],
+     "kind": "planned",
      "customers": 2,
-     "start": "20261016T082847+08:00",
-     "restore": "20261016T160000+08:00"
+     "start": "19/10/2026 09:00 AM",
+     "restore": "19/10/2026 03:00 PM",
+     "lon": 115.023014340573,
+     "lat": -33.837654827993,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -13253,63 +14001,44 @@
      "towns": [
       "FREMANTLE"
      ],
+     "kind": "planned",
      "customers": 2,
-     "start": "20261022T070000+08:00",
-     "restore": "20261022T170000+08:00"
+     "start": "22/10/2026 07:00 AM",
+     "restore": "22/10/2026 05:00 PM",
+     "lon": 115.762614637101,
+     "lat": -32.0557267357466,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2158951-U",
-     "location": "WILLIAMS",
+     "id": "INCD-2165391-U",
+     "location": "MALEBELLING",
      "towns": [
-      "WILLIAMS"
+      "MALEBELLING"
      ],
-     "customers": 1,
-     "start": "20261007T085752+08:00"
+     "kind": "planned",
+     "customers": 2,
+     "start": "22/10/2026 08:30 AM",
+     "restore": "22/10/2026 03:30 PM",
+     "lon": 116.931240278244,
+     "lat": -31.8618258535491,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
-     "id": "INCD-2161581-U",
-     "location": "BUNTINE",
+     "id": "INCD-508372-V",
+     "location": "BINDULI",
      "towns": [
-      "BUNTINE"
+      "BINDULI"
      ],
-     "customers": 1,
-     "start": "20261017T083000+08:00",
-     "restore": "20261017T170000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2161951-U",
-     "location": "WARRADARGE",
-     "towns": [
-      "WARRADARGE"
-     ],
-     "customers": 1,
-     "start": "20261019T080000+08:00",
-     "restore": "20261019T160000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2162041-U(2)",
-     "location": "COOLOONGUP",
-     "towns": [
-      "COOLOONGUP"
-     ],
-     "customers": 1,
-     "start": "20261019T080000+08:00",
-     "restore": "20261019T140000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2162121-U",
-     "location": "MOUNT TARCOOLA",
-     "towns": [
-      "MOUNT TARCOOLA"
-     ],
-     "customers": 1,
-     "start": "20261019T080000+08:00",
-     "restore": "20261019T160000+08:00"
+     "kind": "planned",
+     "customers": 2,
+     "start": "16/10/2026 08:28 AM",
+     "restore": "16/10/2026 04:00 PM",
+     "lon": 121.405222761912,
+     "lat": -30.7825251723219
     },
     {
      "network": "Western Power",
@@ -13318,64 +14047,12 @@
      "towns": [
       "MARVEL LOCH"
      ],
-     "customers": 1,
-     "start": "20261016T104516+08:00",
-     "restore": "20261016T153000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2165881-U(2)",
-     "location": "MOSMAN PARK",
-     "towns": [
-      "MOSMAN PARK"
-     ],
-     "customers": 1,
-     "start": "20261016T105427+08:00",
-     "restore": "20261016T180000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-508342-V",
-     "location": "VITTORIA",
-     "towns": [
-      "VITTORIA"
-     ],
-     "customers": 1,
-     "start": "20261016T080254+08:00",
-     "restore": "20261016T143000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-508872-V",
-     "location": "VITTORIA",
-     "towns": [
-      "VITTORIA"
-     ],
-     "customers": 1,
-     "start": "20261018T070000+08:00",
-     "restore": "20261018T170000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-509012-V",
-     "location": "BALDIVIS",
-     "towns": [
-      "BALDIVIS"
-     ],
-     "customers": 1,
-     "start": "20261019T070000+08:00",
-     "restore": "20261019T170000+08:00"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-509222-V",
-     "location": "MCKAIL",
-     "towns": [
-      "MCKAIL"
-     ],
-     "customers": 1,
-     "start": "20261020T080000+08:00",
-     "restore": "20261020T150000+08:00"
+     "kind": "unplanned",
+     "customers": 2,
+     "start": "16/10/2026 10:45 AM",
+     "restore": "16/10/2026 03:30 PM",
+     "lon": 119.313509322148,
+     "lat": -31.4524503293572
     }
    ]
   },
@@ -13394,8 +14071,26 @@
      "ok": true,
      "count": 1,
      "source": "feed",
-     "capturedAt": 1792119891411,
-     "sourceUrl": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages"
+     "origin": "feed",
+     "capturedAt": 1792120798766,
+     "sourceUrl": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages",
+     "columns": [
+      "messageId",
+      "jobId",
+      "dispatchStatus",
+      "reason",
+      "affectedAreas",
+      "postcodes",
+      "affectedRegions",
+      "customersAffected",
+      "createdOn",
+      "modifiedOn",
+      "estimatedTimeOfRestoration",
+      "sortValue",
+      "outagePolygon_WKT",
+      "outageCentroid_WKT",
+      "canFollow"
+     ]
     }
    ],
    "outages": [
@@ -13431,9 +14126,19 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792119891411,
+     "capturedAt": 1792120798766,
      "error": "This operator blocks automated access to its outage page (bot challenge). Their own map is linked and still works in a browser.",
-     "blocked": true
+     "blocked": true,
+     "attempts": [
+      {
+       "url": "https://www.powerwater.com.au/outages/current-outages",
+       "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+      },
+      {
+       "url": "https://www.powerwater.com.au/outages",
+       "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
+      }
+     ]
     }
    ],
    "outages": []
@@ -13453,8 +14158,22 @@
      "ok": true,
      "count": 2,
      "source": "feed",
-     "capturedAt": 1792119891411,
+     "origin": "feed",
+     "capturedAt": 1792120798766,
      "sourceUrl": "https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages",
+     "columns": [
+      "Outage Id",
+      "Type",
+      "Status Description",
+      "Planned Start",
+      "Planned Restoration",
+      "Actual Start",
+      "Expected Restoration",
+      "Actual End",
+      "Affected Customer Count",
+      "Affected Suburbs",
+      "Reason"
+     ],
      "reported": {
       "outages": 5,
       "customers": 190
