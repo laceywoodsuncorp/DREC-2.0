@@ -46,7 +46,19 @@ let fetchCount = 0;
 globalThis.fetch = async (...args) => { fetchCount++; return realFetch(...args); };
 
 const worker = (await import('../src/worker.js')).default;
-const env = { ASSETS: { fetch: async () => new Response('{}', { status: 404 }) } };
+/* Two envs, so one run shows before and after. The deployed default serves
+   outages from data/outages.json (a capture made on a runner) and parses
+   nothing; OUTAGE_LIVE_FETCH is the old behaviour, fetching and parsing
+   every operator inside the invocation. ASSETS serves the real committed
+   snapshot, so capture mode is measured against the file it will really
+   parse rather than an empty one. */
+const { readFileSync, existsSync } = await import('node:fs');
+const snapshotBody = existsSync('data/outages.json') ? readFileSync('data/outages.json', 'utf8') : null;
+const assets = { fetch: async (req) => (snapshotBody && String(req.url || req).includes('outages.json'))
+  ? new Response(snapshotBody, { status: 200, headers: { 'Content-Type': 'application/json' } })
+  : new Response('{}', { status: 404 }) };
+const env = { ASSETS: assets };
+const liveEnv = { ASSETS: assets, OUTAGE_LIVE_FETCH: '1' };
 
 const CEILING_MS = 10; // Workers free plan, per invocation
 
@@ -82,17 +94,20 @@ const report = { at: new Date().toISOString(), ceilingMs: CEILING_MS, rows: [] }
 const add = async (l, f) => { report.rows.push(await cpu(l, f)); };
 
 const MAIN_CRON = '*/2 * * * *';
-const sched = (tick) => (ctx) =>
-  worker.scheduled({ scheduledTime: tick * 120000, cron: MAIN_CRON }, env, ctx);
+const sched = (tick, e) => (ctx) =>
+  worker.scheduled({ scheduledTime: tick * 120000, cron: MAIN_CRON }, e || env, ctx);
 
 console.log('\n== one scheduled invocation, cold ==');
-/* Both parities. Even runs the incident sweep, odd an outage shard. */
+/* Both parities. Even runs the incident sweep; odd ran an outage shard,
+   and in capture mode runs news alone. */
 await add('cron tick, even parity (news shard + all 8 incident feeds)', sched(1000));
-await add('cron tick, odd parity (news shard + one outage shard)', sched(1001));
+await add('cron tick, odd parity, CAPTURE mode (news shard only)', sched(1001));
+store.clear();
+await add('cron tick, odd parity, LIVE mode (news shard + one outage shard)', sched(1001, liveEnv));
 
 console.log('\n== the same, warm (what a steady-state tick costs) ==');
 await add('cron tick, even parity (warm)', sched(1002));
-await add('cron tick, odd parity (warm)', sched(1003));
+await add('cron tick, odd parity, CAPTURE mode (warm)', sched(1003));
 
 console.log('\n== each incident state on its own, cold ==');
 /* Isolates the parse. A state refresh is one or two fetches and then
@@ -104,10 +119,17 @@ for (const s of STATES) {
     worker.fetch(new Request('https://x.test/api/incidents/' + s), env, ctx));
 }
 
-console.log('\n== each outage state on its own, cold ==');
+console.log('\n== each outage state on its own: LIVE mode (the old cost) ==');
 for (const s of STATES) {
   store.clear();
-  await add('outages: ' + s, (ctx) =>
+  await add('outages LIVE: ' + s, (ctx) =>
+    worker.fetch(new Request('https://x.test/api/outages/' + s), liveEnv, ctx));
+}
+
+console.log('\n== each outage state on its own: CAPTURE mode (what is deployed) ==');
+for (const s of STATES) {
+  store.clear();
+  await add('outages CAPTURE: ' + s, (ctx) =>
     worker.fetch(new Request('https://x.test/api/outages/' + s), env, ctx));
 }
 
