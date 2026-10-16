@@ -96,7 +96,14 @@ ck('no level is invented', i && i.alertLevel === '', i && i.alertLevel);
 ck('the title is a real label, not the event type',
   i && i.title.length > 4 && i.title !== i.type && !/^(fire|other|rescue|met)$/i.test(i.title),
   i && i.title);
-ck('the type is kept', i && /Fire|Bushfire/i.test(i.type), i && i.type);
+/* Structural, like its neighbours. This asserted /Fire|Bushfire/ against
+   whichever incident the probe captured and failed when Victoria's list
+   moved on to a planned burn -- the parser was right and the test was
+   describing one afternoon's data. What matters is that a type survives
+   and is not a restatement of the level. */
+ck('the type is kept', i && String(i.type).trim().length > 2
+  && String(i.type).toLowerCase() !== String(i.alertLevel).toLowerCase(),
+  i && { type: i.type, level: i.alertLevel });
 
 console.log('\n== an earthquake: also a type, also not a level ==');
 const eqProps = (samples.earthquake && samples.earthquake.sample) || {

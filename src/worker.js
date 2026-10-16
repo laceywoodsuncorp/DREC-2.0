@@ -385,7 +385,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-13-cpurevert';
+const WORKER_BUILD = '2026-10-16-staleoutage';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -1108,6 +1108,96 @@ function normaliseWhen(raw) {
   }
   if (ms !== null && isFinite(ms)) out.whenIso = new Date(ms).toISOString();
   return out;
+}
+
+/* Roughly when a date string means, for deciding whether a record is old.
+
+   normaliseWhen deliberately emits no ISO for a d/m/y string. Its reason is
+   worth reading closely, because it is narrower than it first appears: the
+   strings carry no timezone, so guessing AEST against AEDT would shift
+   every displayed time by an hour for half the year. That is a statement
+   about the HOUR. On the day it is explicit that Australian sources write
+   the day first.
+
+   This asks a much cruder question -- is this record days old? -- and an
+   hour either way cannot change that answer. So it reads these the way the
+   feeds are documented to write them, day first, and falls back to a
+   month-first reading only when day-first is not a real calendar date.
+   Every operator configured in OUTAGE_NETWORKS is an Australian
+   distributor, which is what makes that convention safe to apply here and
+   not something to reuse on a feed from elsewhere.
+
+   The alternative, taking whichever reading is latest so nothing is ever
+   dropped on an ambiguity, was tried first and is too weak to do the job:
+   "12/10/2026" would be read as December and a record four days stale
+   would survive for another two months. The threshold below is what
+   provides the safety margin instead, and it is two days wide.
+
+   Western Power is why any of this matters. Its layer holds 124 records,
+   121 started today -- and two from 31 May, still published 137 days
+   later. One reached the dashboard beside today's incidents, reading
+   "Started 31/05/2026, Estimated back 01/06/2026" as though it were live. */
+function latestPossibleMs(raw) {
+  const text = raw ? String(raw).trim() : '';
+  if (!text) return null;
+  if (/^\d{13}$/.test(text)) return Number(text);
+  if (/^\d{10}$/.test(text)) return Number(text) * 1000;
+
+  const m = /\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b(?:[\sT]+(\d{1,2}):(\d{2}))?\s*(AM|PM)?/i.exec(text);
+  if (m) {
+    const a = Number(m[1]), b = Number(m[2]);
+    let year = Number(m[3]);
+    if (year < 100) year += 2000;
+    let hour = m[4] === undefined ? 12 : Number(m[4]);
+    const minute = m[5] === undefined ? 0 : Number(m[5]);
+    if (m[6]) { const pm = /pm/i.test(m[6]); if (hour === 12) hour = pm ? 12 : 0; else if (pm) hour += 12; }
+    const mk = (day, month) => {
+      if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+      const d = new Date(Date.UTC(year, month - 1, day, hour, minute));
+      /* Rejects 31 February, which Date would otherwise roll into March. */
+      if (d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) return null;
+      return d.getTime();
+    };
+    /* Day first, as these feeds are documented to write it; month-first
+       only when that is not a real date, which is how a feed that does the
+       other thing still produces something rather than nothing. */
+    const dayFirst = mk(a, b);
+    return dayFirst !== null ? dayFirst : mk(b, a);
+  }
+
+  const parsed = Date.parse(text);
+  return isNaN(parsed) ? null : parsed;
+}
+
+/* How far past an estimated restoration has to be before a record is no
+   longer "current". Measured from the live Western Power layer rather than
+   picked: of 124 records exactly 2 had a restoration time already past, and
+   both were 137 days old. Nothing at all sat between one day past and
+   thirty, so any threshold in that range catches the same two records.
+
+   Two days, not two hours, for two reasons. An outage whose estimate has
+   just slipped is the normal case and still very much live -- crews
+   overrun. And these strings carry no timezone, so a reading can be out by
+   up to eleven hours; two days absorbs that many times over, which is what
+   makes it safe to read them day-first at all. A record four months past
+   its estimate is not an overrun. */
+const OUTAGE_STALE_AFTER_RESTORE_MS = 2 * 86400000;
+/* For records with no usable restoration time at all. Longer, because the
+   only evidence is how long ago it started and a major event legitimately
+   runs for days. */
+const OUTAGE_STALE_AFTER_START_MS = 14 * 86400000;
+
+/* Is this row definitely not current? Only ever true on a date that is
+   stale under every reading it could have. */
+function outageIsStale(startRaw, restoreRaw, nowMs) {
+  const now = nowMs === undefined ? Date.now() : nowMs;
+  const restore = latestPossibleMs(restoreRaw);
+  if (restore !== null) return (now - restore) > OUTAGE_STALE_AFTER_RESTORE_MS;
+  const start = latestPossibleMs(startRaw);
+  if (start !== null) return (now - start) > OUTAGE_STALE_AFTER_START_MS;
+  /* No usable date is not evidence of staleness. Most operators publish
+     none, and dropping those would empty the map. */
+  return false;
 }
 
 /* Finds the list of incident records inside whatever envelope a feed uses:
@@ -2767,6 +2857,7 @@ function normaliseOutages(json, opts) {
   const kindHint = (opts && opts.kindHint) || '';
   const { records, envelope } = collectRecords(json);
   const outages = [];
+  let staleDropped = 0;
   records.forEach(({ props, geometry }) => {
     const lowered = lowerKeyMap(props);
     const townsRaw = pickOutageField(lowered, 'towns', props);
@@ -2782,6 +2873,11 @@ function normaliseOutages(json, opts) {
     const kindText = pickOutageField(lowered, 'kind', props);
     const start = normaliseWhen(pickOutageField(lowered, 'start', props));
     const restore = normaliseWhen(pickOutageField(lowered, 'restore', props));
+    /* A record the operator has left published long after its restoration
+       time is history, not an outage. Counted, never dropped quietly --
+       "no outages" and "the feed was filtered" look identical otherwise,
+       and telling those apart is most of this file. */
+    if (outageIsStale(start.when, restore.when)) { staleDropped++; return; }
     const split = splitTowns(townsRaw || location);
     outages.push(Object.assign({
       id: id || undefined,
@@ -2809,6 +2905,7 @@ function normaliseOutages(json, opts) {
   const grouped = groupByIncident(outages);
 
   const result = { outages: grouped };
+  if (staleDropped) result.staleDropped = staleDropped;
   /* The field names that were actually there, reported on success as well as
      on failure -- the same reason a scrape reports its headings. A feed that
      reads but yields three fields has columns going unread, and this is the
@@ -3333,6 +3430,12 @@ async function refreshStateOutages(state) {
       entry.count = entry.outages.length;
       entry.sourceUrl = entry.sourceUrl || source.url;
       if (result.parsed.columns) entry.columns = result.parsed.columns;
+      /* Added, because a combined operator reads several parts and the
+         count has to be the total across them, not whichever part ran
+         last. */
+      if (result.parsed.staleDropped) {
+        entry.staleDropped = (entry.staleDropped || 0) + result.parsed.staleDropped;
+      }
       if (source.via) { entry.via = source.via; entry.viaUrl = source.viaUrl; }
       partsDone.add(part);
       if (!net.combine) break;
@@ -3354,6 +3457,9 @@ async function refreshStateOutages(state) {
         entry.count = entry.outages.length;
         entry.sourceUrl = source.url;
         if (result.parsed.columns) entry.columns = result.parsed.columns;
+        /* Assigned, not accumulated: this branch takes the first source
+           that answers and the others are never read. */
+        if (result.parsed.staleDropped) entry.staleDropped = result.parsed.staleDropped;
         if (source.via) { entry.via = source.via; entry.viaUrl = source.viaUrl; }
         break;
       }
@@ -3495,12 +3601,19 @@ async function refreshStateOutages(state) {
       name: n.name, area: n.area, site: n.site, ok: n.ok, count: n.count,
       customers: (n.outages || []).reduce((s, o) => s + (o.customers || 0), 0),
       confirmed: n.confirmed,
-      /* `unreadable` must be listed here. This payload is built from an
-         explicit field list, so a flag set on the entry and not named here
-         is silently dropped -- which has now happened three times in this
-         file, to viaDiagnostic, to endpoints, and to this. The flag existed,
-         drove the error message, and was invisible to every caller. */
+      /* Every flag has to be listed here. This payload is built from an
+         explicit field list, so one set on the entry and not named here is
+         silently dropped -- which has now happened FOUR times in this file:
+         to viaDiagnostic, to endpoints, to unreadable, and to
+         staleDropped. Each existed, each did its job internally, and each
+         was invisible to every caller.
+
+         staleDropped is the count of records the operator was still
+         publishing long after their restoration time. It matters precisely
+         because "this operator reports no outages" and "we filtered its
+         outages out" look identical without it. */
       error: n.error, unconfirmed: n.unconfirmed, blocked: n.blocked, unreadable: n.unreadable,
+      staleDropped: n.staleDropped,
       via: n.via, viaUrl: n.viaUrl, mergedInto: n.mergedInto,
       sourceUrl: n.sourceUrl, columns: n.columns,
       diagnostics: n.diagnostics, attempts: n.attempts

@@ -44,6 +44,45 @@ globalThis.fetch = async (url) => {
 
 const worker = (await import('../src/worker.js')).default;
 const env = { ASSETS: { fetch: async () => new Response('asset', { status: 200 }) } };
+
+/* Fixture timestamps, relative to now.
+
+   Every dated fixture in this file was written with a fixed day in
+   September 2026 and they all aged at once: when outages gained a
+   staleness filter -- which drops a record whose restoration time is more
+   than two days past, because Western Power was still publishing one from
+   31 May -- these fixtures became history and a dozen assertions about
+   grouping, columns and town splitting failed for a reason that had
+   nothing to do with what they test.
+
+   A fixture that is meant to describe a CURRENT outage has to stay
+   current. T(-2) is two hours ago, T(3) is three hours from now. */
+const T = (hours) => new Date(Date.now() + hours * 3600000).toISOString().replace(/\.\d+Z$/, 'Z');
+const STARTED = T(-2);
+const RESTORE_AT = T(3);
+/* The same, in the day-first format Western Power publishes
+   ("31/05/2026 12:08 PM"), for the fixtures copied verbatim from it. */
+/* Evoenergy's CSV is month-first ("9/24/2026 6:05:00 AM") where Western
+   Power is day-first -- which is why latestPossibleMs falls back to a
+   month-first reading when the day-first one is not a real date. */
+const US_FIRST = (hours) => {
+  const d = new Date(Date.now() + hours * 3600000);
+  const p2 = (n) => String(n).padStart(2, '0');
+  let h = d.getUTCHours();
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 === 0 ? 12 : h % 12;
+  return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + '/' + d.getUTCFullYear()
+    + ' ' + h + ':' + p2(d.getUTCMinutes()) + ':00 ' + ap;
+};
+const DAY_FIRST = (hours) => {
+  const d = new Date(Date.now() + hours * 3600000);
+  const p2 = (n) => String(n).padStart(2, '0');
+  let h = d.getUTCHours();
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 === 0 ? 12 : h % 12;
+  return p2(d.getUTCDate()) + '/' + p2(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear()
+    + ' ' + p2(h) + ':' + p2(d.getUTCMinutes()) + ' ' + ap;
+};
 const call = (p) => worker.fetch(new Request('https://example.test' + p), env, { waitUntil: () => {} });
 
 let pass = 0, fail = 0;
@@ -71,14 +110,14 @@ console.log('\n== the shapes operators actually publish ==');
       properties: {
         EVENT_ID: 'EQ-1', LOCALITY: 'Newtown', CUSTOMERSAFFECTED: 412,
         CAUSE: 'Equipment fault', STATUS: 'Crew on site',
-        STARTTIME: '2026-09-17T04:00:00Z', ESTIMATEDRESTORATIONTIME: '2026-09-17T09:30:00Z'
+        STARTTIME: STARTED, ESTIMATEDRESTORATIONTIME: RESTORE_AT
       }
     }]
   });
   // A bare array with completely different field names
   upstream['energex_po_current_planned'] = json([
     { id: 'EQ-2', locality: 'Penrith', numCustomers: '1,205', reason: 'Storm damage',
-      jobStatus: 'Assessing', reportedTime: 1758081600000, etr: '2026-09-17T12:00:00Z' }
+      jobStatus: 'Assessing', reportedTime: Date.now() - 2 * 3600000, etr: RESTORE_AT }
   ]);
   // An object wrapping the list under an arbitrary key
   upstream['ergon_po_current_unplanned'] = json({
@@ -125,7 +164,7 @@ console.log('\n== the text views: a table read by its own headings ==');
     '<tr><th>Suburb</th><th>Customers affected</th><th>Cause</th><th>Status</th>' +
     '<th>Estimated restoration</th></tr>' +
     '<tr><td>Newtown</td><td>412</td><td>Equipment fault</td><td>Crew on site</td>' +
-    '<td>2026-09-17T09:30:00Z</td></tr>' +
+    '<td>' + RESTORE_AT + '</td></tr>' +
     '<tr><td>Gosford</td><td>1,205</td><td>Storm damage</td><td>Assessing</td><td></td></tr>' +
     '</table>');
 
@@ -133,7 +172,7 @@ console.log('\n== the text views: a table read by its own headings ==');
   upstream['essentialenergy.com.au'] = page(
     '<table>' +
     '<tr><td>Outage type</td><td>Areas affected</td><td>No. of premises</td><td>Time off supply</td></tr>' +
-    '<tr><td>Planned</td><td>Penrith</td><td>88</td><td>2026-09-17T04:00:00Z</td></tr>' +
+    '<tr><td>Planned</td><td>Penrith</td><td>88</td><td>' + STARTED + '</td></tr>' +
     '</table>');
 
   const b = await (await call('/api/outages/nsw')).json();
@@ -178,7 +217,7 @@ console.log('\n== Endeavour: two datasets merged, their fallbacks not double-cou
   upstream['outagecustomerlive/exports/geojson'] = json({ type: 'FeatureCollection', features: [
     { geometry: { type: 'Point', coordinates: [150.99, -33.82] },
       properties: { reference: 'INC 1115105492', suburb: 'Greystanes',
-        customers_affected: 120, estimated_restoration_time: '2026-09-24T04:30:00Z' } }] });
+        customers_affected: 120, estimated_restoration_time: RESTORE_AT } }] });
   upstream['plannedoutagecustomer/exports/geojson'] = json({ type: 'FeatureCollection', features: [
     { properties: { reference: 'INC 1115105769', suburb: 'Vineyard', customers_affected: 30 } }] });
   /* Both /records fallbacks also answer. If a part's fallback ran after its
@@ -427,11 +466,20 @@ console.log('\n== Queensland: two complementary files, merged ==');
 console.log('\n== Western Power: a boolean flag, not a word ==');
 {
   reset();
-  // The real column names from its feature service
+  /* The real column names from its feature service.
+
+     Times are relative to now, not the fixed epochs this used to carry.
+     Those were written once and aged: by the time outages gained a
+     staleness filter the fixture's restoration time was 36 days in the
+     past, so the record was correctly dropped as history and three
+     assertions failed for a reason that had nothing to do with what they
+     were testing. A fixture describing a CURRENT outage has to stay
+     current. */
+  const HOUR = 3600000;
   upstream['WP_Outage_Prod'] = json({ type: 'FeatureCollection', features: [
     { properties: { INCIDENTREF: 'WP-1', AFFECTED_AREA: 'Mandurah', NOCUSTOMERSIMPACTED: 730,
       AFFECTED_AREA_NOCUSTOMERS: 12, PLANNEDOUTAGE: 'No', OUTAGETYPE: 'Distribution',
-      OUTAGESTARTTIME: 1789000000000, ESTIMATEDRESTORATIONTIME: 1789010000000 } },
+      OUTAGESTARTTIME: Date.now() - 2 * HOUR, ESTIMATEDRESTORATIONTIME: Date.now() + 4 * HOUR } },
     { properties: { INCIDENTREF: 'WP-2', AFFECTED_AREA: 'Bunbury', NOCUSTOMERSIMPACTED: 12,
       PLANNEDOUTAGE: true, OUTAGETYPE: 'Distribution' } }]});
   const b = await (await call('/api/outages/wa')).json();
@@ -446,6 +494,38 @@ console.log('\n== Western Power: a boolean flag, not a word ==');
     b.outages.find(o => o.location === 'Bunbury'));
   check('epoch times become ISO', !!one.startIso && !!one.restoreIso, one);
   check('INCIDENTREF is carried as the id', one.id === 'WP-1', one.id);
+}
+
+console.log('\n== an outage the operator never took down ==');
+{
+  /* Seen live: Western Power still publishes a record from 31 May, and it
+     reached the dashboard beside today's incidents reading "Started
+     31/05/2026, Estimated back 01/06/2026". Measured on that layer, 121 of
+     124 records started today and exactly two were months old.
+
+     End to end here, through the real pipeline, because the unit-level
+     rules are tested in test/stale_outages.test.mjs and what matters is
+     that a stale row never reaches the payload. */
+  reset();
+  const DAY = 86400000;
+  upstream['WP_Outage_Prod'] = json({ type: 'FeatureCollection', features: [
+    { properties: { INCIDENTREF: 'WP-OLD', AFFECTED_AREA: 'Nairibin', NOCUSTOMERSIMPACTED: 134,
+      PLANNEDOUTAGE: 'No', OUTAGESTARTTIME: '31/05/2026 12:08 PM',
+      ESTIMATEDRESTORATIONTIME: '01/06/2026 06:30 PM' } },
+    { properties: { INCIDENTREF: 'WP-NOW', AFFECTED_AREA: 'Harvey', NOCUSTOMERSIMPACTED: 6,
+      PLANNEDOUTAGE: 'No', OUTAGESTARTTIME: Date.now() - DAY / 4,
+      ESTIMATEDRESTORATIONTIME: Date.now() + DAY / 4 } }]});
+  const b = await (await call('/api/outages/wa')).json();
+  const places = b.outages.map(o => o.location);
+  check('the four-month-old record is gone', !places.includes('Nairibin'), places);
+  check('and the current one is still there', places.includes('Harvey'), places);
+  /* Dropped, but never silently: "no outages" and "we filtered them" must
+     not look the same from outside. */
+  const wp2 = b.networks.find(n => n.name === 'Western Power');
+  check('the drop is reported', wp2 && wp2.staleDropped === 1, wp2);
+  check('the operator still reads as ok', wp2 && wp2.ok, wp2);
+  check('and its customer total excludes the stale row',
+    b.customers === 6, { customers: b.customers });
 }
 
 console.log('\n== an unconnected feed is not a reported outage ==');
@@ -735,17 +815,31 @@ console.log('\n== a day-first date is never silently transposed ==');
 {
   reset();
   /* Ausgrid's list gives dates as 23/09/2026. Date.parse reads d/m/y as US
-     month-first, so 09/03/2026 -- 3 March here -- comes back as 3 September.
-     A confidently wrong date is worse than no date. */
+     month-first, so "09/03/2026" -- 3 March here -- comes back as 3
+     September. A confidently wrong date is worse than no date, so none is
+     invented and the raw string is what gets shown.
+
+     That literal 09/03/2026 is what this fixture used to carry, and it
+     aged: once outages gained a staleness filter the row was seven months
+     old and correctly dropped as history, so this test crashed for a
+     reason unrelated to dates being transposed. The date is now generated
+     relative to today. The day-first shape is what is being tested, not
+     any particular day. */
+  const d = new Date(Date.now() - 3 * 86400000);
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const dayFirst = pad2(d.getUTCDate()) + '/' + pad2(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear();
   upstream['ausgrid.com.au'] = () => new Response(
     '<html><table><tr><th>Suburb</th><th>Customers affected</th><th>Start</th></tr>' +
-    '<tr><td>Waterloo</td><td>158</td><td>09/03/2026</td></tr></table></html>',
+    '<tr><td>Waterloo</td><td>158</td><td>' + dayFirst + '</td></tr></table></html>',
     { status: 200, headers: { 'Content-Type': 'text/html' } });
   const b = await (await call('/api/outages/nsw')).json();
   const one = b.outages.find(o => o.location === 'Waterloo');
   check('the row still reads', !!one && one.customers === 158, one);
-  check('the date is kept exactly as published', one.start === '09/03/2026', one.start);
+  check('the date is kept exactly as published', one.start === dayFirst, one.start);
   check('and no ISO is invented from it', one.startIso === undefined, one.startIso);
+  /* The guard against the fixture quietly ageing into the filter again. */
+  check('the fixture date is recent enough not to be filtered',
+    Date.now() - d.getTime() < 14 * 86400000);
 }
 
 console.log('\n== a scrape reports the columns it saw ==');
@@ -754,7 +848,7 @@ console.log('\n== a scrape reports the columns it saw ==');
   upstream['ausgrid.com.au'] = () => new Response(
     '<html><table>' +
     '<tr><th>Suburb</th><th>Customers affected</th><th>Start</th><th>Job reason</th></tr>' +
-    '<tr><td>Coogee</td><td>13</td><td>23/09/2026</td><td>Storm</td></tr></table></html>',
+    '<tr><td>Coogee</td><td>13</td><td>' + DAY_FIRST(-2).split(' ')[0] + '</td><td>Storm</td></tr></table></html>',
     { status: 200, headers: { 'Content-Type': 'text/html' } });
   const b = await (await call('/api/outages/nsw')).json();
   const ag = b.networks.find(n => n.name === 'Ausgrid');
@@ -1113,16 +1207,23 @@ console.log('\n== Endeavour publishes premises, not outages ==');
      affected premise: their own site reports nine outages against 1,267 of
      these. Read literally that is 1,267 outages -- wrong, and the kind of
      wrong that looks plausible on a dashboard. */
+  /* Times are relative to now. They were fixed dates in September, which
+     aged past the staleness filter and took four assertions down with them
+     -- this fixture is about grouping premises into outages, and a dated
+     fixture made it fail for an unrelated reason. */
+  const stamp = (offsetMs) => new Date(Date.now() + offsetMs).toISOString().slice(0, 16).replace('T', ' ');
+  const started = stamp(-2 * 3600000);
+  const restoreAt = stamp(3 * 3600000);
   const premise = (incident, city, street, when) => ({ properties: {
     street_name: street, cityname: city, postcode: '2178',
     incident_id: incident, outage_type: 'UNPLANNED', incident_status: 'NEW',
-    customers_affected: 1, start_date_time: when, est_restore_time: '2026-09-24 04:00' } });
+    customers_affected: 1, start_date_time: when, est_restore_time: restoreAt } });
 
   upstream['outagecustomerlive/exports/geojson'] = json({ type: 'FeatureCollection', features: [
-    premise('INC 1115105813', 'KEMPS CREEK', '230-234 CLIFTON AVE', '2026-09-24 00:43'),
-    premise('INC 1115105813', 'KEMPS CREEK', '12 BADGERYS RD', '2026-09-24 00:43'),
-    premise('INC 1115105813', 'MOUNT VERNON', '4 CAPITOL HILL DR', '2026-09-24 00:43'),
-    premise('INC 1115105999', 'GREYSTANES', '9 PROSPECT HWY', '2026-09-24 01:10')
+    premise('INC 1115105813', 'KEMPS CREEK', '230-234 CLIFTON AVE', started),
+    premise('INC 1115105813', 'KEMPS CREEK', '12 BADGERYS RD', started),
+    premise('INC 1115105813', 'MOUNT VERNON', '4 CAPITOL HILL DR', started),
+    premise('INC 1115105999', 'GREYSTANES', '9 PROSPECT HWY', stamp(-1 * 3600000))
   ] });
 
   const b = await (await call('/api/outages/nsw')).json();
@@ -1146,11 +1247,18 @@ console.log('\n== Western Power names its towns in one field ==');
 {
   reset();
   /* Also verbatim: one record per incident, with the towns comma-joined and
-     a matching list of per-town customer counts. */
+     a matching list of per-town customer counts.
+
+     This is, exactly, the record that prompted the staleness filter -- the
+     NAIRIBIN outage Western Power was still publishing 137 days after its
+     restoration time. Keeping its original dates here would mean this
+     fixture is now correctly dropped as history, so the dates are current
+     while the day-first format and the comma-joined towns, which are what
+     this block tests, are unchanged. */
   upstream['WP_Outage_Prod'] = json({ type: 'FeatureCollection', features: [{ properties: {
     OBJECTID: 511287, INCIDENTREF: 'INCD-2037481-U', OUTAGETYPE: 'U',
     PLANNEDOUTAGE: 'Unplanned', NOCUSTOMERSIMPACTED: 134,
-    OUTAGESTARTTIME: '31/05/2026 12:08 PM', ESTIMATEDRESTORATIONTIME: '01/06/2026 06:30 PM',
+    OUTAGESTARTTIME: DAY_FIRST(-2), ESTIMATEDRESTORATIONTIME: DAY_FIRST(6),
     AFFECTED_AREA: 'KUKERIN,MOULYINNING,NAIRIBIN,DUMBLEYUNG',
     AFFECTED_AREA_NOCUSTOMERS: '70,25,13,10' } }] });
 
@@ -1164,7 +1272,7 @@ console.log('\n== Western Power names its towns in one field ==');
   check('"Unplanned" as a word is still read as unplanned', one.kind === 'unplanned', one.kind);
   /* Day-first with a time; no ISO is invented from it. */
   check('a day-first timestamp is left as published',
-    one.start === '31/05/2026 12:08 PM' && one.startIso === undefined, [one.start, one.startIso]);
+    one.start === DAY_FIRST(-2) && one.startIso === undefined, [one.start, one.startIso]);
 }
 
 console.log('\n== a whole-network fallback under a combine network ==');
@@ -1253,7 +1361,7 @@ console.log('\n== the Queensland layers, read with their own field names ==');
     features: [feature({
       OBJECTID: 412874, EVENT_ID: 'INCD-974591-g', TYPE: 'PLANNED', STATUS: 'In Progress',
       CUSTOMERS_AFFECTED: 2, SUBURBS: 'YARRABILBA', STREETS: 'WOODWARD AVE',
-      START: '2026-09-18T05:00:00Z', FINISH: null, EST_FIX_TIME: '2026-09-18T12:30:00Z',
+      START: STARTED, FINISH: null, EST_FIX_TIME: RESTORE_AT,
       REASON: 'Planned Maintenance', CRC: 'D86F31ED'
     })]
   }), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -1263,7 +1371,7 @@ console.log('\n== the Queensland layers, read with their own field names ==');
       OBJECTID: 910002, EVENT_ID: '26SW8151', TYPE: 'PLANNED', STATUS: 'Crews working on-site',
       CUSTOMERS_AFFECTED: 32, SUBURBS: 'BOWENVILLE, BRYMAROO, IRVINGDALE, QUINALOW',
       STREETS: 'BRYMAROO-WOODLEIGH RD, DALBY NUNGIL RD, MIRTSCHINS RD',
-      START: '2026-09-22T04:53:00Z', FINISH: null, EST_FIX_TIME: '2026-09-22T12:40:00Z',
+      START: STARTED, FINISH: null, EST_FIX_TIME: RESTORE_AT,
       REASON: 'The loss of supply is to connect new customers to the electricity network',
       CRC: 'F3984D3A'
     })]
@@ -1396,9 +1504,9 @@ console.log('\n== CSV quoting, on the real columns ==');
     /* Both the town list and the cause carry commas inside quotes. Split
        naively, every later column shifts by one and the customer count
        becomes a word -- wrong data rather than an error. */
-    'UP 1,unplanned,Our crews are on their way,,,9/24/2026 6:05:00 AM,9/24/2026 11:00:00 AM,,87,"TURNER, O\'CONNOR, LYNEHAM","Fault, under investigation"',
+    'UP 1,unplanned,Our crews are on their way,,,' + US_FIRST(-2) + ',' + US_FIRST(3) + ',,87,"TURNER, O\'CONNOR, LYNEHAM","Fault, under investigation"',
     /* A doubled quote is a literal quote, not the end of the field. */
-    'UP 2,unplanned,Our crews are on their way,,,9/24/2026 7:00:00 AM,,,13,"O""CONNOR",Equipment fault'
+    'UP 2,unplanned,Our crews are on their way,,,' + US_FIRST(-1) + ',,,13,"O""CONNOR",Equipment fault'
   ].join('\n');
   upstream['ExportOutages'] = () => new Response(csv, { status: 200, headers: { 'Content-Type': 'text/csv' } });
   upstream['http'] = () => new Response('down', { status: 503 });
@@ -1459,17 +1567,17 @@ console.log('\n== the real Evoenergy export ==');
   const csv = [
     'Outage Id,Type,Status Description,Planned Start,Planned Restoration,Actual Start,Expected Restoration,Actual End,Affected Customer Count,Affected Suburbs,Reason',
     /* All five statuses the live file actually carries. */
-    'SP 151024379,planned,Cancelled,9/23/2026 8:15:00 AM,9/23/2026 12:15:00 PM,,,,34,GIRALANG,',
-    'UP 151030011,unplanned,Our crews are on their way to investigate,,,9/24/2026 6:05:00 AM,9/24/2026 11:00:00 AM,,9,"BRADDON, TURNER",Equipment fault',
-    'UP 151030044,unplanned,Restored,,,9/24/2026 1:00:00 AM,,9/24/2026 3:00:00 AM,120,DICKSON,Storm damage',
-    'UP 151030077,unplanned,Completed,,,9/23/2026 7:39:00 AM,,9/23/2026 12:38:00 PM,55,LYNEHAM,Equipment fault',
+    'SP 151024379,planned,Cancelled,' + US_FIRST(-4) + ',' + US_FIRST(-1) + ',,,,34,GIRALANG,',
+    'UP 151030011,unplanned,Our crews are on their way to investigate,,,' + US_FIRST(-2) + ',' + US_FIRST(3) + ',,9,"BRADDON, TURNER",Equipment fault',
+    'UP 151030044,unplanned,Restored,,,' + US_FIRST(-6) + ',,' + US_FIRST(-4) + ',120,DICKSON,Storm damage',
+    'UP 151030077,unplanned,Completed,,,' + US_FIRST(-8) + ',,' + US_FIRST(-5) + ',55,LYNEHAM,Equipment fault',
     /* Scheduled: a planned job that has not started. Matched none of the
        status words the first filter used, so it would have been counted as
        a current outage -- and there are dozens of them in the file. */
-    'SP 151024999,planned,Scheduled,9/25/2026 9:00:00 AM,9/25/2026 3:00:00 PM,,,,4,KALEEN,Planned maintenance',
+    'SP 151024999,planned,Scheduled,' + US_FIRST(24) + ',' + US_FIRST(30) + ',,,,4,KALEEN,Planned maintenance',
     /* A planned outage actually under way. Excluding what has not begun
        must not mean excluding planned work as a category. */
-    'SP 151025100,planned,Scheduled,9/24/2026 8:00:00 AM,9/24/2026 4:00:00 PM,9/24/2026 8:02:00 AM,,,4,HOLT,Essential maintenance'
+    'SP 151025100,planned,Scheduled,' + US_FIRST(-3) + ',' + US_FIRST(5) + ',' + US_FIRST(-3) + ',,,4,HOLT,Essential maintenance'
   ].join('\n');
   upstream['ExportOutages'] = () => new Response(csv, { status: 200, headers: { 'Content-Type': 'text/csv' } });
   upstream['http'] = () => new Response('down', { status: 503 });
@@ -1509,7 +1617,7 @@ console.log('\n== the real Evoenergy export ==');
   /* Planned Start and Actual Start are both filled on that row; empty cells
      are skipped, so the first non-empty column of a pair is what is kept. */
   check('an unplanned row takes its actual start',
-    braddon && /6:05:00 AM/.test(braddon.start || ''), braddon && braddon.start);
+    braddon && braddon.start === US_FIRST(-2), braddon && braddon.start);
 }
 
 console.log('\n== an array of towns is a town list ==');
