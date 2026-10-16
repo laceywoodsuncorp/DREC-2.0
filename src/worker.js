@@ -385,7 +385,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-16-capture';
+const WORKER_BUILD = '2026-10-16-capture2';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -1105,6 +1105,25 @@ function pickCoords(record, geometry) {
    A leading four-digit year (ISO) never matches, so real timestamps are left
    to Date.parse, which handles them correctly. Returns null for anything it
    does not recognise -- including an impossible date like 31/02. */
+/* ISO 8601's compact ("basic") form -- "20261020T080000+08:00" -- to the
+   extended form Date.parse accepts.
+
+   Western Power's own website API writes its times this way. That source is
+   third in its list, behind two ArcGIS queries, and on a GitHub runner the
+   ArcGIS queries failed and this one answered: 145 rows whose dates
+   Date.parse returned NaN for, so not one could be called upcoming or
+   stale, and every scheduled job -- next week's included -- counted as a
+   live fault. 14,801 "customers off" in WA where the true figure was about
+   eighty. Unlike the local d/m/y forms this one carries its zone, so it is
+   an absolute time and safe to convert. */
+function expandBasicIso(raw) {
+  const m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(?:\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/.exec(String(raw || '').trim());
+  if (!m) return null;
+  let zone = m[7] || '';
+  if (zone && zone !== 'Z' && zone.indexOf(':') === -1) zone = zone.slice(0, 3) + ':' + zone.slice(3);
+  return m[1] + '-' + m[2] + '-' + m[3] + 'T' + m[4] + ':' + m[5] + ':' + (m[6] || '00') + zone;
+}
+
 const LOCAL_DATE_RE = /\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})\b/;
 function parseLocalDateParts(raw) {
   const text = raw ? String(raw).trim() : '';
@@ -1153,7 +1172,7 @@ function normaliseWhen(raw) {
        open data APIs, the GeoJSON files) are unaffected. */
     return out;
   } else {
-    const parsed = Date.parse(out.when);
+    const parsed = Date.parse(expandBasicIso(out.when) || out.when);
     if (!isNaN(parsed)) ms = parsed;
   }
   if (ms !== null && isFinite(ms)) out.whenIso = new Date(ms).toISOString();
@@ -1201,7 +1220,7 @@ function latestPossibleMs(raw) {
   }
   /* Only reached for strings with no d/m/y or d-m-y date in them -- ISO and
      RFC forms, which Date.parse reads correctly. */
-  const parsed = Date.parse(text);
+  const parsed = Date.parse(expandBasicIso(text) || text);
   return isNaN(parsed) ? null : parsed;
 }
 

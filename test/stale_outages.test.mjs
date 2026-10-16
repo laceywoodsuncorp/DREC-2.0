@@ -40,8 +40,9 @@ const fns = new Function([
   grab(/const OUTAGE_STALE_AFTER_START_MS = [^\n]*\n/, 'OUTAGE_STALE_AFTER_START_MS'),
   grab(/function latestPossibleMs\([\s\S]*?\n\}/, 'latestPossibleMs'),
   grab(/function outageIsStale\([\s\S]*?\n\}/, 'outageIsStale'),
-  grab(/function normaliseWhen\([\s\S]*?\n\}/, 'normaliseWhen')
-].join('\n') + '; return { latestPossibleMs, outageIsStale, normaliseWhen, parseLocalDateParts, OUTAGE_STALE_AFTER_RESTORE_MS, OUTAGE_STALE_AFTER_START_MS };')();
+  grab(/function normaliseWhen\([\s\S]*?\n\}/, 'normaliseWhen'),
+  grab(/function expandBasicIso\([\s\S]*?\n\}/, 'expandBasicIso')
+].join('\n') + '; return { latestPossibleMs, outageIsStale, normaliseWhen, parseLocalDateParts, expandBasicIso, OUTAGE_STALE_AFTER_RESTORE_MS, OUTAGE_STALE_AFTER_START_MS };')();
 
 let pass = 0, fail = 0;
 const ck = (n, c, e) => {
@@ -171,6 +172,25 @@ console.log('\n== the dash format, which Date.parse silently transposes ==');
   /* Time after the date, with seconds and a meridiem: Evoenergy. */
   const evo = fns.parseLocalDateParts('9/24/2026 6:05:00 PM');
   ck('Evoenergy\'s month-first form still reads', evo && evo.month === 9 && evo.day === 24 && evo.hour === 18, evo);
+}
+
+console.log('\n== ISO 8601 compact form, from Western Power\'s own API ==');
+/* "20261020T080000+08:00". Date.parse returns NaN for it. When a runner
+   fell back to that source, 145 Western Power rows had dates nothing could
+   read, none could be called upcoming or stale, and next week's maintenance
+   counted as live faults: 14,801 "customers off" in WA instead of ~80. It
+   carries its zone, so unlike the local d/m/y forms it is safe to convert. */
+{
+  const w = fns.normaliseWhen('20261020T080000+08:00');
+  ck('the compact form gets a real ISO', w.whenIso === '2026-10-20T00:00:00.000Z', w);
+  ck('the raw string is still what is shown', w.when === '20261020T080000+08:00', w.when);
+  ck('a zone without a colon works', fns.normaliseWhen('20261020T0800+0800').whenIso === '2026-10-20T00:00:00.000Z');
+  ck('Z works', fns.normaliseWhen('20261020T080000Z').whenIso === '2026-10-20T08:00:00.000Z');
+  ck('and it can now be judged stale',
+    fns.outageIsStale('20260531T120800+08:00', '20260601T183000+08:00', NOW));
+  ck('or not', !fns.outageIsStale('20261016T090000+08:00', '20261016T170000+08:00', NOW));
+  ck('the extended form is untouched', fns.expandBasicIso('2026-10-20T08:00:00Z') === null);
+  ck('so are local dates', fns.expandBasicIso('20/10/2026 08:00 AM') === null);
 }
 
 console.log('\n== the thresholds are the measured ones ==');

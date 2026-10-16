@@ -36,6 +36,9 @@ const build = (name) => new Function([
   /* normaliseWhen refuses to invent an ISO from a local d/m/y or d-m-y
      date, and the pattern it checks lives in this constant. */
   grab(/const LOCAL_DATE_RE = [^\n]*\n/, 'LOCAL_DATE_RE'),
+  /* normaliseWhen's helpers, lifted together: it has gained two in a
+     day, and each one broke these four tests separately. */
+  grab(/function expandBasicIso\([\s\S]*?\n\}/, 'expandBasicIso'),
   grab(/function normaliseWhen\([\s\S]*?\n\}/),
   grab(/function parseVic\(json\) \{[\s\S]*?\n\}/)
 ].join('\n') + '; return ' + name + ';')();

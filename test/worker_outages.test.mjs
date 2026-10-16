@@ -79,6 +79,14 @@ const US_FIRST = (hours) => {
   return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + '/' + d.getUTCFullYear()
     + ' ' + h + ':' + p2(d.getUTCMinutes()) + ':00 ' + ap;
 };
+/* Western Power's own API: ISO 8601's compact form with its zone,
+   "20260925T073000+08:00" -- AWST wall time. */
+const COMPACT_AWST = (hours) => {
+  const d = new Date(Date.now() + hours * 3600000 + 8 * 3600000);
+  const p2 = (n) => String(n).padStart(2, '0');
+  return d.getUTCFullYear() + p2(d.getUTCMonth() + 1) + p2(d.getUTCDate()) + 'T'
+    + p2(d.getUTCHours()) + p2(d.getUTCMinutes()) + '00+08:00';
+};
 const DAY_FIRST = (hours) => {
   const d = new Date(Date.now() + hours * 3600000);
   const p2 = (n) => String(n).padStart(2, '0');
@@ -499,6 +507,36 @@ console.log('\n== Western Power: a boolean flag, not a word ==');
     b.outages.find(o => o.location === 'Bunbury'));
   check('epoch times become ISO', !!one.startIso && !!one.restoreIso, one);
   check('INCIDENTREF is carried as the id', one.id === 'WP-1', one.id);
+}
+
+console.log('\n== Western Power through its fallback API ==');
+{
+  /* On a GitHub runner both of Western Power's ArcGIS queries failed and
+     its own website API answered instead, with times in ISO 8601's compact
+     form ("20261020T080000+08:00") and no planned flag. Date.parse returns
+     NaN for that form, so no row could be called upcoming, and every
+     scheduled job counted as a live fault: 14,801 "customers off" in WA
+     where the true figure was about eighty.
+
+     The field names are the API's real ones, as recorded in the "array of
+     towns" block above -- outageId, outageType "F", affectedCustomers, an
+     areas array, startTime and restorationTime. */
+  reset();
+  upstream['WP_Outage_Prod'] = () => new Response('Service unavailable', { status: 503 });
+  upstream['api/corp/outage/all-outages'] = json([
+    { outageId: 'INCD-2163641-U', outageType: 'F', affectedCustomers: 4, areas: ['HOLT ROCK'],
+      startTime: COMPACT_AWST(4 * 24), restorationTime: COMPACT_AWST(4 * 24 + 8) },
+    { outageId: 'INCD-LIVE-U', outageType: 'U', affectedCustomers: 6, areas: ['HARVEY'],
+      startTime: COMPACT_AWST(-2), restorationTime: COMPACT_AWST(3) }]);
+  const b = await (await call('/api/outages/wa')).json();
+  const wp = b.networks.find((n) => n.name === 'Western Power');
+  check('the fallback API answers', wp && wp.ok && /all-outages/.test(wp.sourceUrl || ''), wp);
+  check('and the failed ArcGIS attempts are recorded', wp && (wp.attempts || []).length >= 1, wp && wp.attempts);
+  const holt = b.outages.find((o) => (o.towns || []).includes('HOLT ROCK'));
+  check('a compact-ISO start gets a real timestamp', holt && !!holt.startIso, holt);
+  check('so next week\'s job is upcoming', holt && holt.upcoming === true && holt.kind === 'planned', holt);
+  check('the operator\'s code is kept beside it', holt && !!holt.kindReported, holt && holt.kindReported);
+  check('"customers off" is only the live fault', b.unplannedCustomers === 6, b.unplannedCustomers);
 }
 
 console.log('\n== capture mode: the deployed default ==');
@@ -1792,8 +1830,12 @@ console.log('\n== an array of towns is a town list ==');
      nothing, which is the worst of both. */
   upstream['api/corp/outage/all-outages'] = () => new Response(JSON.stringify([
     { outageId: 'INCD-202534-X', outageType: 'F', affectedCustomers: 177,
-      areas: ['EMBLETON', 'BAYSWATER'], startTime: '20260925T073000+08:00',
-      restorationTime: '20260925T153000+08:00' }
+      /* Relative to now. The real capture's "20260925T073000+08:00" was
+         harmless while nothing could parse this form; once it could, the
+         row was correctly three weeks stale and this block failed for a
+         reason unrelated to arrays of towns. */
+      areas: ['EMBLETON', 'BAYSWATER'], startTime: COMPACT_AWST(-2),
+      restorationTime: COMPACT_AWST(3) }
   ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
   /* The feature service is gone so the fallback is reached. */
   upstream['http'] = () => new Response('gone', { status: 404 });

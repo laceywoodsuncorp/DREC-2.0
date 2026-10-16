@@ -119,10 +119,22 @@ export function mergeOutageSnapshot(feedStates, browserStates, previous, opts) {
       /* Diagnostic fields from the feed, whichever capture supplied the
          rows -- they describe why the feed did or did not work. */
       if (f) {
-        for (const k of ['unreadable', 'staleDropped', 'sourceUrl', 'mergedInto', 'unconfirmed']) {
+        /* columns included: for a source whose schema has never been seen --
+           Western Power's website API among them -- the field names are the
+           first thing anyone needs, and the payload already has them. */
+        for (const k of ['unreadable', 'staleDropped', 'sourceUrl', 'mergedInto', 'unconfirmed', 'columns']) {
           if (f[k] !== undefined && entry[k] === undefined) entry[k] = f[k];
         }
         if (!f.ok && f.error && entry.ok) entry.feedError = f.error;
+        /* The sources that failed before one answered. Western Power's two
+           ArcGIS queries failed on a runner and its website API answered in
+           a shape nothing could date -- and nothing recorded why the first
+           two failed, so the cause had to be guessed at. Kept short: the URL
+           and the error, at most four. */
+        if (Array.isArray(f.attempts) && f.attempts.length) {
+          entry.attempts = f.attempts.slice(0, 4).map((a) => ({
+            url: String(a.url || ''), error: String(a.error || '').slice(0, 200) }));
+        }
       }
 
       /* A published total, kept only while it is still recent. From this

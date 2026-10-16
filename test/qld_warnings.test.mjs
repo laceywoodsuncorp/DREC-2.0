@@ -41,6 +41,9 @@ const parseQldWarnings = new Function([
   /* normaliseWhen refuses to invent an ISO from a local d/m/y or d-m-y
      date, and the pattern it checks lives in this constant. */
   grab(/const LOCAL_DATE_RE = [^\n]*\n/, 'LOCAL_DATE_RE'),
+  /* normaliseWhen's helpers, lifted together: it has gained two in a
+     day, and each one broke these four tests separately. */
+  grab(/function expandBasicIso\([\s\S]*?\n\}/, 'expandBasicIso'),
   grab(/function normaliseWhen\([\s\S]*?\n\}/),
   grab(/function parseQldWarnings\(json\) \{[\s\S]*?\n\}/)
 ].join('\n') + '; return parseQldWarnings;')();
@@ -72,10 +75,19 @@ if (!sample) {
      because that is what the probe happened to capture, and broke when
      Queensland moved to Watch and Act -- the parser was right and the test
      was wrong, which is the least useful way to fail. */
+  /* "Information" included: Queensland Fire publishes it as a level beside
+     the national three -- it is in the probe data as "Information - COEN",
+     "Information - BARAKULA" -- and it broke this assertion the first time
+     the probe happened to capture one. */
   ck('alertLevel is one of the published levels',
-    inc && /^(Advice|Watch and Act|Emergency Warning|All Clear)/i.test(inc.alertLevel || ''),
+    inc && /^(Advice|Watch and Act|Emergency Warning|All Clear|Information)/i.test(inc.alertLevel || ''),
     inc && inc.alertLevel);
-  ck('title is the warning headline, not the level', inc && inc.title.length > 20, inc && inc.title);
+  /* Structural, not a length. "title longer than 20 characters" stood in
+     for "the title is a headline", and "Information - COEN" is a real
+     headline at 18. What matters is that it says more than the level does. */
+  ck('title is the warning headline, not the level',
+    inc && inc.title.toLowerCase() !== String(inc.alertLevel).toLowerCase()
+      && inc.title.length > String(inc.alertLevel).length, inc && inc.title);
   ck('type comes from EventType', inc && inc.type === 'Fire', inc && inc.type);
   ck('status is a call to action, kept apart from the level',
     inc && inc.status && inc.status !== inc.alertLevel, inc && inc.status);

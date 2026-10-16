@@ -80,6 +80,12 @@ await Promise.all(STATES.map(async (st) => {
   console.log('  ' + st.padEnd(4) + String((p.outages || []).length).padStart(5) + ' rows  '
     + String(Date.now() - t0).padStart(6) + 'ms   ' + (p.networks || [])
       .map((n) => n.name + (n.ok ? '=' + n.count : '=FAIL')).join(', '));
+  /* Every source that failed, including ones a later fallback covered: a
+     fallback answering is exactly when a silent change of source happens. */
+  (p.networks || []).forEach((n) => (n.attempts || []).forEach((a) =>
+    console.log('        ' + n.name + ' tried ' + String(a.url).slice(0, 90) + '\n            -> ' + String(a.error).slice(0, 160))));
+  (p.networks || []).filter((n) => n.ok && n.sourceUrl).forEach((n) =>
+    console.log('        ' + n.name + ' answered from ' + String(n.sourceUrl).slice(0, 110)));
 }));
 
 /* In the Worker's own state order, not the order the fetches happened to
