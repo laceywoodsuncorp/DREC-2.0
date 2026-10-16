@@ -1,6 +1,6 @@
 {
- "at": "2026-10-16T02:24:11.662Z",
- "nowMs": 1792117451663,
+ "at": "2026-10-16T03:15:18.438Z",
+ "nowMs": 1792120518438,
  "layer": {
   "name": "Outage_Areas",
   "maxRecordCount": 2000,
@@ -21,14 +21,14 @@
    "SHAPE__Length:esriFieldTypeDouble"
   ]
  },
- "totalRecords": 129,
- "fetched": 129,
+ "totalRecords": 134,
+ "fetched": 134,
  "startRange": {
   "oldest": "2026-05-31T10:29:00.000Z",
   "newest": "2026-10-25T07:00:00.000Z"
  },
  "ageBuckets": {
-  "future": 124,
+  "future": 129,
   "today": 2,
   "lastWeek": 1,
   "lastMonth": 0,
@@ -75,14 +75,13 @@
    "started": "2026-10-15T19:49:00.000Z",
    "ageDays": 0.3,
    "etr": "2026-10-16T15:00:00.000Z",
-   "customers": 12,
+   "customers": 6,
    "area": "HYDEN"
   }
  ],
  "statusLikeFields": {
   "ESTIMATEDRESTORATIONTIME": [
    "01/06/2026 06:30 PM",
-   "16/10/2026 03:00 PM",
    "17/10/2026 05:30 PM",
    "18/10/2026 06:00 AM",
    "17/10/2026 10:00 AM",
@@ -92,7 +91,8 @@
    "18/10/2026 12:30 PM",
    "18/10/2026 05:30 PM",
    "18/10/2026 01:00 PM",
-   "18/10/2026 06:30 PM"
+   "18/10/2026 06:30 PM",
+   "18/10/2026 05:00 PM"
   ]
  },
  "nairibin": [
@@ -111,42 +111,48 @@
    "Tags": "",
    "SHAPE__Area": 773155328.5703125,
    "SHAPE__Length": 110234.84280764995
+  },
+  {
+   "OBJECTID": 546178,
+   "OUTAGETYPE": "U",
+   "INCIDENTREF": "INCD-2165861-U",
+   "ENARNUMBER": "",
+   "OUTAGESTARTTIME": "16/10/2026 10:44 AM",
+   "ESTIMATEDRESTORATIONTIME": "16/10/2026 03:30 PM",
+   "PLANNEDOUTAGE": "Unplanned",
+   "NOCUSTOMERSIMPACTED": 6,
+   "TIMEADDED": 1792147508000,
+   "AFFECTED_AREA": "NAIRIBIN",
+   "AFFECTED_AREA_NOCUSTOMERS": "6",
+   "Tags": "",
+   "SHAPE__Area": 15699051.86328125,
+   "SHAPE__Length": 21560.457735795055
   }
  ],
  "ourPage": {
-  "rows": 129,
+  "rows": 134,
   "oldest": "2026-05-31T10:29:00.000Z",
   "newest": "2026-10-25T07:00:00.000Z"
  },
  "orderBySupported": true,
  "kindValues": {
   "PLANNEDOUTAGE": {
-   "\"Unplanned\"": 113,
-   "\"Planned\"": 16
+   "\"Unplanned\"": 117,
+   "\"Planned\"": 17
   },
   "OUTAGETYPE": {
    "\"F\"": 106,
-   "\"P\"": 16,
-   "\"U\"": 7
+   "\"P\"": 17,
+   "\"U\"": 11
   }
  },
  "futureStart": {
-  "count": 124,
+  "count": 129,
   "byOurKind": {
-   "unplanned": 108,
-   "planned": 16
+   "unplanned": 112,
+   "planned": 17
   },
   "samples": [
-   {
-    "area": "OAKFORD,BANJUP,FORRESTDALE",
-    "start": "16/10/2026 11:00 AM",
-    "etr": "16/10/2026 03:00 PM",
-    "PLANNEDOUTAGE": "Unplanned",
-    "OUTAGETYPE": "F",
-    "INCIDENTREF": "INCD-508392-V",
-    "customers": 142,
-    "ours": "unplanned"
-   },
    {
     "area": "MORLEY",
     "start": "17/10/2026 07:30 AM",
@@ -215,6 +221,16 @@
     "OUTAGETYPE": "F",
     "INCIDENTREF": "INCD-505862-V",
     "customers": 197,
+    "ours": "unplanned"
+   },
+   {
+    "area": "BICTON",
+    "start": "18/10/2026 07:30 AM",
+    "etr": "18/10/2026 12:30 PM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-505982-V",
+    "customers": 55,
     "ours": "unplanned"
    }
   ]
