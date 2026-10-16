@@ -20,7 +20,9 @@ on:
   schedule:
     # 7am and 3pm AEST. Was four a day across every state; it is now only
     # needed where a browser still adds something -- see the Scrape step.
-    - cron: '0 21,5 * * *'
+    # :13 rather than :00 -- GitHub's busiest minute, on which every
+    # scheduled run measured on 16 October started 1-10 hours late.
+    - cron: '13 21,5 * * *'
   workflow_dispatch:
     inputs:
       only:

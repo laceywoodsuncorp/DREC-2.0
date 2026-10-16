@@ -163,6 +163,20 @@ jobs:
             // trigger was withdrawn.
             console.log("          " + Object.entries(d.expectedGapSeconds)
               .map(([k, v]) => k + " every " + v + "s").join(", "));
+            // Is the Worker starting the outage capture? GitHub's own
+            // schedule runs hours late, so this is what keeps outages fresh
+            // once GITHUB_DISPATCH_TOKEN is set. A 401 means the token has
+            // expired or been revoked; 403 or 404, it lacks the permission
+            // or the workflow has moved.
+            const cd = d.captureDispatch || {};
+            console.log("\ncapture dispatch: " + (cd.configured ? "configured" : "NOT configured")
+              + " (every " + cd.everyMinutesDay + " min by day, " + cd.everyMinutesNight + " overnight)");
+            (cd.recent || []).slice(0, 4).forEach(r => console.log("  " + r.at + "  HTTP " + r.status
+              + (r.error ? "  " + String(r.error).slice(0, 120) : "")));
+            if (cd.configured && cd.recent && cd.recent[0] && cd.recent[0].status !== 204) {
+              console.log("::warning::the last capture dispatch got HTTP " + cd.recent[0].status
+                + " -- outages are falling back to GitHub's delayed schedule");
+            }
             if (!d.seen) {
               // Not a failure. caches.default is per-datacentre, and a
               // runner can easily reach a location no cron has run in --

@@ -16,10 +16,14 @@
 # was measured, so leave room for the others.
 #
 #   this capture     35 runs/day x 1 min            ~1,050 min/month
+#   safety net        4 runs/day x 1 min              ~120
 #   browser scrape    2 runs/day x ~6 min (3 states)  ~360
 #   CI and checks    on pushes and by hand            ~200
 #                                                   ------
-#                                                   ~1,610  (about 80%)
+#                                                   ~1,730  (about 86%)
+#
+# The 35 a day are the Worker's dispatches once it drives the capture, or
+# this schedule's runs until then -- never both, because of CAPTURE_DRIVER.
 #
 # Every capture commits data/outages.json, and Cloudflare rebuilds on every
 # push to the branch -- that is how the snapshot reaches the Worker. Its
@@ -28,21 +32,48 @@
 # Times are UTC. AEST is UTC+10 (Brisbane, no daylight saving; Sydney and
 # Melbourne read an hour later over summer):
 #
-#   every 30 min, 20:00-10:59 UTC  ->  6:00am-8:30pm AEST   30 runs
-#   11,13,15,17,19 UTC             ->  9pm, 11pm, 1am, 3am, 5am  5 runs
+#   :07 and :37, 20:00-10:59 UTC  ->  6:07am-8:37pm AEST   30 runs
+#   :07 at 11,13,15,17,19 UTC     ->  9pm, 11pm, 1am, 3am, 5am  5 runs
+#   :23 every 6 hours             ->  safety net, always    4 runs
 #
 # Overnight is thinner, not absent: a storm at 2am is exactly when someone
 # would want this page to be right, and the Worker no longer fetches
 # outages itself to cover the gap.
 #
-# GitHub starts scheduled runs late under load, often by 5-15 minutes, so
-# "every 30 minutes" means a capture is usually under 45 minutes old.
+# WHAT ACTUALLY STARTS IT. GitHub's scheduler is not a clock. Measured on
+# this repository's own scheduled runs, 16 October: a median of 199 minutes
+# late, the worst 580, and about a third never started. So the schedule
+# below is a FALLBACK. The primary trigger is the Worker's own cron, which
+# fires every two minutes without fail and asks GitHub to run this through
+# the API (see dispatchCapture in src/worker.js) -- a dispatched run starts
+# promptly where a scheduled one may not start for hours.
+#
+# That needs two things set up by hand, in this order:
+#   1. A fine-grained GitHub token for this repository only, permission
+#      "Actions: Read and write" and nothing else, stored as the Worker
+#      SECRET GITHUB_DISPATCH_TOKEN (Cloudflare dashboard -> the Worker ->
+#      Settings -> Variables and Secrets, type Secret). Check
+#      /api/crons shows captureDispatch.configured true and recent
+#      statuses of 204.
+#   2. Then the repository VARIABLE CAPTURE_DRIVER = worker (GitHub ->
+#      Settings -> Secrets and variables -> Actions -> Variables). That
+#      stands down the frequent schedule below, which would otherwise run
+#      every capture twice and spend the minutes twice. A job skipped by
+#      its `if` is not billed.
+#
+# The 6-hourly schedule always runs, as a safety net for a token that has
+# expired. It exits early when the last capture is under 25 minutes old,
+# so on a healthy day it costs a minute and makes no commit.
+#
+# Odd minutes, not :00 and :30: GitHub documents the top of the hour as
+# its busiest, and the runs measured above were all scheduled on it.
 name: Capture outages
 
 on:
   schedule:
-    - cron: '*/30 20-23,0-10 * * *'
-    - cron: '0 11,13,15,17,19 * * *'
+    - cron: '7,37 20-23,0-10 * * *'
+    - cron: '7 11,13,15,17,19 * * *'
+    - cron: '23 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -57,16 +88,37 @@ concurrency:
 
 jobs:
   capture:
+    # Manual and dispatched runs always go. Of the scheduled ones, the
+    # safety net always goes and the frequent two stand down once the
+    # Worker is driving -- skipped here, so not billed.
+    if: >-
+      github.event_name != 'schedule'
+      || github.event.schedule == '23 */6 * * *'
+      || vars.CAPTURE_DRIVER != 'worker'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      # The safety net only. If something captured in the last 25 minutes,
+      # this run has nothing to add, and committing would only trigger a
+      # Cloudflare rebuild for the same data.
+      - name: Is a capture needed?
+        id: fresh
+        run: |
+          if [ "${{ github.event.schedule }}" = "23 */6 * * *" ] && [ -f data/outages.json ]; then
+            age=$(node -e 'const j=JSON.parse(require("fs").readFileSync("data/outages.json","utf8")); console.log(Math.round((Date.now()-(j.capturedAt||0))/60000))')
+            echo "last capture is ${age} minutes old"
+            if [ "$age" -lt 25 ]; then echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+          fi
       - uses: actions/setup-node@v4
+        if: steps.fresh.outputs.skip != '1'
         with:
           node-version: '22'
       - name: Capture every state through the Worker's own code
+        if: steps.fresh.outputs.skip != '1'
         run: node scripts/capture-outages.mjs
       - name: Commit the snapshot
+        if: steps.fresh.outputs.skip != '1'
         run: |
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh "Capture outage snapshot" data/outages.json

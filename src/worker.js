@@ -146,6 +146,86 @@ async function recordCronFiring(cron, atMs) {
   } catch (e) { /* never let bookkeeping break a refresh */ }
 }
 
+/* The Worker's own cron starts the outage capture.
+
+   Outages are captured on a GitHub Actions runner (see outageLiveFetch), and
+   GitHub's scheduler turned out not to be a clock. Measured on this
+   repository's own scheduled runs, 16 October: a median of 199 minutes
+   late, the worst 580, and about a third of the expected runs never
+   started at all -- GitHub delays and drops scheduled runs under load. A
+   capture "every half hour" on that scheduler is every few hours in
+   practice, and since the Worker no longer fetches outages itself, the
+   dashboard would quietly go hours stale.
+
+   A workflow_dispatch -- the API equivalent of pressing "Run workflow" --
+   starts promptly, and this cron fires every two minutes without fail. So
+   the cron asks GitHub to run the capture: every half hour from 6am to 9pm
+   AEST, every two hours overnight. One small request, no parsing.
+
+   It needs GITHUB_DISPATCH_TOKEN, a Worker SECRET (never a var, never in
+   the repo): a fine-grained GitHub token for this one repository with
+   Actions read/write and nothing else. Without it this does nothing, and
+   the workflow's own schedule remains the only trigger. The token is sent
+   to api.github.com and nowhere else, and never written into any log or
+   response -- the record kept is the time, the HTTP status, and GitHub's
+   error text if there is one. */
+const CAPTURE_DISPATCH = {
+  repo: 'laceywoodsuncorp/DREC-2.0',
+  workflow: 'capture-outages.yml',
+  ref: 'claude/news-feed-loading-yx55qa'
+};
+/* In ticks, derived from the period -- the same rule as GDELT_EVERY_TICKS,
+   because a tick count written out silently changes meaning when the cron
+   does. */
+const CAPTURE_DAY_EVERY_TICKS = Math.max(1, Math.round(30 * 60000 / CRON_PERIOD_MS));
+const CAPTURE_NIGHT_EVERY_TICKS = Math.max(1, Math.round(120 * 60000 / CRON_PERIOD_MS));
+const CAPTURE_DISPATCH_LOG_URL = 'https://drec-cache.internal/capture-dispatch-log';
+
+/* 6:00am-8:59pm AEST is 20:00-10:59 UTC. AEST rather than local daylight
+   time, matching the workflow's schedule; over summer Sydney and Melbourne
+   read it an hour later. */
+function captureDue(tick, nowMs) {
+  const h = new Date(nowMs).getUTCHours();
+  const daytime = h >= 20 || h <= 10;
+  return tick % (daytime ? CAPTURE_DAY_EVERY_TICKS : CAPTURE_NIGHT_EVERY_TICKS) === 0;
+}
+
+async function dispatchCapture(env, nowMs) {
+  const repo = (env && env.CAPTURE_REPO) || CAPTURE_DISPATCH.repo;
+  const ref = (env && env.CAPTURE_REF) || CAPTURE_DISPATCH.ref;
+  const url = 'https://api.github.com/repos/' + repo + '/actions/workflows/'
+    + CAPTURE_DISPATCH.workflow + '/dispatches';
+  let status = 0, error = '';
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + env.GITHUB_DISPATCH_TOKEN,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        /* GitHub refuses API requests without a User-Agent. */
+        'User-Agent': 'drec-oncall-updates-site',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ref })
+    });
+    status = res.status;
+    /* 204 is success. Anything else keeps GitHub's own words, which say
+       whether the token expired, lacks the permission, or the workflow
+       moved -- the three ways this is expected to break. */
+    if (status !== 204) error = (await res.text()).slice(0, 200);
+  } catch (e) { error = String(e && e.message || e).slice(0, 200); }
+  try {
+    const cached = await readSharedCache(CAPTURE_DISPATCH_LOG_URL);
+    let log = [];
+    if (cached) { try { log = await cached.response.json(); } catch (e) { log = []; } }
+    if (!Array.isArray(log)) log = [];
+    log = [{ at: new Date(nowMs).toISOString(), status, error: error || undefined }].concat(log).slice(0, 8);
+    await writeSharedCache(CAPTURE_DISPATCH_LOG_URL, JSON.stringify(log));
+  } catch (e) { /* bookkeeping must never break the cron */ }
+  return { status, error };
+}
+
 /* The gaps between consecutive firings, in seconds, so the answer is a
    number rather than a list of timestamps to subtract by hand. */
 function cronLogReport(log) {
@@ -385,7 +465,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-16-capture3';
+const WORKER_BUILD = '2026-10-16-dispatch';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -4452,6 +4532,18 @@ async function handleApi(url, env, ctx, request) {
       /* null, not {} -- "this location has seen no firing" and "the cron
          fired and logged nothing" are different answers. */
       seen: log ? cronLogReport(log) : null,
+      /* Whether the Worker is starting the outage capture, and how that
+         last went. `configured` says only whether the secret exists --
+         never anything about the secret itself. */
+      captureDispatch: await (async () => {
+        const c = await readSharedCache(CAPTURE_DISPATCH_LOG_URL);
+        let recent = null;
+        if (c) { try { recent = await c.response.json(); } catch (e) { recent = null; } }
+        return { configured: !!(env && env.GITHUB_DISPATCH_TOKEN),
+          everyMinutesDay: CAPTURE_DAY_EVERY_TICKS * CRON_PERIOD_MS / 60000,
+          everyMinutesNight: CAPTURE_NIGHT_EVERY_TICKS * CRON_PERIOD_MS / 60000,
+          recent };
+      })(),
       cacheAgeSeconds: cached ? Math.round(cached.ageSeconds) : null
     }, null, 1), { status: 200, headers: {
       'Content-Type': 'application/json', 'Cache-Control': 'no-store',
@@ -4544,6 +4636,12 @@ export default {
        (see outageLiveFetch), so the most expensive refresh this Worker had
        -- an outage shard measured at up to ~450ms of CPU against a 10ms
        allowance -- is simply not run here any more. */
+
+    /* And this cron, which is reliable where GitHub's scheduler is not,
+       starts that capture. Only in capture mode, only with the token. */
+    if (!outageLiveFetch(env) && env && env.GITHUB_DISPATCH_TOKEN && captureDue(tick, nowMs)) {
+      ctx.waitUntil(dispatchCapture(env, nowMs).catch(() => {}));
+    }
 
     /* GDELT is only a fallback for /api/gdelt -- the page reads /api/news
        first -- and it rejects most attempts anyway, so once an hour is

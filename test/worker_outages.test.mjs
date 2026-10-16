@@ -34,8 +34,12 @@ let fetchLog = [];
 /* Most-specific match first; the bare 'http' key is a catch-all consulted
    only when nothing else matches. Plain insertion order bit this suite's
    predecessor twice. */
-globalThis.fetch = async (url) => {
+/* The request options too, for the one caller whose method, headers and
+   body are the point: the capture dispatch to GitHub. */
+let fetchInits = [];
+globalThis.fetch = async (url, init) => {
   fetchLog.push(String(url));
+  fetchInits.push({ url: String(url), init: init || {} });
   const keys = Object.keys(upstream).filter((k) => k !== 'http').sort((a, b) => b.length - a.length);
   for (const k of keys) if (String(url).includes(k)) return upstream[k]();
   if (upstream.http) return upstream.http();
@@ -651,6 +655,92 @@ console.log('\n== capture mode: the deployed default ==');
     const touched = fetchLog.filter((u) => { try { return outageHosts.has(new URL(u).host); } catch (e) { return false; } });
     check('odd tick ' + t + ' fetches no outage operator in capture mode', touched.length === 0, touched);
   }
+}
+
+console.log('\n== the Worker starts the capture, because GitHub\'s scheduler is not a clock ==');
+{
+  /* Measured on this repository: GitHub started scheduled runs a median of
+     199 minutes late, the worst 580, and dropped about a third. The Worker's
+     cron is reliable, so with GITHUB_DISPATCH_TOKEN set it asks GitHub to
+     run the capture -- every half hour by day, every two hours overnight. */
+  const src = (await import('node:fs')).readFileSync('./src/worker.js', 'utf8');
+  const MAIN_CRON = /const MAIN_CRON = '([^']+)'/.exec(src)[1];
+  const PERIOD = Number(/const CRON_PERIOD_MS = (\d+)/.exec(src)[1]);
+  const TOKEN = 'github_pat_TEST_ONLY_not_a_real_token';
+  const capEnv = { GITHUB_DISPATCH_TOKEN: TOKEN,
+    ASSETS: { fetch: async () => new Response('not found', { status: 404 }) } };
+  const fire = async (tick, e) => {
+    const waits = [];
+    await worker.scheduled({ scheduledTime: tick * PERIOD, cron: MAIN_CRON }, e,
+      { waitUntil: (p) => waits.push(p) });
+    await Promise.allSettled(waits);
+  };
+  const dispatches = () => fetchInits.filter((x) => /api\.github\.com/.test(x.url));
+
+  /* A tick that is a multiple of the day cadence, at 02:00 UTC (noon AEST). */
+  const dayTick = 15 * 2 * (24 * 20000 + 2);
+  reset(); fetchInits = [];
+  upstream['api.github.com'] = () => new Response(null, { status: 204 });
+  upstream.http = () => new Response('down', { status: 503 });
+  await fire(dayTick, capEnv);
+  const d = dispatches();
+  check('a due daytime tick dispatches once', d.length === 1, d.map((x) => x.url));
+  check('to the capture workflow\'s dispatch endpoint',
+    d[0] && /\/repos\/laceywoodsuncorp\/DREC-2\.0\/actions\/workflows\/capture-outages\.yml\/dispatches$/.test(d[0].url),
+    d[0] && d[0].url);
+  check('as a POST', d[0] && d[0].init.method === 'POST', d[0] && d[0].init.method);
+  check('with the token as a bearer credential',
+    d[0] && d[0].init.headers && d[0].init.headers.Authorization === 'Bearer ' + TOKEN);
+  check('with a User-Agent, which GitHub requires',
+    d[0] && d[0].init.headers && !!d[0].init.headers['User-Agent']);
+  check('naming the branch to run', d[0] && JSON.parse(d[0].init.body).ref === 'claude/news-feed-loading-yx55qa',
+    d[0] && d[0].init.body);
+
+  /* Not due: the next tick. */
+  reset(); fetchInits = [];
+  await fire(dayTick + 1, capEnv);
+  check('a tick that is not due does not dispatch', dispatches().length === 0, dispatches().map((x) => x.url));
+
+  /* Overnight: every two hours, not every thirty minutes. 14:00 UTC is
+     midnight AEST; tick + 15 is 14:30, due by day but not by night. */
+  const nightTick = 60 * (12 * 20000 + 7);
+  reset(); fetchInits = [];
+  await fire(nightTick, capEnv);
+  check('a two-hourly overnight tick dispatches', dispatches().length === 1);
+  reset(); fetchInits = [];
+  await fire(nightTick + 15, capEnv);
+  check('a half-hour overnight tick does not', dispatches().length === 0);
+
+  /* No token: nothing. The workflow's own schedule is then the trigger. */
+  reset(); fetchInits = [];
+  await fire(dayTick, { ASSETS: capEnv.ASSETS });
+  check('without the secret there is no dispatch', dispatches().length === 0);
+  /* Live mode: the Worker fetches outages itself, so there is nothing to
+     capture on its behalf. */
+  reset(); fetchInits = [];
+  await fire(dayTick, Object.assign({ OUTAGE_LIVE_FETCH: '1' }, capEnv));
+  check('in live mode there is no dispatch', dispatches().length === 0);
+
+  /* What /api/crons says about it -- and does not say. */
+  reset(); fetchInits = [];
+  upstream['api.github.com'] = () => new Response('{"message":"Bad credentials"}', { status: 401 });
+  await fire(dayTick, capEnv);
+  const res = await worker.fetch(new Request('https://example.test/api/crons'), capEnv, { waitUntil: () => {} });
+  const text = await res.text();
+  const cr = JSON.parse(text);
+  check('/api/crons says the dispatch is configured', cr.captureDispatch && cr.captureDispatch.configured === true,
+    cr.captureDispatch);
+  check('and states the cadence', cr.captureDispatch.everyMinutesDay === 30 && cr.captureDispatch.everyMinutesNight === 120,
+    cr.captureDispatch);
+  const last = (cr.captureDispatch.recent || [])[0] || {};
+  check('a failed dispatch is recorded with its status', last.status === 401, last);
+  check('and GitHub\'s own reason', /Bad credentials/.test(last.error || ''), last.error);
+  /* The one that matters most. */
+  check('the token appears nowhere in the response', text.indexOf(TOKEN) === -1);
+  const noSecret = await (await worker.fetch(new Request('https://example.test/api/crons'),
+    { ASSETS: capEnv.ASSETS }, { waitUntil: () => {} })).json();
+  check('without the secret it says so', noSecret.captureDispatch.configured === false, noSecret.captureDispatch);
+  delete upstream['api.github.com'];
 }
 
 console.log('\n== a job that has not started is not a fault ==');

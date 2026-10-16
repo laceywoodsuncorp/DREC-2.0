@@ -49,6 +49,16 @@
     // 10ms to 30s and the second trigger becomes available again; the
     // schedule to restore is "* * * * *" and src/worker.js says what else
     // goes with it.
+    // This cron also STARTS the outage capture on GitHub Actions, every
+    // half hour by day and two-hourly overnight, because GitHub's own
+    // scheduler ran this repo's jobs a median of 3.3 hours late. That needs
+    // the SECRET GITHUB_DISPATCH_TOKEN -- a fine-grained token for this
+    // repository only, "Actions: Read and write", nothing else. Add it in
+    // the Cloudflare dashboard (the Worker -> Settings -> Variables and
+    // Secrets, type Secret) or with `wrangler secret put
+    // GITHUB_DISPATCH_TOKEN`. Never as a var and never in this file:
+    // anything here is in the repository. Without it the Worker does not
+    // dispatch, and the workflow's own (late) schedule is the only trigger.
     "crons": ["*/2 * * * *"]
   }
 

@@ -112,6 +112,28 @@ const gdeltTicks = Math.max(1, Math.round(3600000 / periodMs));
 ck('and it still works out to about an hour',
   Math.abs(gdeltTicks * periodMs - 3600000) < 60000, { gdeltTicks, periodMs });
 
+console.log('\n== the Worker starts the outage capture ==');
+/* GitHub's scheduler ran this repo's scheduled jobs a median of 199 minutes
+   late. The Worker's cron is the reliable clock, so it dispatches the
+   capture. The cadence is in ticks, so it must be derived from the period
+   -- the trap GDELT fell into when the cron sped up. */
+{
+  const day = /const CAPTURE_DAY_EVERY_TICKS = [^\n]*CRON_PERIOD_MS/.test(worker);
+  const night = /const CAPTURE_NIGHT_EVERY_TICKS = [^\n]*CRON_PERIOD_MS/.test(worker);
+  ck('the daytime capture cadence is derived from the period', day);
+  ck('and the overnight one', night);
+  const dayTicks = Math.max(1, Math.round(30 * 60000 / periodMs));
+  const nightTicks = Math.max(1, Math.round(120 * 60000 / periodMs));
+  ck('which works out to every 30 minutes by day', dayTicks * periodMs === 30 * 60000, dayTicks);
+  ck('and every 2 hours overnight', nightTicks * periodMs === 120 * 60000, nightTicks);
+  /* Only when there is something to capture for, and a credential to do it
+     with -- and never in live mode, where the Worker fetches outages itself. */
+  ck('dispatch is gated on capture mode and the secret',
+    /!outageLiveFetch\(env\) && env && env\.GITHUB_DISPATCH_TOKEN && captureDue\(tick, nowMs\)/.test(code));
+  ck('the token is a secret read from env, never a literal in the source',
+    !/github_pat_[A-Za-z0-9_]{20,}/.test(worker) && !/ghp_[A-Za-z0-9]{20,}/.test(worker));
+}
+
 console.log('\n== incidents and outages alternate, which halves BOTH ceilings ==');
 /* Not only subrequests. Parsing eight incident feeds next to four states of
    outage data is also the CPU cost, against 10ms. Running incidents on every
