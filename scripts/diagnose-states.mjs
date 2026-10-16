@@ -126,6 +126,11 @@ for (const s of STATES) {
          this project has swallowed a flag -- viaDiagnostic, endpoints,
          unreadable, the payload's own staleDropped, and now this. */
       staleDropped: x.staleDropped,
+      /* Where the rows came from. Without this, the live Worker's Victorian
+         counts were read as its own feed results when they were the
+         browser's, merged in from the snapshot -- and a whole plan was
+         briefly built on that misreading. */
+      source: x.source, origin: x.origin, capturedAt: x.capturedAt,
       sourceUrl: x.sourceUrl, columns: x.columns,
       diagnostics: x.diagnostics,
       attempts: (x.attempts || []).map((a) => ({ url: a.url, error: a.error }))
@@ -142,6 +147,7 @@ for (const s of STATES) {
     unplannedCount: b.unplannedCount, unplannedCustomers: b.unplannedCustomers,
     upcomingCount: b.upcomingCount, upcomingCustomers: b.upcomingCustomers,
     reclassifiedUpcoming: b.reclassifiedUpcoming,
+    outageSource: b.outageSource, snapshotAgeSeconds: b.snapshotAgeSeconds,
     staleRowsStillShown: oldRows(out).length,
     oldestRows: oldRows(out).slice(0, 3)
   };

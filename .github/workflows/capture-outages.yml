@@ -6,13 +6,43 @@
 # Worker was being stopped mid-task 100+ times a day. Here CPU is not the
 # constraint. See scripts/capture-outages.mjs.
 #
-# No browser, so it is quick: the browser scrape (scrape-outages.yml) takes
-# about nine minutes and is now only needed for the published totals of the
-# operators that block their lists. This is the one that keeps the rows
-# current.
+# No browser, so it is quick: measured at 22 seconds end to end, which
+# GitHub bills as one minute. The browser scrape (scrape-outages.yml) takes
+# about nine and is now only needed for AusNet's list and for the published
+# totals of the operators that block theirs. This keeps the rows current.
+#
+# THE BUDGET is 2,000 free Actions minutes a month, SHARED across every
+# private repository on the account -- this repo's own usage is all that
+# was measured, so leave room for the others.
+#
+#   this capture     35 runs/day x 1 min            ~1,050 min/month
+#   browser scrape    2 runs/day x ~6 min (3 states)  ~360
+#   CI and checks    on pushes and by hand            ~200
+#                                                   ------
+#                                                   ~1,610  (about 80%)
+#
+# Every capture commits data/outages.json, and Cloudflare rebuilds on every
+# push to the branch -- that is how the snapshot reaches the Worker. Its
+# free plan allows 3,000 build minutes a month with one build at a time.
+#
+# Times are UTC. AEST is UTC+10 (Brisbane, no daylight saving; Sydney and
+# Melbourne read an hour later over summer):
+#
+#   every 30 min, 20:00-10:59 UTC  ->  6:00am-8:30pm AEST   30 runs
+#   11,13,15,17,19 UTC             ->  9pm, 11pm, 1am, 3am, 5am  5 runs
+#
+# Overnight is thinner, not absent: a storm at 2am is exactly when someone
+# would want this page to be right, and the Worker no longer fetches
+# outages itself to cover the gap.
+#
+# GitHub starts scheduled runs late under load, often by 5-15 minutes, so
+# "every 30 minutes" means a capture is usually under 45 minutes old.
 name: Capture outages
 
 on:
+  schedule:
+    - cron: '*/30 20-23,0-10 * * *'
+    - cron: '0 11,13,15,17,19 * * *'
   workflow_dispatch:
 
 permissions:

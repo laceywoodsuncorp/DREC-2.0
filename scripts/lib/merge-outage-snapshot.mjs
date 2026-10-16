@@ -30,6 +30,15 @@
    showing outages that have since been fixed. */
 export const PREVIOUS_ROWS_MAX_AGE_MS = 2 * 3600000;
 
+/* Rows only a browser can read -- AusNet's list is a page that renders in
+   JavaScript, and no feed behind it has been found -- would otherwise be on
+   the map for two hours after each browser run and gone the rest of the day.
+   The browser runs a few times a day, so its rows are allowed to stand
+   until the next one is due. That is what the live Worker did before this
+   capture existed, so it is parity, not a loosening; and each such network
+   carries the time its rows were actually read, so their age is visible. */
+export const BROWSER_ROWS_MAX_AGE_MS = 6 * 3600000;
+
 /* How long an operator's published total stays worth showing. The browser
    reads these twice a day; a total from the morning shown at night would be
    presenting a recovered network as still out. */
@@ -75,23 +84,30 @@ export function mergeOutageSnapshot(feedStates, browserStates, previous, opts) {
       const rowsOf = (state, nm) => ((state && state.outages) || []).filter((o) => o.network === nm);
 
       let entry, rows;
+      /* Where a previous entry's rows originally came from, carried across
+         runs, because the age limit depends on it. */
+      const prevOrigin = p ? (p.origin || p.source) : null;
+      const prevMaxAge = prevOrigin === 'browser' ? BROWSER_ROWS_MAX_AGE_MS : PREVIOUS_ROWS_MAX_AGE_MS;
       if (f && f.ok) {
         /* The feed answered. It is current, and it is the same code the
            live Worker runs, so it is the authority -- including when it
            says zero. */
-        entry = { name, ok: true, count: f.count || 0, source: 'feed', capturedAt: now };
+        entry = { name, ok: true, count: f.count || 0, source: 'feed', origin: 'feed', capturedAt: now };
         rows = rowsOf(feed, name);
       } else if (b && b.ok && browserAt) {
         /* The feed could not read this operator, and the browser could,
            just now in the same run. */
-        entry = { name, ok: true, count: b.count || 0, source: 'browser', capturedAt: browserAt,
-          shape: b.shape, via: b.via };
+        entry = { name, ok: true, count: b.count || 0, source: 'browser', origin: 'browser',
+          capturedAt: browserAt, shape: b.shape, via: b.via };
         rows = rowsOf(browser, name);
-      } else if (p && p.ok && p.capturedAt && (now - p.capturedAt) <= PREVIOUS_ROWS_MAX_AGE_MS) {
-        /* Neither read it this time, but the last capture did, recently
+      } else if (p && p.ok && p.capturedAt && (now - p.capturedAt) <= prevMaxAge) {
+        /* Neither read it this time, but an earlier capture did, recently
            enough to still be true. Marked, so it is never mistaken for a
-           fresh read. */
-        entry = { name, ok: true, count: p.count || 0, source: 'previous', capturedAt: p.capturedAt };
+           fresh read, and keeping its original timestamp and origin. */
+        entry = { name, ok: true, count: p.count || 0, source: 'previous', origin: prevOrigin,
+          capturedAt: p.capturedAt };
+        if (p.shape) entry.shape = p.shape;
+        if (p.via) entry.via = p.via;
         rows = rowsOf(prev, name);
       } else {
         entry = { name, ok: false, count: 0, source: 'none', capturedAt: now,

@@ -385,7 +385,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-16-cppcfeed';
+const WORKER_BUILD = '2026-10-16-capture';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -4099,7 +4099,11 @@ function applyOutageSnapshot(payload, snapshot, state) {
       via: taken.via, ok: true, count: taken.count || 0,
       customers: (snap.outages || []).filter((o) => o.network === live.name)
         .reduce((t, o) => t + (o.customers || 0), 0),
-      source: 'snapshot', capturedAt, shape: taken.shape
+      /* The network's own read time, not the file's: rows only a browser
+         can read are carried between captures and are older than the file
+         that holds them -- see BROWSER_ROWS_MAX_AGE_MS in the merge. */
+      source: 'snapshot', capturedAt: taken.capturedAt || capturedAt, shape: taken.shape,
+      origin: taken.origin
     };
   });
 
@@ -4137,6 +4141,78 @@ function applyOutageSnapshot(payload, snapshot, state) {
 }
 
 /* GET /api/outages/<state> -- one state's full list. */
+/* Where outages come from: a capture made on a GitHub Actions runner,
+   unless OUTAGE_LIVE_FETCH is set.
+
+   Cloudflare's free plan allows a Worker 10ms of CPU per invocation, and
+   reported this one exceeding it 100+ times in a day. Measured, outage
+   parsing was the worst of it: NSW alone about 300ms, a visitor's request
+   that warmed a cold state about 340ms. No schedule or sharding fits 300ms
+   into 10, so the parsing moved off the Worker entirely.
+   scripts/capture-outages.mjs runs THIS file's outage code in Node on a
+   runner, every half hour or so, and commits the result to
+   data/outages.json; the Worker serves that, which costs it a JSON parse
+   (about a millisecond, memoized per isolate for a minute) and a merge.
+
+   The trade is freshness: outages are as old as the last capture rather
+   than refreshed every few minutes. The page says how old.
+
+   OUTAGE_LIVE_FETCH restores the old behaviour. The capture sets it in the
+   env it builds, so it reads live. On the Workers Paid plan -- 30 seconds
+   of CPU per invocation rather than 10ms -- adding it as a var in
+   wrangler.jsonc brings live fetching back for everyone with no code
+   change. */
+function outageLiveFetch(env) {
+  if (!env || env.OUTAGE_LIVE_FETCH === undefined || env.OUTAGE_LIVE_FETCH === null) return false;
+  const v = String(env.OUTAGE_LIVE_FETCH).trim().toLowerCase();
+  return v !== '' && v !== '0' && v !== 'false' && v !== 'no';
+}
+
+/* One state's outages from the capture alone: no fetch, no Cache API, no
+   parsing beyond the snapshot itself. Networks the capture could not read
+   are kept, with the capture's own reason, so "not reporting" is still said
+   rather than silently dropped. */
+function outagesFromSnapshot(state, snapshot) {
+  const group = OUTAGE_NETWORKS[state];
+  const snapState = snapshot && snapshot.states && snapshot.states[state];
+  const skeleton = {
+    state: state.toUpperCase(), name: group.name, build: WORKER_BUILD,
+    ok: false, count: 0, customers: 0,
+    unplannedCount: 0, unplannedCustomers: 0, plannedCount: 0, plannedCustomers: 0,
+    complete: false, outages: [],
+    networks: group.networks.map((n) => {
+      const s = snapState && (snapState.networks || []).find((x) => x.name === n.name);
+      const entry = { name: n.name, area: n.area, site: n.site, ok: false, count: 0 };
+      if (n.confirmed) entry.confirmed = true;
+      entry.error = !snapshot ? 'No outage capture has been published yet'
+        : !s ? 'Not in the latest capture'
+          : (s.error || 'Not read in the latest capture');
+      if (s && s.blocked) entry.blocked = true;
+      if (s && s.unreadable) entry.unreadable = true;
+      return entry;
+    }),
+    outageSource: 'capture'
+  };
+  if (snapshot && snapshot.capturedAt) {
+    skeleton.snapshotCapturedAt = snapshot.capturedAt;
+    skeleton.snapshotAgeSeconds = Math.round((Date.now() - snapshot.capturedAt) / 1000);
+  } else {
+    skeleton.error = 'No outage capture has been published yet';
+  }
+  const merged = applyUpcoming(applyOutageSnapshot(skeleton, snapshot, state), state);
+  /* staleDropped is the capture's, carried per network: "the operator lists
+     none" and "we filtered its stale rows" must still look different. */
+  if (snapState) {
+    (merged.networks || []).forEach((n) => {
+      const s = (snapState.networks || []).find((x) => x.name === n.name);
+      if (s && s.staleDropped) n.staleDropped = s.staleDropped;
+    });
+  }
+  return merged;
+}
+
+const OUTAGE_JSON_HEADERS = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+
 async function handleOutagesState(state, ctx, env) {
   const group = OUTAGE_NETWORKS[state];
   if (!group) {
@@ -4145,6 +4221,11 @@ async function handleOutagesState(state, ctx, env) {
     });
   }
   const snapshot = await readOutageSnapshot(env);
+  if (!outageLiveFetch(env)) {
+    return new Response(JSON.stringify(outagesFromSnapshot(state, snapshot)), {
+      status: 200, headers: Object.assign({ 'X-Worker-Build': WORKER_BUILD, 'X-Outage-Source': 'capture' },
+        OUTAGE_JSON_HEADERS) });
+  }
   const send = (payload, extraHeaders) => new Response(
     JSON.stringify(applyUpcoming(applyOutageSnapshot(payload, snapshot, state), state)),
     { status: 200, headers: Object.assign({
@@ -4176,7 +4257,23 @@ async function handleOutagesState(state, ctx, env) {
    Warms whatever this datacentre is still missing after the response, so a
    location the cron never runs in fills itself over a few page loads instead
    of reporting eight dead states forever. */
-async function handleOutagesAll(ctx) {
+async function handleOutagesAll(ctx, env) {
+  if (!outageLiveFetch(env)) {
+    /* The same shape the live aggregate has -- every state's totals and
+       networks, no rows -- built from the capture, with no warming behind
+       the response, because there is nothing to warm. */
+    const snapshot = await readOutageSnapshot(env);
+    const states = OUTAGE_STATES.map((st) => {
+      const { outages, ...rest } = outagesFromSnapshot(st, snapshot);
+      return rest;
+    });
+    return new Response(JSON.stringify({
+      states, builtAt: Date.now(), outageSource: 'capture',
+      snapshotCapturedAt: snapshot ? snapshot.capturedAt : null,
+      liveStates: states.filter((x) => x.ok).map((x) => x.state)
+    }), { status: 200, headers: Object.assign({ 'X-Worker-Build': WORKER_BUILD, 'X-Outage-Source': 'capture' },
+      OUTAGE_JSON_HEADERS) });
+  }
   const cached = await readSharedCache(OUTAGES_ALL_CACHE_URL);
   const warm = () => { if (ctx && ctx.waitUntil) ctx.waitUntil(warmColdOutages().catch(() => {})); };
   if (cached) { warm(); return respondFromCache(cached); }
@@ -4341,7 +4438,7 @@ async function handleApi(url, env, ctx, request) {
     return handleIncidentsState(url.pathname.slice('/api/incidents/'.length).replace(/\/+$/, '').toLowerCase(), ctx);
   }
 
-  if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') return handleOutagesAll(ctx);
+  if (url.pathname === '/api/outages' || url.pathname === '/api/outages/') return handleOutagesAll(ctx, env);
   if (url.pathname.startsWith('/api/outages/')) {
     return handleOutagesState(url.pathname.slice('/api/outages/'.length).replace(/\/+$/, '').toLowerCase(), ctx, env);
   }
@@ -4413,9 +4510,13 @@ export default {
     ctx.waitUntil(refreshNewsShard(tick % NEWS_SHARDS, tick, env));
     if (tick % 2 === 0) {
       ctx.waitUntil(refreshAllIncidents());
-    } else {
+    } else if (outageLiveFetch(env)) {
       ctx.waitUntil(refreshOutageShard(Math.floor(tick / 2) % OUTAGE_SHARDS));
     }
+    /* Otherwise the odd tick is news alone. Outages come from the capture
+       (see outageLiveFetch), so the most expensive refresh this Worker had
+       -- an outage shard measured at up to ~450ms of CPU against a 10ms
+       allowance -- is simply not run here any more. */
 
     /* GDELT is only a fallback for /api/gdelt -- the page reads /api/news
        first -- and it rejects most attempts anyway, so once an hour is

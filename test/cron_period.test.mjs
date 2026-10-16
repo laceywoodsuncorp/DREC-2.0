@@ -119,7 +119,14 @@ console.log('\n== incidents and outages alternate, which halves BOTH ceilings ==
 ck('the refreshes alternate by tick parity', /tick % 2 === 0/.test(code));
 ck('incidents are on one parity',
   /tick % 2 === 0\)\s*\{[\s\S]{0,160}?refreshAllIncidents/.test(code));
-ck('outages are on the other', /\} else \{[\s\S]{0,200}?refreshOutageShard/.test(code));
+/* Outages on the other parity -- but only when the Worker fetches them
+   live. By default it serves a capture made on a runner, because outage
+   parsing measured at hundreds of milliseconds against a 10ms allowance,
+   and the odd tick is then news alone. */
+ck('outages are on the other parity, behind the live-fetch switch',
+  /\} else if \(outageLiveFetch\(env\)\) \{[\s\S]{0,200}?refreshOutageShard/.test(code));
+ck('and nowhere in the scheduled handler is an outage shard refreshed unconditionally',
+  !/\} else \{\s*ctx\.waitUntil\(refreshOutageShard/.test(code));
 ck('news runs on every tick',
   /refreshNewsShard\(tick % NEWS_SHARDS/.test(code));
 /* The regression to guard against by name: incidents unconditionally on

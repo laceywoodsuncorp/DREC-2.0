@@ -15,7 +15,7 @@
      - published totals age out, and are never re-stamped as new
 
    Run: node test/merge_outage_snapshot.test.mjs */
-import { mergeOutageSnapshot, PREVIOUS_ROWS_MAX_AGE_MS, REPORTED_MAX_AGE_MS }
+import { mergeOutageSnapshot, PREVIOUS_ROWS_MAX_AGE_MS, BROWSER_ROWS_MAX_AGE_MS, REPORTED_MAX_AGE_MS }
   from '../scripts/lib/merge-outage-snapshot.mjs';
 
 let pass = 0, fail = 0;
@@ -99,6 +99,34 @@ console.log('\n== a previous capture stands in only briefly ==');
   const o = findNet(old, 'tas', 'TasNetworks');
   ck('an older one does not -- its outages may have been fixed', !o.ok && old.states.tas.outages.length === 0, o);
   ck('and the failure says why', /timeout/.test(o.error || ''), o.error);
+}
+
+console.log('\n== rows only a browser can read last until the next browser run ==');
+{
+  /* AusNet's list renders in JavaScript and has no feed behind it that has
+     been found. The browser reads it a few times a day; at a two-hour limit
+     it would be on the map for two hours after each run and gone otherwise. */
+  const feed = { vic: { networks: [net('AusNet Services', false, 0, { error: 'page could not be read' })], outages: [] } };
+  const browser = { vic: { networks: [net('AusNet Services', true, 1)], outages: [row('AusNet Services', 'Lilydale', 30)] } };
+  const run0 = mergeOutageSnapshot(feed, browser, null, { now: NOW, browserCapturedAt: NOW - 60000 }).snapshot;
+  ck('read by the browser in this run', findNet(run0, 'vic', 'AusNet Services').origin === 'browser');
+  /* Four hours of feed-only runs later. */
+  let snap = run0;
+  for (let h = 1; h <= 4; h++) snap = mergeOutageSnapshot(feed, null, snap, { now: NOW + h * H }).snapshot;
+  const a4 = findNet(snap, 'vic', 'AusNet Services');
+  ck('four hours on it is still shown', a4.ok && a4.count === 1 && snap.states.vic.outages.length === 1, a4);
+  ck('still known to be a browser read', a4.origin === 'browser' && a4.source === 'previous', a4);
+  ck('with the time it was really read', a4.capturedAt === NOW - 60000, a4.capturedAt);
+  const late = mergeOutageSnapshot(feed, null, snap, { now: NOW + BROWSER_ROWS_MAX_AGE_MS + H }).snapshot;
+  ck('past the browser limit it goes', !findNet(late, 'vic', 'AusNet Services').ok, findNet(late, 'vic', 'AusNet Services'));
+  /* A FEED that failed gets no such leeway: its rows are meant to be
+     current, and an operator with a working feed that briefly fails should
+     not show three-hour-old outages. */
+  const feedOk = { tas: { networks: [net('TasNetworks', true, 1)], outages: [row('TasNetworks', 'Hobart', 5)] } };
+  const feedDown = { tas: { networks: [net('TasNetworks', false, 0, { error: 'timeout' })], outages: [] } };
+  const t0 = mergeOutageSnapshot(feedOk, null, null, { now: NOW }).snapshot;
+  const t3 = mergeOutageSnapshot(feedDown, null, t0, { now: NOW + 3 * H }).snapshot;
+  ck('a feed-origin row is NOT kept for three hours', !findNet(t3, 'tas', 'TasNetworks').ok, findNet(t3, 'tas', 'TasNetworks'));
 }
 
 console.log('\n== published totals, which age out ==');

@@ -1,45 +1,26 @@
-# Manually triggered: Actions -> "Scrape outages" -> Run workflow.
+# Scheduled, and runnable by hand: Actions -> "Scrape outages" -> Run workflow.
 #
 # Visits each distributor's own outage page in a real browser, because most of
 # these lists only exist after JavaScript runs and a Worker fetch sees an empty
 # shell. Commits what it finds to data/outages.json, which the Worker serves.
 #
-# Scheduled four times a day inside working hours, and runnable by hand at
-# any time.
+# Scheduled twice a day (7am and 3pm AEST) for NSW, VIC and SA only, and
+# runnable by hand for any state. It used to run four times a day across
+# all eight and was the bulk of the Actions bill -- measured at about nine
+# minutes a run, not the five this comment used to claim.
 #
-# THE BUDGET THIS IS SIZED AGAINST IS ACTIONS MINUTES, NOT ANYTHING ELSE.
-# This workflow runs a Node script in a browser; it calls no model and costs
-# no model tokens. A run takes about five minutes, and a private repo gets
-# 2,000 free Actions minutes a month:
-#
-#     hourly      720 runs   3,600 min   180% of the budget -- impossible
-#     every 6h    120 runs     600 min    30%
-#     daily        30 runs     150 min     7.5%
-#
-# Four a day is the "about a third" setting.
-#
-# TIMES ARE UTC, which GitHub requires, and the window asked for was 6am to
-# 8pm in Australian Eastern Standard Time (UTC+10):
-#
-#     20:00 UTC -> 06:00 AEST   (the next day)
-#     01:00 UTC -> 11:00 AEST
-#     06:00 UTC -> 16:00 AEST
-#     10:00 UTC -> 20:00 AEST
-#
-# AEST is Brisbane, which does not observe daylight saving. A reader in
-# Sydney or Melbourne will see these an hour later over summer -- 7am to 9pm
-# rather than 6am to 8pm. Worth knowing before anyone reads the first run of
-# the day as late.
-#
-# The Worker's own five-minute cron is NOT affected by this and should not
-# be. It is what keeps the dashboard current, it costs nothing, and outages
-# do not stop overnight -- a storm at 2am is exactly when someone would want
-# this page to be right.
+# It is no longer what keeps outages current. capture-outages.yml does that,
+# every half hour, by running the Worker's own feed code on a runner; this
+# job adds only what a browser alone can read, and merges its result with a
+# fresh feed capture before committing. See capture-outages.yml for the
+# shared minutes budget.
 name: Scrape outages
 
 on:
   schedule:
-    - cron: '0 20,1,6,10 * * *'
+    # 7am and 3pm AEST. Was four a day across every state; it is now only
+    # needed where a browser still adds something -- see the Scrape step.
+    - cron: '0 21,5 * * *'
   workflow_dispatch:
     inputs:
       only:
@@ -76,8 +57,20 @@ jobs:
           npm install --no-save playwright
           npx playwright install --with-deps chromium
 
+      # Scheduled runs read only NSW, VIC and SA. Measured operator by
+      # operator on 16 October, those are the only states where a browser
+      # still adds anything the feed capture does not: AusNet's list (VIC),
+      # and the published totals of operators that block their lists
+      # (Essential Energy in NSW, Jemena in VIC, SA Power Networks). Every
+      # other state is read in full by capture-outages.yml, and the browser
+      # got nothing there anyway -- blocked pages, or a map with no list.
+      # A manual run still takes whatever states are asked for, all by
+      # default.
       - name: Scrape
-        run: node scripts/scrape-outages.mjs --only "${{ inputs.only }}" ${{ inputs.probe && '--probe' || '' }}
+        run: |
+          ONLY="${{ inputs.only }}"
+          if [ "${{ github.event_name }}" = "schedule" ]; then ONLY="nsw,vic,sa"; fi
+          node scripts/scrape-outages.mjs --only "$ONLY" ${{ inputs.probe && '--probe' || '' }}
 
       # The browser cannot read the five operators that publish proper data
       # feeds -- their pages are blocked or are a map with no list -- which

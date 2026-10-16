@@ -43,7 +43,12 @@ globalThis.fetch = async (url) => {
 };
 
 const worker = (await import('../src/worker.js')).default;
-const env = { ASSETS: { fetch: async () => new Response('asset', { status: 200 }) } };
+/* Every block below exercises LIVE fetching, which the deployed Worker no
+   longer does by default -- outages are served from a capture made on an
+   Actions runner (see outageLiveFetch). The live path still exists behind
+   OUTAGE_LIVE_FETCH, for the capture itself and for a paid plan, so these
+   tests set it. Capture mode has its own section near the end. */
+const env = { OUTAGE_LIVE_FETCH: '1', ASSETS: { fetch: async () => new Response('asset', { status: 200 }) } };
 
 /* Fixture timestamps, relative to now.
 
@@ -494,6 +499,111 @@ console.log('\n== Western Power: a boolean flag, not a word ==');
     b.outages.find(o => o.location === 'Bunbury'));
   check('epoch times become ISO', !!one.startIso && !!one.restoreIso, one);
   check('INCIDENTREF is carried as the id', one.id === 'WP-1', one.id);
+}
+
+console.log('\n== capture mode: the deployed default ==');
+{
+  /* Cloudflare's free plan allows 10ms of CPU per invocation and outage
+     parsing measured at ~300ms for NSW alone, so the deployed Worker no
+     longer parses outages at all. A runner captures them with this same
+     code and the Worker serves the result. These are the guarantees that
+     make that true: no outage fetch from any route or from the cron, the
+     capture's rows and reasons served as they are, and "has it started"
+     still decided against the clock at request time. */
+  const H = 3600000;
+  const capturedAt = Date.now() - 20 * 60000;
+  const ausnetReadAt = Date.now() - 4 * H;
+  const snapshot = { capturedAt, states: {
+    wa: { networks: [
+      { name: 'Western Power', ok: true, count: 2, source: 'feed', origin: 'feed', capturedAt, staleDropped: 2 },
+      { name: 'Horizon Power', ok: false, count: 0, source: 'none', error: 'Their site blocks automated access', blocked: true }],
+      outages: [
+        { network: 'Western Power', location: 'Harvey', towns: ['Harvey'], customers: 6, kind: 'unplanned',
+          start: DAY_FIRST(-3), restore: DAY_FIRST(2) },
+        /* Marked upcoming when captured twenty minutes ago; its start has
+           since passed. Served as it stands it would still read
+           "scheduled", which is the request-time rule's whole reason. */
+        { network: 'Western Power', location: 'Kelmscott', towns: ['Kelmscott'], customers: 10,
+          kind: 'planned', kindReported: 'unplanned', upcoming: true,
+          start: DAY_FIRST(-0.1), restore: DAY_FIRST(5) }] },
+    vic: { networks: [
+      { name: 'AusNet Services', ok: true, count: 1, source: 'previous', origin: 'browser', capturedAt: ausnetReadAt }],
+      outages: [{ network: 'AusNet Services', location: 'Lilydale', customers: 30, kind: 'unplanned' }] }
+  } };
+  const capEnv = (snap) => ({ ASSETS: { fetch: async (req) => (String(req.url || req).includes('outages.json')
+    ? (snap ? new Response(JSON.stringify(snap), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      : new Response('not found', { status: 404 }))
+    : new Response('asset', { status: 200 })) } });
+  const hit = (path, e) => worker.fetch(new Request('https://example.test' + path), e, { waitUntil: () => {} });
+
+  reset();
+  upstream.http = () => new Response('should not be called', { status: 500 });
+  fetchLog = [];
+  const res = await hit('/api/outages/wa', capEnv(snapshot));
+  const b = await res.json();
+  check('no fetch is made to any operator', fetchLog.length === 0, fetchLog);
+  check('the response says where it came from', res.headers.get('X-Outage-Source') === 'capture',
+    res.headers.get('X-Outage-Source'));
+  check('and carries the build', b.build && res.headers.get('X-Worker-Build') === b.build, b.build);
+  const wp = b.networks.find((n) => n.name === 'Western Power');
+  check('Western Power is served from the capture', wp && wp.ok && wp.count === 2 && wp.source === 'snapshot', wp);
+  check('with its staleDropped count', wp && wp.staleDropped === 2, wp);
+  const hz = b.networks.find((n) => n.name === 'Horizon Power');
+  check('an operator the capture could not read keeps its reason', hz && !hz.ok && /blocks/.test(hz.error || '') && hz.blocked, hz);
+  check('the capture age is reported', b.snapshotAgeSeconds >= 1190 && b.snapshotAgeSeconds <= 1210, b.snapshotAgeSeconds);
+
+  const kel = b.outages.find((o) => o.location === 'Kelmscott');
+  check('a job that has started since the capture is no longer "scheduled"', kel && !kel.upcoming, kel);
+  check('and is back to what the operator called it', kel && kel.kind === 'unplanned', kel && kel.kind);
+  check('so it counts as customers off again', b.unplannedCustomers === 16, b.unplannedCustomers);
+
+  fetchLog = [];
+  const v = await (await hit('/api/outages/vic', capEnv(snapshot))).json();
+  const aus = v.networks.find((n) => n.name === 'AusNet Services');
+  /* Rows only a browser can read are carried between captures, so they are
+     older than the file holding them. Their own time has to be the one
+     shown, or four-hour-old outages would read as twenty minutes old. */
+  check('a network\'s own read time is kept, not the file\'s', aus && aus.capturedAt === ausnetReadAt, aus && aus.capturedAt);
+  check('as is where it came from', aus && aus.origin === 'browser', aus && aus.origin);
+  const cp = v.networks.find((n) => n.name === 'CitiPower');
+  check('an operator missing from the capture says so', cp && !cp.ok && /Not in the latest capture/.test(cp.error || ''), cp);
+  check('still no fetch', fetchLog.length === 0, fetchLog);
+
+  fetchLog = [];
+  const none = await (await hit('/api/outages/nsw', capEnv(null))).json();
+  check('with no capture published, the state says exactly that',
+    /No outage capture has been published yet/.test(none.error || ''), none.error);
+  check('every network reads as not reporting', none.networks.every((n) => !n.ok), none.networks);
+  check('and it still does not go and fetch', fetchLog.length === 0, fetchLog);
+
+  fetchLog = [];
+  const agg = await (await hit('/api/outages', capEnv(snapshot))).json();
+  check('the national route works from the capture', agg.outageSource === 'capture'
+    && agg.states.length === 8 && agg.states.every((x) => x.outages === undefined), agg);
+  check('WA is live in it', agg.liveStates.includes('WA'), agg.liveStates);
+  check('and it fetched nothing either', fetchLog.length === 0, fetchLog);
+
+  /* The cron's odd tick used to run an outage shard -- up to ~450ms of CPU.
+     In capture mode it must run news and nothing else. */
+  const outageHosts = new Set();
+  Object.values((await import('../src/worker.js')).OUTAGE_NETWORKS).forEach((g) =>
+    g.networks.forEach((n) => (n.sources || []).forEach((src) => {
+      try { outageHosts.add(new URL(src.url).host); } catch (e) { /* not a URL */ }
+    })));
+  const src = (await import('node:fs')).readFileSync('./src/worker.js', 'utf8');
+  const MAIN_CRON = /const MAIN_CRON = '([^']+)'/.exec(src)[1];
+  const PERIOD = Number(/const CRON_PERIOD_MS = (\d+)/.exec(src)[1]);
+  for (const t of [1001, 1003]) {
+    reset();
+    upstream.http = () => new Response('down', { status: 503 });
+    fetchLog = [];
+    const waits = [];
+    await worker.scheduled({ scheduledTime: t * PERIOD, cron: MAIN_CRON }, capEnv(snapshot),
+      { waitUntil: (p) => waits.push(p) });
+    await Promise.allSettled(waits);
+    const touched = fetchLog.filter((u) => { try { return outageHosts.has(new URL(u).host); } catch (e) { return false; } });
+    check('odd tick ' + t + ' fetches no outage operator in capture mode', touched.length === 0, touched);
+  }
 }
 
 console.log('\n== a job that has not started is not a fault ==');
@@ -1079,7 +1189,7 @@ console.log('\n== the same row twice is still one row ==');
 console.log('\n== the scraped snapshot is the primary source ==');
 {
   const withSnapshot = (snap) => ({
-    ASSETS: { fetch: async (req) => (String(req.url).includes('data/outages.json')
+    OUTAGE_LIVE_FETCH: '1', ASSETS: { fetch: async (req) => (String(req.url).includes('data/outages.json')
       ? new Response(JSON.stringify(snap), { status: 200 })
       : new Response('asset', { status: 200 })) }
   });
@@ -1129,7 +1239,7 @@ console.log('\n== a snapshot that has never been run changes nothing ==');
 {
   reset();
   upstream.http = json([{ suburb: 'Feedville', customersAffected: 9 }]);
-  const placeholder = { ASSETS: { fetch: async () => new Response(
+  const placeholder = { OUTAGE_LIVE_FETCH: '1', ASSETS: { fetch: async () => new Response(
     JSON.stringify({ capturedAt: 0, states: {} }), { status: 200 }) } };
   const b = await worker.fetch(new Request('https://example.test/api/outages/qld'), placeholder,
     { waitUntil: () => {} }).then(r => r.json());
@@ -1144,7 +1254,7 @@ console.log('\n== a snapshot that has never been run changes nothing ==');
 console.log('\n== a thin capture does not beat a verified feed ==');
 {
   const withSnapshot = (snap) => ({
-    ASSETS: { fetch: async (req) => (String(req.url).includes('data/outages.json')
+    OUTAGE_LIVE_FETCH: '1', ASSETS: { fetch: async (req) => (String(req.url).includes('data/outages.json')
       ? new Response(JSON.stringify(snap), { status: 200 })
       : new Response('asset', { status: 200 })) }
   });
@@ -1483,7 +1593,7 @@ console.log('\n== one figure read twice is not two figures ==');
       }
     }
   };
-  const snapEnv = { ASSETS: { fetch: async (req) => (String(req.url || req).includes('outages.json')
+  const snapEnv = { OUTAGE_LIVE_FETCH: '1', ASSETS: { fetch: async (req) => (String(req.url || req).includes('outages.json')
     ? new Response(JSON.stringify(snapshot), { status: 200, headers: { 'Content-Type': 'application/json' } })
     : new Response('asset', { status: 200 })) } };
   upstream.http = () => new Response('down', { status: 503 });

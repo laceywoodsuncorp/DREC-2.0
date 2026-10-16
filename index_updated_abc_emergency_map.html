@@ -1287,7 +1287,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-16-cppcfeed';
+  const EXPECTED_WORKER_BUILD='2026-10-16-capture';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
@@ -2546,7 +2546,9 @@ window.addEventListener('resize',()=>map.invalidateSize());
     if(payload.snapshotAgeSeconds!==undefined){
       const mins=Math.round(payload.snapshotAgeSeconds/60);
       const label=mins<90?mins+' minutes':Math.round(mins/60)+' hours';
-      bits.push('<span'+(mins>180?' class="warn"':'')+'>\uD83D\uDCF7 Captured '+label+' ago</span>');
+      /* Captures run about every half hour by day and hourly overnight, so
+         two hours means several have been missed -- worth flagging. */
+      bits.push('<span'+(mins>120?' class="warn"':'')+'>\uD83D\uDCF7 Captured '+label+' ago</span>');
     }
     summaryEl.innerHTML=bits.join('');
   }
@@ -3012,13 +3014,31 @@ window.addEventListener('resize',()=>map.invalidateSize());
     /* Whose figures these are, said plainly. An aggregator is a second-hand
        account of the operator's data and the distinction matters on a
        dashboard people act on. */
+    /* Outages are served from a capture made on a schedule, not fetched
+       live: the free plan's CPU allowance cannot fit the parsing (see
+       outageLiveFetch in the Worker). Said once, with its age, rather than
+       naming every operator -- the old note listed each network read from a
+       capture and told the reader to run a workflow by hand, both of which
+       stopped being true when every network came from one and it ran itself. */
     const snapNets=(payload.networks||[]).filter(n=>n.source==='snapshot');
+    const okNets=(payload.networks||[]).filter(n=>n.ok);
+    const ago=(mins)=>mins<90?mins+' minute'+(mins===1?'':'s'):Math.round(mins/60)+' hours';
     if(snapNets.length){
       const mins=Math.round((payload.snapshotAgeSeconds||0)/60);
-      notes.push('\uD83D\uDCF7 '+snapNets.map(n=>escapeHtml(n.name)).join(', ')+
-        (snapNets.length===1?' is':' are')+' read from a saved capture taken '+
-        (mins<90?mins+' minutes':Math.round(mins/60)+' hours')+' ago, not fetched live. '+
-        'Run the "Scrape outages" action to refresh it.');
+      const allCaptured=okNets.length&&okNets.every(n=>n.source==='snapshot');
+      notes.push('\uD83D\uDCF7 '+(allCaptured
+        ?'Outages are captured from the operators about every half hour rather than fetched live. This capture is '+ago(mins)+' old.'
+        :snapNets.map(n=>escapeHtml(n.name)).join(', ')+(snapNets.length===1?' is':' are')+
+          ' read from a capture taken '+ago(mins)+' ago, not fetched live.'));
+      /* An operator whose rows are older than the capture holding them --
+         one only a browser can read, carried between captures -- gets its
+         own age, or four-hour-old outages would pass as fresh. */
+      const capturedAtFile=payload.snapshotAgeSeconds!==undefined?Date.now()-payload.snapshotAgeSeconds*1000:null;
+      const older=snapNets.filter(n=>n.capturedAt&&capturedAtFile&&capturedAtFile-n.capturedAt>10*60000);
+      if(older.length){
+        notes.push('\u23F3 '+older.map(n=>escapeHtml(n.name)+' as of '+ago(Math.round((Date.now()-n.capturedAt)/60000))+' ago').join('; ')+
+          ' — '+(older.length===1?'its list is':'their lists are')+' only readable in a browser, which runs a few times a day.');
+      }
     }
     const viaNets=(payload.networks||[]).filter(n=>n.ok&&n.via);
     if(viaNets.length){
