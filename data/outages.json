@@ -1,23 +1,23 @@
 {
- "capturedAt": 1792150868976,
+ "capturedAt": 1792157368967,
  "states": {
   "nsw": {
    "state": "NSW",
    "name": "New South Wales",
-   "count": 199,
-   "customers": 8082,
-   "unplannedCount": 10,
-   "unplannedCustomers": 83,
+   "count": 198,
+   "customers": 9485,
+   "unplannedCount": 9,
+   "unplannedCustomers": 1486,
    "plannedCount": 189,
    "plannedCustomers": 7999,
    "networks": [
     {
      "name": "Ausgrid",
      "ok": true,
-     "count": 7,
+     "count": 6,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "sourceUrl": "https://www.ausgrid.com.au/outages-list",
      "columns": [
       ".css-1puqryl{cursor:pointer;display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-box-pack:start;-ms-flex-pack:start;-webkit-justify-content:fle",
@@ -32,7 +32,7 @@
      "count": 192,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "staleDropped": 37,
      "sourceUrl": "https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/exports/geojson",
      "columns": [
@@ -65,7 +65,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "error": "This operator blocks automated access to its outage page (bot challenge), and the third-party fallback did not answer either. Their own map is linked and still works in a browser.",
      "blocked": true,
      "unreadable": true,
@@ -91,21 +91,26 @@
    "outages": [
     {
      "network": "Ausgrid",
+     "location": "Berry Park, Chisholm, Duckenfield, Millers Forest, Morpeth, Phoenix Park",
+     "towns": [
+      "Berry Park",
+      "Chisholm",
+      "Duckenfield",
+      "Millers Forest",
+      "Morpeth",
+      "Phoenix Park"
+     ],
+     "customers": 1431,
+     "start": "16/10/2026"
+    },
+    {
+     "network": "Ausgrid",
      "location": "Muswellbrook",
      "towns": [
       "Muswellbrook"
      ],
      "customers": 30,
      "start": "16/10/2026"
-    },
-    {
-     "network": "Ausgrid",
-     "location": "Mosman",
-     "towns": [
-      "Mosman"
-     ],
-     "customers": 20,
-     "start": "15/10/2026"
     },
     {
      "network": "Ausgrid",
@@ -130,16 +135,6 @@
      "location": "Waterloo",
      "towns": [
       "Waterloo"
-     ],
-     "customers": null,
-     "start": "15/10/2026"
-    },
-    {
-     "network": "Ausgrid",
-     "location": "Bureen, Denman",
-     "towns": [
-      "Bureen",
-      "Denman"
      ],
      "customers": null,
      "start": "15/10/2026"
@@ -2819,24 +2814,6 @@
     },
     {
      "network": "Endeavour Energy",
-     "id": "INC 1115108734",
-     "location": "KENTHURST",
-     "towns": [
-      "KENTHURST"
-     ],
-     "cause": "Defective equipment",
-     "kind": "unplanned",
-     "customers": 9,
-     "start": "2026-10-16 02:59",
-     "startIso": "2026-10-16T02:59:00.000Z",
-     "restore": "2026-10-16 11:30",
-     "restoreIso": "2026-10-16T11:30:00.000Z",
-     "lon": 150.97325676963857,
-     "lat": -33.6452311404223,
-     "premises": 9
-    },
-    {
-     "network": "Endeavour Energy",
      "id": "SP 2133023950",
      "location": "JAMBEROO",
      "towns": [
@@ -3838,26 +3815,43 @@
      "lon": 150.754641019718,
      "lat": -34.578447570415975,
      "upcoming": true
+    },
+    {
+     "network": "Endeavour Energy",
+     "id": "INC 1115108780",
+     "location": "BLACKTOWN",
+     "towns": [
+      "BLACKTOWN"
+     ],
+     "cause": "None",
+     "kind": "unplanned",
+     "customers": 1,
+     "start": "2026-10-16 11:29",
+     "startIso": "2026-10-16T11:29:00.000Z",
+     "restore": "2026-10-16 16:00",
+     "restoreIso": "2026-10-16T16:00:00.000Z",
+     "lon": 150.90471309967046,
+     "lat": -33.77816778041435
     }
    ]
   },
   "qld": {
    "state": "QLD",
    "name": "Queensland",
-   "count": 358,
-   "customers": 13934,
-   "unplannedCount": 3,
-   "unplannedCustomers": 1766,
+   "count": 357,
+   "customers": 12197,
+   "unplannedCount": 2,
+   "unplannedCustomers": 29,
    "plannedCount": 355,
    "plannedCustomers": 12168,
    "networks": [
     {
      "name": "Energex",
      "ok": true,
-     "count": 115,
+     "count": 114,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "sourceUrl": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
       "OBJECTID",
@@ -3893,7 +3887,7 @@
      "count": 243,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "sourceUrl": "https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
       "OBJECTID",
@@ -3925,28 +3919,6 @@
     }
    ],
    "outages": [
-    {
-     "network": "Energex",
-     "id": "INCD-987698-g",
-     "location": "BASIN POCKET, BOOVAL, EAST IPSWICH, NORTH BOOVAL, SILKSTONE",
-     "towns": [
-      "BASIN POCKET",
-      "BOOVAL",
-      "EAST IPSWICH",
-      "NORTH BOOVAL",
-      "SILKSTONE"
-     ],
-     "status": "Awaiting",
-     "cause": "Under Investigation",
-     "kind": "unplanned",
-     "customers": 1737,
-     "start": "1792145678911",
-     "startIso": "2026-10-16T10:14:38.911Z",
-     "restore": "1792155600000",
-     "restoreIso": "2026-10-16T13:00:00.000Z",
-     "lon": 152.766794119784,
-     "lat": -27.5987743631036
-    },
     {
      "network": "Energex",
      "id": "INCD-983483-g",
@@ -10884,10 +10856,10 @@
   "vic": {
    "state": "VIC",
    "name": "Victoria",
-   "count": 9,
-   "customers": 1422,
-   "unplannedCount": 6,
-   "unplannedCustomers": 1419,
+   "count": 6,
+   "customers": 1303,
+   "unplannedCount": 3,
+   "unplannedCustomers": 1300,
    "plannedCount": 3,
    "plannedCustomers": 3,
    "networks": [
@@ -10917,10 +10889,10 @@
     {
      "name": "Powercor",
      "ok": true,
-     "count": 5,
+     "count": 2,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
      "columns": [
       "ORDER_ID",
@@ -10947,7 +10919,7 @@
      "count": 1,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
      "columns": [
       "ORDER_ID",
@@ -10990,7 +10962,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "unreadable": true,
      "sourceUrl": "https://www.jemena.com.au/outages/electricity-outages/",
@@ -11021,36 +10993,6 @@
     },
     {
      "network": "Powercor",
-     "id": "F-15344-i",
-     "location": "SUNSHINE NORTH",
-     "towns": [
-      "SUNSHINE NORTH"
-     ],
-     "status": "Partially Restored",
-     "cause": "Under investigation",
-     "customers": 102,
-     "start": "17:29 16-10-2026",
-     "restore": "22:30 16-10-2026",
-     "lon": 144.845577278517,
-     "lat": -37.7689665667626
-    },
-    {
-     "network": "Powercor",
-     "id": "2398601-1",
-     "location": "SHEPPARTON",
-     "towns": [
-      "SHEPPARTON"
-     ],
-     "status": "Partially Restored",
-     "cause": "Under investigation",
-     "customers": 16,
-     "start": "00:51 15-10-2026",
-     "restore": "02:00 17-10-2026",
-     "lon": 145.416288013655,
-     "lat": -36.4012313676259
-    },
-    {
-     "network": "Powercor",
      "id": "J-47481-m",
      "location": "CASTLEMAINE",
      "towns": [
@@ -11065,21 +11007,6 @@
      "lon": 144.2088424650249,
      "lat": -37.0560923397026,
      "upcoming": true
-    },
-    {
-     "network": "Powercor",
-     "id": "2399716-1",
-     "location": "SUNSHINE NORTH",
-     "towns": [
-      "SUNSHINE NORTH"
-     ],
-     "status": "Partially Restored",
-     "cause": "Under investigation",
-     "customers": 1,
-     "start": "22:11 16-10-2026",
-     "restore": "22:30 16-10-2026",
-     "lon": 144.8303068907289,
-     "lat": -37.7700744042628
     },
     {
      "network": "Powercor",
@@ -11143,7 +11070,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "unreadable": true,
      "sourceUrl": "https://www.sapowernetworks.com.au/outages/",
@@ -11151,11 +11078,11 @@
      "attempts": [
       {
        "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/OutageList",
-       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1407000870093840296-290213787846251981"
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1014000091030993002-541415030415295083"
       },
       {
        "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/api/outages",
-       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1407000870093840296-237670227393844684"
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1014000091030993002-681683942133596786"
       },
       {
        "url": "https://www.sapowernetworks.com.au/outages/",
@@ -11180,9 +11107,9 @@
    "state": "WA",
    "name": "Western Australia",
    "count": 126,
-   "customers": 12761,
+   "customers": 12797,
    "unplannedCount": 2,
-   "unplannedCustomers": 12,
+   "unplannedCustomers": 48,
    "plannedCount": 124,
    "plannedCustomers": 12749,
    "networks": [
@@ -11192,7 +11119,7 @@
      "count": 126,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "staleDropped": 2,
      "sourceUrl": "https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
@@ -11217,7 +11144,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "unreadable": true,
      "sourceUrl": "https://www.horizonpower.com.au/faults-outages/",
@@ -12380,6 +12307,21 @@
     },
     {
      "network": "Western Power",
+     "id": "INCD-2166391-U",
+     "location": "TALBOT,FLYNN",
+     "towns": [
+      "TALBOT",
+      "FLYNN"
+     ],
+     "kind": "unplanned",
+     "customers": 40,
+     "start": "16/10/2026 08:42 PM",
+     "restore": "18/10/2026 08:45 PM",
+     "lon": 116.56146657728,
+     "lat": -32.1259274829091
+    },
+    {
+     "network": "Western Power",
      "id": "INCD-2165141-U",
      "location": "PARKERVILLE",
      "towns": [
@@ -12944,7 +12886,7 @@
      "kind": "unplanned",
      "customers": 8,
      "start": "16/10/2026 06:27 PM",
-     "restore": "17/10/2026 01:30 AM",
+     "restore": "17/10/2026 01:00 PM",
      "lon": 116.601935466132,
      "lat": -31.9881092696743
     },
@@ -13162,20 +13104,6 @@
     },
     {
      "network": "Western Power",
-     "id": "INCD-2166221-U",
-     "location": "BALDIVIS",
-     "towns": [
-      "BALDIVIS"
-     ],
-     "kind": "unplanned",
-     "customers": 4,
-     "start": "16/10/2026 03:46 PM",
-     "restore": "16/10/2026 08:30 PM",
-     "lon": 115.860063813545,
-     "lat": -32.3085210176743
-    },
-    {
-     "network": "Western Power",
      "id": "INCD-202784-X",
      "location": "AUSTRALIND",
      "towns": [
@@ -13321,7 +13249,7 @@
      "count": 0,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "sourceUrl": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages"
     }
    ],
@@ -13342,7 +13270,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "error": "This operator blocks automated access to its outage page (bot challenge). Their own map is linked and still works in a browser.",
      "blocked": true,
      "attempts": [
@@ -13375,7 +13303,7 @@
      "count": 0,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792150868976,
+     "capturedAt": 1792157368967,
      "sourceUrl": "https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages",
      "columns": [
       "Outage Id",
