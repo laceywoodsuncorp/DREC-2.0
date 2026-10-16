@@ -28,6 +28,41 @@ const get = async (path) => {
 
 const uniq = (a) => [...new Set(a.filter((x) => x !== '' && x != null))];
 
+/* Rows that are plainly not current, read straight from what the API
+   returns. Deliberately crude and deliberately generous -- 30 days, where
+   the Worker's own filter cuts at 2 days past the restoration estimate --
+   so this only ever fires on something indefensible, like the Western
+   Power record from 31 May that was still on the map on 16 October.
+
+   Dates are read day-first, as the Australian operators write them, and a
+   month-first reading is used only when day-first is not a real date. */
+function rowAgeDays(row) {
+  const raw = row && (row.start || row.startIso);
+  if (!raw) return null;
+  const text = String(raw).trim();
+  let ms = null;
+  const m = /\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/.exec(text);
+  if (m) {
+    const a = Number(m[1]), b = Number(m[2]), y = Number(m[3]);
+    const mk = (d, mo) => {
+      if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+      const dt = new Date(Date.UTC(y, mo - 1, d));
+      return dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d ? dt.getTime() : null;
+    };
+    ms = mk(a, b) !== null ? mk(a, b) : mk(b, a);
+  } else {
+    const p = Date.parse(text);
+    if (!isNaN(p)) ms = p;
+  }
+  if (ms === null) return null;
+  return Math.round((Date.now() - ms) / 86400000 * 10) / 10;
+}
+const oldRows = (rows) => (rows || [])
+  .map((r) => ({ row: r, ageDays: rowAgeDays(r) }))
+  .filter((x) => x.ageDays !== null && x.ageDays > 30)
+  .map((x) => ({ ageDays: x.ageDays, location: x.row.location,
+    start: x.row.start, restore: x.row.restore, network: x.row.network }));
+
 const report = { base: BASE, at: new Date().toISOString(), incidents: {}, outages: {} };
 
 for (const s of STATES) {
@@ -83,10 +118,24 @@ for (const s of STATES) {
     networks: (b.networks || []).map((x) => ({
       name: x.name, ok: x.ok, count: x.count, error: x.error,
       blocked: x.blocked, unconfirmed: x.unconfirmed, via: x.via,
+      /* staleDropped had to be added here, and its absence cost a whole
+         round of debugging: the Worker was filtering four-month-old
+         Western Power records correctly and this script was quietly
+         discarding the field that said so, so the fix looked like it had
+         not deployed. That is the FIFTH time an explicit field list in
+         this project has swallowed a flag -- viaDiagnostic, endpoints,
+         unreadable, the payload's own staleDropped, and now this. */
+      staleDropped: x.staleDropped,
       sourceUrl: x.sourceUrl, columns: x.columns,
       diagnostics: x.diagnostics,
       attempts: (x.attempts || []).map((a) => ({ url: a.url, error: a.error }))
-    }))
+    })),
+    /* The OUTCOME, not the mechanism. Whether the filter ran is interesting;
+       whether a stale row is still reaching the dashboard is the actual
+       question, and it is answerable straight from the rows. Anything whose
+       start is more than 30 days ago should not be here at all. */
+    staleRowsStillShown: oldRows(out).length,
+    oldestRows: oldRows(out).slice(0, 3)
   };
 }
 
