@@ -1,13 +1,13 @@
 {
- "capturedAt": 1792139341223,
+ "capturedAt": 1792144325890,
  "states": {
   "nsw": {
    "state": "NSW",
    "name": "New South Wales",
-   "count": 205,
-   "customers": 8115,
-   "unplannedCount": 16,
-   "unplannedCustomers": 116,
+   "count": 202,
+   "customers": 8255,
+   "unplannedCount": 13,
+   "unplannedCustomers": 256,
    "plannedCount": 189,
    "plannedCustomers": 7999,
    "networks": [
@@ -17,7 +17,7 @@
      "count": 8,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "sourceUrl": "https://www.ausgrid.com.au/outages-list",
      "columns": [
       ".css-1puqryl{cursor:pointer;display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-box-pack:start;-ms-flex-pack:start;-webkit-justify-content:fle",
@@ -29,10 +29,10 @@
     {
      "name": "Endeavour Energy",
      "ok": true,
-     "count": 197,
+     "count": 194,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "staleDropped": 37,
      "sourceUrl": "https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/exports/geojson",
      "columns": [
@@ -53,14 +53,19 @@
       "customers_affected",
       "uid",
       "updated_at"
-     ]
+     ],
+     "reported": {
+      "outages": 6,
+      "customers": 17
+     },
+     "reportedAt": 1792144318670
     },
     {
      "name": "Essential Energy",
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "error": "This operator blocks automated access to its outage page (bot challenge), and the third-party fallback did not answer either. Their own map is linked and still works in a browser.",
      "blocked": true,
      "unreadable": true,
@@ -74,10 +79,25 @@
        "url": "https://poweroutagesaustralia.com.au/distributors/essential-energy/",
        "error": "Responded, but no recognisable outage fields"
       }
-     ]
+     ],
+     "reported": {
+      "outages": 218,
+      "customers": 218
+     },
+     "reportedVia": "Power Outages Australia",
+     "reportedAt": 1792144318670
     }
    ],
    "outages": [
+    {
+     "network": "Ausgrid",
+     "location": "Strathfield",
+     "towns": [
+      "Strathfield"
+     ],
+     "customers": 144,
+     "start": "15/10/2026"
+    },
     {
      "network": "Ausgrid",
      "location": "Muswellbrook",
@@ -113,15 +133,6 @@
      ],
      "customers": 19,
      "start": "16/10/2026"
-    },
-    {
-     "network": "Ausgrid",
-     "location": "Strathfield",
-     "towns": [
-      "Strathfield"
-     ],
-     "customers": null,
-     "start": "15/10/2026"
     },
     {
      "network": "Ausgrid",
@@ -2829,8 +2840,8 @@
      "startIso": "2026-10-16T02:59:00.000Z",
      "restore": "2026-10-16 11:30",
      "restoreIso": "2026-10-16T11:30:00.000Z",
-     "lon": 150.9728365896968,
-     "lat": -33.64630428957179,
+     "lon": 150.97325676963857,
+     "lat": -33.6452311404223,
      "premises": 9
     },
     {
@@ -3677,24 +3688,6 @@
     },
     {
      "network": "Endeavour Energy",
-     "id": "INC 1115108755",
-     "location": "PARRAMATTA",
-     "towns": [
-      "PARRAMATTA"
-     ],
-     "cause": "None",
-     "kind": "unplanned",
-     "customers": 2,
-     "start": "2026-10-16 05:08",
-     "startIso": "2026-10-16T05:08:00.000Z",
-     "restore": "2026-10-16 12:00",
-     "restoreIso": "2026-10-16T12:00:00.000Z",
-     "lon": 151.02329176027968,
-     "lat": -33.805737919813176,
-     "premises": 2
-    },
-    {
-     "network": "Endeavour Energy",
      "id": "INC 1115108698",
      "location": "JAMBEROO",
      "towns": [
@@ -3857,6 +3850,23 @@
     },
     {
      "network": "Endeavour Energy",
+     "id": "INC 1115108767",
+     "location": "HAMPTON",
+     "towns": [
+      "HAMPTON"
+     ],
+     "cause": "None",
+     "kind": "unplanned",
+     "customers": 1,
+     "start": "2026-10-16 08:04",
+     "startIso": "2026-10-16T08:04:00.000Z",
+     "restore": "2026-10-16 12:30",
+     "restoreIso": "2026-10-16T12:30:00.000Z",
+     "lon": 150.01850126011183,
+     "lat": -33.70359462045007
+    },
+    {
+     "network": "Endeavour Energy",
      "id": "INC 1115108763",
      "location": "AVONDALE",
      "towns": [
@@ -3871,77 +3881,26 @@
      "restoreIso": "2026-10-16T12:30:00.000Z",
      "lon": 150.74310214953528,
      "lat": -34.517327759802455
-    },
-    {
-     "network": "Endeavour Energy",
-     "id": "INC 1115108760",
-     "location": "GREEN VALLEY",
-     "towns": [
-      "GREEN VALLEY"
-     ],
-     "cause": "None",
-     "kind": "unplanned",
-     "customers": 1,
-     "start": "2026-10-16 06:43",
-     "startIso": "2026-10-16T06:43:00.000Z",
-     "restore": "2026-10-16 12:30",
-     "restoreIso": "2026-10-16T12:30:00.000Z",
-     "lon": 150.87390586991893,
-     "lat": -33.90114845976356
-    },
-    {
-     "network": "Endeavour Energy",
-     "id": "INC 1115108752",
-     "location": "LETHBRIDGE PARK",
-     "towns": [
-      "LETHBRIDGE PARK"
-     ],
-     "cause": "None",
-     "kind": "unplanned",
-     "customers": 1,
-     "start": "2026-10-16 05:05",
-     "startIso": "2026-10-16T05:05:00.000Z",
-     "restore": "2026-10-16 11:30",
-     "restoreIso": "2026-10-16T11:30:00.000Z",
-     "lon": 150.80788259974997,
-     "lat": -33.734901539642294
-    },
-    {
-     "network": "Endeavour Energy",
-     "id": "INC 1115108746",
-     "location": "BLACKTOWN",
-     "towns": [
-      "BLACKTOWN"
-     ],
-     "cause": "None",
-     "kind": "unplanned",
-     "customers": 1,
-     "start": "2026-10-16 04:46",
-     "startIso": "2026-10-16T04:46:00.000Z",
-     "restore": "2026-10-16 11:30",
-     "restoreIso": "2026-10-16T11:30:00.000Z",
-     "lon": 150.89351048018378,
-     "lat": -33.78527980035456
     }
    ]
   },
   "qld": {
    "state": "QLD",
    "name": "Queensland",
-   "count": 363,
-   "customers": 12368,
-   "unplannedCount": 9,
-   "unplannedCustomers": 208,
-   "plannedCount": 354,
-   "plannedCustomers": 12160,
+   "count": 360,
+   "customers": 12265,
+   "unplannedCount": 5,
+   "unplannedCustomers": 97,
+   "plannedCount": 355,
+   "plannedCustomers": 12168,
    "networks": [
     {
      "name": "Energex",
      "ok": true,
-     "count": 116,
+     "count": 115,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "sourceUrl": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
       "OBJECTID",
@@ -3974,10 +3933,10 @@
     {
      "name": "Ergon Energy",
      "ok": true,
-     "count": 247,
+     "count": 245,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "sourceUrl": "https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
       "OBJECTID",
@@ -4514,24 +4473,6 @@
     },
     {
      "network": "Energex",
-     "id": "INCD-987613-g",
-     "location": "CURRAMORE",
-     "towns": [
-      "CURRAMORE"
-     ],
-     "status": "Awaiting",
-     "cause": "Under Investigation",
-     "kind": "unplanned",
-     "customers": 44,
-     "start": "1792120994085",
-     "startIso": "2026-10-16T03:23:14.085Z",
-     "restore": "1792144800000",
-     "restoreIso": "2026-10-16T10:00:00.000Z",
-     "lon": 152.785003496172,
-     "lat": -26.6890298331041
-    },
-    {
-     "network": "Energex",
      "id": "INCD-985961-g",
      "location": "INALA, RICHLANDS",
      "towns": [
@@ -4742,24 +4683,6 @@
      "lon": 153.398496034806,
      "lat": -27.9744325225718,
      "upcoming": true
-    },
-    {
-     "network": "Energex",
-     "id": "INCD-987581-g",
-     "location": "STONY CREEK",
-     "towns": [
-      "STONY CREEK"
-     ],
-     "status": "In Progress",
-     "cause": "Emergency repairs in-progress",
-     "kind": "unplanned",
-     "customers": 33,
-     "start": "1792112629534",
-     "startIso": "2026-10-16T01:03:49.534Z",
-     "restore": "1792144800000",
-     "restoreIso": "2026-10-16T10:00:00.000Z",
-     "lon": 152.678572231679,
-     "lat": -26.9092803134597
     },
     {
      "network": "Energex",
@@ -5578,6 +5501,25 @@
      "restoreIso": "2026-10-18T19:00:00.000Z",
      "lon": 153.363051711966,
      "lat": -28.0745494998583,
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-983145-g",
+     "location": "RED HILL",
+     "towns": [
+      "RED HILL"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 8,
+     "start": "1792575000000",
+     "startIso": "2026-10-21T09:30:00.000Z",
+     "restore": "1792603800000",
+     "restoreIso": "2026-10-21T17:30:00.000Z",
+     "lon": 153.010401276819,
+     "lat": -27.4571211263826,
      "upcoming": true
     },
     {
@@ -7410,24 +7352,6 @@
      "lon": 144.259661992894,
      "lat": -26.6220266994258,
      "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26CA11781",
-     "location": "BLACKALL, CHARLEVILLE, TAMBO",
-     "towns": [
-      "BLACKALL",
-      "CHARLEVILLE",
-      "TAMBO"
-     ],
-     "status": "Outage reported",
-     "cause": "The loss of supply is due to damage requiring emergency repairs. Fault finding is in progress.",
-     "kind": "unplanned",
-     "customers": 32,
-     "start": "1792135376000",
-     "startIso": "2026-10-16T07:22:56.000Z",
-     "lon": 144.934630475886,
-     "lat": -25.0127663829851
     },
     {
      "network": "Ergon Energy",
@@ -11029,48 +10953,31 @@
      "lon": 148.03745537971,
      "lat": -21.9701566927198,
      "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26CA11780",
-     "location": "MIDGEE, PORT CURTIS",
-     "towns": [
-      "MIDGEE",
-      "PORT CURTIS"
-     ],
-     "status": "Crews working on-site",
-     "cause": "The loss of supply is to allow emergency maintenance of the electricity network.",
-     "kind": "unplanned",
-     "customers": 2,
-     "start": "1792137060000",
-     "startIso": "2026-10-16T07:51:00.000Z",
-     "restore": "1792143000000",
-     "restoreIso": "2026-10-16T09:30:00.000Z",
-     "lon": 150.536218106494,
-     "lat": -23.4519010735816
     }
    ]
   },
   "vic": {
    "state": "VIC",
    "name": "Victoria",
-   "count": 9,
-   "customers": 545,
-   "unplannedCount": 6,
-   "unplannedCustomers": 542,
+   "count": 10,
+   "customers": 1485,
+   "unplannedCount": 7,
+   "unplannedCustomers": 1482,
    "plannedCount": 3,
    "plannedCustomers": 3,
    "networks": [
     {
      "name": "AusNet Services",
-     "ok": false,
-     "count": 0,
-     "source": "none",
-     "capturedAt": 1792139341223,
-     "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
+     "ok": true,
+     "count": 1,
+     "source": "browser",
+     "origin": "browser",
+     "capturedAt": 1792144318670,
+     "shape": "cards",
      "unreadable": true,
      "sourceUrl": "https://ausnetservices.my.salesforce-sites.com/OutageTracker/",
      "unconfirmed": true,
+     "feedError": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "attempts": [
       {
        "url": "https://ausnetservices.my.salesforce-sites.com/OutageTracker/",
@@ -11085,10 +10992,10 @@
     {
      "name": "Powercor",
      "ok": true,
-     "count": 7,
+     "count": 5,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
      "columns": [
       "ORDER_ID",
@@ -11102,7 +11009,12 @@
       "CAUSE",
       "START_TIME",
       "PRIVATISED"
-     ]
+     ],
+     "reported": {
+      "outages": null,
+      "customers": 182
+     },
+     "reportedAt": 1792144318670
     },
     {
      "name": "CitiPower",
@@ -11110,7 +11022,7 @@
      "count": 2,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
      "columns": [
       "ORDER_ID",
@@ -11124,16 +11036,23 @@
       "CAUSE",
       "START_TIME",
       "PRIVATISED"
-     ]
+     ],
+     "reported": {
+      "outages": null,
+      "customers": 182
+     },
+     "reportedAt": 1792144318670
     },
     {
      "name": "United Energy",
-     "ok": false,
-     "count": 0,
-     "source": "none",
-     "capturedAt": 1792139341223,
-     "error": "HTTP 404 — United Energy | Home @charset \"UTF-8\";.TopLinks-module--root--16b37{align-items:center;display:flex;flex-flow:row nowrap;grid-area:top-links;justify-content:fle…",
+     "ok": true,
+     "count": 2,
+     "source": "browser",
+     "origin": "browser",
+     "capturedAt": 1792144318670,
+     "shape": "cards",
      "unconfirmed": true,
+     "feedError": "HTTP 404 — United Energy | Home @charset \"UTF-8\";.TopLinks-module--root--16b37{align-items:center;display:flex;flex-flow:row nowrap;grid-area:top-links;justify-content:fle…",
      "attempts": [
       {
        "url": "https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/",
@@ -11146,7 +11065,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "unreadable": true,
      "sourceUrl": "https://www.jemena.com.au/outages/electricity-outages/",
@@ -11160,44 +11079,35 @@
        "url": "https://poweroutagesaustralia.com.au/distributors/jemena/",
        "error": "Responded, but no recognisable outage fields"
       }
-     ]
+     ],
+     "reported": {
+      "outages": 0,
+      "customers": 0
+     },
+     "reportedVia": "Power Outages Australia",
+     "reportedAt": 1792144318670
     }
    ],
    "outages": [
     {
-     "network": "Powercor",
-     "id": "F-15344-i",
-     "location": "SUNSHINE NORTH, KEALBA",
-     "towns": [
-      "SUNSHINE NORTH",
-      "KEALBA"
-     ],
-     "status": "Partially Restored",
-     "cause": "Under investigation",
-     "customers": 468,
-     "start": "17:29 16-10-2026",
-     "restore": "22:30 16-10-2026",
-     "lon": 144.844093823809,
-     "lat": -37.7700379258742,
-     "premises": 2
+     "network": "AusNet Services",
+     "location": "Register as a life support customer",
+     "customers": null
     },
     {
      "network": "Powercor",
-     "id": "F-15341-i",
-     "location": "YANDO, BOORT, LEAGHUR",
+     "id": "F-15344-i",
+     "location": "SUNSHINE NORTH",
      "towns": [
-      "YANDO",
-      "BOORT",
-      "LEAGHUR"
+      "SUNSHINE NORTH"
      ],
      "status": "Partially Restored",
      "cause": "Under investigation",
-     "customers": 41,
-     "start": "17:47 16-10-2026",
-     "restore": "20:30 16-10-2026",
-     "lon": 143.823027730338,
-     "lat": -36.182329868836,
-     "premises": 3
+     "customers": 152,
+     "start": "17:29 16-10-2026",
+     "restore": "22:30 16-10-2026",
+     "lon": 144.844093823809,
+     "lat": -37.7700379258742
     },
     {
      "network": "Powercor",
@@ -11210,24 +11120,9 @@
      "cause": "Under investigation",
      "customers": 28,
      "start": "00:51 15-10-2026",
-     "restore": "19:30 16-10-2026",
+     "restore": "02:00 17-10-2026",
      "lon": 145.416288013655,
      "lat": -36.4012313676259
-    },
-    {
-     "network": "Powercor",
-     "id": "J-67261-i",
-     "location": "CABARITA",
-     "towns": [
-      "CABARITA"
-     ],
-     "status": "Partially Restored",
-     "cause": "Under investigation",
-     "customers": 3,
-     "start": "17:41 16-10-2026",
-     "restore": "Unknown",
-     "lon": 142.0830893281639,
-     "lat": -34.1896742721494
     },
     {
      "network": "Powercor",
@@ -11288,7 +11183,7 @@
      "cause": "Under investigation",
      "customers": 1,
      "start": "17:42 16-10-2026",
-     "restore": "21:30 16-10-2026",
+     "restore": "00:00 17-10-2026",
      "lon": 144.9553299446339,
      "lat": -37.840972292168
     },
@@ -11308,6 +11203,17 @@
      "lon": 144.9878447023669,
      "lat": -37.781995808404,
      "upcoming": true
+    },
+    {
+     "network": "United Energy",
+     "location": "<picture><source type=\"image/avif\" srcSet=\"/static/c50341b110a35486f15e1fd4f5e418d5/1fd1a/ue-logo.avif 18w,/static/c50341b110a35486f15e1fd4f5e418d5/436f9/ue-logo.avif 35w,/static/c50341b110a35486f15e1",
+     "customers": null
+    },
+    {
+     "network": "United Energy",
+     "location": "Oops, page not found!",
+     "cause": "132 099",
+     "customers": 1300
     }
    ]
   },
@@ -11326,19 +11232,20 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
+     "blocked": true,
      "unreadable": true,
      "sourceUrl": "https://www.sapowernetworks.com.au/outages/",
      "unconfirmed": true,
      "attempts": [
       {
        "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/OutageList",
-       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 187000340530854577-708016317851699379"
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 414000380439980109-610585586052237747"
       },
       {
        "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/api/outages",
-       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 187000340530854577-741949789305505973"
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 414000380439980109-664510141699066292"
       },
       {
        "url": "https://www.sapowernetworks.com.au/outages/",
@@ -11348,7 +11255,13 @@
        "url": "https://poweroutagesaustralia.com.au/distributors/sa-power-networks/",
        "error": "Responded, but no recognisable outage fields"
       }
-     ]
+     ],
+     "reported": {
+      "outages": 0,
+      "customers": 0
+     },
+     "reportedVia": "Power Outages Australia",
+     "reportedAt": 1792144318670
     }
    ],
    "outages": []
@@ -11356,20 +11269,20 @@
   "wa": {
    "state": "WA",
    "name": "Western Australia",
-   "count": 128,
-   "customers": 12872,
-   "unplannedCount": 7,
-   "unplannedCustomers": 138,
-   "plannedCount": 121,
-   "plannedCustomers": 12734,
+   "count": 125,
+   "customers": 12753,
+   "unplannedCount": 1,
+   "unplannedCustomers": 4,
+   "plannedCount": 124,
+   "plannedCustomers": 12749,
    "networks": [
     {
      "name": "Western Power",
      "ok": true,
-     "count": 128,
+     "count": 125,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "staleDropped": 2,
      "sourceUrl": "https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
@@ -11394,7 +11307,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "error": "Their outage page answered but could not be read — the page layout has probably changed. Their own map is linked and still works in a browser.",
      "unreadable": true,
      "sourceUrl": "https://www.horizonpower.com.au/faults-outages/",
@@ -11766,21 +11679,6 @@
     },
     {
      "network": "Western Power",
-     "id": "INCD-202834-X",
-     "location": "BALLAJURA,WHITEMAN",
-     "towns": [
-      "BALLAJURA",
-      "WHITEMAN"
-     ],
-     "kind": "planned",
-     "customers": 172,
-     "start": "16/10/2026 10:29 AM",
-     "restore": "16/10/2026 05:00 PM",
-     "lon": 115.911096064587,
-     "lat": -31.8420253445961
-    },
-    {
-     "network": "Western Power",
      "id": "INCD-497012-V",
      "location": "MARMION,SORRENTO",
      "towns": [
@@ -12045,6 +11943,22 @@
     },
     {
      "network": "Western Power",
+     "id": "INCD-2166281-U",
+     "location": "CLAREMONT",
+     "towns": [
+      "CLAREMONT"
+     ],
+     "kind": "planned",
+     "customers": 87,
+     "start": "22/10/2026 07:00 PM",
+     "restore": "23/10/2026 06:00 AM",
+     "lon": 115.7849327656,
+     "lat": -31.9820594828375,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
      "id": "INCD-82123-W",
      "location": "CLAREMONT,DALKEITH",
      "towns": [
@@ -12139,20 +12053,6 @@
      "lat": -32.056023837346,
      "upcoming": true,
      "kindReported": "unplanned"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2166131-U",
-     "location": "MOUNT HAWTHORN",
-     "towns": [
-      "MOUNT HAWTHORN"
-     ],
-     "kind": "unplanned",
-     "customers": 73,
-     "start": "16/10/2026 12:23 PM",
-     "restore": "16/10/2026 07:30 PM",
-     "lon": 115.835447711904,
-     "lat": -31.9190217761112
     },
     {
      "network": "Western Power",
@@ -12266,6 +12166,24 @@
      "restore": "21/10/2026 05:30 PM",
      "lon": 115.962613992482,
      "lat": -32.0226244811871,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-509332-V",
+     "location": "BAYONET HEAD,LANGE,WALMSLEY",
+     "towns": [
+      "BAYONET HEAD",
+      "LANGE",
+      "WALMSLEY"
+     ],
+     "kind": "planned",
+     "customers": 61,
+     "start": "22/10/2026 08:00 AM",
+     "restore": "22/10/2026 04:00 PM",
+     "lon": 117.880180299863,
+     "lat": -34.9841649891157,
      "upcoming": true,
      "kindReported": "unplanned"
     },
@@ -12617,6 +12535,22 @@
     },
     {
      "network": "Western Power",
+     "id": "INCD-2166291-U",
+     "location": "COLLIE",
+     "towns": [
+      "COLLIE"
+     ],
+     "kind": "planned",
+     "customers": 35,
+     "start": "22/10/2026 07:00 AM",
+     "restore": "22/10/2026 02:30 PM",
+     "lon": 116.170667414528,
+     "lat": -33.359095304761,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
      "id": "INCD-2163291-U",
      "location": "PARKERVILLE",
      "towns": [
@@ -12662,20 +12596,6 @@
      "lat": -31.5583025035878,
      "upcoming": true,
      "kindReported": "unplanned"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2165921-U",
-     "location": "DAWESVILLE",
-     "towns": [
-      "DAWESVILLE"
-     ],
-     "kind": "unplanned",
-     "customers": 28,
-     "start": "16/10/2026 11:04 AM",
-     "restore": "16/10/2026 04:30 PM",
-     "lon": 115.633878953009,
-     "lat": -32.6331308001129
     },
     {
      "network": "Western Power",
@@ -12792,20 +12712,6 @@
      "lat": -32.0591295271211,
      "upcoming": true,
      "kindReported": "unplanned"
-    },
-    {
-     "network": "Western Power",
-     "id": "INCD-2164761-U",
-     "location": "BALINGUP",
-     "towns": [
-      "BALINGUP"
-     ],
-     "kind": "unplanned",
-     "customers": 20,
-     "start": "14/10/2026 05:35 PM",
-     "restore": "16/10/2026 06:30 PM",
-     "lon": 115.990586187448,
-     "lat": -33.7825414707423
     },
     {
      "network": "Western Power",
@@ -13219,20 +13125,6 @@
     },
     {
      "network": "Western Power",
-     "id": "INCD-2165721-U",
-     "location": "HYDEN",
-     "towns": [
-      "HYDEN"
-     ],
-     "kind": "unplanned",
-     "customers": 6,
-     "start": "15/10/2026 07:49 PM",
-     "restore": "16/10/2026 06:30 PM",
-     "lon": 119.31212692991,
-     "lat": -32.4351252356121
-    },
-    {
-     "network": "Western Power",
      "id": "INCD-2161841-U",
      "location": "BEDFORDALE",
      "towns": [
@@ -13330,17 +13222,19 @@
     },
     {
      "network": "Western Power",
-     "id": "INCD-2166171-U",
-     "location": "WAROONA",
+     "id": "INCD-2166271-U",
+     "location": "RAVENSWOOD",
      "towns": [
-      "WAROONA"
+      "RAVENSWOOD"
      ],
-     "kind": "unplanned",
+     "kind": "planned",
      "customers": 4,
-     "start": "16/10/2026 02:51 PM",
-     "restore": "16/10/2026 08:00 PM",
-     "lon": 115.863955075506,
-     "lat": -32.8042275308945
+     "start": "22/10/2026 07:00 AM",
+     "restore": "22/10/2026 05:00 PM",
+     "lon": 115.84554083928,
+     "lat": -32.5481318217984,
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Western Power",
@@ -13352,7 +13246,7 @@
      "kind": "unplanned",
      "customers": 4,
      "start": "16/10/2026 03:46 PM",
-     "restore": "16/10/2026 08:00 PM",
+     "restore": "16/10/2026 08:30 PM",
      "lon": 115.860063813545,
      "lat": -32.3085210176743
     },
@@ -13439,20 +13333,6 @@
     },
     {
      "network": "Western Power",
-     "id": "INCD-2166231-U",
-     "location": "LAKE KING",
-     "towns": [
-      "LAKE KING"
-     ],
-     "kind": "unplanned",
-     "customers": 3,
-     "start": "16/10/2026 03:53 PM",
-     "restore": "16/10/2026 08:30 PM",
-     "lon": 119.70085717824,
-     "lat": -33.2187129520536
-    },
-    {
-     "network": "Western Power",
      "id": "INCD-2162151-U",
      "location": "GRACETOWN",
      "towns": [
@@ -13517,7 +13397,7 @@
      "count": 0,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "sourceUrl": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages"
     }
    ],
@@ -13538,7 +13418,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "error": "This operator blocks automated access to its outage page (bot challenge). Their own map is linked and still works in a browser.",
      "blocked": true,
      "attempts": [
@@ -13571,7 +13451,7 @@
      "count": 1,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792139341223,
+     "capturedAt": 1792144325890,
      "sourceUrl": "https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages",
      "columns": [
       "Outage Id",
