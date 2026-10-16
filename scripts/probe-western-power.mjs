@@ -50,6 +50,21 @@ async function get(url) {
 const report = { at: new Date().toISOString(), nowMs: Date.now() };
 const fmt = (ms) => (ms === null || ms === undefined || !isFinite(ms)) ? null : new Date(ms).toISOString();
 
+/* These fields are esriFieldTypeString, NOT dates -- "31/05/2026 12:08 PM",
+   day first. The first version of this probe ran Number() over them, got
+   NaN for all 120 records and reported "noStart: 120", which hid the very
+   distribution it was written to measure. Day-first matters: 05/06 is the
+   fifth of June here and would be the sixth of May read the other way. */
+const parseWhen = (v) => {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number' && isFinite(v) && v > 0) return v;           // TIMEADDED
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/i.exec(String(v));
+  if (!m) { const n = Date.parse(String(v)); return isFinite(n) ? n : null; }
+  let hour = Number(m[4]);
+  if (m[6]) { const pm = /pm/i.test(m[6]); if (hour === 12) hour = pm ? 12 : 0; else if (pm) hour += 12; }
+  return Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1]), hour, Number(m[5]));
+};
+
 console.log('== the layer itself ==');
 const meta = await get(BASE + '?f=json');
 if (meta.json) {
@@ -82,20 +97,7 @@ if (all.json && Array.isArray(all.json.features)) {
     for (const n of names) if (r[n] !== undefined && r[n] !== null) return r[n];
     return null;
   };
-  /* These fields are esriFieldTypeString, NOT dates -- "31/05/2026 12:08 PM",
-     day first. The first version of this probe ran Number() over them, got
-     NaN for all 120 records and reported "noStart: 120", which hid the very
-     distribution it was written to measure. Day-first matters: 05/06 is the
-     fifth of June here and would be the sixth of May read the other way. */
-  const parseWhen = (v) => {
-    if (v === null || v === undefined) return null;
-    if (typeof v === 'number' && isFinite(v) && v > 0) return v;           // TIMEADDED
-    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/i.exec(String(v));
-    if (!m) { const n = Date.parse(String(v)); return isFinite(n) ? n : null; }
-    let hour = Number(m[4]);
-    if (m[6]) { const pm = /pm/i.test(m[6]); if (hour === 12) hour = pm ? 12 : 0; else if (pm) hour += 12; }
-    return Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1]), hour, Number(m[5]));
-  };
+
   const START = ['OUTAGESTARTTIME', 'OUTAGE_START_TIME', 'STARTTIME', 'START_TIME'];
   const END = ['ESTIMATEDRESTORATIONTIME', 'ESTIMATED_RESTORATION_TIME', 'ETR', 'RESTORATIONTIME'];
   const starts = rows.map((r) => parseWhen(pick(r, START))).filter((n) => n);
@@ -191,6 +193,67 @@ if (all.json && Array.isArray(all.json.features)) {
 } else {
   report.fetchError = all.error || all.snippet;
   console.log('  ERROR: ' + report.fetchError);
+}
+
+/* ---- planned vs unplanned, and outages that have not started yet ----
+
+   Reported from the live dashboard: HOLT ROCK, Western Power, 4 customers,
+   "Started 20/10/2026 08:00 AM, Estimated back 20/10/2026 04:00 PM" --
+   viewed on 16 October. That is a job four days in the future, drawn as a
+   red unplanned fault with "Customers off" and "Started" beside it. The page
+   already draws planned work grey-blue and labels it "planned work", so the
+   Worker must have classified this as unplanned. This reports what Western
+   Power actually said about it, and what our classifier makes of that. */
+if (all.json && Array.isArray(all.json.features)) {
+  const rows = all.json.features.map((f) => f.attributes || {});
+  const now = Date.now();
+  const tally = (key) => {
+    const m = new Map();
+    rows.forEach((r) => { const v = JSON.stringify(r[key]); m.set(v, (m.get(v) || 0) + 1); });
+    return Object.fromEntries([...m.entries()].sort((a, b) => b[1] - a[1]));
+  };
+  report.kindValues = { PLANNEDOUTAGE: tally('PLANNEDOUTAGE'), OUTAGETYPE: tally('OUTAGETYPE') };
+  console.log('\n== what Western Power says about planned vs unplanned ==');
+  console.log('  PLANNEDOUTAGE: ' + JSON.stringify(report.kindValues.PLANNEDOUTAGE));
+  console.log('  OUTAGETYPE:    ' + JSON.stringify(report.kindValues.OUTAGETYPE));
+
+  /* The Worker's own classifier, lifted from the source so this reports
+     what the dashboard actually does rather than what it should. */
+  const { readFileSync } = await import('node:fs');
+  const wsrc = readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8');
+  const cm = /function classifyOutage\([\s\S]*?\n\}/.exec(wsrc);
+  const classifyOutage = cm ? new Function(cm[0] + '; return classifyOutage;')() : null;
+
+  const future = rows.filter((r) => { const s0 = parseWhen(r.OUTAGESTARTTIME); return s0 && s0 > now; });
+  report.futureStart = {
+    count: future.length,
+    byOurKind: {},
+    samples: []
+  };
+  future.forEach((r) => {
+    /* The Worker passes the FIRST matching kind field, which is
+       PLANNEDOUTAGE, then status and cause -- reproduced here. */
+    const ours = classifyOutage ? classifyOutage(String(r.PLANNEDOUTAGE ?? ''), '', '') : '(n/a)';
+    const k = ours || '(unlabelled)';
+    report.futureStart.byOurKind[k] = (report.futureStart.byOurKind[k] || 0) + 1;
+    if (report.futureStart.samples.length < 8) {
+      report.futureStart.samples.push({ area: String(r.AFFECTED_AREA || '').slice(0, 50),
+        start: r.OUTAGESTARTTIME, etr: r.ESTIMATEDRESTORATIONTIME,
+        PLANNEDOUTAGE: r.PLANNEDOUTAGE, OUTAGETYPE: r.OUTAGETYPE,
+        INCIDENTREF: r.INCIDENTREF, customers: r.NOCUSTOMERSIMPACTED, ours: k });
+    }
+  });
+  console.log('\n== outages whose start is still in the future ==');
+  console.log('  count: ' + future.length + ' of ' + rows.length);
+  console.log('  as we classify them: ' + JSON.stringify(report.futureStart.byOurKind));
+  report.futureStart.samples.forEach((x) => console.log('    ' + x.start + ' -> ' + x.etr
+    + '  PLANNEDOUTAGE=' + JSON.stringify(x.PLANNEDOUTAGE) + ' OUTAGETYPE=' + JSON.stringify(x.OUTAGETYPE)
+    + '  ref=' + x.INCIDENTREF + '  ours=' + x.ours + '  ' + x.area));
+
+  const holt = rows.filter((r) => /HOLT ROCK/i.test(String(r.AFFECTED_AREA || '')));
+  report.holtRock = holt;
+  console.log('\n  HOLT ROCK records: ' + holt.length);
+  holt.forEach((r) => console.log('    ' + JSON.stringify(r).slice(0, 400)));
 }
 
 console.log('\n================ verdict ================');
