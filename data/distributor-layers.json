@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-16T03:21:28.830Z",
+  "at": "2026-10-16T03:27:00.461Z",
   "operators": {
     "Essential Energy": {
       "searches": [
@@ -346,17 +346,17 @@
       ],
       "candidates": [
         {
-          "title": "HPC POLE DO NOTHING YEAR 20",
+          "title": "HPC WIRE ROUTE DO NOTHING YEAR 20",
           "owner": "asseticdev",
-          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_POLE_DO_NOTHING_YEAR_20/FeatureServer",
+          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20/FeatureServer",
           "type": "Feature Service",
           "modified": "2025-05-19",
           "serviceStatus": 200,
           "extent": {
-            "xmin": 12632441.082473047,
+            "xmin": 12632441.081987321,
             "ymin": -2866933.2919469774,
-            "xmax": 12703692.625264565,
-            "ymax": -2803939.969844356,
+            "xmax": 12703692.525424087,
+            "ymax": -2803117.439271737,
             "spatialReference": {
               "wkid": 102100,
               "latestWkid": 3857
@@ -366,33 +366,33 @@
           "layers": [
             {
               "id": 0,
-              "name": "HPC_POLE_DO_NOTHING_YEAR_20",
-              "count": 3613,
+              "name": "HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20",
+              "count": 3960,
               "fields": [
                 "FID",
                 "TOWN",
                 "SHORT_PLAN",
-                "ASSET_ID",
-                "STRUCTURE_",
-                "STRUCTUR1",
+                "PLANT_NUMB",
+                "CARRIER_TA",
+                "CARRIER_TY",
                 "PARENT_TYP",
                 "ELLIPSE_PA",
                 "ELLIPSE_EQ",
                 "LIFECYCLE_",
                 "DATE_INSTA",
                 "LOCATION_D",
-                "NUMBER",
-                "HEIGHT",
+                "MOUNTING",
+                "USAGE",
+                "ACTUAL_LEN",
+                "NOMINAL_VO",
+                "NETWORK_TY",
+                "PHASE",
+                "SPEC_CODE",
+                "SPEC_NAME",
+                "SPEC_DESCR",
                 "MATERIAL",
-                "POLE_TYPE",
-                "FUNCTION_",
-                "TREATMENT",
-                "OVERHEAD_E",
-                "OWNER_TYPE",
-                "OWNER_NAME",
-                "ID",
-                "Unique_Ass",
-                "Asset_Name"
+                "SIZE",
+                "PARENT_FEE"
               ],
               "outageFields": []
             }
@@ -452,17 +452,17 @@
           ]
         },
         {
-          "title": "HPC WIRE ROUTE DO NOTHING YEAR 20",
+          "title": "HPC POLE DO NOTHING YEAR 20",
           "owner": "asseticdev",
-          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20/FeatureServer",
+          "url": "https://services6.arcgis.com/loh1ZILR6O9wsRvs/arcgis/rest/services/HPC_POLE_DO_NOTHING_YEAR_20/FeatureServer",
           "type": "Feature Service",
           "modified": "2025-05-19",
           "serviceStatus": 200,
           "extent": {
-            "xmin": 12632441.081987321,
+            "xmin": 12632441.082473047,
             "ymin": -2866933.2919469774,
-            "xmax": 12703692.525424087,
-            "ymax": -2803117.439271737,
+            "xmax": 12703692.625264565,
+            "ymax": -2803939.969844356,
             "spatialReference": {
               "wkid": 102100,
               "latestWkid": 3857
@@ -472,33 +472,33 @@
           "layers": [
             {
               "id": 0,
-              "name": "HPC_WIRE_ROUTE_DO_NOTHING_YEAR_20",
-              "count": 3960,
+              "name": "HPC_POLE_DO_NOTHING_YEAR_20",
+              "count": 3613,
               "fields": [
                 "FID",
                 "TOWN",
                 "SHORT_PLAN",
-                "PLANT_NUMB",
-                "CARRIER_TA",
-                "CARRIER_TY",
+                "ASSET_ID",
+                "STRUCTURE_",
+                "STRUCTUR1",
                 "PARENT_TYP",
                 "ELLIPSE_PA",
                 "ELLIPSE_EQ",
                 "LIFECYCLE_",
                 "DATE_INSTA",
                 "LOCATION_D",
-                "MOUNTING",
-                "USAGE",
-                "ACTUAL_LEN",
-                "NOMINAL_VO",
-                "NETWORK_TY",
-                "PHASE",
-                "SPEC_CODE",
-                "SPEC_NAME",
-                "SPEC_DESCR",
+                "NUMBER",
+                "HEIGHT",
                 "MATERIAL",
-                "SIZE",
-                "PARENT_FEE"
+                "POLE_TYPE",
+                "FUNCTION_",
+                "TREATMENT",
+                "OVERHEAD_E",
+                "OWNER_TYPE",
+                "OWNER_NAME",
+                "ID",
+                "Unique_Ass",
+                "Asset_Name"
               ],
               "outageFields": []
             }
@@ -1255,7 +1255,20 @@
               "id": 1,
               "name": "Poles",
               "count": 515371,
-              "fields": [],
+              "fields": [
+                "OBJECTID",
+                "UTILITY",
+                "SITE_LABEL",
+                "ASSET_TYPE",
+                "SYSTEM_ID",
+                "STAY_COUNT",
+                "LON",
+                "LAT",
+                "CUSTOM1",
+                "CUSTOM2",
+                "CUSTOM3",
+                "REFRESH_DT"
+              ],
               "outageFields": []
             },
             {
@@ -1535,7 +1548,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 12,
+              "count": 14,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -1753,7 +1766,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 12,
+              "count": 14,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -1989,7 +2002,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 12,
+              "count": 14,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -2165,16 +2178,16 @@
           "modified": "2023-08-11"
         },
         {
-          "title": "Infrastructure Investments",
+          "title": "BPA Interconnection Queue",
           "owner": "zac_cleanprosperousinstitute",
-          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/Infrastructure_Investments/FeatureServer",
+          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/BPA_Interconnection_Queue/FeatureServer",
           "type": "Feature Service",
           "modified": "2025-10-16"
         },
         {
-          "title": "BPA Interconnection Queue",
+          "title": "Infrastructure Investments",
           "owner": "zac_cleanprosperousinstitute",
-          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/BPA_Interconnection_Queue/FeatureServer",
+          "url": "https://services8.arcgis.com/sB18HZzMG4vkLHYe/arcgis/rest/services/Infrastructure_Investments/FeatureServer",
           "type": "Feature Service",
           "modified": "2025-10-16"
         },
@@ -2186,18 +2199,18 @@
           "modified": "2024-06-13"
         },
         {
-          "title": "2022_RBSA_Data_Collection_Tool_Working_NY_v2_form",
-          "owner": "NYetz_NEEA",
-          "url": "https://services1.arcgis.com/CmvSIsDghIn6Uvfm/arcgis/rest/services/service_554e7d077ac54201967b0b1f63f4135f_form/FeatureServer",
-          "type": "Feature Service",
-          "modified": "2026-04-27"
-        },
-        {
           "title": "2022_RBSA_Data_Collection_Tool_Working_NY_v2_results",
           "owner": "NYetz_NEEA",
           "url": "https://services1.arcgis.com/CmvSIsDghIn6Uvfm/arcgis/rest/services/survey123_157fc61d63034f26ac2f878c6d65b266_results/FeatureServer",
           "type": "Feature Service",
           "modified": "2026-04-24"
+        },
+        {
+          "title": "2022_RBSA_Data_Collection_Tool_Working_NY_v2_form",
+          "owner": "NYetz_NEEA",
+          "url": "https://services1.arcgis.com/CmvSIsDghIn6Uvfm/arcgis/rest/services/service_554e7d077ac54201967b0b1f63f4135f_form/FeatureServer",
+          "type": "Feature Service",
+          "modified": "2026-04-27"
         },
         {
           "title": "2027_RBSA_Data_Collection_Tool_DRAFT_results",
@@ -2484,7 +2497,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 12,
+              "count": 14,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
