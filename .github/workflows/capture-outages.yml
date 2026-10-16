@@ -1,0 +1,42 @@
+# Captures every state's outage list by running the Worker's own outage code
+# on a runner, and commits it to data/outages.json, which the Worker serves.
+#
+# Exists because Cloudflare's free plan allows the Worker 10ms of CPU per
+# invocation and outage parsing measured at ~300ms for NSW alone -- the
+# Worker was being stopped mid-task 100+ times a day. Here CPU is not the
+# constraint. See scripts/capture-outages.mjs.
+#
+# No browser, so it is quick: the browser scrape (scrape-outages.yml) takes
+# about nine minutes and is now only needed for the published totals of the
+# operators that block their lists. This is the one that keeps the rows
+# current.
+name: Capture outages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Shared with scrape-outages.yml: both write data/outages.json, so they run
+# one at a time rather than racing. Queued, never cancelled -- a cancelled
+# capture is a gap in the data.
+concurrency:
+  group: outage-snapshot
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Capture every state through the Worker's own code
+        run: node scripts/capture-outages.mjs
+      - name: Commit the snapshot
+        run: |
+          BRANCH="${{ github.ref_name }}" \
+            scripts/commit-data.sh "Capture outage snapshot" data/outages.json

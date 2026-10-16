@@ -55,6 +55,11 @@ on:
 permissions:
   contents: write
 
+# Shared with capture-outages.yml: both write data/outages.json.
+concurrency:
+  group: outage-snapshot
+  cancel-in-progress: false
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -73,6 +78,17 @@ jobs:
 
       - name: Scrape
         run: node scripts/scrape-outages.mjs --only "${{ inputs.only }}" ${{ inputs.probe && '--probe' || '' }}
+
+      # The browser cannot read the five operators that publish proper data
+      # feeds -- their pages are blocked or are a map with no list -- which
+      # left QLD, WA and ACT empty in the snapshot. The Worker's own feed
+      # code reads them fine, so it runs here too and the two are merged:
+      # the feed supplies rows, the browser supplies published totals for
+      # operators that block their lists, and fills any gap the feed has in
+      # this same run. See scripts/lib/merge-outage-snapshot.mjs.
+      - name: Merge in the Worker's feed capture
+        if: always()
+        run: node scripts/capture-outages.mjs --with-browser
 
       # Saved whether or not the run succeeded: a page the scraper could not
       # read is the thing most worth looking at, and the rendered HTML plus a
