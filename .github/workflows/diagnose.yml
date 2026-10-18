@@ -110,6 +110,16 @@ jobs:
       - name: Which operator pages allow embedding
         run: node scripts/probe-embeddable.mjs
 
+      # Headers say what a page permits; this says what a reader sees. Each
+      # candidate is loaded in an iframe in a real browser and screenshotted
+      # -- reported from the dashboard: every operator tab came up blank.
+      - name: What each outage-map iframe actually shows
+        continue-on-error: true
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          node scripts/probe-embed-render.mjs
+
       # Reported from the live dashboard: a Western Power outage that
       # started in May, shown as current. Either the layer retains closed
       # outages, or our 400-record page without an order takes the oldest.
@@ -129,4 +139,5 @@ jobs:
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh 'Record live state health and the feed probes' \
               data/state-health.json data/nt-power-probe.json \
-              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json data/feed-discovery.json data/alert-sa-probe.json data/cpu-bench.json data/wp-probe.json data/embed-probe.json
+              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json data/feed-discovery.json data/alert-sa-probe.json data/cpu-bench.json data/wp-probe.json data/embed-probe.json \
+              $(ls data/embed-render.json data/embed-shots/*.jpg 2>/dev/null)
