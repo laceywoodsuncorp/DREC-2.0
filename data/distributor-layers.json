@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-18T22:57:39.632Z",
+  "at": "2026-10-18T23:15:20.384Z",
   "operators": {
     "Essential Energy": {
       "searches": [
@@ -1100,7 +1100,7 @@
             {
               "id": 1,
               "name": "NSW_AusGrid_Outages_Points",
-              "count": 10,
+              "count": 11,
               "fields": [
                 "OBJECTID",
                 "WebId",
@@ -1548,7 +1548,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 9,
+              "count": 7,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -1648,7 +1648,7 @@
             {
               "id": 1,
               "name": "Powercor_Outages_Points",
-              "count": 11,
+              "count": 12,
               "fields": [
                 "OBJECTID",
                 "createDateTime",
@@ -1674,7 +1674,7 @@
             {
               "id": 2,
               "name": "Powercor_Outages_Polygons",
-              "count": 11,
+              "count": 12,
               "fields": [
                 "OBJECTID",
                 "createDateTime",
@@ -1766,7 +1766,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 9,
+              "count": 7,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -2002,7 +2002,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 9,
+              "count": 7,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -2497,7 +2497,7 @@
             {
               "id": 0,
               "name": "Incidents",
-              "count": 9,
+              "count": 7,
               "fields": [
                 "OBJECTID",
                 "incidentNo",
@@ -2786,8 +2786,83 @@
           "url": "https://services3.arcgis.com/iR1gOFe0FlzMQ2yd/arcgis/rest/services/Electricity/FeatureServer",
           "type": "Feature Service",
           "modified": "2025-10-09",
-          "inAustralia": null,
-          "layers": []
+          "serviceStatus": 200,
+          "extent": {
+            "xmin": 16594782.793424992,
+            "ymin": -4197020.414900933,
+            "xmax": 16596945.265607225,
+            "ymax": -4195253.671518057,
+            "spatialReference": {
+              "wkid": 102100,
+              "latestWkid": 3857
+            }
+          },
+          "inAustralia": true,
+          "layers": [
+            {
+              "id": 0,
+              "name": "ElectricalLight",
+              "count": 1012,
+              "fields": [
+                "OBJECTID",
+                "SymbolRotation",
+                "LifecycleStatus",
+                "UID",
+                "Owner",
+                "DATASOURCE",
+                "DRAWINGNUM",
+                "POSITIONSOURCE",
+                "SUBTYPE",
+                "Manufacturer",
+                "LIGHTTYPE",
+                "FITTINGMODEL",
+                "POLE",
+                "QUANTITY",
+                "Location",
+                "POINT_X",
+                "POINT_Y",
+                "POINT_Z",
+                "CreationDate",
+                "Creator",
+                "EditDate",
+                "Editor"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 1,
+              "name": "OverheadHVElectricLine",
+              "count": 74,
+              "fields": [
+                "OBJECTID",
+                "UID",
+                "CreationDate",
+                "Creator",
+                "EditDate",
+                "Editor",
+                "Shape__Length"
+              ],
+              "outageFields": []
+            },
+            {
+              "id": 2,
+              "name": "UndergroundLVElectricLine",
+              "count": 162,
+              "fields": [
+                "OBJECTID",
+                "SUBTYPE",
+                "DATASOURCE",
+                "DRAWINGNUMBER",
+                "POSITIONSOURCE",
+                "CreationDate",
+                "Creator",
+                "EditDate",
+                "Editor",
+                "SHAPE__Length"
+              ],
+              "outageFields": []
+            }
+          ]
         }
       ]
     },
