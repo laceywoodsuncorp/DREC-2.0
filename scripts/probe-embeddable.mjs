@@ -84,6 +84,37 @@ for (const [op, urls] of Object.entries(CANDIDATES)) {
       + (row.finalUrl ? '  -> ' + row.finalUrl : '') + (row.title ? '  "' + row.title.slice(0, 60) + '"' : ''));
   }
 }
+/* An operator none of whose candidate pages exist has moved its outage
+   page. Its home page is read for links mentioning outages, so the tab can
+   point at where the page went rather than at another guess. */
+report.discovered = {};
+const HOMES = { 'United Energy': 'https://www.unitedenergy.com.au/' };
+for (const [op, home] of Object.entries(HOMES)) {
+  const rows = report.operators[op] || [];
+  if (rows.some((r) => r.status && r.status < 400)) continue;
+  try {
+    const res = await fetch(home, { redirect: 'follow', headers: { 'User-Agent': UA, Accept: 'text/html' } });
+    const html = await res.text();
+    const links = [...new Set([...html.matchAll(/href=["']([^"'#]+)["']/gi)].map((m) => m[1])
+      .filter((h) => /outage|fault|power-?cut|interruption/i.test(h))
+      .map((h) => { try { return new URL(h, home).href; } catch (e) { return null; } }).filter(Boolean))];
+    report.discovered[op] = [];
+    for (const href of links.slice(0, 12)) {
+      try {
+        const r2 = await fetch(href, { redirect: 'follow', headers: { 'User-Agent': UA, Accept: 'text/html' } });
+        const b2 = await r2.text();
+        const row = { url: href, status: r2.status, finalUrl: r2.url !== href ? r2.url : undefined,
+          title: ((/<title[^>]*>([^<]{0,120})</i.exec(b2) || [])[1] || '').trim(),
+          xFrameOptions: r2.headers.get('x-frame-options'),
+          frameAncestors: frameAncestors(r2.headers.get('content-security-policy')) };
+        report.discovered[op].push(row);
+        console.log('  found ' + op + ': ' + row.status + '  ' + href + '  "' + row.title.slice(0, 60) + '"  XFO=' + row.xFrameOptions);
+      } catch (e) { report.discovered[op].push({ url: href, error: e.message }); }
+    }
+    if (!links.length) console.log('  ' + op + ': home page has no outage links (' + res.status + ')');
+  } catch (e) { report.discovered[op] = { error: e.message }; }
+}
+
 mkdirSync('data', { recursive: true });
 writeFileSync('data/embed-probe.json', JSON.stringify(report, null, 1) + '\n');
 console.log('\nwrote data/embed-probe.json');
