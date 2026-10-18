@@ -582,21 +582,24 @@ const check = (n, c, x) => {
     await p.click('#otab-nt');
     check('opening one hides our map',
       await p.$eval('#outagePaneAll', e => e.hidden) && !(await p.$eval('#outagePaneOperator', e => e.hidden)));
+    /* The operators' own pages refuse a frame or put a bot check in it
+       (data/embed-render.json), so the tab frames the aggregator page that
+       renders, and says whose figures they are. */
     const f = await p.$eval('#outagePaneOperator iframe', e => ({ src: e.src, sb: e.getAttribute('sandbox') }));
-    check('and frames the operator’s own map', /powerwater\.com\.au/.test(f.src), f);
+    check('and frames a map that can be shown in a frame',
+      /^https:\/\/poweroutagesaustralia\.com\.au\/distributors\/power-and-water\/$/.test(f.src), f);
     check('which cannot navigate the dashboard away',
       /allow-scripts/.test(f.sb) && !/allow-top-navigation/.test(f.sb), f);
-    check('with a way out if their page refuses the frame',
-      /verify you are human/i.test(await p.$eval('#outagePaneOperator', e => e.innerText)));
+    const pane = await p.$eval('#outagePaneOperator', e => e.innerText);
+    check('it says the figures are second-hand', /Power Outages Australia/.test(pane) && /indicative/i.test(pane), pane);
+    check('and the operator’s own map is one click away',
+      await p.$$eval('#outagePaneOperator a', as => as.some(a => /powerwater\.com\.au/.test(a.href))));
 
-    /* AusNet forbids framing. An iframe would render blank; a proxy that
-       stripped the header would be going around the operator. A link it is. */
+    /* Every tab frames its own operator's page, not the first one's. */
     await p.click('#otab-vic-east');
-    const vis = await p.$$eval('#outagePaneOperator .op-embed', es => es.filter(e => !e.hidden).map(e => ({
-      frames: e.querySelectorAll('iframe').length, text: e.innerText,
-      href: (e.querySelector('a.go') || {}).href })));
-    check('an operator that forbids framing gets a link, not a blank frame',
-      vis.length === 1 && vis[0].frames === 0 && /ausnetservices\.com\.au/.test(vis[0].href || ''), vis);
+    const vis = await p.$$eval('#outagePaneOperator .op-embed', es => es.filter(e => !e.hidden).map(e =>
+      (e.querySelector('iframe') || {}).src || ''));
+    check('each tab frames its own operator', vis.length === 1 && /\/ausnet-services\/$/.test(vis[0]), vis);
 
     await p.keyboard.press('ArrowRight');
     check('arrow keys move along the tabs',
@@ -616,7 +619,7 @@ const check = (n, c, x) => {
       await p.$eval('#otab-sa', e => e.getAttribute('aria-selected') === 'true'));
     check('and frames SA Power Networks',
       await p.$$eval('#outagePaneOperator .op-embed', es => es.some(e => !e.hidden &&
-        /sapowernetworks/.test((e.querySelector('iframe') || {}).src || ''))));
+        /sa-power-networks/.test((e.querySelector('iframe') || {}).src || ''))));
     check('no page errors', p._errs.length === 0, p._errs);
     await p.close();
   }
