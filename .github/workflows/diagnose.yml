@@ -104,6 +104,12 @@ jobs:
       - name: CPU cost per invocation
         run: node scripts/cpu-bench.mjs
 
+      # Whether each unreadable operator's own outage page may be shown in
+      # an iframe on the dashboard -- their X-Frame-Options and CSP
+      # frame-ancestors decide, and a page that forbids it gets a link.
+      - name: Which operator pages allow embedding
+        run: node scripts/probe-embeddable.mjs
+
       # Reported from the live dashboard: a Western Power outage that
       # started in May, shown as current. Either the layer retains closed
       # outages, or our 400-record page without an order takes the oldest.
@@ -123,4 +129,4 @@ jobs:
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh 'Record live state health and the feed probes' \
               data/state-health.json data/nt-power-probe.json \
-              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json data/feed-discovery.json data/alert-sa-probe.json data/cpu-bench.json data/wp-probe.json
+              data/warnings-probe.json data/shape-probe.json data/sa-nt-probe.json data/unmapped-towns.json data/blocked-recheck.json data/distributor-layers.json data/outage-mirrors.json data/unreadable-probe.json data/feed-discovery.json data/alert-sa-probe.json data/cpu-bench.json data/wp-probe.json data/embed-probe.json
