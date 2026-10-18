@@ -1,6 +1,6 @@
 {
   "base": "https://drec-oncall-updates-site.lacey-wood.workers.dev",
-  "at": "2026-10-16T08:46:59.707Z",
+  "at": "2026-10-18T22:51:14.683Z",
   "incidents": {
     "nsw": {
       "httpStatus": 200,
@@ -32,28 +32,24 @@
       "ok": true,
       "build": "2026-10-16-dispatch",
       "sourceUrl": "https://emergency.vic.gov.au/public/events-geojson.json",
-      "count": 20,
-      "withAlertLevel": 1,
-      "alertLevels": [
-        "Advice"
-      ],
+      "count": 10,
+      "withAlertLevel": 0,
+      "alertLevels": [],
       "statuses": [
-        "Minor",
+        "Patrolled",
+        "In Progress",
         "Under Control",
-        "Safe",
-        "Request For Assistance",
         "Responding",
-        "Warning"
+        "Safe",
+        "Request For Assistance"
       ],
       "types": [
-        "Drinking Water",
+        "Planned Burn",
         "Bushfire",
-        "Other",
-        "Flooding",
-        "Hazardous Material",
-        "Structure Fire",
         "Building Fire",
-        "Strong Wind"
+        "Other",
+        "Washaway",
+        "Tree Down"
       ],
       "attempts": []
     },
@@ -65,26 +61,25 @@
       "mergedFrom": [
         "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json"
       ],
-      "count": 91,
-      "withAlertLevel": 46,
+      "count": 61,
+      "withAlertLevel": 32,
       "alertLevels": [
         "Advice",
         "Information"
       ],
       "statuses": [
-        "Stay Informed",
         "Avoid Smoke",
         "Going",
         "Patrolled",
-        "Contained",
         "There is a vegetation fire at this location. Smoke may affect residents and motorists in the area. Residents should close their doors and windows and keep medication close by if suffering from a respiratory condition. Motorists should use caution and drive to conditions. If you believe your property is under threat, you should call Triple Zero (000) immediately."
       ],
       "types": [
         "Fire",
         "FIRE VEGETATION",
         "FIRE PERMITTED BURN",
-        "FIRE OTHER",
         "FIRE VEHICLE",
+        "FIRE STRUCTURE",
+        "POWER / GAS GAS",
         "RESCUE ROAD CRASH"
       ],
       "attempts": [
@@ -101,8 +96,8 @@
       "mergedFrom": [
         "https://api.emergency.wa.gov.au/v1/warnings"
       ],
-      "count": 19,
-      "withAlertLevel": 6,
+      "count": 13,
+      "withAlertLevel": 3,
       "alertLevels": [
         "Advice"
       ],
@@ -131,23 +126,19 @@
       "ok": true,
       "build": "2026-10-16-dispatch",
       "sourceUrl": "https://combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
-      "count": 26,
+      "count": 11,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
         "Controlled - Incident",
         "Safe - Incident",
-        "Going - Incident",
         "Completed - Incident"
       ],
       "types": [
         "Burn Off",
         "Grass Fire",
         "Burn Off Prescribed",
-        "Structure Fire",
-        "TREE DOWN",
-        "Hazardous materials",
-        "Rubbish Or Waste"
+        "TREE DOWN"
       ],
       "attempts": []
     },
@@ -156,12 +147,11 @@
       "ok": true,
       "build": "2026-10-16-dispatch",
       "sourceUrl": "https://alert.tas.gov.au/data/incidents-and-messages.kml",
-      "count": 13,
+      "count": 19,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
         "Patrol",
-        "Mobilised",
         "Going",
         "Investigating"
       ],
@@ -182,22 +172,23 @@
       "ok": true,
       "build": "2026-10-16-dispatch",
       "sourceUrl": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
-      "count": 21,
-      "withAlertLevel": 21,
+      "count": 23,
+      "withAlertLevel": 23,
       "alertLevels": [
         "Advice"
       ],
       "statuses": [
-        "Closed",
-        "Being Controlled"
+        "Active",
+        "Closed"
       ],
       "types": [
-        "Permit Burn",
         "Grass and Scrub Fire",
-        "Automatic Fire Alarm",
-        "Smoke Complaint/Illegal Burn",
+        "Road Crash - Person Trapped",
+        "Road Crash",
         "Vehicle Fire",
-        "Bushfire"
+        "Automatic Fire Alarm",
+        "Aircraft Crash",
+        "Alarm Bells Ringing"
       ],
       "attempts": [
         {
@@ -215,7 +206,7 @@
       "ok": true,
       "build": "2026-10-16-dispatch",
       "sourceUrl": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
-      "count": 20,
+      "count": 16,
       "withAlertLevel": 0,
       "alertLevels": [],
       "statuses": [
@@ -224,6 +215,7 @@
         "Units On Route"
       ],
       "types": [
+        "MOTOR VEHICLE ACCIDENT",
         "AMBULANCE RESPONSE"
       ],
       "attempts": []
@@ -234,28 +226,27 @@
       "httpStatus": 200,
       "ok": true,
       "build": "2026-10-16-dispatch",
-      "count": 205,
-      "customers": 8115,
+      "count": 212,
+      "customers": 9534,
       "complete": false,
-      "rows": 205,
+      "rows": 212,
       "networks": [
         {
           "name": "Ausgrid",
           "ok": true,
-          "count": 8,
+          "count": 9,
           "source": "snapshot",
           "origin": "feed",
-          "capturedAt": 1792139341223,
+          "capturedAt": 1792362181205,
           "attempts": []
         },
         {
           "name": "Endeavour Energy",
           "ok": true,
-          "count": 197,
-          "staleDropped": 37,
+          "count": 203,
           "source": "snapshot",
           "origin": "feed",
-          "capturedAt": 1792139341223,
+          "capturedAt": 1792362181205,
           "attempts": []
         },
         {
@@ -267,13 +258,13 @@
           "attempts": []
         }
       ],
-      "withTowns": 204,
-      "unplannedCount": 16,
-      "unplannedCustomers": 116,
-      "upcomingCount": 189,
-      "upcomingCustomers": 7999,
+      "withTowns": 211,
+      "unplannedCount": 12,
+      "unplannedCustomers": 1075,
+      "upcomingCount": 192,
+      "upcomingCustomers": 8059,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 1079,
+      "snapshotAgeSeconds": 1694,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
@@ -281,10 +272,10 @@
       "httpStatus": 200,
       "ok": true,
       "build": "2026-10-16-dispatch",
-      "count": 9,
-      "customers": 545,
+      "count": 10,
+      "customers": 89,
       "complete": false,
-      "rows": 9,
+      "rows": 10,
       "networks": [
         {
           "name": "AusNet Services",
@@ -296,19 +287,19 @@
         {
           "name": "Powercor",
           "ok": true,
-          "count": 7,
+          "count": 10,
           "source": "snapshot",
           "origin": "feed",
-          "capturedAt": 1792139341223,
+          "capturedAt": 1792362181205,
           "attempts": []
         },
         {
           "name": "CitiPower",
           "ok": true,
-          "count": 2,
+          "count": 0,
           "source": "snapshot",
           "origin": "feed",
-          "capturedAt": 1792139341223,
+          "capturedAt": 1792362181205,
           "attempts": []
         },
         {
@@ -326,13 +317,13 @@
           "attempts": []
         }
       ],
-      "withTowns": 9,
-      "unplannedCount": 6,
-      "unplannedCustomers": 542,
-      "upcomingCount": 2,
-      "upcomingCustomers": 2,
+      "withTowns": 10,
+      "unplannedCount": 4,
+      "unplannedCustomers": 16,
+      "upcomingCount": 1,
+      "upcomingCustomers": 1,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 1079,
+      "snapshotAgeSeconds": 1694,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
@@ -340,38 +331,38 @@
       "httpStatus": 200,
       "ok": true,
       "build": "2026-10-16-dispatch",
-      "count": 363,
-      "customers": 12368,
+      "count": 400,
+      "customers": 17361,
       "complete": true,
-      "rows": 363,
+      "rows": 400,
       "networks": [
         {
           "name": "Energex",
           "ok": true,
-          "count": 116,
+          "count": 142,
           "source": "snapshot",
           "origin": "feed",
-          "capturedAt": 1792139341223,
+          "capturedAt": 1792362181205,
           "attempts": []
         },
         {
           "name": "Ergon Energy",
           "ok": true,
-          "count": 247,
+          "count": 388,
           "source": "snapshot",
           "origin": "feed",
-          "capturedAt": 1792139341223,
+          "capturedAt": 1792362181205,
           "attempts": []
         }
       ],
-      "withTowns": 363,
+      "withTowns": 400,
       "unplannedCount": 9,
-      "unplannedCustomers": 208,
-      "upcomingCount": 327,
-      "upcomingCustomers": 11505,
-      "reclassifiedUpcoming": 15,
+      "unplannedCustomers": 591,
+      "upcomingCount": 365,
+      "upcomingCustomers": 15898,
+      "reclassifiedUpcoming": 24,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 1079,
+      "snapshotAgeSeconds": 1694,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
@@ -379,19 +370,19 @@
       "httpStatus": 200,
       "ok": true,
       "build": "2026-10-16-dispatch",
-      "count": 128,
-      "customers": 12872,
+      "count": 139,
+      "customers": 10371,
       "complete": false,
-      "rows": 128,
+      "rows": 139,
       "networks": [
         {
           "name": "Western Power",
           "ok": true,
-          "count": 128,
+          "count": 139,
           "staleDropped": 2,
           "source": "snapshot",
           "origin": "feed",
-          "capturedAt": 1792139341223,
+          "capturedAt": 1792362181205,
           "attempts": []
         },
         {
@@ -402,14 +393,14 @@
           "attempts": []
         }
       ],
-      "withTowns": 128,
-      "unplannedCount": 7,
-      "unplannedCustomers": 138,
-      "upcomingCount": 120,
-      "upcomingCustomers": 12562,
-      "reclassifiedUpcoming": 120,
+      "withTowns": 139,
+      "unplannedCount": 0,
+      "unplannedCustomers": 0,
+      "upcomingCount": 139,
+      "upcomingCustomers": 10371,
+      "reclassifiedUpcoming": 139,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 1079,
+      "snapshotAgeSeconds": 1694,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
@@ -434,7 +425,7 @@
       "unplannedCount": 0,
       "unplannedCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 1079,
+      "snapshotAgeSeconds": 1694,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
@@ -442,28 +433,28 @@
       "httpStatus": 200,
       "ok": true,
       "build": "2026-10-16-dispatch",
-      "count": 0,
-      "customers": 0,
+      "count": 6,
+      "customers": 341,
       "complete": true,
-      "rows": 0,
+      "rows": 6,
       "networks": [
         {
           "name": "TasNetworks",
           "ok": true,
-          "count": 0,
+          "count": 6,
           "source": "snapshot",
           "origin": "feed",
-          "capturedAt": 1792139341223,
+          "capturedAt": 1792362181205,
           "attempts": []
         }
       ],
-      "withTowns": 0,
+      "withTowns": 6,
       "unplannedCount": 0,
       "unplannedCustomers": 0,
       "upcomingCount": 0,
       "upcomingCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 1079,
+      "snapshotAgeSeconds": 1694,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
@@ -489,7 +480,7 @@
       "unplannedCount": 0,
       "unplannedCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 1079,
+      "snapshotAgeSeconds": 1694,
       "staleRowsStillShown": 0,
       "oldestRows": []
     },
@@ -497,28 +488,28 @@
       "httpStatus": 200,
       "ok": true,
       "build": "2026-10-16-dispatch",
-      "count": 1,
-      "customers": 40,
+      "count": 5,
+      "customers": 1279,
       "complete": true,
-      "rows": 1,
+      "rows": 5,
       "networks": [
         {
           "name": "Evoenergy",
           "ok": true,
-          "count": 1,
+          "count": 5,
           "source": "snapshot",
           "origin": "feed",
-          "capturedAt": 1792139341223,
+          "capturedAt": 1792362181205,
           "attempts": []
         }
       ],
-      "withTowns": 1,
+      "withTowns": 5,
       "unplannedCount": 1,
-      "unplannedCustomers": 40,
+      "unplannedCustomers": 1152,
       "upcomingCount": 0,
       "upcomingCustomers": 0,
       "outageSource": "capture",
-      "snapshotAgeSeconds": 1079,
+      "snapshotAgeSeconds": 1694,
       "staleRowsStillShown": 0,
       "oldestRows": []
     }
