@@ -209,6 +209,35 @@
   .scrape-btn:disabled{opacity:.55;cursor:default}
   .scrape-note{padding:8px 24px 0;font-size:.75rem;color:#5a6a6a;line-height:1.5}
   .scrape-note.bad{color:#8a5200}
+  /* Tabs: everything we can read, then each operator we cannot. Pills that
+     wrap, so seven region names fit on a phone without sideways scrolling. */
+  .outage-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:12px 24px 0}
+  .outage-tab{border:1px solid #d7dee2;background:var(--true-white);color:var(--heritage-green);
+    font:inherit;font-size:.74rem;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer;
+    transition:background .15s,border-color .15s}
+  .outage-tab:hover{border-color:var(--neutral-green)}
+  .outage-tab:focus-visible{outline:2px solid var(--neutral-green);outline-offset:2px}
+  .outage-tab[aria-selected="true"]{background:var(--heritage-green);border-color:var(--heritage-green);color:var(--true-white)}
+  /* The operator tabs are a different kind of answer -- someone else's map,
+     not our data -- and say so with a small marker. */
+  .outage-tab.ext::after{content:" \2197";opacity:.7}
+  .op-embed-head{padding:14px 24px 0}
+  .op-embed-head h4{margin:0;font-size:.92rem;color:var(--heritage-green)}
+  .op-embed-head p{margin:4px 0 0;font-size:.78rem;color:#5a6a6a;line-height:1.5;max-width:760px}
+  .op-embed-frame{margin:12px 24px 0;border:1px solid #d7dee2;border-radius:10px;overflow:hidden}
+  .op-embed-frame iframe{min-height:680px}
+  .op-embed-blocked{margin:12px 24px 0;padding:16px;border-radius:10px;background:#fdf5e8;
+    border:1px solid #e8d3a8;color:#6d4c12;font-size:.82rem;line-height:1.5}
+  .op-embed-blocked .go,.op-embed-link .go{display:inline-block;margin-top:8px;padding:7px 12px;border-radius:7px;
+    background:var(--heritage-green);color:var(--true-white);font-weight:700;text-decoration:none;font-size:.8rem}
+  .op-embed-link{margin:8px 24px 16px;font-size:.74rem;color:#5a6a6a;line-height:1.5}
+  .op-embed-link a{color:var(--neutral-green);font-weight:600}
+  @media (max-width:640px){
+    .outage-tabs,.op-embed-head{padding-left:16px;padding-right:16px}
+    .op-embed-frame,.op-embed-blocked{margin-left:16px;margin-right:16px}
+    .op-embed-link{margin-left:16px;margin-right:16px}
+    .op-embed-frame iframe{min-height:560px}
+  }
   .outage-search{padding:12px 24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .outage-search input{flex:1;min-width:220px;max-width:420px;padding:8px 12px;border-radius:999px;
     border:1px solid #d7dee2;font-size:.82rem;font-family:inherit;color:var(--heritage-green)}
@@ -513,6 +542,11 @@
     <button type="button" class="scrape-btn" id="scrapeBtn" hidden>📷 Refresh capture</button>
   </div>
   <div class="scrape-note" id="scrapeNote" hidden></div>
+  <!-- One tab for everything we can read, then one per operator we cannot.
+       Rendered from OPERATOR_EMBEDS in the script, so the tabs and the
+       "check their map" links in search results come from one list. -->
+  <div class="outage-tabs" id="outageTabs" role="tablist" aria-label="Electricity outage maps"></div>
+  <div class="outage-pane" id="outagePaneAll" role="tabpanel" aria-labelledby="otab-all">
   <div class="outage-search">
     <input type="search" id="outageFilter" placeholder="Find any town or suburb in Australia — e.g. Wyong" autocomplete="off">
     <span class="outage-search-count" id="outageFilterCount"></span>
@@ -532,6 +566,11 @@
     <div class="outage-mapnote" id="outageMapNote"></div>
   </div>
   <div class="outage-foot" id="outageFoot"></div>
+  </div>
+  <!-- The operator tabs share one panel; each operator's frame is built the
+       first time its tab is opened and kept, so switching back does not
+       reload their map. -->
+  <div class="outage-pane" id="outagePaneOperator" role="tabpanel" hidden></div>
 
   <div class="mobile-map-block">
     <h3>📶 Mobile Network Outage Reports <span class="crowd-badge">Crowdsourced — not carrier-confirmed</span></h3>
@@ -1287,7 +1326,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-16-dispatch';
+  const EXPECTED_WORKER_BUILD='2026-10-18-optabs';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
@@ -2576,12 +2615,159 @@ window.addEventListener('resize',()=>map.invalidateSize());
      must never say when it simply cannot place a row. So town names are
      resolved through the ABS gazetteer, and anything that resolves to
      neither is counted out loud under the map rather than quietly dropped. */
-  const OPERATOR_SITES={
-    'SA Power Networks':'https://www.sapowernetworks.com.au/outages/',
-    'Essential Energy':'https://www.essentialenergy.com.au/outages-and-faults/power-outages',
-    'Horizon Power':'https://www.horizonpower.com.au/faults-outages/',
-    'Power and Water Corporation':'https://www.powerwater.com.au/outages'
-  };
+  /* The operators whose outages we cannot read, and where their own map is.
+
+     Each gets a tab in the outages section showing that map, because for
+     these regions it is the only source there is. Whether it can be shown
+     inside this page is the operator's choice, stated in its X-Frame-Options
+     and CSP frame-ancestors headers (scripts/probe-embeddable.mjs reads
+     them):
+       'allowed'   -- shown in a frame, with a link beside it anyway
+       'forbidden' -- not framed; the tab is a link to their site instead
+       'unknown'   -- the site answers automated requests with a bot
+                      challenge, so its real policy cannot be read; framed,
+                      with the link made prominent in case it stays blank
+     Overriding a 'forbidden' -- proxying the page to strip the header --
+     would be going around the operator's decision, so it is not done.
+
+     `region` finishes "Search outages in ...". `why` says, in the tab, why
+     this is their map rather than our data. One list, used for the tabs
+     and for the "check their map" links in search results. */
+  /* `embed` as measured by scripts/probe-embeddable.mjs (data/embed-probe.json,
+     18 Oct 2026):
+       forbidden -- AusNet (X-Frame-Options SAMEORIGIN, frame-ancestors 'self'),
+                    Jemena (same), United Energy (X-Frame-Options deny, on
+                    every page of the site including /outage-map).
+       unknown   -- Power and Water, Essential Energy and Horizon Power answer
+                    an automated request with a Cloudflare check, whose own
+                    headers forbid framing and say nothing about the page's;
+                    SA Power Networks' page allows framing but sits behind
+                    Incapsula, which may challenge inside a frame too.
+     Rerun the probe (Diagnose workflow) if an operator changes its site. */
+  const OPERATOR_EMBEDS=[
+    {id:'nt',op:'Power and Water Corporation',state:'NT',region:'the NT',area:'the Northern Territory',
+      url:'https://www.powerwater.com.au/outages/current-outages',embed:'unknown',
+      why:'Power and Water blocks automated access to its outage list'},
+    {id:'sa',op:'SA Power Networks',state:'SA',region:'SA',area:'South Australia',
+      url:'https://www.sapowernetworks.com.au/outages/',embed:'unknown',
+      why:'SA Power Networks blocks automated access to its outage list'},
+    {id:'nsw-regional',op:'Essential Energy',state:'NSW',region:'regional NSW',area:'regional and rural New South Wales',
+      url:'https://www.essentialenergy.com.au/outages-and-faults/power-outages',embed:'unknown',
+      why:'Essential Energy blocks automated access to its outage list'},
+    {id:'wa-regional',op:'Horizon Power',state:'WA',region:'regional WA',area:'regional Western Australia, outside the south-west grid',
+      url:'https://www.horizonpower.com.au/faults-outages/',embed:'unknown',
+      why:'Horizon Power blocks automated access to its outage list'},
+    {id:'vic-east',op:'AusNet Services',state:'VIC',region:'eastern Victoria',area:'eastern and north-eastern Victoria',
+      url:'https://www.ausnetservices.com.au/outages',embed:'forbidden',
+      why:'AusNet’s list only appears once its page runs in a browser, so we can read it only a couple of times a day'},
+    {id:'melb-nw',op:'Jemena',state:'VIC',region:'north-west Melbourne',area:'north-west Melbourne',
+      url:'https://www.jemena.com.au/outages/electricity-outages/',embed:'forbidden',
+      why:'Jemena’s list only appears once its page runs in a browser'},
+    {id:'melb-se',op:'United Energy',state:'VIC',region:'south-east Melbourne',area:'south-east Melbourne and the Mornington Peninsula',
+      url:'https://www.unitedenergy.com.au/outage-map',embed:'forbidden',
+      why:'United Energy moved its outage list and we have not yet found where its data now comes from'}
+  ];
+  const OPERATOR_SITES=Object.fromEntries(OPERATOR_EMBEDS.map(e=>[e.op,e.url]));
+
+  /* ---- outage tabs ---- */
+  const outageTabsEl=document.getElementById('outageTabs');
+  const outagePaneAll=document.getElementById('outagePaneAll');
+  const outagePaneOp=document.getElementById('outagePaneOperator');
+  const opFrames={};   // built on first open, kept so switching back does not reload them
+
+  function renderOutageTabs(){
+    if(!outageTabsEl)return;
+    const tabs=[{id:'all',label:'Outages we can read',ext:false}]
+      .concat(OPERATOR_EMBEDS.map(e=>({id:e.id,label:'Search outages in '+e.region,ext:true,op:e.op})));
+    outageTabsEl.innerHTML=tabs.map(t=>
+      '<button type="button" role="tab" class="outage-tab'+(t.ext?' ext':'')+'" id="otab-'+t.id+'"'+
+      ' data-tab="'+t.id+'" aria-selected="'+(t.id==='all')+'" tabindex="'+(t.id==='all'?'0':'-1')+'"'+
+      ' aria-controls="'+(t.id==='all'?'outagePaneAll':'outagePaneOperator')+'"'+
+      (t.op?' title="'+escapeHtml(t.op)+' outage map"':'')+'>'+escapeHtml(t.label)+'</button>').join('');
+  }
+
+  function operatorPaneHtml(e){
+    const link='<a href="'+escapeHtml(e.url)+'" target="_blank" rel="noopener">open the '+escapeHtml(e.op)+' map in a new tab ↗</a>';
+    const head='<div class="op-embed-head"><h4>'+escapeHtml(e.op)+' — outages in '+escapeHtml(e.area)+'</h4>'+
+      '<p>We can’t include these outages on our map: '+escapeHtml(e.why)+'. This is their own outage map, '+
+      'exactly as they publish it — use its search to find a town.</p></div>';
+    if(e.embed==='forbidden'){
+      return head+'<div class="op-embed-blocked">'+escapeHtml(e.op)+' doesn’t allow its map to be shown inside other websites, '+
+        'so it can only be opened on their site.<br><a class="go" href="'+escapeHtml(e.url)+'" target="_blank" rel="noopener">'+
+        'Open the '+escapeHtml(e.op)+' outage map ↗</a></div><div class="op-embed-link"></div>';
+    }
+    /* sandbox: their map keeps its scripts, cookies and forms, and may open
+       links in new tabs -- but cannot navigate this dashboard away, which is
+       the one thing a framed page should never be able to do. */
+    return head+'<div class="ca-embed-wrap op-embed-frame"><iframe src="'+escapeHtml(e.url)+'"'+
+      ' title="'+escapeHtml(e.op)+' outage map for '+escapeHtml(e.area)+'" loading="lazy"'+
+      ' referrerpolicy="strict-origin-when-cross-origin"'+
+      ' sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe></div>'+
+      '<div class="op-embed-link">'+(e.embed==='unknown'
+        ?'<b>Blank, or stuck on a “verify you are human” check?</b> Some operators stop their page working inside other sites — '+link+'.'
+        :'Prefer the full page? '+link+'.')+'</div>';
+  }
+
+  function selectOutageTab(id,focus){
+    const e=OPERATOR_EMBEDS.find(x=>x.id===id);
+    if(id!=='all'&&!e)id='all';
+    if(outageTabsEl)outageTabsEl.querySelectorAll('[role=tab]').forEach(b=>{
+      const on=b.dataset.tab===id;
+      b.setAttribute('aria-selected',String(on));
+      b.tabIndex=on?0:-1;
+      if(on&&focus)b.focus();
+    });
+    if(id==='all'){
+      if(outagePaneAll)outagePaneAll.hidden=false;
+      if(outagePaneOp)outagePaneOp.hidden=true;
+      /* Leaflet measures its container when it draws; drawn while hidden it
+         comes back grey and offset unless told the size has changed. */
+      if(oMap)setTimeout(()=>oMap.invalidateSize(),0);
+      return;
+    }
+    if(outagePaneAll)outagePaneAll.hidden=true;
+    if(!outagePaneOp)return;
+    outagePaneOp.hidden=false;
+    outagePaneOp.setAttribute('aria-labelledby','otab-'+id);
+    Object.values(opFrames).forEach(el=>{el.hidden=true;});
+    if(!opFrames[id]){
+      const el=document.createElement('div');
+      el.className='op-embed';
+      el.innerHTML=operatorPaneHtml(e);
+      outagePaneOp.appendChild(el);
+      opFrames[id]=el;
+    }
+    opFrames[id].hidden=false;
+  }
+
+  renderOutageTabs();
+  if(outageTabsEl){
+    outageTabsEl.addEventListener('click',ev=>{
+      const b=ev.target.closest('[data-tab]');if(b)selectOutageTab(b.dataset.tab);
+    });
+    /* Arrow keys move between tabs, as for any tab list. */
+    outageTabsEl.addEventListener('keydown',ev=>{
+      if(!['ArrowLeft','ArrowRight','Home','End'].includes(ev.key))return;
+      const btns=[...outageTabsEl.querySelectorAll('[role=tab]')];
+      const i=btns.findIndex(b=>b.getAttribute('aria-selected')==='true');
+      const j=ev.key==='Home'?0:ev.key==='End'?btns.length-1
+        :(i+(ev.key==='ArrowRight'?1:-1)+btns.length)%btns.length;
+      ev.preventDefault();selectOutageTab(btns[j].dataset.tab,true);
+    });
+  }
+  /* A "check their map" link in a search result opens that operator's tab
+     here; it keeps the real address as its href, so opening it in a new
+     tab still goes straight to the operator. */
+  document.addEventListener('click',ev=>{
+    const a=ev.target.closest&&ev.target.closest('[data-open-operator]');
+    if(!a||ev.metaKey||ev.ctrlKey||ev.shiftKey||ev.button)return;
+    const e=OPERATOR_EMBEDS.find(x=>x.op===a.dataset.openOperator);
+    if(!e)return;
+    ev.preventDefault();
+    selectOutageTab(e.id,true);
+    const sec=document.getElementById('section-outages');
+    if(sec&&sec.scrollIntoView)sec.scrollIntoView({behavior:'smooth',block:'start'});
+  });
   /* Which distributors a state has, and whether we can read them. This drives
      the message for a town with no listed outage, and the distinction is the
      whole point: in SA and NT there is exactly one distributor and it blocks
@@ -2589,14 +2775,38 @@ window.addEventListener('resize',()=>map.invalidateSize());
      distributors answer and one does not, so the same words would be a guess
      -- and wrong every time somebody searches a town whose power is simply
      on. */
+  /* The fallback only. This table was written by hand and went stale: it
+     listed Victoria as fully readable after AusNet, Jemena and United Energy
+     had stopped being, so a search for a Victorian town answered "every
+     distributor in VIC is reporting to us" -- untrue for most of
+     Melbourne. blindSpots() below reads it from the live data instead and
+     uses this only when the data has no networks for the state. */
   const STATE_BLIND={
     SA:{all:true,blocked:['SA Power Networks']},
     NT:{all:true,blocked:['Power and Water Corporation']},
     NSW:{all:false,blocked:['Essential Energy']},
     WA:{all:false,blocked:['Horizon Power']},
-    VIC:{all:false,blocked:[]},QLD:{all:false,blocked:[]},
+    VIC:{all:false,blocked:['AusNet Services','Jemena','United Energy']},QLD:{all:false,blocked:[]},
     TAS:{all:false,blocked:[]},ACT:{all:false,blocked:[]}
   };
+  /* Which of a state's distributors are not reporting right now, from the
+     payload itself. A network merged into another's list (CitiPower and
+     Powercor share one) is reporting, just under the other name. */
+  function blindSpots(payload,st){
+    const want=String(st||'').toUpperCase();
+    const nets=((payload&&payload.networks)||[]).filter(n=>String(n.state||payload.state||'').toUpperCase()===want);
+    if(!nets.length)return STATE_BLIND[want]||{all:false,blocked:[]};
+    const down=nets.filter(n=>!n.ok&&!n.mergedInto).map(n=>n.name);
+    return {all:down.length===nets.length,blocked:down};
+  }
+  /* A link to an operator's map that opens its tab on this page, keeping
+     the operator's own address as the href for a new-tab click. */
+  function operatorLink(op,text){
+    const url=OPERATOR_SITES[op];
+    if(!url)return '';
+    return '<a class="go" href="'+escapeHtml(url)+'" target="_blank" rel="noopener" data-open-operator="'+
+      escapeHtml(op)+'">'+text+'</a>';
+  }
 
   /* Strips the ABS disambiguator from a locality name: "(TAS.)",
      "(BRISBANE - QLD)". Only a recognised state code is accepted at the end
@@ -2932,24 +3142,25 @@ window.addEventListener('resize',()=>map.invalidateSize());
         ' and none of them has a listed outage.</div>';
     }
     const st=states[0];
-    const info=STATE_BLIND[st]||{all:false,blocked:[]};
+    const info=blindSpots(payload,st);
     if(info.all){
-      const op=info.blocked[0],url=OPERATOR_SITES[op];
+      const op=info.blocked[0];
       return '<div class="outage-verdict blind">We can\u2019t show outages for <b>'+
         escapeHtml(q)+'</b> ('+st+'). <b>'+escapeHtml(op)+
-        '</b> is the only distributor here and it blocks automated access, so we have no list to search \u2014 '+
+        '</b> is the only distributor here and we can\u2019t read its list, so we have nothing to search \u2014 '+
         'this is not the same as saying your power is on.'+
-        '<br><a class="go" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">Check '+
-        escapeHtml(op)+'\u2019s own outage map \u2192</a></div>';
+        '<br>'+operatorLink(op,'Search the '+escapeHtml(op)+' outage map \u2192')+'</div>';
     }
     if(info.blocked.length){
-      const op=info.blocked[0],url=OPERATOR_SITES[op];
+      /* Every unreadable distributor named, not just the first: in Victoria
+         it is three of five, and naming one implied the others were fine. */
+      const names=info.blocked.map(op=>'<b>'+escapeHtml(op)+'</b>');
+      const list=names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names[names.length-1];
       return '<div class="outage-verdict clear">No current outage listed for <b>'+escapeHtml(q)+
         '</b> by the operators we can read in '+st+'.'+
-        '<br><span style="opacity:.85">One caveat: <b>'+escapeHtml(op)+
-        '</b> blocks automated access, so if it is your distributor we cannot see your area.</span>'+
-        '<br><a class="go" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">Check '+
-        escapeHtml(op)+'\u2019s map \u2192</a></div>';
+        '<br><span style="opacity:.85">One caveat: we can\u2019t read '+list+
+        ', so if '+(names.length===1?'it is':'one of them is')+' your distributor we cannot see your area.</span>'+
+        '<br>'+info.blocked.map(op=>operatorLink(op,'Search the '+escapeHtml(op)+' map \u2192')).filter(Boolean).join(' ')+'</div>';
     }
     /* Every distributor in this state answers, so "no outage listed" is a
        real answer and gets no warning attached to it. */

@@ -88,6 +88,13 @@ function statePayload(scenario) {
     nets[2].reportedVia = 'Power Outages Australia';
     outages = outages.filter(o => o.network !== 'Essential Energy');
   }
+  /* The distributors that block us in reality, marked down the way the
+     Worker marks them, so the page's search verdict has something true to
+     say. SA and NT are set the same way in the per-state handler below. */
+  if (scenario === 'blind') {
+    nets[2].ok = false; nets[2].blocked = true; nets[2].error = 'HTTP 403';
+    outages = outages.filter(o => o.network !== 'Essential Energy');
+  }
   if (scenario === 'via') {
     nets[2].via = 'Power Outages Australia';
     nets[2].viaUrl = 'https://poweroutagesaustralia.com.au/distributors/essential-energy/';
@@ -182,9 +189,10 @@ const server = http.createServer((req, res) => {
       const others = {
         VIC: [{ name: 'Powercor', area: 'Western Victoria', site: 'https://www.powercor.com.au/', ok: true, count: 0, customers: 0 },
               { name: 'Jemena', area: 'North-western Melbourne', site: 'https://www.jemena.com.au/', ok: true, count: 0, customers: 0 }],
-        /* Reporting, not blocked. Which states are blind is the page's own
-           constant, not something the fixture decides -- baking it in here
-           made every scenario, including the quiet one, carry a warning. */
+        /* Reporting, not blocked, except in the 'blind' scenario. Which
+           distributors are blind comes from these payloads now, so baking a
+           block in here for every scenario would make every one of them,
+           including the quiet one, carry a warning. */
         SA:  [{ name: 'SA Power Networks', area: 'All of South Australia', site: 'https://www.sapowernetworks.com.au/outages/', ok: true, count: 0, customers: 0 }],
         NT:  [{ name: 'Power and Water Corporation', area: 'All of the Northern Territory', site: 'https://www.powerwater.com.au/outages', ok: true, count: 0, customers: 0 }],
         QLD: [{ name: 'Energex', area: 'South East Queensland', site: 'https://www.energex.com.au/', ok: true, count: 0, customers: 0 }],
@@ -192,6 +200,9 @@ const server = http.createServer((req, res) => {
         TAS: [{ name: 'TasNetworks', area: 'All of Tasmania', site: 'https://www.tasnetworks.com.au/outages', ok: true, count: 0, customers: 0 }],
         ACT: [{ name: 'Evoenergy', area: 'All of the ACT', site: 'https://www.evoenergy.com.au/Outages', ok: true, count: 0, customers: 0 }]
       };
+      if (sc === 'blind' && (st === 'SA' || st === 'NT')) {
+        others[st] = others[st].map(n => Object.assign({}, n, { ok: false, blocked: true, error: 'HTTP 403' }));
+      }
       return send(200, { state: st, name: st, ok: true, complete: true, count: 0, customers: 0,
         unplannedCount: 0, unplannedCustomers: 0, plannedCount: 0, plannedCustomers: 0,
         networks: others[st] || [], outages: [] });

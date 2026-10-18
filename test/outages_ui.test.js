@@ -212,8 +212,10 @@ const check = (n, c, x) => {
   {
     const p = await open('snapshot');
     check('the age of the capture is on screen', /captured/i.test(await summary(p)), await summary(p));
-    check('and the footer says how to refresh it',
-      /scrape outages/i.test(await foot(p)), await foot(p));
+    /* Captures run on their own now, so the footer gives the capture's age
+       rather than telling the reader to run a workflow by hand. */
+    check('and the footer says it is a capture, with its age',
+      /capture taken 3 hours ago/i.test(await foot(p)) && !/scrape outages/i.test(await foot(p)), await foot(p));
     /* The footnote names only the captured operator; one fetched live must
        not be swept into the same sentence. */
     check('operators fetched live are not named as captured',
@@ -496,7 +498,11 @@ const check = (n, c, x) => {
 
   console.log('\n== what a search says when it finds nothing ==');
   {
-    const p = await open('live');
+    /* 'blind' marks Essential Energy, SA Power Networks and Power and Water
+       down, as the Worker reports them -- the verdict reads which
+       distributors are blind from the data rather than a list in the page,
+       which had gone stale for Victoria. */
+    const p = await open('blind');
     await p.waitForTimeout(1200);
 
     /* NSW: Ausgrid and Endeavour answer, Essential Energy does not. "No
@@ -521,7 +527,7 @@ const check = (n, c, x) => {
     await p.fill('#outageFilter', 'Port Augusta');
     await p.waitForTimeout(400);
     v = await p.$eval('#outageList', e => e.innerText);
-    check('SA says the provider blocks us', /blocks automated access/i.test(v), v);
+    check('SA says we cannot read the provider', /only distributor here and we can.t read its list/i.test(v), v);
     check('and does not let that be read as "no outage"',
       /not the same as saying your power is on/i.test(v), v);
     check('with a link to SA Power Networks',
@@ -537,7 +543,7 @@ const check = (n, c, x) => {
     v = await p.$eval('#outageList', e => e.innerText);
     check('VIC says no outage is listed', /No current outage listed/i.test(v), v);
     check('and warns about nobody, because nobody is blocked',
-      !/blocks automated access/i.test(v), v);
+      !/blocks automated access|can.t read/i.test(v), v);
     check('and is styled as an all-clear',
       await p.$eval('#outageList .outage-verdict', e => e.classList.contains('clear')));
 
@@ -549,7 +555,7 @@ const check = (n, c, x) => {
     check('an ambiguous name lists every state it is in',
       /VIC/.test(v) && /TAS/.test(v), v);
     check('and claims nothing about a distributor',
-      !/blocks automated access/i.test(v), v);
+      !/blocks automated access|can.t read/i.test(v), v);
 
     /* A place the gazetteer does not carry. Asserting anything about its
        provider would be invention. */
@@ -558,6 +564,60 @@ const check = (n, c, x) => {
     v = await p.$eval('#outageList', e => e.innerText);
     check('an unknown place says so rather than guessing',
       /don.t recognise it/i.test(v), v);
+    await p.close();
+  }
+
+  console.log('\n== operators we cannot read get their own tab ==');
+  {
+    /* Their maps are real third-party pages. The test checks what the
+       dashboard asks for -- the iframe, its sandbox, the fallback link --
+       and never loads the operators' sites themselves. */
+    await ctx.route(u => !/^http:\/\/localhost[:/]/.test(String(u)), r => r.abort());
+    const p = await open('blind');
+    const labels = await p.$$eval('#outageTabs [role=tab]', e => e.map(x => x.textContent.trim()));
+    check('the first tab is the map we draw', labels[0] === 'Outages we can read', labels);
+    check('each operator tab is named for its region',
+      labels.slice(1).every(l => /^Search outages in /.test(l)) && labels.includes('Search outages in the NT'), labels);
+
+    await p.click('#otab-nt');
+    check('opening one hides our map',
+      await p.$eval('#outagePaneAll', e => e.hidden) && !(await p.$eval('#outagePaneOperator', e => e.hidden)));
+    const f = await p.$eval('#outagePaneOperator iframe', e => ({ src: e.src, sb: e.getAttribute('sandbox') }));
+    check('and frames the operator’s own map', /powerwater\.com\.au/.test(f.src), f);
+    check('which cannot navigate the dashboard away',
+      /allow-scripts/.test(f.sb) && !/allow-top-navigation/.test(f.sb), f);
+    check('with a way out if their page refuses the frame',
+      /verify you are human/i.test(await p.$eval('#outagePaneOperator', e => e.innerText)));
+
+    /* AusNet forbids framing. An iframe would render blank; a proxy that
+       stripped the header would be going around the operator. A link it is. */
+    await p.click('#otab-vic-east');
+    const vis = await p.$$eval('#outagePaneOperator .op-embed', es => es.filter(e => !e.hidden).map(e => ({
+      frames: e.querySelectorAll('iframe').length, text: e.innerText,
+      href: (e.querySelector('a.go') || {}).href })));
+    check('an operator that forbids framing gets a link, not a blank frame',
+      vis.length === 1 && vis[0].frames === 0 && /ausnetservices\.com\.au/.test(vis[0].href || ''), vis);
+
+    await p.keyboard.press('ArrowRight');
+    check('arrow keys move along the tabs',
+      await p.$eval('#otab-melb-nw', e => e.getAttribute('aria-selected') === 'true'));
+
+    await p.click('#otab-all');
+    await p.waitForTimeout(150);
+    const box = await p.$eval('#outageMap', e => e.getBoundingClientRect().height);
+    check('going back shows our map again, drawn at full size',
+      !(await p.$eval('#outagePaneAll', e => e.hidden)) && box > 100, box);
+
+    /* A search that lands in a blind state links to that operator's tab. */
+    await p.fill('#outageFilter', 'Port Augusta');
+    await p.waitForTimeout(400);
+    await p.click('#outageList .outage-verdict a[data-open-operator]');
+    check('the search verdict’s link opens that operator’s tab',
+      await p.$eval('#otab-sa', e => e.getAttribute('aria-selected') === 'true'));
+    check('and frames SA Power Networks',
+      await p.$$eval('#outagePaneOperator .op-embed', es => es.some(e => !e.hidden &&
+        /sapowernetworks/.test((e.querySelector('iframe') || {}).src || ''))));
+    check('no page errors', p._errs.length === 0, p._errs);
     await p.close();
   }
 

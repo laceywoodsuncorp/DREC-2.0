@@ -465,7 +465,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-16-dispatch';
+const WORKER_BUILD = '2026-10-18-optabs';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -3460,8 +3460,11 @@ export const OUTAGE_NETWORKS = {
           { url: 'https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json', format: 'json', parse: parseCppcOutages('CitiPower') },
           { url: 'https://www.citipower.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable }
         ] },
+      /* The list page below now answers 404; the site's outage page moved to
+         /outage-map (found by scripts/probe-embeddable.mjs), so that is the
+         page readers are sent to. The source stays until its data is found. */
       { name: 'United Energy', area: 'South-eastern Melbourne and the Mornington Peninsula',
-        site: 'https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/',
+        site: 'https://www.unitedenergy.com.au/outage-map',
         sources: [
           { url: 'https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable }
         ] },
