@@ -122,6 +122,33 @@ try {
   console.log('terms ' + res.status + ' ' + text.length + ' chars');
 } catch (e) { report.terms = { error: e.message }; }
 
+/* The feed POA's own map reads, fetched plainly -- our User-Agent, no
+   borrowed Origin or Referer. A few records per distributor are kept so
+   the Worker's parser is written against real values rather than key
+   names, and become its test fixture. */
+const FEED = 'https://poa-outages-api.sk-9b3.workers.dev/outages';
+try {
+  const res = await fetch(FEED, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+  const body = await res.json();
+  const sample = { fetchedAt: new Date().toISOString(), status: res.status,
+    cacheControl: res.headers.get('cache-control'), generatedAt: body.generatedAt, totals: body.totals,
+    coverage: body.coverage, sources: body.sources, byDistributor: body.byDistributor, filtered: body.filtered,
+    outageCount: (body.outages || []).length, outages: [] };
+  const per = {};
+  for (const o of body.outages || []) {
+    const k = o.distributor + '|' + o.type + '|' + o.scheduled;
+    if ((per[k] = (per[k] || 0) + 1) > 2) continue;
+    /* Geometry trimmed to its type and first point: enough to know the
+       shape, without carrying someone's polygon file around. */
+    const g = o.geometry;
+    const first = (c) => (Array.isArray(c) && Array.isArray(c[0]) ? first(c[0]) : c);
+    sample.outages.push(Object.assign({}, o, { geometry: g && { type: g.type, coordinates: first(g.coordinates) } }));
+  }
+  writeFileSync('data/poa-feed-sample.json', JSON.stringify(sample, null, 1) + '\n');
+  console.log('feed ' + res.status + ' outages=' + sample.outageCount + ' sampled=' + sample.outages.length +
+    ' generatedAt=' + body.generatedAt + ' cache-control=' + sample.cacheControl);
+} catch (e) { console.log('feed: ' + e.message); }
+
 const pw = await import('playwright').catch(() => null);
 if (pw) {
   const browser = await pw.chromium.launch();
