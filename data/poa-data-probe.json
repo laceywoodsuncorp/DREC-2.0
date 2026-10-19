@@ -1,5 +1,5 @@
 {
- "at": "2026-10-19T01:08:20.520Z",
+ "at": "2026-10-19T01:34:15.037Z",
  "robots": {
   "status": 200,
   "rules": [
@@ -900,7 +900,7 @@
      "status": 200,
      "type": "application/json",
      "method": "GET",
-     "bytes": 442535,
+     "bytes": 435582,
      "shape": {
       "keys": [
        "generatedAt",
@@ -936,19 +936,13 @@
       },
       "byState": {
        "keys": [
-        "NSW",
         "ACT",
         "SA",
+        "NSW",
         "WA",
-        "VIC",
-        "TAS"
+        "TAS",
+        "VIC"
        ],
-       "NSW": {
-        "keys": [
-         "outages",
-         "customersAffected"
-        ]
-       },
        "ACT": {
         "keys": [
          "outages",
@@ -961,19 +955,25 @@
          "customersAffected"
         ]
        },
+       "NSW": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
        "WA": {
         "keys": [
          "outages",
          "customersAffected"
         ]
        },
-       "VIC": {
+       "TAS": {
         "keys": [
          "outages",
          "customersAffected"
         ]
        },
-       "TAS": {
+       "VIC": {
         "keys": [
          "outages",
          "customersAffected"
@@ -994,28 +994,19 @@
       "byDistributor": {
        "keys": [
         "SA Power Networks",
-        "Endeavour Energy",
         "Western Power",
         "Evoenergy",
         "Essential Energy",
         "AusNet Services",
         "Ausgrid",
+        "Endeavour Energy",
         "Horizon Power",
-        "Powercor",
         "TasNetworks",
         "CitiPower",
+        "Powercor",
         "United Energy"
        ],
        "SA Power Networks": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "Endeavour Energy": {
         "keys": [
          "state",
          "live",
@@ -1069,7 +1060,7 @@
          "sourceUrl"
         ]
        },
-       "Horizon Power": {
+       "Endeavour Energy": {
         "keys": [
          "state",
          "live",
@@ -1078,7 +1069,7 @@
          "sourceUrl"
         ]
        },
-       "Powercor": {
+       "Horizon Power": {
         "keys": [
          "state",
          "live",
@@ -1097,6 +1088,15 @@
         ]
        },
        "CitiPower": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Powercor": {
         "keys": [
          "state",
          "live",
@@ -1143,7 +1143,7 @@
        }
       },
       "outages": {
-       "array": 644,
+       "array": 635,
        "first": {
         "keys": [
          "id",
@@ -1167,10 +1167,281 @@
      }
     }
    ],
-   "rendered": "Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home / Outage map / Essential Energy Essential Energy power outages NSW · QLD · 3,754 suburbs covered Essential Energy has 13 outages right now 13 active outages 588 customers off supply 67 planned jobs ahead Checked Mon 1:07 am · updates continuously About Essential Energy Essential Energy is the electricity distribution network for parts of NSW, QLD — it owns and maintains the poles, wires and substations that carry power to roughly 3,754 suburbs we track. It is not an energy retailer: which distributor serves you is decided by your address, not by the company that bills you. We collect Essential Energy's publicly published outage information continuously and show it alongside the other connected networks, so you do not have to know whose network you are on before you can find out whether your power is out. Essential Energy remains the authority on its own network. Suburbs supplied by Essential Energy Each links to that suburb's current outage status. Aarons Pass Abercrombie Abercrombie River Aberfoyle Aberglasslyn Abington Acacia Creek Acacia Park Acacia Plateau Adaminaby Adelong Adjungbilly Afterlee Akolele Albert Albury Aldavilla Alectown Alfredtown Alice Alice Alison Allandale Alleena Allgomera Allgomera Creek Allworth Allynbrook Alma Park Alstonvale Alstonville Alumy Creek Amaroo Amiens Amiens Ammerdown Amosfield Anabranch North Anabranch South Anambah Ando Anembo Angled"
+   "rendered": "Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home / Outage map / Essential Energy Essential Energy power outages NSW · QLD · 3,754 suburbs covered Essential Energy has 12 outages right now 12 active outages 581 customers off supply 67 planned jobs ahead Checked Mon 1:33 am · updates continuously About Essential Energy Essential Energy is the electricity distribution network for parts of NSW, QLD — it owns and maintains the poles, wires and substations that carry power to roughly 3,754 suburbs we track. It is not an energy retailer: which distributor serves you is decided by your address, not by the company that bills you. We collect Essential Energy's publicly published outage information continuously and show it alongside the other connected networks, so you do not have to know whose network you are on before you can find out whether your power is out. Essential Energy remains the authority on its own network. Suburbs supplied by Essential Energy Each links to that suburb's current outage status. Aarons Pass Abercrombie Abercrombie River Aberfoyle Aberglasslyn Abington Acacia Creek Acacia Park Acacia Plateau Adaminaby Adelong Adjungbilly Afterlee Akolele Albert Albury Aldavilla Alectown Alfredtown Alice Alice Alison Allandale Alleena Allgomera Allgomera Creek Allworth Allynbrook Alma Park Alstonvale Alstonville Alumy Creek Amaroo Amiens Amiens Ammerdown Amosfield Anabranch North Anabranch South Anambah Ando Anembo Angled"
   },
   "power-and-water": {
    "requests": [
+    {
+     "url": "https://poa-outages-api.sk-9b3.workers.dev/outages",
+     "status": 200,
+     "type": "application/json",
+     "method": "GET",
+     "bytes": 435582,
+     "shape": {
+      "keys": [
+       "generatedAt",
+       "durationMs",
+       "totals",
+       "scheduled",
+       "byState",
+       "sources",
+       "byDistributor",
+       "coverage",
+       "filtered",
+       "outages",
+       "collectorLogs",
+       "producedBy",
+       "engineSync"
+      ],
+      "totals": {
+       "keys": [
+        "outages",
+        "customersAffected",
+        "unplanned",
+        "planned"
+       ]
+      },
+      "scheduled": {
+       "keys": [
+        "outages",
+        "customersAffected",
+        "horizonHours",
+        "beyondHorizon",
+        "beyondHorizonCustomers"
+       ]
+      },
+      "byState": {
+       "keys": [
+        "ACT",
+        "SA",
+        "NSW",
+        "WA",
+        "TAS",
+        "VIC"
+       ],
+       "ACT": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "SA": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "NSW": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "WA": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "TAS": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "VIC": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       }
+      },
+      "sources": {
+       "array": 12,
+       "first": {
+        "keys": [
+         "name",
+         "ok",
+         "count",
+         "droppedStale"
+        ]
+       }
+      },
+      "byDistributor": {
+       "keys": [
+        "SA Power Networks",
+        "Western Power",
+        "Evoenergy",
+        "Essential Energy",
+        "AusNet Services",
+        "Ausgrid",
+        "Endeavour Energy",
+        "Horizon Power",
+        "TasNetworks",
+        "CitiPower",
+        "Powercor",
+        "United Energy"
+       ],
+       "SA Power Networks": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Western Power": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Evoenergy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Essential Energy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "AusNet Services": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Ausgrid": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Endeavour Energy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Horizon Power": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "TasNetworks": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "CitiPower": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Powercor": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "United Energy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       }
+      },
+      "coverage": {
+       "keys": [
+        "connected",
+        "total",
+        "states",
+        "missing"
+       ],
+       "states": {
+        "array": 6,
+        "first": "string"
+       },
+       "missing": {
+        "array": 3,
+        "first": "string"
+       }
+      },
+      "filtered": {
+       "keys": [
+        "stale",
+        "staleCustomers",
+        "implausibleTimestamps",
+        "implausibleBy"
+       ],
+       "implausibleBy": {
+        "keys": []
+       }
+      },
+      "outages": {
+       "array": 635,
+       "first": {
+        "keys": [
+         "id",
+         "distributor",
+         "state",
+         "type",
+         "scheduled",
+         "customersAffected",
+         "suburbs",
+         "startTime",
+         "estimatedRestoration",
+         "centre",
+         "geometry"
+        ]
+       }
+      },
+      "collectorLogs": {
+       "array": 22,
+       "first": "string"
+      }
+     }
+    },
     {
      "url": "https://poweroutagesaustralia.com.au/cdn-cgi/rum?",
      "status": 204,
@@ -1184,282 +1455,11 @@
      "status": 200,
      "type": "application/json",
      "method": "GET",
-     "bytes": 442535,
-     "shape": {
-      "keys": [
-       "generatedAt",
-       "durationMs",
-       "totals",
-       "scheduled",
-       "byState",
-       "sources",
-       "byDistributor",
-       "coverage",
-       "filtered",
-       "outages",
-       "collectorLogs",
-       "producedBy",
-       "engineSync"
-      ],
-      "totals": {
-       "keys": [
-        "outages",
-        "customersAffected",
-        "unplanned",
-        "planned"
-       ]
-      },
-      "scheduled": {
-       "keys": [
-        "outages",
-        "customersAffected",
-        "horizonHours",
-        "beyondHorizon",
-        "beyondHorizonCustomers"
-       ]
-      },
-      "byState": {
-       "keys": [
-        "NSW",
-        "ACT",
-        "SA",
-        "WA",
-        "VIC",
-        "TAS"
-       ],
-       "NSW": {
-        "keys": [
-         "outages",
-         "customersAffected"
-        ]
-       },
-       "ACT": {
-        "keys": [
-         "outages",
-         "customersAffected"
-        ]
-       },
-       "SA": {
-        "keys": [
-         "outages",
-         "customersAffected"
-        ]
-       },
-       "WA": {
-        "keys": [
-         "outages",
-         "customersAffected"
-        ]
-       },
-       "VIC": {
-        "keys": [
-         "outages",
-         "customersAffected"
-        ]
-       },
-       "TAS": {
-        "keys": [
-         "outages",
-         "customersAffected"
-        ]
-       }
-      },
-      "sources": {
-       "array": 12,
-       "first": {
-        "keys": [
-         "name",
-         "ok",
-         "count",
-         "droppedStale"
-        ]
-       }
-      },
-      "byDistributor": {
-       "keys": [
-        "SA Power Networks",
-        "Endeavour Energy",
-        "Western Power",
-        "Evoenergy",
-        "Essential Energy",
-        "AusNet Services",
-        "Ausgrid",
-        "Horizon Power",
-        "Powercor",
-        "TasNetworks",
-        "CitiPower",
-        "United Energy"
-       ],
-       "SA Power Networks": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "Endeavour Energy": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "Western Power": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "Evoenergy": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "Essential Energy": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "AusNet Services": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "Ausgrid": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "Horizon Power": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "Powercor": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "TasNetworks": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "CitiPower": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       },
-       "United Energy": {
-        "keys": [
-         "state",
-         "live",
-         "scheduled",
-         "customersAffected",
-         "sourceUrl"
-        ]
-       }
-      },
-      "coverage": {
-       "keys": [
-        "connected",
-        "total",
-        "states",
-        "missing"
-       ],
-       "states": {
-        "array": 6,
-        "first": "string"
-       },
-       "missing": {
-        "array": 3,
-        "first": "string"
-       }
-      },
-      "filtered": {
-       "keys": [
-        "stale",
-        "staleCustomers",
-        "implausibleTimestamps",
-        "implausibleBy"
-       ],
-       "implausibleBy": {
-        "keys": []
-       }
-      },
-      "outages": {
-       "array": 644,
-       "first": {
-        "keys": [
-         "id",
-         "distributor",
-         "state",
-         "type",
-         "scheduled",
-         "customersAffected",
-         "suburbs",
-         "startTime",
-         "estimatedRestoration",
-         "centre",
-         "geometry"
-        ]
-       }
-      },
-      "collectorLogs": {
-       "array": 22,
-       "first": "string"
-      }
-     }
-    },
-    {
-     "url": "https://poa-outages-api.sk-9b3.workers.dev/outages",
-     "status": 200,
-     "type": "application/json",
-     "method": "GET",
      "bytes": 0,
      "sample": ""
     }
    ],
-   "rendered": "Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home / Outage map / Power and Water Power and Water power outages NT · 408 suburbs covered No Power and Water outages reported right now 0 active outages 0 customers off supply 0 planned jobs ahead Checked Mon 1:07 am · updates continuously About Power and Water Power and Water is the electricity distribution network for parts of NT — it owns and maintains the poles, wires and substations that carry power to roughly 408 suburbs we track. It is not an energy retailer: which distributor serves you is decided by your address, not by the company that bills you. We collect Power and Water's publicly published outage information continuously and show it alongside the other connected networks, so you do not have to know whose network you are on before you can find out whether your power is out. Power and Water remains the authority on its own network. Suburbs supplied by Power and Water Each links to that suburb's current outage status. Acacia Hills Adelaide River Aherrenge Alawa Ali Curung Alice Springs Alice Springs Alice Springs Alyangula Amata Amoonguna Amoonguna Ampilatwatja Anangu Pitjantjatjara Yankunytjatjara Anatye Angurugu Anindilyakwa Anmatjere Annie River Antewenegerrde Anula Araluen Archer Areyonga Arnold Arumbera Atitjere Avon Downs Ayers Range South Ayers Rock Bagot Baines Bakewell Barrow Creek Barunga Batchelor Bathurst Island Bayview Bees Creek Bellamack Belyuen Berri"
+   "rendered": "Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home / Outage map / Power and Water Power and Water power outages NT · 408 suburbs covered No Power and Water outages reported right now 0 active outages 0 customers off supply 0 planned jobs ahead Checked Mon 1:33 am · updates continuously About Power and Water Power and Water is the electricity distribution network for parts of NT — it owns and maintains the poles, wires and substations that carry power to roughly 408 suburbs we track. It is not an energy retailer: which distributor serves you is decided by your address, not by the company that bills you. We collect Power and Water's publicly published outage information continuously and show it alongside the other connected networks, so you do not have to know whose network you are on before you can find out whether your power is out. Power and Water remains the authority on its own network. Suburbs supplied by Power and Water Each links to that suburb's current outage status. Acacia Hills Adelaide River Aherrenge Alawa Ali Curung Alice Springs Alice Springs Alice Springs Alyangula Amata Amoonguna Amoonguna Ampilatwatja Anangu Pitjantjatjara Yankunytjatjara Anatye Angurugu Anindilyakwa Anmatjere Annie River Antewenegerrde Anula Araluen Archer Areyonga Arnold Arumbera Atitjere Avon Downs Ayers Range South Ayers Rock Bagot Baines Bakewell Barrow Creek Barunga Batchelor Bathurst Island Bayview Bees Creek Bellamack Belyuen Berri"
   }
  },
  "terms": {

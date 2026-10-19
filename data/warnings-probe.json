@@ -1,14 +1,14 @@
 {
-  "at": "2026-10-19T00:56:37.167Z",
+  "at": "2026-10-19T01:23:38.589Z",
   "states": {
     "qld": [
       {
         "url": "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json",
         "status": 200,
         "type": "binary/octet-stream",
-        "bytes": 59521,
+        "bytes": 63759,
         "shape": "object",
-        "items": 26,
+        "items": 28,
         "fields": {
           "WarningTitle": [
             "AVOID SMOKE - Dajarra - fire as at 12:00pm Sunday, 18 Octobe",
@@ -69,9 +69,9 @@
         "url": "https://www.fire.qld.gov.au/data/alerts/bushfireAlert.json",
         "status": 200,
         "type": "binary/octet-stream",
-        "bytes": 59521,
+        "bytes": 63759,
         "shape": "object",
-        "items": 26,
+        "items": 28,
         "fields": {
           "WarningTitle": [
             "AVOID SMOKE - Dajarra - fire as at 12:00pm Sunday, 18 Octobe",
@@ -132,9 +132,9 @@
         "url": "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.xml",
         "status": 200,
         "type": "binary/octet-stream",
-        "bytes": 21443,
+        "bytes": 20756,
         "shape": "xml",
-        "items": 30,
+        "items": 29,
         "fields": {},
         "verdict": "no level-like field found"
       },
@@ -250,9 +250,9 @@
         "url": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
         "status": 200,
         "type": "text/xml",
-        "bytes": 69959,
+        "bytes": 81583,
         "shape": "xml",
-        "items": 18,
+        "items": 21,
         "fields": {
           "distributionStatus": [
             "Actual"
@@ -262,8 +262,7 @@
           ],
           "category": [
             "Fire",
-            "Other",
-            "Transport"
+            "Other"
           ],
           "urgency": [
             "Unknown"
@@ -307,9 +306,9 @@
         "url": "https://emergency.vic.gov.au/public/events-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 14098,
+        "bytes": 13716,
         "shape": "object",
-        "items": 16,
+        "items": 15,
         "fields": {
           "status": [
             "Patrolled",
@@ -317,8 +316,7 @@
             "Safe",
             "Not Yet Under Control",
             "Under Control",
-            "Complete",
-            "Responding"
+            "Request For Assistance"
           ],
           "category1": [
             "Planned Burn",
@@ -330,26 +328,25 @@
             "Planned Burn",
             "Bushfire",
             "Tree Down",
-            "Non Structure Fire",
             "Other",
-            "Building Fire"
+            "Non Structure Fire"
           ]
         },
-        "verdict": "operational status only: Patrolled | Safe | Under Control | Responding"
+        "verdict": "operational status only: Patrolled | Safe | Under Control"
       },
       {
         "url": "https://emergency.vic.gov.au/public/warnings-geojson.json",
         "status": 404,
         "title": "404 Not Found",
-        "bytes": 363
+        "bytes": 383
       },
       {
         "url": "https://emergency.vic.gov.au/public/osom-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 42945,
+        "bytes": 42512,
         "shape": "object",
-        "items": 38,
+        "items": 37,
         "fields": {
           "status": [
             "Patrolled",
@@ -357,8 +354,7 @@
             "Safe",
             "Not Yet Under Control",
             "Under Control",
-            "Responding",
-            "Complete",
+            "Request For Assistance",
             "Unknown"
           ],
           "category1": [
@@ -371,14 +367,13 @@
           "category2": [
             "Planned Burn",
             "Bushfire",
-            "Building Fire",
             "Tree Down",
-            "Non Structure Fire",
             "Other",
+            "Non Structure Fire",
             "Burn Area"
           ]
         },
-        "verdict": "operational status only: Patrolled | Safe | Under Control | Responding"
+        "verdict": "operational status only: Patrolled | Safe | Under Control"
       }
     ],
     "tas": [
@@ -460,7 +455,7 @@
         "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 18726,
+        "bytes": 18765,
         "shape": "object",
         "fields": {
           "_category": [
@@ -497,7 +492,7 @@
         "url": "http://www.bom.gov.au/fwo/IDZ00054.warnings_land_nsw.xml",
         "status": 403,
         "title": "",
-        "bytes": 1385
+        "bytes": 1387
       }
     ]
   }
