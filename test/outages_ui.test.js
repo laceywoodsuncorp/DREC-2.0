@@ -169,7 +169,7 @@ const check = (n, c, x) => {
     const f = await foot(p);
     check('the footer names the source', /Power Outages Australia/i.test(f), f);
     check('and explains why it is not the operator',
-      /third-party aggregator/i.test(f) && /blocks/i.test(f), f);
+      /independent site/i.test(f) && /can.t read/i.test(f) && /indicative/i.test(f), f);
     check('and names which operator it applies to', /Essential/.test(f), f);
     await p.close();
   }
@@ -498,14 +498,15 @@ const check = (n, c, x) => {
     check('and is styled as a gap, not an all-clear',
       await p.$eval('#outageList .outage-verdict', e => e.classList.contains('blind')));
 
-    /* Victoria: every distributor answers, so no warning belongs here at all.
-       Telling someone their provider blocks us when their power is simply on
-       is the failure this whole verdict exists to avoid. */
+    /* Victoria: every distributor is read -- three of them through Power
+       Outages Australia -- so no warning belongs here at all. Telling
+       someone their provider blocks us when their power is simply on is
+       the failure this whole verdict exists to avoid. */
     await p.fill('#outageFilter', 'Ballarat Central');
     await p.waitForTimeout(400);
     v = await p.$eval('#outageList', e => e.innerText);
     check('VIC says no outage is listed', /No current outage listed/i.test(v), v);
-    check('and warns about nobody, because nobody is blocked',
+    check('and warns about nobody, because nobody is unreadable',
       !/blocks automated access|can.t read/i.test(v), v);
     check('and is styled as an all-clear',
       await p.$eval('#outageList .outage-verdict', e => e.classList.contains('clear')));
@@ -541,6 +542,13 @@ const check = (n, c, x) => {
     check('the first tab is the map we draw', labels[0] === 'Outages we can read', labels);
     check('each operator tab is named for its region',
       labels.slice(1).every(l => /^Search outages in /.test(l)) && labels.includes('Search outages in the NT'), labels);
+    /* Asked for: operators read through Power Outages Australia are on our
+       map, not in a tab. Only the ones we cannot read at all get one. */
+    check('an operator read through Power Outages Australia gets no tab',
+      !labels.some((l) => /Victoria|Melbourne/.test(l)), labels);
+    check('one we cannot read at all still does', labels.includes('Search outages in the NT'), labels);
+    check('and the footer says whose figures they are',
+      /AusNet Services, United Energy and Jemena outages come via Power Outages Australia/.test(await foot(p)), await foot(p));
 
     await p.click('#otab-sa');
     check('opening one hides our map',
@@ -567,14 +575,14 @@ const check = (n, c, x) => {
       nt.length === 1 && nt[0].frames === 0 && /powerwater\.com\.au/.test(nt[0].href), nt);
 
     /* Every tab frames its own operator's page, not the first one's. */
-    await p.click('#otab-vic-east');
+    await p.click('#otab-nsw-regional');
     const vis = await p.$$eval('#outagePaneOperator .op-embed', es => es.filter(e => !e.hidden).map(e =>
       (e.querySelector('iframe') || {}).src || ''));
-    check('each tab frames its own operator', vis.length === 1 && /distributor=ausnet-services$/.test(vis[0]), vis);
+    check('each tab frames its own operator', vis.length === 1 && /distributor=essential-energy$/.test(vis[0]), vis);
 
     await p.keyboard.press('ArrowRight');
     check('arrow keys move along the tabs',
-      await p.$eval('#otab-melb-nw', e => e.getAttribute('aria-selected') === 'true'));
+      await p.$eval('#otab-wa-regional', e => e.getAttribute('aria-selected') === 'true'));
 
     await p.click('#otab-all');
     await p.waitForTimeout(150);

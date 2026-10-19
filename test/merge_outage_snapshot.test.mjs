@@ -48,6 +48,31 @@ console.log('== the case that was broken: feed reads it, browser cannot ==');
   ck('an operator nobody can read is reported, not dropped', hz && !hz.ok && hz.blocked, hz);
 }
 
+console.log('\n== a feed read through an aggregator stays labelled ==');
+{
+  /* AusNet's own pages fail; Power Outages Australia's feed answers. The
+     browser also read AusNet this morning. The feed wins -- and must keep
+     saying it is POA's account, in the network and in every row. */
+  const via = { via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/map/?distributor=ausnet-services' };
+  const feed = { vic: { networks: [net('AusNet Services', true, 2, via)],
+    outages: [Object.assign(row('AusNet Services', 'Loch Sport', 314), { via: via.via }),
+      Object.assign(row('AusNet Services', 'Cape Paterson', 551), { via: via.via })] } };
+  const browser = { vic: { networks: [net('AusNet Services', true, 5)],
+    outages: Array.from({ length: 5 }, (_, i) => row('AusNet Services', 'B' + i, 1)) } };
+  const { snapshot } = mergeOutageSnapshot(feed, browser, null, { now: NOW, browserCapturedAt: NOW - 60000 });
+  const an = findNet(snapshot, 'vic', 'AusNet Services');
+  ck('the aggregator feed wins over a browser read', an.source === 'feed' && an.count === 2, an);
+  ck('and the network says whose account it is', an.via === via.via && an.viaUrl === via.viaUrl, an);
+  ck('and so does every row', snapshot.states.vic.outages.every((o) => o.via === via.via), snapshot.states.vic.outages);
+
+  /* Carried forward by a later capture that could not read it, the label
+     goes with it. */
+  const later = mergeOutageSnapshot({ vic: { networks: [net('AusNet Services', false, 0, { error: 'HTTP 503' })], outages: [] } },
+    null, snapshot, { now: NOW + 60000 }).snapshot;
+  const carried = findNet(later, 'vic', 'AusNet Services');
+  ck('a carried-forward entry keeps the label', carried.source === 'previous' && carried.via === via.via && carried.viaUrl === via.viaUrl, carried);
+}
+
 console.log('\n== the feed is the authority, including when it says zero ==');
 {
   /* The browser read 24 Ausgrid outages this morning; the feed, now, reads

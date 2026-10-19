@@ -212,6 +212,7 @@
   /* Tabs: everything we can read, then each operator we cannot. Pills that
      wrap, so seven region names fit on a phone without sideways scrolling. */
   .outage-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:12px 24px 0}
+  .outage-pop .via,.outage .meta .via{font-size:11px;opacity:.75;font-style:italic}
   .outage-tab{border:1px solid #d7dee2;background:var(--true-white);color:var(--heritage-green);
     font:inherit;font-size:.74rem;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer;
     transition:background .15s,border-color .15s}
@@ -1325,7 +1326,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-18-poatabs';
+  const EXPECTED_WORKER_BUILD='2026-10-19-poafeed';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
@@ -2624,9 +2625,9 @@ window.addEventListener('resize',()=>map.invalidateSize());
      one gets a link card instead of a frame. `url` is also where the "check
      their map" links in search results point. */
   /* POA's map, zoomed to one distributor by ?distributor=<slug>
-     (scripts/probe-poa-map.mjs). It covers neither the NT nor Jemena --
-     the NT is hatched out of its map and Jemena is absent from its feed --
-     so those two tabs carry no frame, only a link to the operator. */
+     (scripts/probe-poa-map.mjs). It does not cover the NT -- hatched out
+     of its map -- so that tab carries no frame, only a link to the
+     operator. */
   const POA_MAP='https://poweroutagesaustralia.com.au/map/?distributor=';
   const OPERATOR_EMBEDS=[
     {id:'nt',op:'Power and Water Corporation',short:'Power and Water',state:'NT',region:'the NT',area:'the Northern Territory',
@@ -2645,7 +2646,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       url:'https://www.ausnetservices.com.au/outages',embedUrl:POA_MAP+'ausnet-services',
       why:'AusNet’s list only appears once its page runs in a browser, so we can read it only a couple of times a day'},
     {id:'melb-nw',op:'Jemena',state:'VIC',region:'north-west Melbourne',area:'north-west Melbourne',
-      url:'https://www.jemena.com.au/outages/electricity-outages/',noEmbed:'Power Outages Australia doesn’t carry Jemena’s outages, and Jemena’s own map can’t be shown inside other websites',
+      url:'https://www.jemena.com.au/outages/electricity-outages/',embedUrl:POA_MAP+'jemena',
       why:'Jemena’s list only appears once its page runs in a browser'},
     {id:'melb-se',op:'United Energy',state:'VIC',region:'south-east Melbourne',area:'south-east Melbourne and the Mornington Peninsula',
       url:'https://www.unitedenergy.com.au/outage-map',embedUrl:POA_MAP+'united-energy',
@@ -2659,16 +2660,34 @@ window.addEventListener('resize',()=>map.invalidateSize());
   const outagePaneOp=document.getElementById('outagePaneOperator');
   const opFrames={};   // built on first open, kept so switching back does not reload them
 
-  function renderOutageTabs(){
+  /* A tab only for an operator we cannot read right now. Most are read
+     through Power Outages Australia and are on the map like anyone else;
+     their tab comes back only if that fails, so a region is never left with
+     neither. Before the data arrives, the ones POA does not cover. */
+  let outageTabSel='all',lastTabsHtml='';
+  function visibleEmbeds(payload){
+    const nets=(payload&&payload.networks)||null;
+    if(!nets)return OPERATOR_EMBEDS.filter(e=>!e.embedUrl);
+    return OPERATOR_EMBEDS.filter(e=>{
+      const n=nets.find(x=>x.name===e.op);
+      return !n||(!n.ok&&!n.mergedInto);
+    });
+  }
+  function renderOutageTabs(payload){
     if(!outageTabsEl)return;
+    const shown=visibleEmbeds(payload);
+    if(outageTabSel!=='all'&&!shown.some(e=>e.id===outageTabSel))selectOutageTab('all');
     const tabs=[{id:'all',label:'Outages we can read',ext:false}]
-      .concat(OPERATOR_EMBEDS.map(e=>({id:e.id,label:'Search outages in '+e.region,ext:true,op:e.op,
+      .concat(shown.map(e=>({id:e.id,label:'Search outages in '+e.region,ext:true,op:e.op,
         tip:e.op+(e.embedUrl?' outages, on the Power Outages Australia map':' outage map, on their own site')})));
-    outageTabsEl.innerHTML=tabs.map(t=>
+    const html=tabs.map(t=>
       '<button type="button" role="tab" class="outage-tab'+(t.ext?' ext':'')+'" id="otab-'+t.id+'"'+
-      ' data-tab="'+t.id+'" aria-selected="'+(t.id==='all')+'" tabindex="'+(t.id==='all'?'0':'-1')+'"'+
+      ' data-tab="'+t.id+'" aria-selected="'+(t.id===outageTabSel)+'" tabindex="'+(t.id===outageTabSel?'0':'-1')+'"'+
       ' aria-controls="'+(t.id==='all'?'outagePaneAll':'outagePaneOperator')+'"'+
       (t.tip?' title="'+escapeHtml(t.tip)+'"':'')+'>'+escapeHtml(t.label)+'</button>').join('');
+    /* Re-rendered on every refresh; rewritten only when it changed, so a
+       focused tab keeps its focus. */
+    if(html!==lastTabsHtml){outageTabsEl.innerHTML=html;lastTabsHtml=html;}
   }
 
   function operatorPaneHtml(e){
@@ -2698,6 +2717,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
   function selectOutageTab(id,focus){
     const e=OPERATOR_EMBEDS.find(x=>x.id===id);
     if(id!=='all'&&!e)id='all';
+    outageTabSel=id;
     if(outageTabsEl)outageTabsEl.querySelectorAll('[role=tab]').forEach(b=>{
       const on=b.dataset.tab===id;
       b.setAttribute('aria-selected',String(on));
@@ -3026,7 +3046,8 @@ window.addEventListener('resize',()=>map.invalidateSize());
     if(o.towns&&o.towns.length>1)rows.push(['Also affects',escapeHtml(o.towns.filter(t=>t!==p.town).join(', '))]);
     return '<div class="outage-pop"><h4>'+escapeHtml(p.town||'Outage')+'</h4>'+
       '<div class="op">'+escapeHtml(o.network||'')+
-      (up?' · scheduled, not started yet':(o.kind==='planned'?' · planned work':''))+'</div>'+
+      (up?' · scheduled, not started yet':(o.kind==='planned'?' · planned work':''))+
+      (o.via?'<br><span class="via">via '+escapeHtml(o.via)+' — indicative, confirm with '+escapeHtml(o.network||'the distributor')+'</span>':'')+'</div>'+
       (rows.length?'<dl>'+rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('')+'</dl>':'')+
       '</div>';
   }
@@ -3168,7 +3189,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       const planned=o.kind==='planned';
       const detail=[o.cause,o.status].filter(Boolean).join(' · ');
       const meta=[];
-      meta.push('<span>'+escapeHtml(o.network||'')+'</span>');
+      meta.push('<span>'+escapeHtml(o.network||'')+(o.via?' <span class="via">via '+escapeHtml(o.via)+'</span>':'')+'</span>');
       if(o.customers!==null&&o.customers!==undefined)meta.push('<span class="cust">'+num(o.customers)+' customers</span>');
       const started=when(o.startIso,o.start);
       if(started)meta.push('<span>'+(o.upcoming?'Scheduled for ':'Started ')+escapeHtml(started)+'</span>');
@@ -3226,10 +3247,16 @@ window.addEventListener('resize',()=>map.invalidateSize());
     }
     const viaNets=(payload.networks||[]).filter(n=>n.ok&&n.via);
     if(viaNets.length){
-      notes.push('ℹ️ '+viaNets.map(n=>escapeHtml(n.name)+' figures come via '+escapeHtml(n.via)).join('; ')+
-        ' — a third-party aggregator rather than the operator, because '+
-        (viaNets.length===1?'that operator blocks':'those operators block')+
-        ' automated access to its own page. Treat as indicative and confirm on their site.');
+      /* Grouped by aggregator: with Power Outages Australia standing in for
+         five operators, one sentence per operator was a paragraph. */
+      const byVia={};
+      viaNets.forEach(n=>{(byVia[n.via]=byVia[n.via]||[]).push(n.name);});
+      Object.entries(byVia).forEach(([via,names])=>{
+        const list=names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names[names.length-1];
+        notes.push('ℹ️ '+escapeHtml(list)+' outages come via '+escapeHtml(via)+
+          ', an independent site that collects what distributors publish, because we can’t read '+
+          (names.length===1?'that operator’s':'those operators’')+' own pages. Indicative only — confirm with the distributor.');
+      });
     }
     notes.push('Reported by each state’s distribution network operators. Outage counts and restoration estimates are the operators’ own and can change without notice — for anything operational, confirm on the operator’s site.');
     const drifted=(payload.networks||[]).filter(n=>n.ok&&n.diagnostics);
@@ -3251,6 +3278,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       listEl.hidden=true;listEl.innerHTML='';
       return;
     }
+    renderOutageTabs(payload);
     renderSummary(payload);
     renderMap(payload);
     renderList(payload);

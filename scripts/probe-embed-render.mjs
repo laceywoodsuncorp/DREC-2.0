@@ -34,8 +34,8 @@ import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 
 const POA_MAP = 'https://poweroutagesaustralia.com.au/map/?distributor=';
 /* id -> [label, url]: each operator's own page, and the POA map zoomed to
-   it -- which is what the dashboard's tabs frame. POA covers neither the
-   NT nor Jemena, so those two have only the operator's page. */
+   it -- which is what the dashboard's tabs frame. POA does not cover the
+   NT, so it has only the operator's page. */
 const CANDIDATES = {
   nt: [['own', 'https://www.powerwater.com.au/outages/current-outages']],
   sa: [['own', 'https://www.sapowernetworks.com.au/outages/'], ['poa', POA_MAP + 'sa-power-networks']],
@@ -43,7 +43,7 @@ const CANDIDATES = {
     ['poa', POA_MAP + 'essential-energy']],
   'wa-regional': [['own', 'https://www.horizonpower.com.au/faults-outages/'], ['poa', POA_MAP + 'horizon-power']],
   'vic-east': [['own', 'https://www.ausnetservices.com.au/outages'], ['poa', POA_MAP + 'ausnet-services']],
-  'melb-nw': [['own', 'https://www.jemena.com.au/outages/electricity-outages/']],
+  'melb-nw': [['own', 'https://www.jemena.com.au/outages/electricity-outages/'], ['poa', POA_MAP + 'jemena']],
   'melb-se': [['own', 'https://www.unitedenergy.com.au/outage-map'], ['poa', POA_MAP + 'united-energy']],
   /* Controls: two pages the dashboard already frames successfully. If
      these fail too, the probe is broken, not the operators. */

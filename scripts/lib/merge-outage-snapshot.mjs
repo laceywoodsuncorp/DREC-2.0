@@ -107,7 +107,7 @@ export function mergeOutageSnapshot(feedStates, browserStates, previous, opts) {
         entry = { name, ok: true, count: p.count || 0, source: 'previous', origin: prevOrigin,
           capturedAt: p.capturedAt };
         if (p.shape) entry.shape = p.shape;
-        if (p.via) entry.via = p.via;
+        if (p.via) { entry.via = p.via; if (p.viaUrl) entry.viaUrl = p.viaUrl; }
         rows = rowsOf(prev, name);
       } else {
         entry = { name, ok: false, count: 0, source: 'none', capturedAt: now,
@@ -122,7 +122,10 @@ export function mergeOutageSnapshot(feedStates, browserStates, previous, opts) {
         /* columns included: for a source whose schema has never been seen --
            Western Power's website API among them -- the field names are the
            first thing anyone needs, and the payload already has them. */
-        for (const k of ['unreadable', 'staleDropped', 'sourceUrl', 'mergedInto', 'unconfirmed', 'columns']) {
+        /* via/viaUrl: a feed read through Power Outages Australia must stay
+           labelled as such in the snapshot, or its rows pass for the
+           operator's own. */
+        for (const k of ['unreadable', 'staleDropped', 'sourceUrl', 'mergedInto', 'unconfirmed', 'columns', 'via', 'viaUrl']) {
           if (f[k] !== undefined && entry[k] === undefined) entry[k] = f[k];
         }
         if (!f.ok && f.error && entry.ok) entry.feedError = f.error;

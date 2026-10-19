@@ -203,6 +203,17 @@ const server = http.createServer((req, res) => {
       if (sc === 'blind' && (st === 'SA' || st === 'NT')) {
         others[st] = others[st].map(n => Object.assign({}, n, { ok: false, blocked: true, error: 'HTTP 403' }));
       }
+      /* As it stands now: AusNet, United Energy and Jemena read through
+         Power Outages Australia. */
+      if (sc === 'blind' && st === 'VIC') {
+        others.VIC = [others.VIC[0],
+          { name: 'AusNet Services', area: 'Eastern Victoria', site: 'https://www.ausnetservices.com.au/outages', ok: true,
+            count: 0, customers: 0, via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/map/?distributor=ausnet-services' },
+          { name: 'United Energy', area: 'South-east Melbourne', site: 'https://www.unitedenergy.com.au/outage-map', ok: true,
+            count: 0, customers: 0, via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/map/?distributor=united-energy' },
+          Object.assign({}, others.VIC[1], { via: 'Power Outages Australia',
+            viaUrl: 'https://poweroutagesaustralia.com.au/map/?distributor=jemena' })];
+      }
       return send(200, { state: st, name: st, ok: true, complete: true, count: 0, customers: 0,
         unplannedCount: 0, unplannedCustomers: 0, plannedCount: 0, plannedCustomers: 0,
         networks: others[st] || [], outages: [] });

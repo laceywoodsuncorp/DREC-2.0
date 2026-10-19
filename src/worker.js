@@ -465,7 +465,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-18-poatabs';
+const WORKER_BUILD = '2026-10-19-poafeed';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -2461,22 +2461,50 @@ const INCIDENT_FEEDS = {
 /* Tries one source and reports precisely what happened. Never throws -- an
    unreachable host is a result, not an exception, because the caller needs to
    move on to the next source either way. */
+/* Responses to `shared` sources, by URL, for a minute: one national feed
+   read by several networks is fetched once per refresh, not once each.
+   The promise is kept, so networks refreshed in parallel wait on the same
+   request rather than each starting one. */
+const SHARED_SOURCE_TTL_MS = 60000;
+const sharedSourceBodies = new Map();
+/* For tests, which swap the upstream between cases inside the minute. */
+export function clearSharedSources() { sharedSourceBodies.clear(); }
+function fetchSourceBody(source) {
+  const go = async () => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const upstream = await fetch(source.url, {
+        headers: FEED_REQUEST_HEADERS,
+        signal: ctrl.signal,
+        redirect: 'follow',
+        cf: { cacheTtl: 0 }
+      });
+      return { ok: upstream.ok, status: upstream.status, text: await upstream.text().catch(() => '') };
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  if (!source.shared) return go();
+  const hit = sharedSourceBodies.get(source.url);
+  if (hit && Date.now() - hit.at < SHARED_SOURCE_TTL_MS) return hit.body;
+  const body = go();
+  sharedSourceBodies.set(source.url, { at: Date.now(), body });
+  /* A failed fetch is not kept: the next network should try for itself. */
+  body.then((b) => { if (!b.ok) sharedSourceBodies.delete(source.url); },
+    () => sharedSourceBodies.delete(source.url));
+  return body;
+}
+
 async function tryIncidentSource(source) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15000);
   try {
-    const upstream = await fetch(source.url, {
-      headers: FEED_REQUEST_HEADERS,
-      signal: ctrl.signal,
-      redirect: 'follow',
-      cf: { cacheTtl: 0 }
-    });
+    const upstream = await fetchSourceBody(source);
     if (!upstream.ok) {
-      const excerpt = bodyExcerpt(await upstream.text().catch(() => ''));
+      const excerpt = bodyExcerpt(upstream.text);
       return { ok: false, error: 'HTTP ' + upstream.status + (excerpt ? ' — ' + excerpt : '') };
     }
 
-    const bodyText = await upstream.text();
+    const bodyText = upstream.text;
     if (source.format === 'text') return { ok: true, parsed: source.parse(bodyText) };
 
     let json;
@@ -2492,8 +2520,6 @@ async function tryIncidentSource(source) {
     return { ok: true, parsed: source.parse(json) };
   } catch (err) {
     return { ok: false, error: err.name === 'AbortError' ? 'Timed out after 15s' : err.message };
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -3319,6 +3345,113 @@ function parseCppcOutages(business) {
   };
 }
 
+/* Power Outages Australia: an independent site that collects the outages
+   distributors publish and serves them, nationally, as one JSON feed --
+   the feed its own map reads. Used for the operators whose own pages
+   cannot be read (bot checks, browser-only lists), and only as a last
+   resort behind the operator's own sources.
+
+   Agreed with the dashboard's owner on 19 Oct 2026, after reading POA's
+   robots.txt (crawling and live answers allowed; training not) and its
+   /terms/ (no ownership claimed; data indicative only; attribute to the
+   reporting distributor and link to it as the authority). The rows are
+   tagged `via`, so the page says whose account they are, and the
+   operator's own map stays the link. It is not a published API: if its
+   shape changes, the parser reports it rather than serving a zero.
+
+   Not covered by POA, by its own terms: Energex, Ergon, Power and Water.
+   POA's `sources` lists every distributor it collects, with its own ok
+   flag; `byDistributor` lists only those with outages, so a quiet network
+   is absent from it and that is not a gap. */
+export const POA_FEED_URL = 'https://poa-outages-api.sk-9b3.workers.dev/outages';
+const POA_MAP_URL = 'https://poweroutagesaustralia.com.au/map/?distributor=';
+/* Older than this and POA's own collection has stalled; its rows would be
+   history passed off as current. Its terms say it is "normally current
+   within minutes". */
+const POA_MAX_AGE_MS = 3 * 3600 * 1000;
+
+/* A suburb entry as a place name, whatever shape it arrives in. */
+function poaPlace(x) {
+  if (x == null) return '';
+  if (typeof x === 'string') return x.trim();
+  if (typeof x === 'object') return String(x.name || x.suburb || x.locality || x.label || '').trim();
+  return '';
+}
+/* POA's `centre` as GeoJSON, whichever form it takes. Australia's
+   longitudes (110-155) and latitudes (-9 to -44) cannot be confused, so a
+   bare pair is ordered by magnitude rather than trusted. */
+function poaCentre(c) {
+  if (!c) return null;
+  let a, b;
+  if (Array.isArray(c) && c.length >= 2) { a = Number(c[0]); b = Number(c[1]); }
+  else if (typeof c === 'object') {
+    a = Number(c.lng !== undefined ? c.lng : c.lon !== undefined ? c.lon : c.longitude);
+    b = Number(c.lat !== undefined ? c.lat : c.latitude);
+  } else return null;
+  if (!isFinite(a) || !isFinite(b)) return null;
+  const lon = Math.abs(a) > 90 ? a : b, lat = Math.abs(a) > 90 ? b : a;
+  return { type: 'Point', coordinates: [lon, lat] };
+}
+
+export function parsePoaOutages(distributor) {
+  const want = String(distributor).toLowerCase();
+  return function (json, nowMs) {
+    if (!json || typeof json !== 'object' || !Array.isArray(json.outages)) {
+      return { outages: [], diagnostics: { envelope: 'unrecognised', expected: 'outages[]',
+        sampleKeys: Object.keys(json || {}).slice(0, 10) } };
+    }
+    /* POA reports on its own collection per distributor. A distributor it
+       does not carry, or whose collection it says failed, has an empty
+       list that means "unknown", not "no outages" -- so it is reported as
+       unreadable rather than as a quiet network. */
+    const sources = Array.isArray(json.sources) ? json.sources : [];
+    const src = sources.find((x) => x && String(x.name || '').toLowerCase() === want);
+    const listed = json.byDistributor && Object.keys(json.byDistributor).some((k) => k.toLowerCase() === want);
+    if (!src && !listed) {
+      return { outages: [], diagnostics: { note: 'Power Outages Australia does not carry ' + distributor } };
+    }
+    if (src && src.ok === false) {
+      return { outages: [], diagnostics: { note: 'Power Outages Australia reports its own collection from ' + distributor + ' failing' } };
+    }
+    const gen = Date.parse(json.generatedAt || '');
+    const now = nowMs || Date.now();
+    if (isFinite(gen) && now - gen > POA_MAX_AGE_MS) {
+      return { outages: [], diagnostics: { note: 'Power Outages Australia feed last generated ' +
+        Math.round((now - gen) / 60000) + ' minutes ago' } };
+    }
+    const fc = { features: json.outages
+      .filter((o) => o && String(o.distributor || '').toLowerCase() === want)
+      .map((o) => {
+        const towns = (Array.isArray(o.suburbs) ? o.suburbs : (o.suburbs ? [o.suburbs] : []))
+          .map(poaPlace).filter(Boolean);
+        /* `scheduled` is POA's planned flag; `type` is 'planned' or
+           'unplanned'. Compared whole -- "unplanned" contains "plan". */
+        const planned = o.scheduled === true || /^(planned|scheduled)$/i.test(String(o.type || '').trim());
+        return { properties: {
+          id: o.id,
+          suburbs: towns.join(', '),
+          customersAffected: o.customersAffected,
+          startTime: o.startTime,
+          estimatedRestoration: o.estimatedRestoration,
+          type: planned ? 'Planned' : (o.type || 'Unplanned'),
+          /* crewStatus is the operator's own words ("Our crews are
+             travelling to this area"); status is POA's. Its "active" says
+             only that the outage is listed, so it is not shown. */
+          status: o.crewStatus || (o.status && o.status !== 'active' ? String(o.status).replace(/-/g, ' ') : undefined),
+          cause: o.cause
+        }, geometry: poaCentre(o.centre) || o.geometry || null };
+      }) };
+    return normaliseOutages(fc);
+  };
+}
+/* One POA fallback source for one distributor. `shared` lets every
+   network read the one national response a capture fetches, rather than
+   fetching it once per network. */
+function poaSource(distributor, slug) {
+  return { url: POA_FEED_URL, format: 'json', parse: parsePoaOutages(distributor), shared: true,
+    via: 'Power Outages Australia', viaUrl: POA_MAP_URL + slug };
+}
+
 export const OUTAGE_NETWORKS = {
   nsw: {
     name: 'New South Wales',
@@ -3363,9 +3496,7 @@ export const OUTAGE_NETWORKS = {
         site: 'https://www.essentialenergy.com.au/outages-and-faults/power-outages',
         sources: [
           { url: 'https://www.essentialenergy.com.au/outages-and-faults/power-outages', format: 'text', parse: parseOutageTable },
-          { url: 'https://poweroutagesaustralia.com.au/distributors/essential-energy/',
-            format: 'text', parse: parseOutageTable,
-            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/essential-energy/' }
+          poaSource('Essential Energy', 'essential-energy')
         ] }
     ]
   },
@@ -3440,7 +3571,8 @@ export const OUTAGE_NETWORKS = {
         site: 'https://www.ausnetservices.com.au/outages',
         sources: [
           { url: 'https://ausnetservices.my.salesforce-sites.com/OutageTracker/', format: 'text', parse: parseOutageTable },
-          { url: 'https://www.ausnetservices.com.au/outages', format: 'text', parse: parseOutageTable }
+          { url: 'https://www.ausnetservices.com.au/outages', format: 'text', parse: parseOutageTable },
+          poaSource('AusNet Services', 'ausnet-services')
         ] },
       /* CitiPower, Powercor and United Energy are one operator group on one
          platform, and each publishes the same "full outage list" page. */
@@ -3466,7 +3598,8 @@ export const OUTAGE_NETWORKS = {
       { name: 'United Energy', area: 'South-eastern Melbourne and the Mornington Peninsula',
         site: 'https://www.unitedenergy.com.au/outage-map',
         sources: [
-          { url: 'https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable }
+          { url: 'https://www.unitedenergy.com.au/power-outages-and-emergencies/full-outage-list/', format: 'text', parse: parseOutageTable },
+          poaSource('United Energy', 'united-energy')
         ] },
       { name: 'Jemena', area: 'North-western Melbourne',
         /* The old path redirects twice -- jemena.com.au/electricity/outages
@@ -3476,12 +3609,7 @@ export const OUTAGE_NETWORKS = {
         site: 'https://www.jemena.com.au/outages/electricity-outages/',
         sources: [
           { url: 'https://www.jemena.com.au/outages/electricity-outages/', format: 'text', parse: parseOutageTable },
-          /* Last resort: the same data republished by Power Outages
-             Australia. Tagged `via` so the page says whose figures these
-             are -- an aggregator is a second-hand account. */
-          { url: 'https://poweroutagesaustralia.com.au/distributors/jemena/',
-            format: 'text', parse: parseOutageTable,
-            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/jemena/' }
+          poaSource('Jemena', 'jemena')
         ] }
     ]
   },
@@ -3501,9 +3629,7 @@ export const OUTAGE_NETWORKS = {
           /* Last resort: the same data republished by Power Outages
              Australia. Tagged `via` so the page says whose figures these
              are -- an aggregator is a second-hand account. */
-          { url: 'https://poweroutagesaustralia.com.au/distributors/sa-power-networks/',
-            format: 'text', parse: parseOutageTable,
-            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/sa-power-networks/' }
+          poaSource('SA Power Networks', 'sa-power-networks')
         ] }
     ]
   },
@@ -3538,7 +3664,8 @@ export const OUTAGE_NETWORKS = {
         site: 'https://www.horizonpower.com.au/faults-outages/',
         sources: [
           { url: 'https://www.horizonpower.com.au/faults-outages/power-outages/', format: 'text', parse: parseOutageTable },
-          { url: 'https://www.horizonpower.com.au/faults-outages/', format: 'text', parse: parseOutageTable }
+          { url: 'https://www.horizonpower.com.au/faults-outages/', format: 'text', parse: parseOutageTable },
+          poaSource('Horizon Power', 'horizon-power')
         ] }
     ]
   },
@@ -3561,9 +3688,7 @@ export const OUTAGE_NETWORKS = {
           /* Last resort: the same data republished by Power Outages
              Australia. Tagged `via` so the page says whose figures these
              are -- an aggregator is a second-hand account. */
-          { url: 'https://poweroutagesaustralia.com.au/distributors/tasnetworks/',
-            format: 'text', parse: parseOutageTable,
-            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/tasnetworks/' }
+          poaSource('TasNetworks', 'tasnetworks')
         ] }
     ]
   },
@@ -3609,9 +3734,7 @@ export const OUTAGE_NETWORKS = {
           /* Last resort: the same data republished by Power Outages
              Australia. Tagged `via` so the page says whose figures these
              are -- an aggregator is a second-hand account. */
-          { url: 'https://poweroutagesaustralia.com.au/distributors/evoenergy/',
-            format: 'text', parse: parseOutageTable,
-            via: 'Power Outages Australia', viaUrl: 'https://poweroutagesaustralia.com.au/distributors/evoenergy/' }
+          poaSource('Evoenergy', 'evoenergy')
         ] }
     ]
   }
@@ -3647,6 +3770,12 @@ const MAX_OUTAGE_ATTEMPTS_PER_STATE = 12;
    Parsing happens here on the cron rather than on a visitor's request, for
    the same CPU-budget reason as the incident feeds. A total failure leaves
    the previous cache entry in place. */
+/* Rows from a third-party source carry its name, so each outage -- in a
+   popup, in the list -- says whose account it is, not only the footer. */
+function viaRows(rows, source) {
+  return source.via ? rows.map((o) => Object.assign({}, o, { via: source.via })) : rows;
+}
+
 async function refreshStateOutages(state) {
   const group = OUTAGE_NETWORKS[state];
   if (!group) return { ok: false, state, error: 'Unknown state' };
@@ -3691,7 +3820,7 @@ async function refreshStateOutages(state) {
         continue;
       }
       entry.ok = true;
-      entry.outages = entry.outages.concat(result.parsed.outages);
+      entry.outages = entry.outages.concat(viaRows(result.parsed.outages, source));
       entry.count = entry.outages.length;
       entry.sourceUrl = entry.sourceUrl || source.url;
       if (result.parsed.columns) entry.columns = result.parsed.columns;
@@ -3718,7 +3847,7 @@ async function refreshStateOutages(state) {
           continue;
         }
         entry.ok = true;
-        entry.outages = result.parsed.outages;
+        entry.outages = viaRows(result.parsed.outages, source);
         entry.count = entry.outages.length;
         entry.sourceUrl = source.url;
         if (result.parsed.columns) entry.columns = result.parsed.columns;
@@ -4198,7 +4327,7 @@ function applyOutageSnapshot(payload, snapshot, state) {
     if (live.confirmed && live.ok && (taken.count || 0) <= (live.count || 0)) return live;
     return {
       name: live.name, area: live.area, site: live.site, mergedInto: taken.mergedInto,
-      via: taken.via, ok: true, count: taken.count || 0,
+      via: taken.via, viaUrl: taken.viaUrl, ok: true, count: taken.count || 0,
       customers: (snap.outages || []).filter((o) => o.network === live.name)
         .reduce((t, o) => t + (o.customers || 0), 0),
       /* The network's own read time, not the file's: rows only a browser

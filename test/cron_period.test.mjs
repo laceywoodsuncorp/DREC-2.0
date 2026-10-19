@@ -202,7 +202,10 @@ console.log('\n== the other ceiling: 50 external subrequests per invocation ==')
    because it is what rises the moment the config grows. */
 const stub = (block) => {
   const names = new Set([...block.matchAll(/parse: (\w+)/g)].map((m) => m[1]));
-  return [...names].map((n) => 'const ' + n + '=()=>{};').join('\n') + '\n';
+  /* poaSource builds a whole source, so its stub returns one: it is an
+     endpoint like any other in the count. */
+  const poa = /\bpoaSource\(/.test(block) ? 'const poaSource=()=>({ url: "poa", format: "json" });\n' : '';
+  return poa + [...names].map((n) => 'const ' + n + '=()=>{};').join('\n') + '\n';
 };
 const grab = (re, what) => {
   const m = re.exec(worker);
@@ -214,16 +217,24 @@ const NETWORKS = new Function(stub(netBlock) + netBlock.replace('export ', '')
   + '; return OUTAGE_NETWORKS;')();
 const OUTAGE_STATES = new Function(grab(/const OUTAGE_STATES = [^;]*;/, 'OUTAGE_STATES')
   + '; return OUTAGE_STATES;')();
+/* A shared source (Power Outages Australia's national feed) is fetched
+   once per invocation however many networks read it, so it is counted
+   once per shard rather than once per network. */
+const usesShared = (st) => {
+  const v = NETWORKS[st];
+  return ((v && v.networks) || []).some((op) => (op.sources || []).some((x) => x.url === 'poa'));
+};
 const endpointsFor = (st) => {
   const v = NETWORKS[st];
   const arr = Array.isArray(v) ? v : (v && (v.networks || Object.values(v))) || [];
   return (Array.isArray(arr) ? arr : []).reduce((n, op) =>
-    n + (op.endpoints ? op.endpoints.length : (op.sources ? op.sources.length : (op.url ? 1 : 0))), 0);
+    n + (op.endpoints ? op.endpoints.length
+      : (op.sources ? op.sources.filter((x) => x.url !== 'poa').length : (op.url ? 1 : 0))), 0);
 };
 const shardCost = [];
 for (let sh = 0; sh < OUTAGE_SHARDS; sh++) {
-  shardCost.push(OUTAGE_STATES.filter((_, i) => i % OUTAGE_SHARDS === sh)
-    .reduce((n, st) => n + endpointsFor(st), 0));
+  const states = OUTAGE_STATES.filter((_, i) => i % OUTAGE_SHARDS === sh);
+  shardCost.push(states.reduce((n, st) => n + endpointsFor(st), 0) + (states.some(usesShared) ? 1 : 0));
 }
 const worstShard = Math.max(...shardCost);
 const incBlock = grab(/const INCIDENT_FEEDS = \{[\s\S]*?\n\};/, 'INCIDENT_FEEDS');

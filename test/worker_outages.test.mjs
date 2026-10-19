@@ -46,7 +46,8 @@ globalThis.fetch = async (url, init) => {
   return new Response('not stubbed', { status: 404 });
 };
 
-const worker = (await import('../src/worker.js')).default;
+const workerModule = await import('../src/worker.js');
+const worker = workerModule.default;
 /* Every block below exercises LIVE fetching, which the deployed Worker no
    longer does by default -- outages are served from a capture made on an
    Actions runner (see outageLiveFetch). The live path still exists behind
@@ -113,7 +114,8 @@ const readSharedCacheAge = async (key) => {
   if (!e) return Infinity;
   return (Date.now() - Number(e.headers['x-fetched-at'] || 0)) / 1000;
 };
-const reset = () => { generation++; store.clear(); upstream = {}; fetchLog = []; };
+const reset = () => { generation++; store.clear(); upstream = {}; fetchLog = [];
+  workerModule.clearSharedSources(); };
 
 console.log('\n== the shapes operators actually publish ==');
 {
@@ -1214,10 +1216,18 @@ console.log('\n== an aggregator is used, and said to be an aggregator ==');
      fallback is a third party -- which the payload has to admit to. */
   upstream['essentialenergy.com.au'] = () => new Response(
     '<html><title>Just a moment...</title></html>', { status: 403 });
-  upstream['poweroutagesaustralia.com.au'] = () => new Response(
-    '<html><table><tr><th>Suburb</th><th>Customers affected</th></tr>' +
-    '<tr><td>Armidale</td><td>107</td></tr></table></html>',
-    { status: 200, headers: { 'Content-Type': 'text/html' } });
+  /* POA's national feed, which its own map reads: every distributor in
+     one response, each network taking its own rows. */
+  upstream['poa-outages-api'] = json({
+    generatedAt: new Date().toISOString(),
+    sources: [{ name: 'Essential Energy', ok: true, count: 1 }, { name: 'Ausgrid', ok: true, count: 1 }],
+    byDistributor: { 'Essential Energy': {}, Ausgrid: {} },
+    outages: [
+      { id: 'EE1', distributor: 'Essential Energy', state: 'NSW', type: 'unplanned', scheduled: false,
+        customersAffected: 107, suburbs: ['Armidale'], startTime: new Date(Date.now() - 3600e3).toISOString(),
+        centre: [151.67, -30.51] },
+      { id: 'AG1', distributor: 'Ausgrid', state: 'NSW', type: 'unplanned', customersAffected: 5, suburbs: ['Newtown'] }
+    ] });
 
   const b = await (await call('/api/outages/nsw')).json();
   const ee = b.networks.find(n => n.name === 'Essential Energy');
