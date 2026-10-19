@@ -2535,21 +2535,10 @@ window.addEventListener('resize',()=>map.invalidateSize());
         (payload.plannedCustomers?' · '+num(payload.plannedCustomers)+' customers':'')+
         (payload.upcomingCount?' ('+num(payload.upcomingCount)+' not started yet)':'')+'</span>');
     }
+    /* No count of networks reporting or not connected: the tabs beside the
+       map are where the regions we cannot read are covered, so the bar keeps
+       to the figures themselves. */
     const nets=payload.networks||[];
-    const down=nets.filter(n=>(!n.ok&&!n.unconfirmed)||(n.ok&&n.diagnostics));
-    const pending=nets.filter(n=>n.unconfirmed||n.blocked);
-    if(down.length){
-      bits.push('<span class="warn">⚠️ '+down.length+' of '+nets.length+
-        ' networks not reporting — this list is incomplete</span>');
-    }
-    if(pending.length){
-      bits.push('<span class="warn">'+pending.length+' of '+nets.length+
-        ' networks not connected yet — use their own maps below</span>');
-    }
-    /* Said only when it is true, and worth saying: with nothing but warnings
-       to go on, a reader cannot tell a complete list from a silent one. On a
-       quiet day "all 3 networks reporting" is the difference between "no
-       outages" and "no data". */
     /* Operators we cannot list but whose totals we know. Their figures used
        to sit on the per-operator chips; with those gone this is the only
        place a whole state's customer count appears, and dropping it would
@@ -2570,10 +2559,6 @@ window.addEventListener('resize',()=>map.invalidateSize());
     if((payload.failedStates||[]).length){
       bits.push('<span class="warn">⚠️ '+payload.failedStates.join(', ')+
         ' did not load — these totals are short by whatever is out there</span>');
-    }
-    if(nets.length&&!down.length&&!pending.length&&!(payload.failedStates||[]).length){
-      bits.push('<span>'+(nets.length===1?'the network is':'all '+nets.length+' networks are')+
-        ' reporting</span>');
     }
     if(payload.cacheAgeSeconds>1500){
       bits.push('<span class="warn">Data is '+Math.round(payload.cacheAgeSeconds/60)+' minutes old</span>');
@@ -3053,7 +3038,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     const view=q
       ? Object.assign({},payload,{outages:(payload.outages||[]).filter(o=>matchesTown(o,q))})
       : payload;
-    const {pts,unplaced,notPlaces}=outagePoints(view);
+    const {pts}=outagePoints(view);
 
     /* Searched a place with no outage: show where it is rather than leaving
        the map wherever it happened to be. "Nothing is out here" is easier to
@@ -3088,28 +3073,14 @@ window.addEventListener('resize',()=>map.invalidateSize());
     }else{
       m.setView([-25.6,134.3],4);
     }
+    /* No count of towns mapped or unplaced: every row is still in the
+       search either way. Only a failed place lookup is said, because then
+       most of the map is missing rather than a few dots. */
     if(noteEl){
-      const bits=[];
-      if(pts.length)bits.push(pts.length+' town'+(pts.length===1?'':'s')+' mapped');
-      /* Said out loud, because a town we could not place is missing from the
-         map while its power is still off -- and a reader counting dots would
-         otherwise undercount without knowing. */
-      if(unplaced.length){
-        const uniq=[...new Set(unplaced)];
-        bits.push(uniq.length+' could not be placed on the map ('+
-          escapeHtml(uniq.slice(0,4).join(', '))+(uniq.length>4?'…':'')+') — they are in the list below');
-      }
-      /* Kept separate from the unplaced towns: these are not places we
-         failed to find, they are rows an operator's page gave us that were
-         never place names. Lumping them together would make the map look
-         less complete than it is and hide the scrape that needs fixing. */
-      if(notPlaces.length){
-        const u=[...new Set(notPlaces)];
-        bits.push(u.length+' row'+(u.length===1?'':'s')+' had no readable place name');
-      }
-      if(gazetteerState==='failed')bits.push('place lookup unavailable, so only operators that publish coordinates are shown');
-      noteEl.className='outage-mapnote'+((unplaced.length||notPlaces.length||gazetteerState==='failed')?' warn':'');
-      noteEl.textContent=bits.join(' · ');
+      const failed=gazetteerState==='failed';
+      noteEl.className='outage-mapnote'+(failed?' warn':'');
+      noteEl.textContent=failed?'Place lookup unavailable, so only operators that publish coordinates are shown':'';
+      noteEl.hidden=!failed;
     }
   }
 

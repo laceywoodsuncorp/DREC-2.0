@@ -116,11 +116,8 @@ const check = (n, c, x) => {
   console.log('\n== an operator that is down stays visible ==');
   {
     const p = await open('partial');
-    /* The per-operator chips are gone, so the coverage warning in the
-       summary bar is now the only thing standing between a short list and a
-       reader who thinks it is complete. It has to carry that weight. */
-    check('the summary says the list is incomplete', /incomplete/i.test(await summary(p)), await summary(p));
-    check('and counts how many are missing', /\d+ of \d+/.test(await summary(p)), await summary(p));
+    /* No coverage count in the bar any more (asked for); the operator tabs
+       cover the regions we cannot read. */
     /* Four, not five: the partial scenario drops Essential Energy's row. */
     check('the working operators still have their outages',
       (await searchRows(p, 'o')).length === 4, (await searchRows(p, 'o')).length);
@@ -132,11 +129,6 @@ const check = (n, c, x) => {
     const p = await open('drift');
     check('the tile explains the gap', /didn.t recognise/i.test(await foot(p)), await foot(p));
     check('and names the operator', /Endeavour/.test(await foot(p)), await foot(p));
-    /* It must not read as quiet either: silently dropping an operator's rows
-       is the most misleading thing this tile could do, and with the chips
-       gone the footnote above and the summary below are what prevent it. */
-    check('and it counts against coverage in the summary',
-      /incomplete/i.test(await summary(p)), await summary(p));
     await p.close();
   }
 
@@ -166,19 +158,6 @@ const check = (n, c, x) => {
     check('and does not claim every network is reporting',
       !/networks are reporting/i.test(ds), ds);
     await d.close();
-  }
-
-  console.log('\n== "not connected yet" is not "unavailable" ==');
-  {
-    const p = await open('unconnected');
-    /* An operator we have never managed to read is a different claim from
-       one that has gone down, and the summary has to keep them apart now
-       that the chips are gone -- "not connected yet" says we have not built
-       the feed, "not reporting" says theirs is broken. */
-    const t = await summary(p);
-    check('unconnected operators say so, not "unavailable"', /not connected yet/i.test(t), t);
-    check('and are counted', /\d+ of \d+/.test(t), t);
-    await p.close();
   }
 
   console.log('\n== an aggregator figures are labelled as such ==');
@@ -399,8 +378,9 @@ const check = (n, c, x) => {
        dot. Plotting only rows that carry their own coordinate would leave
        most operators off the map entirely. */
     check('towns are plotted as dots', dots > 0, dots);
+    /* Asked for: no "towns mapped" line under the map. */
     const note = await p.$eval('#outageMapNote', e => e.innerText);
-    check('the map says how many towns it mapped', /town/i.test(note), note);
+    check('the map does not count towns', !/town|placed|mapped/i.test(note), note);
 
     /* Coverage stated positively when it holds. A bar that only ever warns
        leaves a quiet day looking the same as a blind one. */
@@ -421,28 +401,18 @@ const check = (n, c, x) => {
     await p.close();
   }
 
-  console.log('\n== the bar says when the list is complete ==');
+  console.log('\n== the bar keeps to the figures ==');
   {
-    /* Every operator answering is a fact the reader needs: it is what makes
-       "no outages" mean no outages rather than no data. */
-    const p = await open('quiet');
-    await p.waitForTimeout(900);
-    const bar = await p.$eval('#outageSummary', e => e.innerText);
-    check('a complete list says so', /reporting/i.test(bar), bar);
-    check('and does not warn about anything', !/not reporting|not connected/i.test(bar), bar);
-    await p.close();
-  }
-
-  {
-    /* And when an operator is missing, the reassurance must disappear -- it
-       would otherwise contradict the warning sitting next to it. */
-    const p = await open('partial');
-    await p.waitForTimeout(900);
-    const bar = await p.$eval('#outageSummary', e => e.innerText);
-    check('an incomplete list warns instead', /not reporting|not connected/i.test(bar), bar);
-    check('and does not also claim everything is reporting',
-      !/all \d+ networks are reporting/i.test(bar), bar);
-    await p.close();
+    /* Asked for: no count of networks reporting or not connected. The tabs
+       beside the map cover the regions we cannot read. */
+    for (const sc of ['quiet', 'partial', 'unconnected']) {
+      const p = await open(sc);
+      await p.waitForTimeout(900);
+      const bar = await p.$eval('#outageSummary', e => e.innerText);
+      check(sc + ': no network count in the bar',
+        !/not reporting|not connected|networks? (are|is) reporting|\d+ of \d+ networks/i.test(bar), bar);
+      await p.close();
+    }
   }
 
   console.log('\n== town names as operators actually write them ==');
@@ -456,13 +426,6 @@ const check = (n, c, x) => {
        shapes accounted for every failure but two. */
     check('a comma-joined list becomes one dot per town', dots === 4, dots);
 
-    const note = await p.$eval('#outageMapNote', e => e.innerText);
-    check('nothing real is left unplaced', !/could not be placed/i.test(note), note);
-    /* The 404 row is not a town we failed to find, and must not be counted
-       as one -- that would overstate what is missing and hide the bad
-       scrape behind it. */
-    check('the unreadable row is reported separately',
-      /no readable place name/i.test(note), note);
 
     /* Each shape individually, so a regression names itself. */
     await p.fill('#outageFilter', 'Ravensdale');
@@ -480,7 +443,7 @@ const check = (n, c, x) => {
     await p.close();
   }
 
-  console.log('\n== a town we cannot place is counted, not dropped ==');
+  console.log('\n== a failed place lookup is still said ==');
   {
     /* With no gazetteer the page can still plot operators that publish
        coordinates, but it must say what is missing rather than draw a
