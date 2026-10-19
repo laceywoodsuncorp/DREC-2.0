@@ -1,14 +1,14 @@
 {
-  "at": "2026-10-19T00:41:25.531Z",
+  "at": "2026-10-19T00:56:37.167Z",
   "states": {
     "qld": [
       {
         "url": "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.json",
         "status": 200,
         "type": "binary/octet-stream",
-        "bytes": 63759,
+        "bytes": 59521,
         "shape": "object",
-        "items": 28,
+        "items": 26,
         "fields": {
           "WarningTitle": [
             "AVOID SMOKE - Dajarra - fire as at 12:00pm Sunday, 18 Octobe",
@@ -69,9 +69,9 @@
         "url": "https://www.fire.qld.gov.au/data/alerts/bushfireAlert.json",
         "status": 200,
         "type": "binary/octet-stream",
-        "bytes": 63759,
+        "bytes": 59521,
         "shape": "object",
-        "items": 28,
+        "items": 26,
         "fields": {
           "WarningTitle": [
             "AVOID SMOKE - Dajarra - fire as at 12:00pm Sunday, 18 Octobe",
@@ -132,9 +132,9 @@
         "url": "https://www.qfes.qld.gov.au/data/alerts/bushfireAlert.xml",
         "status": 200,
         "type": "binary/octet-stream",
-        "bytes": 20756,
+        "bytes": 21443,
         "shape": "xml",
-        "items": 29,
+        "items": 30,
         "fields": {},
         "verdict": "no level-like field found"
       },
@@ -250,9 +250,9 @@
         "url": "https://data.esa.act.gov.au/feeds/esa-cap-incidents.xml",
         "status": 200,
         "type": "text/xml",
-        "bytes": 66194,
+        "bytes": 69959,
         "shape": "xml",
-        "items": 17,
+        "items": 18,
         "fields": {
           "distributionStatus": [
             "Actual"
@@ -262,8 +262,8 @@
           ],
           "category": [
             "Fire",
-            "Transport",
-            "Other"
+            "Other",
+            "Transport"
           ],
           "urgency": [
             "Unknown"
@@ -307,76 +307,78 @@
         "url": "https://emergency.vic.gov.au/public/events-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 12669,
+        "bytes": 14098,
         "shape": "object",
-        "items": 13,
+        "items": 16,
         "fields": {
           "status": [
             "Patrolled",
             "In Progress",
+            "Safe",
             "Not Yet Under Control",
             "Under Control",
-            "Safe",
-            "Responding",
-            "On Scene"
+            "Complete",
+            "Responding"
           ],
           "category1": [
             "Planned Burn",
             "Fire",
-            "Other",
-            "Tree Down"
+            "Tree Down",
+            "Other"
           ],
           "category2": [
             "Planned Burn",
             "Bushfire",
+            "Tree Down",
             "Non Structure Fire",
             "Other",
-            "Tree Down"
+            "Building Fire"
           ]
         },
-        "verdict": "operational status only: Patrolled | Under Control | Safe | Responding | On Scene"
+        "verdict": "operational status only: Patrolled | Safe | Under Control | Responding"
       },
       {
         "url": "https://emergency.vic.gov.au/public/warnings-geojson.json",
         "status": 404,
         "title": "404 Not Found",
-        "bytes": 383
+        "bytes": 363
       },
       {
         "url": "https://emergency.vic.gov.au/public/osom-geojson.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 40683,
+        "bytes": 42945,
         "shape": "object",
-        "items": 34,
+        "items": 38,
         "fields": {
           "status": [
             "Patrolled",
             "In Progress",
+            "Safe",
             "Not Yet Under Control",
             "Under Control",
-            "Safe",
             "Responding",
-            "Unknown",
-            "On Scene"
+            "Complete",
+            "Unknown"
           ],
           "category1": [
             "Planned Burn",
             "Fire",
-            "Burn Area",
+            "Tree Down",
             "Other",
-            "Tree Down"
+            "Burn Area"
           ],
           "category2": [
             "Planned Burn",
             "Bushfire",
+            "Building Fire",
+            "Tree Down",
             "Non Structure Fire",
-            "Burn Area",
             "Other",
-            "Tree Down"
+            "Burn Area"
           ]
         },
-        "verdict": "operational status only: Patrolled | Under Control | Safe | Responding | On Scene"
+        "verdict": "operational status only: Patrolled | Safe | Under Control | Responding"
       }
     ],
     "tas": [
@@ -435,7 +437,7 @@
         "url": "https://alert.sa.gov.au/",
         "status": 200,
         "type": "text/html",
-        "bytes": 55863,
+        "bytes": 55849,
         "shape": "html",
         "title": "Incidents and warnings | Alert SA ",
         "verdict": "no level-like field found"
@@ -458,7 +460,7 @@
         "url": "https://www.pfes.nt.gov.au/incidentmap/json/incidents.json",
         "status": 200,
         "type": "application/json",
-        "bytes": 17907,
+        "bytes": 18726,
         "shape": "object",
         "fields": {
           "_category": [
@@ -495,7 +497,7 @@
         "url": "http://www.bom.gov.au/fwo/IDZ00054.warnings_land_nsw.xml",
         "status": 403,
         "title": "",
-        "bytes": 1386
+        "bytes": 1385
       }
     ]
   }
