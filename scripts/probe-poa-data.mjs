@@ -99,7 +99,6 @@ for (const slug of SLUGS) {
     row.textSample = text.slice(0, 600);
     row.tables = (html.match(/<table/gi) || []).length;
     row.listItems = (html.match(/<li/gi) || []).length;
-    if (slug === 'essential-energy') { mkdirSync('data', { recursive: true }); writeFileSync('data/poa-sample.html', html.slice(0, 400000)); }
   } catch (e) { row.error = e.message; }
   report.pages[slug] = row;
   console.log(slug.padEnd(20) + String(row.status).padEnd(5) + ' ' + row.bytes + 'B gen=' + row.generator +
@@ -107,6 +106,21 @@ for (const slug of SLUGS) {
     '\n   ' + (row.headline || '(no headline in HTML)'));
   await new Promise((r) => setTimeout(r, 1500));
 }
+
+/* The terms, since robots.txt points to them before anything is
+   republished -- and the dashboard would republish. Read before any use
+   of the data is built. */
+try {
+  const res = await fetch(BASE + '/terms/', { headers: { 'User-Agent': UA, Accept: 'text/html' } });
+  const html = await res.text();
+  const main = (/<main[\s\S]*?<\/main>/i.exec(html) || [html])[0];
+  const text = main.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<\/(p|h\d|li|div)>/gi, '\n').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&')
+    .replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n').trim().slice(0, 20000);
+  report.terms = { status: res.status, chars: text.length };
+  writeFileSync('data/poa-terms.txt', text + '\n');
+  console.log('terms ' + res.status + ' ' + text.length + ' chars');
+} catch (e) { report.terms = { error: e.message }; }
 
 const pw = await import('playwright').catch(() => null);
 if (pw) {
