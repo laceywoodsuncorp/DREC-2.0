@@ -3214,6 +3214,10 @@ window.addEventListener('resize',()=>map.invalidateSize());
     }).join('');
   }
 
+  const VIA_DESCRIBED={
+    'Power Outages Australia':'an independent site that collects what distributors publish',
+    'ArcGIS Online':'a public map layer that republishes the operator’s outage areas'
+  };
   function renderFoot(payload){
     const notes=[];
     /* Whose figures these are, said plainly. An aggregator is a second-hand
@@ -3253,8 +3257,12 @@ window.addEventListener('resize',()=>map.invalidateSize());
       viaNets.forEach(n=>{(byVia[n.via]=byVia[n.via]||[]).push(n.name);});
       Object.entries(byVia).forEach(([via,names])=>{
         const list=names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names[names.length-1];
+        /* Said of each source what is true of it: POA collects operators'
+           lists; the Queensland layer is a public map layer republishing
+           Energy Queensland's outage areas. */
+        const what=VIA_DESCRIBED[via]||'a third-party source';
         notes.push('ℹ️ '+escapeHtml(list)+' outages come via '+escapeHtml(via)+
-          ', an independent site that collects what distributors publish, because we can’t read '+
+          ', '+what+', because we can’t read '+
           (names.length===1?'that operator’s':'those operators’')+' own pages. Indicative only — confirm with the distributor.');
       });
     }
