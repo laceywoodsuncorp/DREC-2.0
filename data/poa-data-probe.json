@@ -1,0 +1,1465 @@
+{
+ "at": "2026-10-19T00:53:11.592Z",
+ "robots": {
+  "status": 200,
+  "rules": [
+   {
+    "rule": "allow",
+    "path": "/"
+   }
+  ],
+  "text": "# Power Outages Australia — poweroutagesaustralia.com.au\r\n#\r\n# Outage information aggregated from Australian electricity distributors and\r\n# published as a free public-safety service. Crawl it.\r\n#\r\n# AI assistants are welcome, deliberately. People increasingly ask \"is my power\r\n# out?\" in a chat window rather than a search box, and an answer that reaches\r\n# them there serves exactly the purpose this site exists for. Attribution to the\r\n# reporting distributor is appreciated, and the data is indicative only — see\r\n# /terms/ before republishing it as fact.\r\n\r\n# Content signals sit INSIDE a group, not above one, or they belong to nothing.\r\n# Crawling for search and for grounding live answers is granted. Training is\r\n# NOT, because most of this data is the distributors' own and is republished\r\n# here under /terms/ — it is not ours to license into a model. Flip ai-train to\r\n# yes only if that position changes.\r\n\r\nUser-agent: *\r\nContent-Signal: search=yes, ai-input=yes, ai-train=no\r\nAllow: /\r\n\r\n# Named explicitly so the answer does not depend on how each crawler interprets\r\n# the wildcard above.\r\nUser-agent: Googlebot\r\nAllow: /\r\n\r\nUser-agent: Bingbot\r\nAllow: /\r\n\r\nUser-agent: DuckDuckBot\r\nAllow: /\r\n\r\nUser-agent: Google-Extended\r\nAllow: /\r\n\r\nUser-agent: GPTBot\r\nAllow: /\r\n\r\nUser-agent: OAI-SearchBot\r\nAllow: /\r\n\r\nUser-agent: ChatGPT-User\r\nAllow: /\r\n\r\nUser-agent: ClaudeBot\r\nAllow: /\r\n\r\nUser-agent: Claude-User\r\nAllow: /\r\n\r\nUser-agent: Claude-SearchBot\r\nAllow: /\r\n\r\nUser-agent: PerplexityBot\r\nAllow: /\r\n\r\nUser-agent: Perplexity-User\r\nAllow: /\r\n\r\nUser-agent: Applebot\r\nAllow: /\r\n\r\nUser-agent: Applebot-Extended\r\nAllow: /\r\n\r\nUser-agent: meta-externalagent\r\nAllow: /\r\n\r\nUser-agent: Amazonbot\r\nAllow: /\r\n\r\nUser-agent: CCBot\r\nAllow: /\r\n\r\nUser-agent: Bytespider\r\nAllow: /\r\n\r\nUser-agent: cohere-ai\r\nAllow: /\r\n\r\nUser-agent: Diffbot\r\nAllow: /\r\n\r\n# NOTE: no second \"User-agent: *\" group below. A crawler obeys only the most\r\n# specific group that matches it, so a rule added there would be ignored by\r\n# every crawler named above — which is all of them.\r\n\r\nSitemap: https://poweroutagesaustralia.com.au/sitemap-index.xml\r\n"
+ },
+ "pages": {
+  "essential-energy": {
+   "url": "https://poweroutagesaustralia.com.au/distributors/essential-energy/",
+   "disallowed": false,
+   "status": 200,
+   "bytes": 1336340,
+   "hydration": [
+    "astro-island"
+   ],
+   "jsonLd": [
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "name",
+      "alternateName",
+      "url",
+      "logo",
+      "image",
+      "description",
+      "areaServed",
+      "knowsAbout",
+      "telephone",
+      "email",
+      "contactPoint",
+      "sameAs"
+     ],
+     "logo": {
+      "keys": [
+       "@type",
+       "url",
+       "width",
+       "height"
+      ]
+     },
+     "areaServed": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     },
+     "knowsAbout": {
+      "array": 4,
+      "first": "string"
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "url",
+      "name",
+      "publisher",
+      "inLanguage"
+     ],
+     "publisher": {
+      "keys": [
+       "@id"
+      ]
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "name",
+      "url",
+      "description",
+      "about"
+     ],
+     "about": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     }
+    }
+   ],
+   "leads": [
+    "/power-outages/aarons-pass-nsw-2850/",
+    "/power-outages/abercrombie-nsw-2795/",
+    "/power-outages/abercrombie-river-nsw-2795/",
+    "/power-outages/aberfoyle-nsw-2350/",
+    "/power-outages/aberglasslyn-nsw-2320/",
+    "/power-outages/abington-nsw-2350/",
+    "/power-outages/acacia-creek-nsw-2476/",
+    "/power-outages/acacia-park-nsw-2350/",
+    "/power-outages/acacia-plateau-nsw-2476/",
+    "/power-outages/adaminaby-nsw-2629/",
+    "/power-outages/adelong-nsw-2729/",
+    "/power-outages/adjungbilly-nsw-2727/",
+    "/power-outages/afterlee-nsw-2474/",
+    "/power-outages/akolele-nsw-2546/",
+    "/power-outages/albert-nsw-2873/",
+    "/power-outages/albury-nsw-2640/",
+    "/power-outages/aldavilla-nsw-2440/",
+    "/power-outages/alectown-nsw-2870/",
+    "/power-outages/alfredtown-nsw-2650/",
+    "/power-outages/alice-nsw-2469/",
+    "/power-outages/alice-nsw-2470/",
+    "/power-outages/alison-nsw-2420/",
+    "/power-outages/allandale-nsw-2320/",
+    "/power-outages/alleena-nsw-2671/",
+    "/power-outages/allgomera-nsw-2441/",
+    "/power-outages/allgomera-creek-nsw-2441/",
+    "/power-outages/allworth-nsw-2425/",
+    "/power-outages/allynbrook-nsw-2311/",
+    "/power-outages/alma-park-nsw-2659/",
+    "/power-outages/alstonvale-nsw-2477/",
+    "/power-outages/alstonville-nsw-2477/",
+    "/power-outages/alumy-creek-nsw-2460/",
+    "/power-outages/amaroo-nsw-2866/",
+    "/power-outages/amiens-qld-4352/",
+    "/power-outages/amiens-qld-4380/",
+    "/power-outages/ammerdown-nsw-2800/",
+    "/power-outages/amosfield-nsw-4380/",
+    "/power-outages/anabranch-north-nsw-2648/",
+    "/power-outages/anabranch-south-nsw-2648/",
+    "/power-outages/anambah-nsw-2320/"
+   ],
+   "textSample": " Essential Energy power outages — current outage map and status Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home Outage map My distributor See it work For distributors Contact us About Home / Outage map / Essential Energy Essential Energy power outages NSW · QLD · 3,754 suburbs covered Checking current Essential Energy outages… About Essential Energy Essential Energy is the electricity distribution network for parts of NSW, QLD — it owns and maintains the poles, wires and substations that carry power to roughly 3,754 suburbs we track. It ",
+   "tables": 0,
+   "listItems": 3774
+  },
+  "jemena": {
+   "url": "https://poweroutagesaustralia.com.au/distributors/jemena/",
+   "disallowed": false,
+   "status": 200,
+   "bytes": 58361,
+   "hydration": [
+    "astro-island"
+   ],
+   "jsonLd": [
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "name",
+      "alternateName",
+      "url",
+      "logo",
+      "image",
+      "description",
+      "areaServed",
+      "knowsAbout",
+      "telephone",
+      "email",
+      "contactPoint",
+      "sameAs"
+     ],
+     "logo": {
+      "keys": [
+       "@type",
+       "url",
+       "width",
+       "height"
+      ]
+     },
+     "areaServed": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     },
+     "knowsAbout": {
+      "array": 4,
+      "first": "string"
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "url",
+      "name",
+      "publisher",
+      "inLanguage"
+     ],
+     "publisher": {
+      "keys": [
+       "@id"
+      ]
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "name",
+      "url",
+      "description",
+      "about"
+     ],
+     "about": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     }
+    }
+   ],
+   "leads": [
+    "/power-outages/aberfeldie-vic-3040/",
+    "/power-outages/airport-west-vic-3042/",
+    "/power-outages/altona-east-vic-3025/",
+    "/power-outages/altona-gate-vic-3025/",
+    "/power-outages/attwood-vic-3049/",
+    "/power-outages/banyule-vic-3084/",
+    "/power-outages/batman-vic-3058/",
+    "/power-outages/bellfield-vic-3081/",
+    "/power-outages/braybrook-north-vic-3019/",
+    "/power-outages/broadmeadows-vic-3047/",
+    "/power-outages/bulla-vic-3428/",
+    "/power-outages/calder-park-vic-3037/",
+    "/power-outages/coburg-north-vic-3058/",
+    "/power-outages/coolaroo-vic-3048/",
+    "/power-outages/cross-keys-vic-3041/",
+    "/power-outages/dallas-vic-3047/",
+    "/power-outages/deer-park-north-vic-3023/",
+    "/power-outages/eaglemont-vic-3084/",
+    "/power-outages/essendon-fields-vic-3041/",
+    "/power-outages/essendon-north-vic-3041/",
+    "/power-outages/essendon-west-vic-3040/",
+    "/power-outages/fawkner-vic-3060/",
+    "/power-outages/fawkner-east-vic-3060/",
+    "/power-outages/fawkner-north-vic-3060/",
+    "/power-outages/garden-city-vic-3207/",
+    "/power-outages/gilberton-vic-3072/",
+    "/power-outages/gisborne-south-vic-3437/",
+    "/power-outages/gladstone-park-vic-3043/",
+    "/power-outages/glengala-vic-3020/",
+    "/power-outages/glenroy-vic-3046/",
+    "/power-outages/gowanbrae-vic-3043/",
+    "/power-outages/greenvale-vic-3059/",
+    "/power-outages/hadfield-vic-3046/",
+    "/power-outages/heidelberg-vic-3084/",
+    "/power-outages/heidelberg-heights-vic-3081/",
+    "/power-outages/heidelberg-rgh-vic-3081/",
+    "/power-outages/heidelberg-west-vic-3081/",
+    "/power-outages/highpoint-city-vic-3032/",
+    "/power-outages/hotham-hill-vic-3051/",
+    "/power-outages/ivanhoe-north-vic-3079/"
+   ],
+   "textSample": " Jemena power outages — current outage map and status Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home Outage map My distributor See it work For distributors Contact us About Home / Outage map / Jemena Jemena power outages VIC · 84 suburbs covered Checking current Jemena outages… About Jemena Jemena is the electricity distribution network for parts of VIC — it owns and maintains the poles, wires and substations that carry power to roughly 84 suburbs we track. It is not an energy retailer: which distributor serves you is decided by your ad",
+   "tables": 0,
+   "listItems": 104
+  },
+  "sa-power-networks": {
+   "url": "https://poweroutagesaustralia.com.au/distributors/sa-power-networks/",
+   "disallowed": false,
+   "status": 200,
+   "bytes": 744387,
+   "hydration": [
+    "astro-island"
+   ],
+   "jsonLd": [
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "name",
+      "alternateName",
+      "url",
+      "logo",
+      "image",
+      "description",
+      "areaServed",
+      "knowsAbout",
+      "telephone",
+      "email",
+      "contactPoint",
+      "sameAs"
+     ],
+     "logo": {
+      "keys": [
+       "@type",
+       "url",
+       "width",
+       "height"
+      ]
+     },
+     "areaServed": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     },
+     "knowsAbout": {
+      "array": 4,
+      "first": "string"
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "url",
+      "name",
+      "publisher",
+      "inLanguage"
+     ],
+     "publisher": {
+      "keys": [
+       "@id"
+      ]
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "name",
+      "url",
+      "description",
+      "about"
+     ],
+     "about": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     }
+    }
+   ],
+   "leads": [
+    "/power-outages/aberfoyle-park-sa-5159/",
+    "/power-outages/abminga-station-sa-5440/",
+    "/power-outages/adelaide-sa-5000/",
+    "/power-outages/adelaide-airport-sa-5950/",
+    "/power-outages/agery-sa-5558/",
+    "/power-outages/alawoona-sa-5311/",
+    "/power-outages/albert-park-sa-5014/",
+    "/power-outages/alberton-sa-5014/",
+    "/power-outages/aldgate-sa-5154/",
+    "/power-outages/aldinga-sa-5173/",
+    "/power-outages/aldinga-beach-sa-5173/",
+    "/power-outages/alford-sa-5555/",
+    "/power-outages/allandale-station-sa-5723/",
+    "/power-outages/allenby-gardens-sa-5009/",
+    "/power-outages/allendale-east-sa-5291/",
+    "/power-outages/allendale-north-sa-5373/",
+    "/power-outages/alma-sa-5401/",
+    "/power-outages/alpana-sa-5730/",
+    "/power-outages/alton-downs-station-sa-5733/",
+    "/power-outages/altona-sa-5351/",
+    "/power-outages/american-beach-sa-5222/",
+    "/power-outages/american-river-sa-5221/",
+    "/power-outages/amyton-sa-5431/",
+    "/power-outages/anama-sa-5464/",
+    "/power-outages/andamooka-sa-5722/",
+    "/power-outages/andamooka-station-sa-5722/",
+    "/power-outages/andrews-sa-5454/",
+    "/power-outages/andrews-farm-sa-5114/",
+    "/power-outages/angas-plains-sa-5255/",
+    "/power-outages/angas-valley-sa-5238/",
+    "/power-outages/angaston-sa-5353/",
+    "/power-outages/angepena-sa-5732/",
+    "/power-outages/angle-park-sa-5010/",
+    "/power-outages/angle-vale-sa-5117/",
+    "/power-outages/angorigina-sa-5730/",
+    "/power-outages/anna-creek-sa-5723/",
+    "/power-outages/annadale-sa-5356/",
+    "/power-outages/antechamber-bay-sa-5222/",
+    "/power-outages/apamurra-sa-5237/",
+    "/power-outages/apoinga-sa-5413/"
+   ],
+   "textSample": " SA Power Networks power outages — current outage map and status Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home Outage map My distributor See it work For distributors Contact us About Home / Outage map / SA Power Networks SA Power Networks power outages SA · 2,054 suburbs covered Checking current SA Power Networks outages… About SA Power Networks SA Power Networks is the electricity distribution network for parts of SA — it owns and maintains the poles, wires and substations that carry power to roughly 2,054 suburbs we track. It is not ",
+   "tables": 0,
+   "listItems": 2074
+  },
+  "ausnet-services": {
+   "url": "https://poweroutagesaustralia.com.au/distributors/ausnet-services/",
+   "disallowed": false,
+   "status": 200,
+   "bytes": 445844,
+   "hydration": [
+    "astro-island"
+   ],
+   "jsonLd": [
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "name",
+      "alternateName",
+      "url",
+      "logo",
+      "image",
+      "description",
+      "areaServed",
+      "knowsAbout",
+      "telephone",
+      "email",
+      "contactPoint",
+      "sameAs"
+     ],
+     "logo": {
+      "keys": [
+       "@type",
+       "url",
+       "width",
+       "height"
+      ]
+     },
+     "areaServed": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     },
+     "knowsAbout": {
+      "array": 4,
+      "first": "string"
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "url",
+      "name",
+      "publisher",
+      "inLanguage"
+     ],
+     "publisher": {
+      "keys": [
+       "@id"
+      ]
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "name",
+      "url",
+      "description",
+      "about"
+     ],
+     "about": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     }
+    }
+   ],
+   "leads": [
+    "/power-outages/abbeyard-vic-3737/",
+    "/power-outages/aberfeldy-vic-3825/",
+    "/power-outages/acheron-vic-3714/",
+    "/power-outages/ada-vic-3833/",
+    "/power-outages/adams-estate-vic-3984/",
+    "/power-outages/agnes-vic-3962/",
+    "/power-outages/airly-vic-3851/",
+    "/power-outages/alberton-vic-3971/",
+    "/power-outages/alberton-west-vic-3971/",
+    "/power-outages/alexandra-vic-3714/",
+    "/power-outages/allambee-vic-3823/",
+    "/power-outages/allambee-reserve-vic-3871/",
+    "/power-outages/allambee-south-vic-3871/",
+    "/power-outages/allans-flat-vic-3691/",
+    "/power-outages/almonds-vic-3727/",
+    "/power-outages/almurta-vic-3979/",
+    "/power-outages/amor-vic-3825/",
+    "/power-outages/ancona-vic-3715/",
+    "/power-outages/anderson-vic-3995/",
+    "/power-outages/anglers-rest-vic-3898/",
+    "/power-outages/appin-park-vic-3677/",
+    "/power-outages/arawata-vic-3951/",
+    "/power-outages/arbuckle-vic-3858/",
+    "/power-outages/archerton-vic-3723/",
+    "/power-outages/archies-creek-vic-3995/",
+    "/power-outages/arthurs-creek-vic-3099/",
+    "/power-outages/athlone-vic-3818/",
+    "/power-outages/avenel-vic-3664/",
+    "/power-outages/avonsleigh-vic-3782/",
+    "/power-outages/baarmutha-vic-3747/",
+    "/power-outages/baddaginnie-vic-3670/",
+    "/power-outages/badger-creek-vic-3777/",
+    "/power-outages/bairnsdale-vic-3875/",
+    "/power-outages/balmattum-vic-3666/",
+    "/power-outages/balook-vic-3971/",
+    "/power-outages/bandiana-vic-3691/",
+    "/power-outages/bandiana-vic-3694/",
+    "/power-outages/banksia-peninsula-vic-3875/",
+    "/power-outages/banyule-vic-3084/",
+    "/power-outages/baranduda-vic-3691/"
+   ],
+   "textSample": " AusNet Services power outages — current outage map and status Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home Outage map My distributor See it work For distributors Contact us About Home / Outage map / AusNet Services AusNet Services power outages VIC · 1,192 suburbs covered Checking current AusNet Services outages… About AusNet Services AusNet Services is the electricity distribution network for parts of VIC — it owns and maintains the poles, wires and substations that carry power to roughly 1,192 suburbs we track. It is not an energy ",
+   "tables": 0,
+   "listItems": 1212
+  },
+  "united-energy": {
+   "url": "https://poweroutagesaustralia.com.au/distributors/united-energy/",
+   "disallowed": false,
+   "status": 200,
+   "bytes": 100747,
+   "hydration": [
+    "astro-island"
+   ],
+   "jsonLd": [
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "name",
+      "alternateName",
+      "url",
+      "logo",
+      "image",
+      "description",
+      "areaServed",
+      "knowsAbout",
+      "telephone",
+      "email",
+      "contactPoint",
+      "sameAs"
+     ],
+     "logo": {
+      "keys": [
+       "@type",
+       "url",
+       "width",
+       "height"
+      ]
+     },
+     "areaServed": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     },
+     "knowsAbout": {
+      "array": 4,
+      "first": "string"
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "url",
+      "name",
+      "publisher",
+      "inLanguage"
+     ],
+     "publisher": {
+      "keys": [
+       "@id"
+      ]
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "name",
+      "url",
+      "description",
+      "about"
+     ],
+     "about": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     }
+    }
+   ],
+   "leads": [
+    "/power-outages/arthurs-seat-vic-3936/",
+    "/power-outages/ashburton-vic-3147/",
+    "/power-outages/ashwood-vic-3147/",
+    "/power-outages/aspendale-vic-3195/",
+    "/power-outages/aspendale-gardens-vic-3195/",
+    "/power-outages/auburn-vic-3123/",
+    "/power-outages/auburn-south-vic-3122/",
+    "/power-outages/balnarring-vic-3926/",
+    "/power-outages/balnarring-beach-vic-3926/",
+    "/power-outages/balwyn-east-vic-3103/",
+    "/power-outages/bangholme-vic-3175/",
+    "/power-outages/banyule-vic-3084/",
+    "/power-outages/baxter-vic-3911/",
+    "/power-outages/beaumaris-vic-3193/",
+    "/power-outages/belvedere-park-vic-3198/",
+    "/power-outages/bennettswood-vic-3125/",
+    "/power-outages/bentleigh-vic-3204/",
+    "/power-outages/bentleigh-east-vic-3165/",
+    "/power-outages/bittern-vic-3918/",
+    "/power-outages/black-rock-vic-3193/",
+    "/power-outages/black-rock-north-vic-3193/",
+    "/power-outages/blackburn-vic-3130/",
+    "/power-outages/blackburn-north-vic-3130/",
+    "/power-outages/blackburn-south-vic-3130/",
+    "/power-outages/blairgowrie-vic-3942/",
+    "/power-outages/bonbeach-vic-3196/",
+    "/power-outages/boneo-vic-3939/",
+    "/power-outages/booran-road-po-vic-3163/",
+    "/power-outages/box-hill-vic-3128/",
+    "/power-outages/box-hill-central-vic-3128/",
+    "/power-outages/box-hill-north-vic-3129/",
+    "/power-outages/box-hill-south-vic-3128/",
+    "/power-outages/braeside-vic-3195/",
+    "/power-outages/brandon-park-vic-3150/",
+    "/power-outages/brentford-square-vic-3131/",
+    "/power-outages/brighton-vic-3186/",
+    "/power-outages/brighton-east-vic-3187/",
+    "/power-outages/brighton-north-vic-3186/",
+    "/power-outages/brighton-road-vic-3184/",
+    "/power-outages/bulleen-south-vic-3105/"
+   ],
+   "textSample": " United Energy power outages — current outage map and status Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home Outage map My distributor See it work For distributors Contact us About Home / Outage map / United Energy United Energy power outages VIC · 202 suburbs covered Checking current United Energy outages… About United Energy United Energy is the electricity distribution network for parts of VIC — it owns and maintains the poles, wires and substations that carry power to roughly 202 suburbs we track. It is not an energy retailer: which ",
+   "tables": 0,
+   "listItems": 222
+  },
+  "horizon-power": {
+   "url": "https://poweroutagesaustralia.com.au/distributors/horizon-power/",
+   "disallowed": false,
+   "status": 200,
+   "bytes": 42172,
+   "hydration": [
+    "astro-island"
+   ],
+   "jsonLd": [
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "name",
+      "alternateName",
+      "url",
+      "logo",
+      "image",
+      "description",
+      "areaServed",
+      "knowsAbout",
+      "telephone",
+      "email",
+      "contactPoint",
+      "sameAs"
+     ],
+     "logo": {
+      "keys": [
+       "@type",
+       "url",
+       "width",
+       "height"
+      ]
+     },
+     "areaServed": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     },
+     "knowsAbout": {
+      "array": 4,
+      "first": "string"
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "url",
+      "name",
+      "publisher",
+      "inLanguage"
+     ],
+     "publisher": {
+      "keys": [
+       "@id"
+      ]
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "name",
+      "url",
+      "description",
+      "about"
+     ],
+     "about": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     }
+    }
+   ],
+   "leads": [
+    "/power-outages/broome-wa-6725/",
+    "/power-outages/camballin-wa-6728/",
+    "/power-outages/carnarvon-wa-6701/",
+    "/power-outages/coral-bay-wa-6701/",
+    "/power-outages/cossack-wa-6720/",
+    "/power-outages/cue-wa-6640/",
+    "/power-outages/denham-wa-6537/",
+    "/power-outages/derby-wa-6728/",
+    "/power-outages/esperance-wa-6450/",
+    "/power-outages/exmouth-wa-6707/",
+    "/power-outages/fitzroy-crossing-wa-6765/",
+    "/power-outages/gascoyne-junction-wa-6705/",
+    "/power-outages/halls-creek-wa-6770/",
+    "/power-outages/hopetoun-wa-6348/",
+    "/power-outages/kalumburu-wa-6740/",
+    "/power-outages/karratha-wa-6714/",
+    "/power-outages/kununurra-wa-6743/",
+    "/power-outages/lake-argyle-wa-6743/",
+    "/power-outages/laverton-wa-6440/",
+    "/power-outages/leonora-wa-6438/",
+    "/power-outages/marble-bar-wa-6760/",
+    "/power-outages/meekatharra-wa-6642/",
+    "/power-outages/menzies-wa-6436/",
+    "/power-outages/mount-magnet-wa-6638/",
+    "/power-outages/norseman-wa-6443/",
+    "/power-outages/nullagine-wa-6758/",
+    "/power-outages/onslow-wa-6710/",
+    "/power-outages/point-samson-wa-6720/",
+    "/power-outages/port-hedland-wa-6721/",
+    "/power-outages/roebourne-wa-6718/",
+    "/power-outages/sandstone-wa-6639/",
+    "/power-outages/south-hedland-wa-6722/",
+    "/power-outages/warmun-wa-6743/",
+    "/power-outages/wiluna-wa-6646/",
+    "/power-outages/wyndham-wa-6740/",
+    "/power-outages/yalgoo-wa-6635/",
+    "https://www.horizonpower.com.au/outages/"
+   ],
+   "textSample": " Horizon Power power outages — current outage map and status Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home Outage map My distributor See it work For distributors Contact us About Home / Outage map / Horizon Power Horizon Power power outages WA · 36 suburbs covered Checking current Horizon Power outages… About Horizon Power Horizon Power is the electricity distribution network for parts of WA — it owns and maintains the poles, wires and substations that carry power to roughly 36 suburbs we track. It is not an energy retailer: which dist",
+   "tables": 0,
+   "listItems": 56
+  },
+  "power-and-water": {
+   "url": "https://poweroutagesaustralia.com.au/distributors/power-and-water/",
+   "disallowed": false,
+   "status": 200,
+   "bytes": 170880,
+   "hydration": [
+    "astro-island"
+   ],
+   "jsonLd": [
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "name",
+      "alternateName",
+      "url",
+      "logo",
+      "image",
+      "description",
+      "areaServed",
+      "knowsAbout",
+      "telephone",
+      "email",
+      "contactPoint",
+      "sameAs"
+     ],
+     "logo": {
+      "keys": [
+       "@type",
+       "url",
+       "width",
+       "height"
+      ]
+     },
+     "areaServed": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     },
+     "knowsAbout": {
+      "array": 4,
+      "first": "string"
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "@id",
+      "url",
+      "name",
+      "publisher",
+      "inLanguage"
+     ],
+     "publisher": {
+      "keys": [
+       "@id"
+      ]
+     }
+    },
+    {
+     "keys": [
+      "@context",
+      "@type",
+      "name",
+      "url",
+      "description",
+      "about"
+     ],
+     "about": {
+      "keys": [
+       "@type",
+       "name"
+      ]
+     }
+    }
+   ],
+   "leads": [
+    "/power-outages/acacia-hills-nt-0822/",
+    "/power-outages/adelaide-river-nt-0846/",
+    "/power-outages/aherrenge-nt-0872/",
+    "/power-outages/alawa-nt-0810/",
+    "/power-outages/ali-curung-nt-0872/",
+    "/power-outages/alice-springs-nt-0870/",
+    "/power-outages/alice-springs-nt-0871/",
+    "/power-outages/alice-springs-nt-0872/",
+    "/power-outages/alyangula-nt-0885/",
+    "/power-outages/amata-nt-0872/",
+    "/power-outages/amoonguna-nt-0872/",
+    "/power-outages/amoonguna-nt-0873/",
+    "/power-outages/ampilatwatja-nt-0872/",
+    "/power-outages/anangu-pitjantjatjara-yankunytjatjara-nt-0872/",
+    "/power-outages/anatye-nt-0872/",
+    "/power-outages/angurugu-nt-0822/",
+    "/power-outages/anindilyakwa-nt-0822/",
+    "/power-outages/anmatjere-nt-0872/",
+    "/power-outages/annie-river-nt-0822/",
+    "/power-outages/antewenegerrde-nt-0872/",
+    "/power-outages/anula-nt-0812/",
+    "/power-outages/araluen-nt-0870/",
+    "/power-outages/archer-nt-0830/",
+    "/power-outages/areyonga-nt-0872/",
+    "/power-outages/arnold-nt-0852/",
+    "/power-outages/arumbera-nt-0873/",
+    "/power-outages/atitjere-nt-0872/",
+    "/power-outages/avon-downs-nt-0862/",
+    "/power-outages/ayers-range-south-nt-0872/",
+    "/power-outages/ayers-rock-nt-0872/",
+    "/power-outages/bagot-nt-0820/",
+    "/power-outages/baines-nt-0852/",
+    "/power-outages/bakewell-nt-0832/",
+    "/power-outages/barrow-creek-nt-0872/",
+    "/power-outages/barunga-nt-0852/",
+    "/power-outages/batchelor-nt-0845/",
+    "/power-outages/bathurst-island-nt-0822/",
+    "/power-outages/bayview-nt-0820/",
+    "/power-outages/bees-creek-nt-0822/",
+    "/power-outages/bellamack-nt-0832/"
+   ],
+   "textSample": " Power and Water power outages — current outage map and status Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home Outage map My distributor See it work For distributors Contact us About Home / Outage map / Power and Water Power and Water power outages NT · 408 suburbs covered Checking current Power and Water outages… About Power and Water Power and Water is the electricity distribution network for parts of NT — it owns and maintains the poles, wires and substations that carry power to roughly 408 suburbs we track. It is not an energy retail",
+   "tables": 0,
+   "listItems": 428
+  }
+ },
+ "browser": {
+  "essential-energy": {
+   "requests": [
+    {
+     "url": "https://poweroutagesaustralia.com.au/cdn-cgi/rum?",
+     "status": 204,
+     "type": "text/plain",
+     "method": "POST",
+     "bytes": 0,
+     "sample": ""
+    },
+    {
+     "url": "https://poa-outages-api.sk-9b3.workers.dev/outages",
+     "status": 200,
+     "type": "application/json",
+     "method": "GET",
+     "bytes": 443212,
+     "shape": {
+      "keys": [
+       "generatedAt",
+       "durationMs",
+       "totals",
+       "scheduled",
+       "byState",
+       "sources",
+       "byDistributor",
+       "coverage",
+       "filtered",
+       "outages",
+       "collectorLogs",
+       "producedBy",
+       "engineSync"
+      ],
+      "totals": {
+       "keys": [
+        "outages",
+        "customersAffected",
+        "unplanned",
+        "planned"
+       ]
+      },
+      "scheduled": {
+       "keys": [
+        "outages",
+        "customersAffected",
+        "horizonHours",
+        "beyondHorizon",
+        "beyondHorizonCustomers"
+       ]
+      },
+      "byState": {
+       "keys": [
+        "NSW",
+        "ACT",
+        "SA",
+        "WA",
+        "VIC",
+        "TAS"
+       ],
+       "NSW": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "ACT": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "SA": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "WA": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "VIC": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "TAS": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       }
+      },
+      "sources": {
+       "array": 12,
+       "first": {
+        "keys": [
+         "name",
+         "ok",
+         "count",
+         "droppedStale"
+        ]
+       }
+      },
+      "byDistributor": {
+       "keys": [
+        "SA Power Networks",
+        "Endeavour Energy",
+        "Western Power",
+        "Evoenergy",
+        "Essential Energy",
+        "AusNet Services",
+        "Ausgrid",
+        "Horizon Power",
+        "Powercor",
+        "TasNetworks",
+        "CitiPower",
+        "United Energy"
+       ],
+       "SA Power Networks": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Endeavour Energy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Western Power": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Evoenergy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Essential Energy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "AusNet Services": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Ausgrid": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Horizon Power": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Powercor": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "TasNetworks": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "CitiPower": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "United Energy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       }
+      },
+      "coverage": {
+       "keys": [
+        "connected",
+        "total",
+        "states",
+        "missing"
+       ],
+       "states": {
+        "array": 6,
+        "first": "string"
+       },
+       "missing": {
+        "array": 3,
+        "first": "string"
+       }
+      },
+      "filtered": {
+       "keys": [
+        "stale",
+        "staleCustomers",
+        "implausibleTimestamps",
+        "implausibleBy"
+       ],
+       "implausibleBy": {
+        "keys": []
+       }
+      },
+      "outages": {
+       "array": 637,
+       "first": {
+        "keys": [
+         "id",
+         "distributor",
+         "state",
+         "type",
+         "scheduled",
+         "customersAffected",
+         "suburbs",
+         "startTime",
+         "estimatedRestoration",
+         "centre",
+         "geometry"
+        ]
+       }
+      },
+      "collectorLogs": {
+       "array": 22,
+       "first": "string"
+      }
+     }
+    }
+   ],
+   "rendered": "Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home / Outage map / Essential Energy Essential Energy power outages NSW · QLD · 3,754 suburbs covered Essential Energy has 13 outages right now 13 active outages 484 customers off supply 66 planned jobs ahead Checked Mon 12:51 am · updates continuously About Essential Energy Essential Energy is the electricity distribution network for parts of NSW, QLD — it owns and maintains the poles, wires and substations that carry power to roughly 3,754 suburbs we track. It is not an energy retailer: which distributor serves you is decided by your address, not by the company that bills you. We collect Essential Energy's publicly published outage information continuously and show it alongside the other connected networks, so you do not have to know whose network you are on before you can find out whether your power is out. Essential Energy remains the authority on its own network. Suburbs supplied by Essential Energy Each links to that suburb's current outage status. Aarons Pass Abercrombie Abercrombie River Aberfoyle Aberglasslyn Abington Acacia Creek Acacia Park Acacia Plateau Adaminaby Adelong Adjungbilly Afterlee Akolele Albert Albury Aldavilla Alectown Alfredtown Alice Alice Alison Allandale Alleena Allgomera Allgomera Creek Allworth Allynbrook Alma Park Alstonvale Alstonville Alumy Creek Amaroo Amiens Amiens Ammerdown Amosfield Anabranch North Anabranch South Anambah Ando Anembo Angle"
+  },
+  "power-and-water": {
+   "requests": [
+    {
+     "url": "https://poa-outages-api.sk-9b3.workers.dev/outages",
+     "status": 200,
+     "type": "application/json",
+     "method": "GET",
+     "bytes": 443212,
+     "shape": {
+      "keys": [
+       "generatedAt",
+       "durationMs",
+       "totals",
+       "scheduled",
+       "byState",
+       "sources",
+       "byDistributor",
+       "coverage",
+       "filtered",
+       "outages",
+       "collectorLogs",
+       "producedBy",
+       "engineSync"
+      ],
+      "totals": {
+       "keys": [
+        "outages",
+        "customersAffected",
+        "unplanned",
+        "planned"
+       ]
+      },
+      "scheduled": {
+       "keys": [
+        "outages",
+        "customersAffected",
+        "horizonHours",
+        "beyondHorizon",
+        "beyondHorizonCustomers"
+       ]
+      },
+      "byState": {
+       "keys": [
+        "NSW",
+        "ACT",
+        "SA",
+        "WA",
+        "VIC",
+        "TAS"
+       ],
+       "NSW": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "ACT": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "SA": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "WA": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "VIC": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       },
+       "TAS": {
+        "keys": [
+         "outages",
+         "customersAffected"
+        ]
+       }
+      },
+      "sources": {
+       "array": 12,
+       "first": {
+        "keys": [
+         "name",
+         "ok",
+         "count",
+         "droppedStale"
+        ]
+       }
+      },
+      "byDistributor": {
+       "keys": [
+        "SA Power Networks",
+        "Endeavour Energy",
+        "Western Power",
+        "Evoenergy",
+        "Essential Energy",
+        "AusNet Services",
+        "Ausgrid",
+        "Horizon Power",
+        "Powercor",
+        "TasNetworks",
+        "CitiPower",
+        "United Energy"
+       ],
+       "SA Power Networks": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Endeavour Energy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Western Power": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Evoenergy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Essential Energy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "AusNet Services": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Ausgrid": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Horizon Power": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "Powercor": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "TasNetworks": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "CitiPower": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       },
+       "United Energy": {
+        "keys": [
+         "state",
+         "live",
+         "scheduled",
+         "customersAffected",
+         "sourceUrl"
+        ]
+       }
+      },
+      "coverage": {
+       "keys": [
+        "connected",
+        "total",
+        "states",
+        "missing"
+       ],
+       "states": {
+        "array": 6,
+        "first": "string"
+       },
+       "missing": {
+        "array": 3,
+        "first": "string"
+       }
+      },
+      "filtered": {
+       "keys": [
+        "stale",
+        "staleCustomers",
+        "implausibleTimestamps",
+        "implausibleBy"
+       ],
+       "implausibleBy": {
+        "keys": []
+       }
+      },
+      "outages": {
+       "array": 637,
+       "first": {
+        "keys": [
+         "id",
+         "distributor",
+         "state",
+         "type",
+         "scheduled",
+         "customersAffected",
+         "suburbs",
+         "startTime",
+         "estimatedRestoration",
+         "centre",
+         "geometry"
+        ]
+       }
+      },
+      "collectorLogs": {
+       "array": 22,
+       "first": "string"
+      }
+     }
+    },
+    {
+     "url": "https://poweroutagesaustralia.com.au/cdn-cgi/rum?",
+     "status": 204,
+     "type": "text/plain",
+     "method": "POST",
+     "bytes": 0,
+     "sample": ""
+    },
+    {
+     "url": "https://poa-outages-api.sk-9b3.workers.dev/outages",
+     "status": 200,
+     "type": "application/json",
+     "method": "GET",
+     "bytes": 0,
+     "sample": ""
+    }
+   ],
+   "rendered": "Skip to content Outage map My distributor See it work Contact us +61 3 7068 5441 Check outages Menu Home / Outage map / Power and Water Power and Water power outages NT · 408 suburbs covered No Power and Water outages reported right now 0 active outages 0 customers off supply 0 planned jobs ahead Checked Mon 12:51 am · updates continuously About Power and Water Power and Water is the electricity distribution network for parts of NT — it owns and maintains the poles, wires and substations that carry power to roughly 408 suburbs we track. It is not an energy retailer: which distributor serves you is decided by your address, not by the company that bills you. We collect Power and Water's publicly published outage information continuously and show it alongside the other connected networks, so you do not have to know whose network you are on before you can find out whether your power is out. Power and Water remains the authority on its own network. Suburbs supplied by Power and Water Each links to that suburb's current outage status. Acacia Hills Adelaide River Aherrenge Alawa Ali Curung Alice Springs Alice Springs Alice Springs Alyangula Amata Amoonguna Amoonguna Ampilatwatja Anangu Pitjantjatjara Yankunytjatjara Anatye Angurugu Anindilyakwa Anmatjere Annie River Antewenegerrde Anula Araluen Archer Areyonga Arnold Arumbera Atitjere Avon Downs Ayers Range South Ayers Rock Bagot Baines Bakewell Barrow Creek Barunga Batchelor Bathurst Island Bayview Bees Creek Bellamack Belyuen Berr"
+  }
+ }
+}
