@@ -1,6 +1,6 @@
 {
- "at": "2026-10-18T23:24:57.779Z",
- "nowMs": 1792365897779,
+ "at": "2026-10-19T00:48:54.017Z",
+ "nowMs": 1792370934017,
  "layer": {
   "name": "Outage_Areas",
   "maxRecordCount": 2000,
@@ -21,14 +21,14 @@
    "SHAPE__Length:esriFieldTypeDouble"
   ]
  },
- "totalRecords": 147,
- "fetched": 147,
+ "totalRecords": 151,
+ "fetched": 151,
  "startRange": {
   "oldest": "2026-05-31T10:29:00.000Z",
   "newest": "2026-10-28T19:00:00.000Z"
  },
  "ageBuckets": {
-  "future": 145,
+  "future": 149,
   "today": 0,
   "lastWeek": 0,
   "lastMonth": 0,
@@ -45,7 +45,7 @@
  "oldestFive": [
   {
    "started": "2026-05-31T10:29:00.000Z",
-   "ageDays": 140.5,
+   "ageDays": 140.6,
    "etr": "2026-06-01T18:30:00.000Z",
    "customers": 55,
    "area": "RED GULLY,REGANS FORD,YATHROO,MINDARRA"
@@ -58,32 +58,30 @@
    "area": "KUKERIN,MOULYINNING,NAIRIBIN,DUMBLEYUNG,NORTH KUKERIN,NORTH "
   },
   {
-   "started": "2026-10-19T06:41:00.000Z",
-   "ageDays": -0.3,
-   "etr": "2026-10-19T11:30:00.000Z",
-   "customers": 351,
-   "area": "COCKBURN CENTRAL,SUCCESS,BEELIAR"
-  },
-  {
    "started": "2026-10-19T06:51:00.000Z",
    "ageDays": -0.3,
-   "etr": "2026-10-19T11:30:00.000Z",
+   "etr": "2026-10-19T12:00:00.000Z",
    "customers": 48,
    "area": "MILLBROOK"
   },
   {
-   "started": "2026-10-19T07:00:00.000Z",
+   "started": "2026-10-19T07:29:00.000Z",
    "ageDays": -0.3,
-   "etr": "2026-10-19T15:00:00.000Z",
-   "customers": 25,
-   "area": "MUNGALUP,COLLIE,PRESTON SETTLEMENT"
+   "etr": "2026-10-19T12:00:00.000Z",
+   "customers": 29,
+   "area": "MUCHEA"
+  },
+  {
+   "started": "2026-10-19T07:30:00.000Z",
+   "ageDays": -0.3,
+   "etr": "2026-10-19T16:30:00.000Z",
+   "customers": 50,
+   "area": "SWAN VIEW"
   }
  ],
  "statusLikeFields": {
   "ESTIMATEDRESTORATIONTIME": [
    "01/06/2026 06:30 PM",
-   "19/10/2026 03:00 PM",
-   "19/10/2026 02:00 PM",
    "19/10/2026 04:30 PM",
    "20/10/2026 05:30 PM",
    "20/10/2026 10:30 AM",
@@ -92,7 +90,9 @@
    "20/10/2026 01:00 PM",
    "20/10/2026 03:00 PM",
    "20/10/2026 05:00 PM",
-   "19/10/2026 02:30 PM"
+   "19/10/2026 03:00 PM",
+   "22/10/2026 06:00 AM",
+   "21/10/2026 06:00 PM"
   ]
  },
  "nairibin": [
@@ -114,46 +114,29 @@
   }
  ],
  "ourPage": {
-  "rows": 147,
+  "rows": 151,
   "oldest": "2026-05-31T10:29:00.000Z",
   "newest": "2026-10-28T19:00:00.000Z"
  },
  "orderBySupported": true,
  "kindValues": {
   "PLANNEDOUTAGE": {
-   "\"Unplanned\"": 147
+   "\"Unplanned\"": 139,
+   "\"Planned\"": 12
   },
   "OUTAGETYPE": {
-   "\"F\"": 142,
-   "\"U\"": 5
+   "\"F\"": 132,
+   "\"P\"": 12,
+   "\"U\"": 7
   }
  },
  "futureStart": {
-  "count": 145,
+  "count": 149,
   "byOurKind": {
-   "unplanned": 145
+   "unplanned": 137,
+   "planned": 12
   },
   "samples": [
-   {
-    "area": "KENSINGTON",
-    "start": "19/10/2026 07:30 AM",
-    "etr": "19/10/2026 03:00 PM",
-    "PLANNEDOUTAGE": "Unplanned",
-    "OUTAGETYPE": "F",
-    "INCIDENTREF": "INCD-508172-V",
-    "customers": 10,
-    "ours": "unplanned"
-   },
-   {
-    "area": "MIDVALE,MIDLAND",
-    "start": "19/10/2026 07:30 AM",
-    "etr": "19/10/2026 02:00 PM",
-    "PLANNEDOUTAGE": "Unplanned",
-    "OUTAGETYPE": "F",
-    "INCIDENTREF": "INCD-507932-V",
-    "customers": 178,
-    "ours": "unplanned"
-   },
    {
     "area": "SWAN VIEW",
     "start": "19/10/2026 07:30 AM",
@@ -162,16 +145,6 @@
     "OUTAGETYPE": "F",
     "INCIDENTREF": "INCD-507922-V",
     "customers": 50,
-    "ours": "unplanned"
-   },
-   {
-    "area": "BUNTINE,MAYA",
-    "start": "19/10/2026 07:30 AM",
-    "etr": "19/10/2026 04:30 PM",
-    "PLANNEDOUTAGE": "Unplanned",
-    "OUTAGETYPE": "F",
-    "INCIDENTREF": "INCD-2160081-U",
-    "customers": 7,
     "ours": "unplanned"
    },
    {
@@ -212,6 +185,36 @@
     "OUTAGETYPE": "F",
     "INCIDENTREF": "INCD-202744-X",
     "customers": 22,
+    "ours": "unplanned"
+   },
+   {
+    "area": "LESMURDIE",
+    "start": "20/10/2026 09:00 AM",
+    "etr": "20/10/2026 01:00 PM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-83263-W",
+    "customers": 27,
+    "ours": "unplanned"
+   },
+   {
+    "area": "GREENFIELDS",
+    "start": "20/10/2026 08:00 AM",
+    "etr": "20/10/2026 03:00 PM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-499832-V",
+    "customers": 18,
+    "ours": "unplanned"
+   },
+   {
+    "area": "NORTHAMPTON",
+    "start": "20/10/2026 08:00 AM",
+    "etr": "20/10/2026 04:00 PM",
+    "PLANNEDOUTAGE": "Unplanned",
+    "OUTAGETYPE": "F",
+    "INCIDENTREF": "INCD-508592-V",
+    "customers": 4,
     "ours": "unplanned"
    }
   ]

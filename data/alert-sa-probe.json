@@ -1,59 +1,62 @@
 {
- "at": "2026-10-18T23:17:52.150Z",
+ "at": "2026-10-19T00:40:38.266Z",
  "feeds": [
   {
    "url": "https://combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
    "use": "production",
    "status": 200,
-   "bytes": 50429,
-   "entries": 14,
-   "withGeometry": 14,
-   "insideAustralia": 14,
+   "bytes": 60902,
+   "entries": 17,
+   "withGeometry": 17,
+   "insideAustralia": 17,
    "events": {
     "Burn Off": 5,
     "Grass Fire": 4,
-    "Burn Off Prescribed": 4,
-    "TREE DOWN": 1
+    "Burn Off Prescribed": 3,
+    "TREE DOWN": 3,
+    "Tree Fire": 1,
+    "Hazardous materials": 1
    },
    "severities": {
-    "Unknown": 13
+    "Unknown": 14
    },
    "urgencies": {
-    "Unknown": 13
+    "Unknown": 14
    },
    "categories": {
-    "Burn off": 9,
-    "Fire": 4,
-    "TREE DOWN": 1
+    "Burn off": 8,
+    "Fire": 5,
+    "TREE DOWN": 3,
+    "Hazardous materials": 1
    },
    "senders": {
-    "South Australian Country Fire Service": 11,
-    "South Australian Metropolitan Fire Service": 2,
-    "SES.State.PublicInfo@eso.sa.gov.au": 1
+    "South Australian Country Fire Service": 12,
+    "SES.State.PublicInfo@eso.sa.gov.au": 3,
+    "South Australian Metropolitan Fire Service": 2
    },
    "responseTypes": {
-    "Monitor": 13
+    "Monitor": 14
    },
    "parameterNames": {
-    "Location": 14,
-    "Status": 14,
-    "WarningLevel": 14,
-    "ControlAuthority": 14,
-    "FireBanDistrict": 14,
-    "RespondingUnit": 14,
-    "Source": 14,
-    "IncidentName": 13,
-    "IncidentLevel": 13,
-    "CallToAction": 13,
-    "SubCategory": 13,
-    "WarningLevelExt": 13,
-    "Risk": 13,
-    "IncidentPrimaryUnit": 1,
-    "Icon": 1,
-    "Uniseqnumber": 1,
-    "Globalid": 1,
-    "IncidentAddressStreetName": 1,
-    "IncidentAddressStreetType": 1
+    "Location": 17,
+    "Status": 17,
+    "WarningLevel": 17,
+    "ControlAuthority": 17,
+    "FireBanDistrict": 17,
+    "RespondingUnit": 17,
+    "Source": 17,
+    "IncidentName": 14,
+    "IncidentLevel": 14,
+    "CallToAction": 14,
+    "SubCategory": 14,
+    "WarningLevelExt": 14,
+    "Risk": 14,
+    "IncidentPrimaryUnit": 3,
+    "Icon": 3,
+    "Uniseqnumber": 3,
+    "Globalid": 3,
+    "IncidentAddressStreetName": 3,
+    "IncidentAddressStreetType": 3
    },
    "outageEntriesByEvent": 0,
    "outageEntriesByText": 0,
@@ -161,38 +164,6 @@
      "urgency": "Unknown",
      "certainty": "Observed",
      "responseType": "Monitor",
-     "senderName": "South Australian Metropolitan Fire Service",
-     "headline": "STONYFELL : BURNOFF PRESCRIBED",
-     "areaDesc": "STONYFELL",
-     "parameters": [
-      "IncidentName=STONYFELL",
-      "Location=STONYFELL",
-      "IncidentLevel=1",
-      "Status=Controlled",
-      "WarningLevel=Incident",
-      "ControlAuthority=South Australian Metropolitan Fire Service",
-      "FireBanDistrict=MOUNT LOFTY RANGES",
-      "CallToAction=",
-      "SubCategory=Burn Off Prescribed",
-      "RespondingUnit=",
-      "WarningLevelExt=",
-      "Risk=",
-      "Source=SA"
-     ],
-     "hasPoint": true,
-     "point": [
-      -34.931614,
-      138.678047
-     ],
-     "web": "https://www.cfs.sa.gov.au/incidents"
-    },
-    {
-     "event": "Burn Off Prescribed",
-     "category": "Burn off",
-     "severity": "Unknown",
-     "urgency": "Unknown",
-     "certainty": "Observed",
-     "responseType": "Monitor",
      "senderName": "South Australian Country Fire Service",
      "headline": "HUMBUG SCRUB : BURNOFF PRESCRIBED",
      "areaDesc": "FRANK BARKER RD HUMBUG SCRUB",
@@ -249,6 +220,38 @@
       135.778181
      ],
      "web": "https://www.cfs.sa.gov.au/incidents"
+    },
+    {
+     "event": "Burn Off",
+     "category": "Burn off",
+     "severity": "Unknown",
+     "urgency": "Unknown",
+     "certainty": "Observed",
+     "responseType": "Monitor",
+     "senderName": "South Australian Country Fire Service",
+     "headline": "KENTON VALLEY : BURN OFF",
+     "areaDesc": "454 KENTON VALLEY RD KENTON VALLEY",
+     "parameters": [
+      "IncidentName=KENTON VALLEY",
+      "Location=454 KENTON VALLEY RD KENTON VALLEY",
+      "IncidentLevel=1",
+      "Status=Controlled",
+      "WarningLevel=Incident",
+      "ControlAuthority=South Australian Country Fire Service",
+      "FireBanDistrict=MOUNT LOFTY RANGES",
+      "CallToAction=",
+      "SubCategory=Burn Off",
+      "RespondingUnit=",
+      "WarningLevelExt=",
+      "Risk=",
+      "Source=SA"
+     ],
+     "hasPoint": true,
+     "point": [
+      -34.861149,
+      138.89243
+     ],
+     "web": "https://www.cfs.sa.gov.au/incidents"
     }
    ],
    "outageSamples": []
@@ -257,12 +260,12 @@
    "url": "https://uat.combined-feed.alert.sa.gov.au/majorIncidentsCAP.xml",
    "use": "UAT -- NOT FOR USE, contents are test data",
    "status": 200,
-   "bytes": 445389,
-   "entries": 120,
-   "withGeometry": 120,
-   "insideAustralia": 120,
+   "bytes": 448819,
+   "entries": 121,
+   "withGeometry": 121,
+   "insideAustralia": 121,
    "events": {
-    "TREE DOWN": 22,
+    "TREE DOWN": 23,
     "FLOODING SALVAGE": 9,
     "SEVERE WEATHER": 6,
     "Hazardous materials": 5,
@@ -294,7 +297,7 @@
    },
    "categories": {
     "Fire": 25,
-    "TREE DOWN": 22,
+    "TREE DOWN": 23,
     "Relief And Recovery Centre": 17,
     "Recovery Centre": 14,
     "Relief Centre": 13,
@@ -307,7 +310,7 @@
     "Heatwave": 1
    },
    "senders": {
-    "SES.State.PublicInfo@eso.sa.gov.au": 37,
+    "SES.State.PublicInfo@eso.sa.gov.au": 38,
     "South Australian Country Fire Service": 15,
     "South Australian Metropolitan Fire Service": 12,
     "Department of Fire and Emergency Services WA": 4,
@@ -324,28 +327,28 @@
     "Unknown (Watch and Act - Stay Indoors)": 1
    },
    "parameterNames": {
-    "WarningLevel": 120,
-    "Location": 120,
-    "ControlAuthority": 120,
-    "FireBanDistrict": 120,
-    "Source": 120,
-    "Status": 75,
-    "RespondingUnit": 75,
+    "WarningLevel": 121,
+    "Location": 121,
+    "ControlAuthority": 121,
+    "FireBanDistrict": 121,
+    "Source": 121,
+    "Status": 76,
+    "RespondingUnit": 76,
     "Opens": 45,
     "Closes": 45,
     "Services": 45,
+    "IncidentPrimaryUnit": 38,
+    "Icon": 38,
+    "Uniseqnumber": 38,
+    "Globalid": 38,
+    "IncidentAddressStreetName": 38,
+    "IncidentAddressStreetType": 38,
     "IncidentName": 38,
     "IncidentLevel": 38,
     "CallToAction": 38,
     "SubCategory": 38,
     "WarningLevelExt": 38,
-    "Risk": 38,
-    "IncidentPrimaryUnit": 37,
-    "Icon": 37,
-    "Uniseqnumber": 37,
-    "Globalid": 37,
-    "IncidentAddressStreetName": 37,
-    "IncidentAddressStreetType": 37
+    "Risk": 38
    },
    "outageEntriesByEvent": 0,
    "outageEntriesByText": 0,
