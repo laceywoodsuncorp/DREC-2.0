@@ -2623,28 +2623,32 @@ window.addEventListener('resize',()=>map.invalidateSize());
      this is not on our map. `embedUrl` is what is framed; an entry without
      one gets a link card instead of a frame. `url` is also where the "check
      their map" links in search results point. */
-  const POA='https://poweroutagesaustralia.com.au/distributors/';
+  /* POA's map, zoomed to one distributor by ?distributor=<slug>
+     (scripts/probe-poa-map.mjs). It covers neither the NT nor Jemena --
+     the NT is hatched out of its map and Jemena is absent from its feed --
+     so those two tabs carry no frame, only a link to the operator. */
+  const POA_MAP='https://poweroutagesaustralia.com.au/map/?distributor=';
   const OPERATOR_EMBEDS=[
     {id:'nt',op:'Power and Water Corporation',short:'Power and Water',state:'NT',region:'the NT',area:'the Northern Territory',
-      url:'https://www.powerwater.com.au/outages/current-outages',embedUrl:POA+'power-and-water/',
+      url:'https://www.powerwater.com.au/outages/current-outages',noEmbed:'Power Outages Australia doesn’t cover the NT, and Power and Water’s own map can’t be shown inside other websites',
       why:'Power and Water blocks automated access to its outage list'},
     {id:'sa',op:'SA Power Networks',state:'SA',region:'SA',area:'South Australia',
-      url:'https://www.sapowernetworks.com.au/outages/',embedUrl:POA+'sa-power-networks/',
+      url:'https://www.sapowernetworks.com.au/outages/',embedUrl:POA_MAP+'sa-power-networks',
       why:'SA Power Networks blocks automated access to its outage list'},
     {id:'nsw-regional',op:'Essential Energy',state:'NSW',region:'regional NSW',area:'regional and rural New South Wales',
-      url:'https://www.essentialenergy.com.au/outages-and-faults/power-outages',embedUrl:POA+'essential-energy/',
+      url:'https://www.essentialenergy.com.au/outages-and-faults/power-outages',embedUrl:POA_MAP+'essential-energy',
       why:'Essential Energy blocks automated access to its outage list'},
     {id:'wa-regional',op:'Horizon Power',state:'WA',region:'regional WA',area:'regional Western Australia, outside the south-west grid',
-      url:'https://www.horizonpower.com.au/faults-outages/',embedUrl:POA+'horizon-power/',
+      url:'https://www.horizonpower.com.au/faults-outages/',embedUrl:POA_MAP+'horizon-power',
       why:'Horizon Power blocks automated access to its outage list'},
     {id:'vic-east',op:'AusNet Services',short:'AusNet',state:'VIC',region:'eastern Victoria',area:'eastern and north-eastern Victoria',
-      url:'https://www.ausnetservices.com.au/outages',embedUrl:POA+'ausnet-services/',
+      url:'https://www.ausnetservices.com.au/outages',embedUrl:POA_MAP+'ausnet-services',
       why:'AusNet’s list only appears once its page runs in a browser, so we can read it only a couple of times a day'},
     {id:'melb-nw',op:'Jemena',state:'VIC',region:'north-west Melbourne',area:'north-west Melbourne',
-      url:'https://www.jemena.com.au/outages/electricity-outages/',embedUrl:POA+'jemena/',
+      url:'https://www.jemena.com.au/outages/electricity-outages/',noEmbed:'Power Outages Australia doesn’t carry Jemena’s outages, and Jemena’s own map can’t be shown inside other websites',
       why:'Jemena’s list only appears once its page runs in a browser'},
     {id:'melb-se',op:'United Energy',state:'VIC',region:'south-east Melbourne',area:'south-east Melbourne and the Mornington Peninsula',
-      url:'https://www.unitedenergy.com.au/outage-map',embedUrl:POA+'united-energy/',
+      url:'https://www.unitedenergy.com.au/outage-map',embedUrl:POA_MAP+'united-energy',
       why:'United Energy moved its outage list and we have not yet found where its data now comes from'}
   ];
   const OPERATOR_SITES=Object.fromEntries(OPERATOR_EMBEDS.map(e=>[e.op,e.url]));
@@ -2658,12 +2662,13 @@ window.addEventListener('resize',()=>map.invalidateSize());
   function renderOutageTabs(){
     if(!outageTabsEl)return;
     const tabs=[{id:'all',label:'Outages we can read',ext:false}]
-      .concat(OPERATOR_EMBEDS.map(e=>({id:e.id,label:'Search outages in '+e.region,ext:true,op:e.op})));
+      .concat(OPERATOR_EMBEDS.map(e=>({id:e.id,label:'Search outages in '+e.region,ext:true,op:e.op,
+        tip:e.op+(e.embedUrl?' outages, on the Power Outages Australia map':' outage map, on their own site')})));
     outageTabsEl.innerHTML=tabs.map(t=>
       '<button type="button" role="tab" class="outage-tab'+(t.ext?' ext':'')+'" id="otab-'+t.id+'"'+
       ' data-tab="'+t.id+'" aria-selected="'+(t.id==='all')+'" tabindex="'+(t.id==='all'?'0':'-1')+'"'+
       ' aria-controls="'+(t.id==='all'?'outagePaneAll':'outagePaneOperator')+'"'+
-      (t.op?' title="'+escapeHtml(t.op)+' outages, via Power Outages Australia"':'')+'>'+escapeHtml(t.label)+'</button>').join('');
+      (t.tip?' title="'+escapeHtml(t.tip)+'"':'')+'>'+escapeHtml(t.label)+'</button>').join('');
   }
 
   function operatorPaneHtml(e){
@@ -2671,12 +2676,12 @@ window.addEventListener('resize',()=>map.invalidateSize());
     const own='<a href="'+escapeHtml(e.url)+'" target="_blank" rel="noopener">'+escapeHtml(name)+'’s own outage map ↗</a>';
     const head='<div class="op-embed-head"><h4>'+escapeHtml(e.op)+' — outages in '+escapeHtml(e.area)+'</h4>'+
       '<p>We can’t include these outages on our map: '+escapeHtml(e.why)+'.'+
-      (e.embedUrl?' Below is '+escapeHtml(name)+'’s outage list as collected by <b>Power Outages Australia</b>, an independent site '+
-        'that gathers each operator’s published outages — search it for a suburb. Treat it as indicative: '+
+      (e.embedUrl?' Below is the outage map from <b>Power Outages Australia</b>, an independent site '+
+        'that gathers each operator’s published outages, zoomed to '+escapeHtml(name)+' — search it for a suburb. Treat it as indicative: '+
         escapeHtml(name)+' is the authority, so confirm on '+own+' before acting on it.':'')+'</p></div>';
     if(!e.embedUrl){
-      return head+'<div class="op-embed-blocked">'+escapeHtml(e.op)+'’s map can’t be shown inside other websites, '+
-        'so it can only be opened on their site.<br><a class="go" href="'+escapeHtml(e.url)+'" target="_blank" rel="noopener">'+
+      return head+'<div class="op-embed-blocked">'+escapeHtml(e.noEmbed||(e.op+'’s map can’t be shown inside other websites'))+
+        ', so it can only be opened on their site.<br><a class="go" href="'+escapeHtml(e.url)+'" target="_blank" rel="noopener">'+
         'Open the '+escapeHtml(e.op)+' outage map ↗</a></div>';
     }
     /* sandbox: the framed page keeps its scripts, cookies and forms, and may

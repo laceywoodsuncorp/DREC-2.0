@@ -542,7 +542,7 @@ const check = (n, c, x) => {
     check('each operator tab is named for its region',
       labels.slice(1).every(l => /^Search outages in /.test(l)) && labels.includes('Search outages in the NT'), labels);
 
-    await p.click('#otab-nt');
+    await p.click('#otab-sa');
     check('opening one hides our map',
       await p.$eval('#outagePaneAll', e => e.hidden) && !(await p.$eval('#outagePaneOperator', e => e.hidden)));
     /* The operators' own pages refuse a frame or put a bot check in it
@@ -550,19 +550,27 @@ const check = (n, c, x) => {
        renders, and says whose figures they are. */
     const f = await p.$eval('#outagePaneOperator iframe', e => ({ src: e.src, sb: e.getAttribute('sandbox') }));
     check('and frames a map that can be shown in a frame',
-      /^https:\/\/poweroutagesaustralia\.com\.au\/distributors\/power-and-water\/$/.test(f.src), f);
+      f.src === 'https://poweroutagesaustralia.com.au/map/?distributor=sa-power-networks', f);
     check('which cannot navigate the dashboard away',
       /allow-scripts/.test(f.sb) && !/allow-top-navigation/.test(f.sb), f);
     const pane = await p.$eval('#outagePaneOperator', e => e.innerText);
     check('it says the figures are second-hand', /Power Outages Australia/.test(pane) && /indicative/i.test(pane), pane);
     check('and the operator’s own map is one click away',
-      await p.$$eval('#outagePaneOperator a', as => as.some(a => /powerwater\.com\.au/.test(a.href))));
+      await p.$$eval('#outagePaneOperator a', as => as.some(a => /sapowernetworks\.com\.au/.test(a.href))));
+
+    /* POA covers neither the NT nor Jemena, and both operators refuse a
+       frame, so those tabs are a link to the operator and nothing blank. */
+    await p.click('#otab-nt');
+    const nt = await p.$$eval('#outagePaneOperator .op-embed', es => es.filter(e => !e.hidden).map(e => ({
+      frames: e.querySelectorAll('iframe').length, href: (e.querySelector('a.go') || {}).href || '' })));
+    check('the NT tab is a link to Power and Water, not a blank frame',
+      nt.length === 1 && nt[0].frames === 0 && /powerwater\.com\.au/.test(nt[0].href), nt);
 
     /* Every tab frames its own operator's page, not the first one's. */
     await p.click('#otab-vic-east');
     const vis = await p.$$eval('#outagePaneOperator .op-embed', es => es.filter(e => !e.hidden).map(e =>
       (e.querySelector('iframe') || {}).src || ''));
-    check('each tab frames its own operator', vis.length === 1 && /\/ausnet-services\/$/.test(vis[0]), vis);
+    check('each tab frames its own operator', vis.length === 1 && /distributor=ausnet-services$/.test(vis[0]), vis);
 
     await p.keyboard.press('ArrowRight');
     check('arrow keys move along the tabs',
@@ -582,7 +590,7 @@ const check = (n, c, x) => {
       await p.$eval('#otab-sa', e => e.getAttribute('aria-selected') === 'true'));
     check('and frames SA Power Networks',
       await p.$$eval('#outagePaneOperator .op-embed', es => es.some(e => !e.hidden &&
-        /sa-power-networks/.test((e.querySelector('iframe') || {}).src || ''))));
+        /distributor=sa-power-networks/.test((e.querySelector('iframe') || {}).src || ''))));
     check('no page errors', p._errs.length === 0, p._errs);
     await p.close();
   }

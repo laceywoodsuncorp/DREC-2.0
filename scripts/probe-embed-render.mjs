@@ -32,20 +32,19 @@
 import { createServer } from 'node:http';
 import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 
-const POA = 'https://poweroutagesaustralia.com.au/distributors/';
-/* id -> [label, url]. The POA slugs not already used by the Worker are
-   guesses at its naming; a 404 says so in the report. */
+const POA_MAP = 'https://poweroutagesaustralia.com.au/map/?distributor=';
+/* id -> [label, url]: each operator's own page, and the POA map zoomed to
+   it -- which is what the dashboard's tabs frame. POA covers neither the
+   NT nor Jemena, so those two have only the operator's page. */
 const CANDIDATES = {
-  nt: [['own', 'https://www.powerwater.com.au/outages/current-outages'],
-    ['poa', POA + 'power-and-water/'], ['poa', POA + 'power-and-water-corporation/']],
-  sa: [['own', 'https://www.sapowernetworks.com.au/outages/'], ['poa', POA + 'sa-power-networks/']],
+  nt: [['own', 'https://www.powerwater.com.au/outages/current-outages']],
+  sa: [['own', 'https://www.sapowernetworks.com.au/outages/'], ['poa', POA_MAP + 'sa-power-networks']],
   'nsw-regional': [['own', 'https://www.essentialenergy.com.au/outages-and-faults/power-outages'],
-    ['poa', POA + 'essential-energy/']],
-  'wa-regional': [['own', 'https://www.horizonpower.com.au/faults-outages/'], ['poa', POA + 'horizon-power/']],
-  'vic-east': [['own', 'https://www.ausnetservices.com.au/outages'],
-    ['poa', POA + 'ausnet-services/'], ['poa', POA + 'ausnet/']],
-  'melb-nw': [['own', 'https://www.jemena.com.au/outages/electricity-outages/'], ['poa', POA + 'jemena/']],
-  'melb-se': [['own', 'https://www.unitedenergy.com.au/outage-map'], ['poa', POA + 'united-energy/']],
+    ['poa', POA_MAP + 'essential-energy']],
+  'wa-regional': [['own', 'https://www.horizonpower.com.au/faults-outages/'], ['poa', POA_MAP + 'horizon-power']],
+  'vic-east': [['own', 'https://www.ausnetservices.com.au/outages'], ['poa', POA_MAP + 'ausnet-services']],
+  'melb-nw': [['own', 'https://www.jemena.com.au/outages/electricity-outages/']],
+  'melb-se': [['own', 'https://www.unitedenergy.com.au/outage-map'], ['poa', POA_MAP + 'united-energy']],
   /* Controls: two pages the dashboard already frames successfully. If
      these fail too, the probe is broken, not the operators. */
   control: [['ctl', 'https://outage.report/au/telstra'], ['ctl', 'https://censusatlas.au/']]
