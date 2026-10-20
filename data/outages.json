@@ -1,13 +1,13 @@
 {
- "capturedAt": 1792510632130,
+ "capturedAt": 1792516970502,
  "states": {
   "nsw": {
    "state": "NSW",
    "name": "New South Wales",
-   "count": 77,
-   "customers": 7160,
-   "unplannedCount": 16,
-   "unplannedCustomers": 3410,
+   "count": 76,
+   "customers": 5738,
+   "unplannedCount": 15,
+   "unplannedCustomers": 1988,
    "plannedCount": 61,
    "plannedCustomers": 3750,
    "networks": [
@@ -17,7 +17,7 @@
      "count": 11,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://www.ausgrid.com.au/outages-list",
      "columns": [
       ".css-1puqryl{cursor:pointer;display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-box-pack:start;-ms-flex-pack:start;-webkit-justify-content:fle",
@@ -32,7 +32,7 @@
      "count": 2,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/exports/geojson",
      "columns": [
       "street_name",
@@ -52,20 +52,15 @@
       "customers_affected",
       "uid",
       "updated_at"
-     ],
-     "reported": {
-      "outages": 6,
-      "customers": 91
-     },
-     "reportedAt": 1792490820346
+     ]
     },
     {
      "name": "Essential Energy",
      "ok": true,
-     "count": 64,
+     "count": 63,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -227,34 +222,6 @@
      "lon": 150.9862727196981,
      "lat": -33.39428108006264,
      "premises": 26
-    },
-    {
-     "network": "Essential Energy",
-     "id": "essential:INCD-301475-q",
-     "location": "Blue Cow, Bullocks Flat, Charlotte Pass, Crackenback, Guthega, Kosciuszko National Park, Ngarigo, Perisher Valley, Smiggin Holes, Thredbo, Wilsons Valley",
-     "towns": [
-      "Blue Cow",
-      "Bullocks Flat",
-      "Charlotte Pass",
-      "Crackenback",
-      "Guthega",
-      "Kosciuszko National Park",
-      "Ngarigo",
-      "Perisher Valley",
-      "Smiggin Holes",
-      "Thredbo",
-      "Wilsons Valley"
-     ],
-     "cause": "Essential Energy is investigating",
-     "kind": "unplanned",
-     "customers": 1422,
-     "start": "2026-10-20T15:01:00.000Z",
-     "startIso": "2026-10-20T15:01:00.000Z",
-     "restore": "2026-10-20T21:00:00.000Z",
-     "restoreIso": "2026-10-20T21:00:00.000Z",
-     "lon": 148.41005,
-     "lat": -36.42235,
-     "via": "Power Outages Australia"
     },
     {
      "network": "Essential Energy",
@@ -1448,10 +1415,10 @@
   "qld": {
    "state": "QLD",
    "name": "Queensland",
-   "count": 391,
-   "customers": 15064,
-   "unplannedCount": 6,
-   "unplannedCustomers": 2655,
+   "count": 390,
+   "customers": 14517,
+   "unplannedCount": 5,
+   "unplannedCustomers": 2108,
    "plannedCount": 385,
    "plannedCustomers": 12409,
    "networks": [
@@ -1461,8 +1428,8 @@
      "count": 90,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
-     "sourceUrl": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/1/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
+     "capturedAt": 1792516970502,
+     "sourceUrl": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
       "OBJECTID",
       "EVENT_ID",
@@ -1476,10 +1443,12 @@
       "EST_FIX_TIME",
       "REASON",
       "CRC",
-      "EXTRACTED"
+      "EXTRACTED",
+      "SHAPE__Area",
+      "SHAPE__Length"
      ],
      "via": "ArcGIS Online",
-     "viaUrl": "https://www.arcgis.com/home/item.html?id=b568ce59af7c4f848705a7b600f66334",
+     "viaUrl": "https://www.arcgis.com/home/item.html?id=22eb173943984e86a9e03c3e04b64635",
      "attempts": [
       {
        "url": "https://www.energex.com.au/static/Energex/energex_po_current_unplanned.geojson",
@@ -1488,20 +1457,16 @@
       {
        "url": "https://www.energex.com.au/static/Energex/energex_po_current_planned.geojson",
        "error": "HTTP 403 — Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-syste…"
-      },
-      {
-       "url": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
-       "error": "fetch failed"
       }
      ]
     },
     {
      "name": "Ergon Energy",
      "ok": true,
-     "count": 301,
+     "count": 300,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
       "OBJECTID",
@@ -1551,8 +1516,8 @@
      "startIso": "2026-10-22T22:30:00.000Z",
      "restore": "1792726200000",
      "restoreIso": "2026-10-23T03:30:00.000Z",
-     "lon": 153.093428872698,
-     "lat": -26.4954573443326,
+     "lon": 153.091471281443,
+     "lat": -26.4989527362407,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1571,8 +1536,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 152.986776058293,
-     "lat": -26.4477679607381,
+     "lon": 152.980378784508,
+     "lat": -26.4605055334645,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1591,8 +1556,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 152.958215365256,
-     "lat": -27.2930810434681,
+     "lon": 152.954901814463,
+     "lat": -27.2916264279915,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1611,8 +1576,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 153.13174558553,
-     "lat": -26.7491431890659,
+     "lon": 153.12927315916,
+     "lat": -26.7490876743464,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1631,8 +1596,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 152.958718990186,
-     "lat": -27.2934956650109,
+     "lon": 152.955866291434,
+     "lat": -27.2929606932904,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1651,8 +1616,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792641600000",
      "restoreIso": "2026-10-22T04:00:00.000Z",
-     "lon": 152.991896646112,
-     "lat": -27.2544117217273,
+     "lon": 152.989425921346,
+     "lat": -27.2547801024863,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1671,8 +1636,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 152.954832222904,
-     "lat": -27.2890206225776,
+     "lon": 152.952856949773,
+     "lat": -27.2897901531724,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1691,8 +1656,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 153.140141375144,
-     "lat": -26.7957703815308,
+     "lon": 153.138499875963,
+     "lat": -26.7973011727267,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1712,8 +1677,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 153.033591239417,
-     "lat": -27.6849558784202,
+     "lon": 153.031355450743,
+     "lat": -27.6829664379543,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1733,8 +1698,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792643400000",
      "restoreIso": "2026-10-22T04:30:00.000Z",
-     "lon": 153.083353219465,
-     "lat": -27.8121565304801,
+     "lon": 153.07595065317,
+     "lat": -27.820426148871,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1753,8 +1718,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 153.033425769249,
-     "lat": -26.6088824469482,
+     "lon": 153.031227748159,
+     "lat": -26.6096591632196,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1773,8 +1738,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792643400000",
      "restoreIso": "2026-10-22T04:30:00.000Z",
-     "lon": 153.160023205678,
-     "lat": -27.0810892991481,
+     "lon": 153.158659030298,
+     "lat": -27.0821255722102,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1799,8 +1764,8 @@
      "startIso": "2026-10-25T11:30:00.000Z",
      "restore": "1792953000000",
      "restoreIso": "2026-10-25T18:30:00.000Z",
-     "lon": 152.383362445047,
-     "lat": -27.0397054254624,
+     "lon": 152.360870545996,
+     "lat": -27.0244777996202,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1819,8 +1784,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792560600000",
      "restoreIso": "2026-10-21T05:30:00.000Z",
-     "lon": 153.200529188851,
-     "lat": -27.0705043526831,
+     "lon": 153.198593719127,
+     "lat": -27.0698635723589,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1839,8 +1804,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 153.039111876145,
-     "lat": -27.5556584186198,
+     "lon": 153.037035536286,
+     "lat": -27.5558968259738,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1863,8 +1828,8 @@
      "startIso": "2026-10-24T22:00:00.000Z",
      "restore": "1792906200000",
      "restoreIso": "2026-10-25T05:30:00.000Z",
-     "lon": 152.682487735369,
-     "lat": -26.4154896528916,
+     "lon": 152.654386672837,
+     "lat": -26.4645405704181,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1883,8 +1848,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792643400000",
      "restoreIso": "2026-10-22T04:30:00.000Z",
-     "lon": 153.326670280036,
-     "lat": -27.8670893425324,
+     "lon": 153.322500339648,
+     "lat": -27.8683198668171,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1903,8 +1868,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792647000000",
      "restoreIso": "2026-10-22T05:30:00.000Z",
-     "lon": 153.057788089903,
-     "lat": -27.4215782609181,
+     "lon": 153.056497470008,
+     "lat": -27.4205391638359,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1923,8 +1888,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792647000000",
      "restoreIso": "2026-10-22T05:30:00.000Z",
-     "lon": 153.057788089903,
-     "lat": -27.4215782609181,
+     "lon": 153.056497470008,
+     "lat": -27.4205391638359,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1943,8 +1908,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 152.930525473476,
-     "lat": -27.1480937377779,
+     "lon": 152.928252180103,
+     "lat": -27.1520276310639,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1963,8 +1928,8 @@
      "startIso": "2026-10-24T22:00:00.000Z",
      "restore": "1792906200000",
      "restoreIso": "2026-10-25T05:30:00.000Z",
-     "lon": 153.059191283328,
-     "lat": -27.4215740554958,
+     "lon": 153.058077440875,
+     "lat": -27.4221476339326,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -1983,8 +1948,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792562400000",
      "restoreIso": "2026-10-21T06:00:00.000Z",
-     "lon": 153.425310382939,
-     "lat": -28.0404130081835,
+     "lon": 153.423649893093,
+     "lat": -28.0402790174663,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2003,8 +1968,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792648800000",
      "restoreIso": "2026-10-22T06:00:00.000Z",
-     "lon": 153.256104393497,
-     "lat": -27.496426194548,
+     "lon": 153.254380748569,
+     "lat": -27.4965043859432,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2023,8 +1988,8 @@
      "startIso": "2026-10-20T10:30:00.000Z",
      "restore": "1792517400000",
      "restoreIso": "2026-10-20T17:30:00.000Z",
-     "lon": 153.003727346357,
-     "lat": -27.4522918711472,
+     "lon": 153.00247565914,
+     "lat": -27.4518196430514,
      "via": "ArcGIS Online"
     },
     {
@@ -2044,8 +2009,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792562400000",
      "restoreIso": "2026-10-21T06:00:00.000Z",
-     "lon": 152.631465394694,
-     "lat": -28.0159578653384,
+     "lon": 152.618017541422,
+     "lat": -28.0020069302822,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2064,8 +2029,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792560600000",
      "restoreIso": "2026-10-21T05:30:00.000Z",
-     "lon": 152.914593576492,
-     "lat": -26.3078389743887,
+     "lon": 152.904419159644,
+     "lat": -26.3180740300631,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2087,8 +2052,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 152.023157833954,
-     "lat": -27.5098413392204,
+     "lon": 151.99913109156,
+     "lat": -27.5033523337392,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2110,8 +2075,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792562400000",
      "restoreIso": "2026-10-21T06:00:00.000Z",
-     "lon": 152.630548415482,
-     "lat": -27.6011849255305,
+     "lon": 152.616554872836,
+     "lat": -27.6052233981469,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2130,8 +2095,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 153.268481714812,
-     "lat": -27.5289702360734,
+     "lon": 153.267380540173,
+     "lat": -27.5291629608432,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2150,8 +2115,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 152.960836215282,
-     "lat": -26.627466089075,
+     "lon": 152.959906105522,
+     "lat": -26.6277003849264,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2170,8 +2135,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792648800000",
      "restoreIso": "2026-10-22T06:00:00.000Z",
-     "lon": 153.52504056193,
-     "lat": -28.1704987965647,
+     "lon": 153.523972770344,
+     "lat": -28.1707682367542,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2190,8 +2155,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792562400000",
      "restoreIso": "2026-10-21T06:00:00.000Z",
-     "lon": 153.386246529508,
-     "lat": -27.8919103377375,
+     "lon": 153.384785629824,
+     "lat": -27.8919231716894,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2210,8 +2175,8 @@
      "startIso": "2026-10-22T22:30:00.000Z",
      "restore": "1792729800000",
      "restoreIso": "2026-10-23T04:30:00.000Z",
-     "lon": 153.416815441929,
-     "lat": -27.9736632470543,
+     "lon": 153.41546098571,
+     "lat": -27.973756074695,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2230,8 +2195,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 152.788367775233,
-     "lat": -27.2289762110546,
+     "lon": 152.771887279677,
+     "lat": -27.2409290517883,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2250,8 +2215,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792639800000",
      "restoreIso": "2026-10-22T03:30:00.000Z",
-     "lon": 152.677073115952,
-     "lat": -26.388578423054,
+     "lon": 152.675014981605,
+     "lat": -26.3893267906321,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2271,8 +2236,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792729800000",
      "restoreIso": "2026-10-23T04:30:00.000Z",
-     "lon": 152.956822200123,
-     "lat": -27.6236539472855,
+     "lon": 152.942638970465,
+     "lat": -27.6216212573222,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2291,8 +2256,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792643400000",
      "restoreIso": "2026-10-22T04:30:00.000Z",
-     "lon": 152.911478177358,
-     "lat": -27.08633829276,
+     "lon": 152.906776012259,
+     "lat": -27.0867634716376,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2313,8 +2278,8 @@
      "startIso": "2026-10-20T21:30:00.000Z",
      "restore": "1792560600000",
      "restoreIso": "2026-10-21T05:30:00.000Z",
-     "lon": 152.392746868516,
-     "lat": -27.1200338183353,
+     "lon": 152.378140183628,
+     "lat": -27.1063677350272,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2333,8 +2298,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792735200000",
      "restoreIso": "2026-10-23T06:00:00.000Z",
-     "lon": 152.954466039033,
-     "lat": -27.5937318070191,
+     "lon": 152.95342332733,
+     "lat": -27.5934865042846,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2353,8 +2318,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792731600000",
      "restoreIso": "2026-10-23T05:00:00.000Z",
-     "lon": 153.102249431009,
-     "lat": -26.6762367245925,
+     "lon": 153.10114208241,
+     "lat": -26.6757496072753,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2374,8 +2339,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792643400000",
      "restoreIso": "2026-10-22T04:30:00.000Z",
-     "lon": 152.905666394293,
-     "lat": -27.014102359211,
+     "lon": 152.888332362104,
+     "lat": -27.0103665801636,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2394,8 +2359,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 153.131727114406,
-     "lat": -27.4837181468884,
+     "lon": 153.130319337256,
+     "lat": -27.4837654450267,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2414,8 +2379,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792557000000",
      "restoreIso": "2026-10-21T04:30:00.000Z",
-     "lon": 153.008150077464,
-     "lat": -27.177732618275,
+     "lon": 153.006196040384,
+     "lat": -27.1776933252545,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2434,8 +2399,8 @@
      "startIso": "2026-10-20T22:30:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 153.405071958936,
-     "lat": -28.0190235045615,
+     "lon": 153.404082848304,
+     "lat": -28.0198499979098,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2454,8 +2419,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792731600000",
      "restoreIso": "2026-10-23T05:00:00.000Z",
-     "lon": 153.099827464701,
-     "lat": -27.2198664060997,
+     "lon": 153.098763912407,
+     "lat": -27.2198049796659,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2474,8 +2439,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 153.027036517608,
-     "lat": -27.516344759137,
+     "lon": 153.026404004516,
+     "lat": -27.5172430980619,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2494,8 +2459,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792648800000",
      "restoreIso": "2026-10-22T06:00:00.000Z",
-     "lon": 153.400911142377,
-     "lat": -27.9740333495073,
+     "lon": 153.400438656121,
+     "lat": -27.9746703070835,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2514,8 +2479,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792643400000",
      "restoreIso": "2026-10-22T04:30:00.000Z",
-     "lon": 153.125845969198,
-     "lat": -26.7683199626371,
+     "lon": 153.124438071159,
+     "lat": -26.7670875046646,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2534,8 +2499,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792544400000",
      "restoreIso": "2026-10-21T01:00:00.000Z",
-     "lon": 152.964915965655,
-     "lat": -27.1463033869097,
+     "lon": 152.964103025245,
+     "lat": -27.1470777153511,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2554,8 +2519,8 @@
      "startIso": "2026-10-24T22:00:00.000Z",
      "restore": "1792908000000",
      "restoreIso": "2026-10-25T06:00:00.000Z",
-     "lon": 153.10817541632,
-     "lat": -27.7708362106861,
+     "lon": 153.106942675492,
+     "lat": -27.7706375666924,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2576,8 +2541,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792647000000",
      "restoreIso": "2026-10-22T05:30:00.000Z",
-     "lon": 152.393479733324,
-     "lat": -27.0758949967163,
+     "lon": 152.386500506696,
+     "lat": -27.078450803028,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2596,8 +2561,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 152.993396958562,
-     "lat": -26.4514188172809,
+     "lon": 152.990466907149,
+     "lat": -26.4502369049404,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2616,8 +2581,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792562400000",
      "restoreIso": "2026-10-21T06:00:00.000Z",
-     "lon": 153.525489861816,
-     "lat": -28.1715039552306,
+     "lon": 153.524997013895,
+     "lat": -28.1719713749036,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2636,8 +2601,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792729800000",
      "restoreIso": "2026-10-23T04:30:00.000Z",
-     "lon": 153.240023369329,
-     "lat": -27.7049297225777,
+     "lon": 153.238331301994,
+     "lat": -27.7075191310659,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2656,8 +2621,8 @@
      "startIso": "2026-10-22T12:00:00.000Z",
      "restore": "1792690200000",
      "restoreIso": "2026-10-22T17:30:00.000Z",
-     "lon": 153.006583883947,
-     "lat": -27.4548739852888,
+     "lon": 153.005966189124,
+     "lat": -27.4549612759263,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2676,8 +2641,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792557000000",
      "restoreIso": "2026-10-21T04:30:00.000Z",
-     "lon": 153.008179103106,
-     "lat": -27.1753118090797,
+     "lon": 153.006346319535,
+     "lat": -27.17606218355,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2696,8 +2661,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792729800000",
      "restoreIso": "2026-10-23T04:30:00.000Z",
-     "lon": 153.160482546208,
-     "lat": -27.0797902451665,
+     "lon": 153.159669286997,
+     "lat": -27.0796817405718,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2716,8 +2681,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792731600000",
      "restoreIso": "2026-10-23T05:00:00.000Z",
-     "lon": 153.004750027283,
-     "lat": -27.5399150208247,
+     "lon": 153.004543685494,
+     "lat": -27.5410529433734,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2736,8 +2701,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792729800000",
      "restoreIso": "2026-10-23T04:30:00.000Z",
-     "lon": 153.01072963581,
-     "lat": -27.5822702481301,
+     "lon": 153.009280604765,
+     "lat": -27.5826199810206,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2756,8 +2721,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792643400000",
      "restoreIso": "2026-10-22T04:30:00.000Z",
-     "lon": 153.1594061373,
-     "lat": -27.0811557887713,
+     "lon": 153.158659030298,
+     "lat": -27.0821255722102,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2776,8 +2741,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 152.99830089647,
-     "lat": -27.2624624088472,
+     "lon": 152.997501387064,
+     "lat": -27.2629113765636,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2796,8 +2761,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 153.073448391875,
-     "lat": -27.549343522712,
+     "lon": 153.072585280416,
+     "lat": -27.549821553088,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2816,8 +2781,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792729800000",
      "restoreIso": "2026-10-23T04:30:00.000Z",
-     "lon": 152.817144625682,
-     "lat": -27.5754417338729,
+     "lon": 152.815772744105,
+     "lat": -27.5753558025322,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2836,8 +2801,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792731600000",
      "restoreIso": "2026-10-23T05:00:00.000Z",
-     "lon": 153.044249609605,
-     "lat": -27.9081218898682,
+     "lon": 153.031334728594,
+     "lat": -27.9100186337067,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2856,8 +2821,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 152.715861537471,
-     "lat": -26.2376346044061,
+     "lon": 152.702900952209,
+     "lat": -26.2344188760427,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2876,8 +2841,8 @@
      "startIso": "2026-10-24T22:00:00.000Z",
      "restore": "1792906200000",
      "restoreIso": "2026-10-25T05:30:00.000Z",
-     "lon": 152.698392616225,
-     "lat": -26.3725274450615,
+     "lon": 152.694461562257,
+     "lat": -26.3786249904423,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2896,8 +2861,8 @@
      "startIso": "2026-10-24T22:00:00.000Z",
      "restore": "1792908000000",
      "restoreIso": "2026-10-25T06:00:00.000Z",
-     "lon": 152.981293226367,
-     "lat": -27.4916132483474,
+     "lon": 152.980481961118,
+     "lat": -27.4918042143062,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2916,8 +2881,8 @@
      "startIso": "2026-10-21T22:30:00.000Z",
      "restore": "1792647000000",
      "restoreIso": "2026-10-22T05:30:00.000Z",
-     "lon": 153.464669523977,
-     "lat": -28.1050402128021,
+     "lon": 153.463893930338,
+     "lat": -28.1046238191555,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2936,8 +2901,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 153.063214559968,
-     "lat": -27.4835516086746,
+     "lon": 153.062980011472,
+     "lat": -27.4841762190909,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2956,8 +2921,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792731600000",
      "restoreIso": "2026-10-23T05:00:00.000Z",
-     "lon": 153.10894452363,
-     "lat": -26.6780556465381,
+     "lon": 153.10822031856,
+     "lat": -26.6781905267514,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2976,8 +2941,8 @@
      "startIso": "2026-10-21T09:30:00.000Z",
      "restore": "1792603800000",
      "restoreIso": "2026-10-21T17:30:00.000Z",
-     "lon": 153.011225536655,
-     "lat": -27.4571171926855,
+     "lon": 153.010401276819,
+     "lat": -27.4571211263826,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -2996,8 +2961,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792647000000",
      "restoreIso": "2026-10-22T05:30:00.000Z",
-     "lon": 152.957097721469,
-     "lat": -27.2920979377589,
+     "lon": 152.956120225871,
+     "lat": -27.2924220213988,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3016,8 +2981,8 @@
      "startIso": "2026-10-21T21:30:00.000Z",
      "restore": "1792647000000",
      "restoreIso": "2026-10-22T05:30:00.000Z",
-     "lon": 153.005515115549,
-     "lat": -27.5378856120121,
+     "lon": 153.004699512937,
+     "lat": -27.5381642215601,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3037,8 +3002,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792560600000",
      "restoreIso": "2026-10-21T05:30:00.000Z",
-     "lon": 153.062349435665,
-     "lat": -27.4225142848504,
+     "lon": 153.061185076404,
+     "lat": -27.4222178983593,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3057,8 +3022,8 @@
      "startIso": "2026-10-20T19:00:00.000Z",
      "restore": "1792533600000",
      "restoreIso": "2026-10-20T22:00:00.000Z",
-     "lon": 153.034840302268,
-     "lat": -27.5706410653277,
+     "lon": 153.03518951972,
+     "lat": -27.5712539105539,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3077,8 +3042,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792647000000",
      "restoreIso": "2026-10-22T05:30:00.000Z",
-     "lon": 153.02843794962,
-     "lat": -27.3132984861953,
+     "lon": 153.028841266535,
+     "lat": -27.3138723580669,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3097,8 +3062,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792560600000",
      "restoreIso": "2026-10-21T05:30:00.000Z",
-     "lon": 152.956222916275,
-     "lat": -27.2917157923047,
+     "lon": 152.95505898442,
+     "lat": -27.2917931157519,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3117,8 +3082,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792557000000",
      "restoreIso": "2026-10-21T04:30:00.000Z",
-     "lon": 153.095793448745,
-     "lat": -27.7256630351287,
+     "lon": 153.09378471677,
+     "lat": -27.7245652781952,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3137,8 +3102,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792728000000",
      "restoreIso": "2026-10-23T04:00:00.000Z",
-     "lon": 153.324304047593,
-     "lat": -27.868021732261,
+     "lon": 153.322500339648,
+     "lat": -27.8683198668171,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3157,8 +3122,8 @@
      "startIso": "2026-10-21T22:00:00.000Z",
      "restore": "1792645200000",
      "restoreIso": "2026-10-22T05:00:00.000Z",
-     "lon": 152.988666750969,
-     "lat": -26.6309233429757,
+     "lon": 152.988436877678,
+     "lat": -26.6321922442137,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3177,8 +3142,8 @@
      "startIso": "2026-10-20T21:30:00.000Z",
      "restore": "1792557000000",
      "restoreIso": "2026-10-21T04:30:00.000Z",
-     "lon": 152.779499489021,
-     "lat": -27.5740753486723,
+     "lon": 152.776311398529,
+     "lat": -27.5751946693732,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3197,8 +3162,8 @@
      "startIso": "2026-10-22T22:00:00.000Z",
      "restore": "1792733400000",
      "restoreIso": "2026-10-23T05:30:00.000Z",
-     "lon": 153.081418826132,
-     "lat": -27.3229117793344,
+     "lon": 153.081499721534,
+     "lat": -27.3233860616786,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3217,8 +3182,8 @@
      "startIso": "2026-10-20T22:30:00.000Z",
      "restore": "1792560600000",
      "restoreIso": "2026-10-21T05:30:00.000Z",
-     "lon": 153.463497676323,
-     "lat": -28.1054340321453,
+     "lon": 153.463601665392,
+     "lat": -28.1059125120039,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3237,8 +3202,8 @@
      "startIso": "2026-10-25T10:00:00.000Z",
      "restore": "1792951200000",
      "restoreIso": "2026-10-25T18:00:00.000Z",
-     "lon": 153.053589534496,
-     "lat": -27.5122283036223,
+     "lon": 153.053235144605,
+     "lat": -27.5118362334879,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3257,8 +3222,8 @@
      "startIso": "2026-10-22T00:00:00.000Z",
      "restore": "1792643400000",
      "restoreIso": "2026-10-22T04:30:00.000Z",
-     "lon": 153.034733671792,
-     "lat": -27.4717442946444,
+     "lon": 153.035233158662,
+     "lat": -27.4716716214793,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3277,8 +3242,8 @@
      "startIso": "2026-10-21T23:00:00.000Z",
      "restore": "1792639800000",
      "restoreIso": "2026-10-22T03:30:00.000Z",
-     "lon": 153.065198257543,
-     "lat": -26.7971283992952,
+     "lon": 153.066362054158,
+     "lat": -26.7972006496892,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3297,8 +3262,8 @@
      "startIso": "2026-10-21T21:30:00.000Z",
      "restore": "1792647000000",
      "restoreIso": "2026-10-22T05:30:00.000Z",
-     "lon": 152.991100852607,
-     "lat": -27.3583174118688,
+     "lon": 152.990610250227,
+     "lat": -27.3581971117186,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3317,8 +3282,8 @@
      "startIso": "2026-10-20T22:00:00.000Z",
      "restore": "1792558800000",
      "restoreIso": "2026-10-21T05:00:00.000Z",
-     "lon": 153.073952475527,
-     "lat": -27.5482353653981,
+     "lon": 153.07450107566,
+     "lat": -27.5482066110387,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -3338,8 +3303,8 @@
      "startIso": "2026-10-20T12:00:00.000Z",
      "restore": "1792512000000",
      "restoreIso": "2026-10-20T16:00:00.000Z",
-     "lon": 153.147742895686,
-     "lat": -27.5110817399735,
+     "lon": 153.148254536722,
+     "lat": -27.5113630299707,
      "via": "ArcGIS Online"
     },
     {
@@ -3358,8 +3323,8 @@
      "startIso": "2026-10-20T12:00:00.000Z",
      "restore": "1792512000000",
      "restoreIso": "2026-10-20T16:00:00.000Z",
-     "lon": 153.147742895686,
-     "lat": -27.5110817399735,
+     "lon": 153.148254536722,
+     "lat": -27.5113630299707,
      "via": "ArcGIS Online"
     },
     {
@@ -3375,7 +3340,7 @@
      "status": "Crews working on-site",
      "cause": "The loss of supply is due to damage requiring emergency repairs. Fault finding is in progress.",
      "kind": "unplanned",
-     "customers": 2342,
+     "customers": 2028,
      "start": "1792507355000",
      "startIso": "2026-10-20T14:42:35.000Z",
      "lon": 145.724483434593,
@@ -3480,33 +3445,6 @@
      "lat": -27.5502499668558,
      "via": "ArcGIS Online",
      "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26SW12857",
-     "location": "DAANDINE, DALBY, DUCKLO, DULEEN, KUMBARILLA, KUPUNN, NANDI, RANGES BRIDGE, WERANGA",
-     "towns": [
-      "DAANDINE",
-      "DALBY",
-      "DUCKLO",
-      "DULEEN",
-      "KUMBARILLA",
-      "KUPUNN",
-      "NANDI",
-      "RANGES BRIDGE",
-      "WERANGA"
-     ],
-     "status": "Crews working on-site",
-     "cause": "The loss of supply is to allow emergency maintenance of the electricity network.",
-     "kind": "unplanned",
-     "customers": 233,
-     "start": "1792487220000",
-     "startIso": "2026-10-20T09:07:00.000Z",
-     "restore": "1792512000000",
-     "restoreIso": "2026-10-20T16:00:00.000Z",
-     "lon": 150.787973871395,
-     "lat": -27.2895078918988,
-     "via": "ArcGIS Online"
     },
     {
      "network": "Ergon Energy",
@@ -9562,10 +9500,10 @@
   "vic": {
    "state": "VIC",
    "name": "Victoria",
-   "count": 107,
-   "customers": 3603,
-   "unplannedCount": 6,
-   "unplannedCustomers": 223,
+   "count": 109,
+   "customers": 3513,
+   "unplannedCount": 8,
+   "unplannedCustomers": 133,
    "plannedCount": 101,
    "plannedCustomers": 3380,
    "networks": [
@@ -9575,7 +9513,7 @@
      "count": 99,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -9603,10 +9541,10 @@
     {
      "name": "Powercor",
      "ok": true,
-     "count": 6,
+     "count": 8,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "staleDropped": 1,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
      "columns": [
@@ -9621,12 +9559,7 @@
       "CAUSE",
       "START_TIME",
       "PRIVATISED"
-     ],
-     "reported": {
-      "outages": null,
-      "customers": 84
-     },
-     "reportedAt": 1792490820346
+     ]
     },
     {
      "name": "CitiPower",
@@ -9634,7 +9567,7 @@
      "count": 1,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
      "columns": [
       "ORDER_ID",
@@ -9648,12 +9581,7 @@
       "CAUSE",
       "START_TIME",
       "PRIVATISED"
-     ],
-     "reported": {
-      "outages": null,
-      "customers": 84
-     },
-     "reportedAt": 1792490820346
+     ]
     },
     {
      "name": "United Energy",
@@ -9661,7 +9589,7 @@
      "count": 1,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -9688,7 +9616,7 @@
      "count": 0,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "via": "Power Outages Australia",
      "viaUrl": "https://poweroutagesaustralia.com.au/map/?distributor=jemena",
@@ -11500,18 +11428,50 @@
     },
     {
      "network": "Powercor",
+     "id": "F-15382-i",
+     "location": "WEERITE, CHOCOLYN",
+     "towns": [
+      "WEERITE",
+      "CHOCOLYN"
+     ],
+     "status": "Partially Restored",
+     "cause": "Under investigation",
+     "customers": 35,
+     "start": "03:19 21-10-2026",
+     "restore": "07:00 21-10-2026",
+     "lon": 143.2355524157619,
+     "lat": -38.2563904007267,
+     "premises": 2
+    },
+    {
+     "network": "Powercor",
      "id": "2401630-1",
      "location": "WEERITE",
      "towns": [
       "WEERITE"
      ],
-     "status": "Outage Reported",
+     "status": "Partially Restored",
      "cause": "Under investigation",
      "customers": 20,
      "start": "01:02 21-10-2026",
-     "restore": "05:30 21-10-2026",
+     "restore": "07:00 21-10-2026",
      "lon": 143.2726731434209,
      "lat": -38.2375504724394
+    },
+    {
+     "network": "Powercor",
+     "id": "2401641-1",
+     "location": "WERRIMULL",
+     "towns": [
+      "WERRIMULL"
+     ],
+     "status": "Outage Reported",
+     "cause": "Under investigation",
+     "customers": 14,
+     "start": "02:31 21-10-2026",
+     "restore": "06:00 21-10-2026",
+     "lon": 141.524540107787,
+     "lat": -34.5591389074575
     },
     {
      "network": "Powercor",
@@ -11599,13 +11559,13 @@
       "Dandenong South"
      ],
      "status": "Fault",
-     "cause": "Under investigation",
+     "cause": "Vehicle impact to a power pole",
      "kind": "unplanned",
-     "customers": 141,
+     "customers": 2,
      "restore": "2026-10-20T18:30:00.000Z",
      "restoreIso": "2026-10-20T18:30:00.000Z",
-     "lon": 145.1944,
-     "lat": -38.01874,
+     "lon": 145.19235,
+     "lat": -38.01949,
      "via": "Power Outages Australia"
     }
    ]
@@ -11613,20 +11573,20 @@
   "sa": {
    "state": "SA",
    "name": "South Australia",
-   "count": 65,
-   "customers": 12146,
-   "unplannedCount": 2,
-   "unplannedCustomers": 51,
+   "count": 64,
+   "customers": 12105,
+   "unplannedCount": 1,
+   "unplannedCustomers": 11,
    "plannedCount": 63,
-   "plannedCustomers": 12095,
+   "plannedCustomers": 12094,
    "networks": [
     {
      "name": "SA Power Networks",
      "ok": true,
-     "count": 65,
+     "count": 64,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -11643,11 +11603,11 @@
      "attempts": [
       {
        "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/OutageList",
-       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1011000091368913389-786377059918348906"
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 421000830029934521-51552750179521742"
       },
       {
        "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/api/outages",
-       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1011000091368913389-205312832818053723"
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 421000830029934521-51552836078867662"
       },
       {
        "url": "https://www.sapowernetworks.com.au/outages/",
@@ -11808,7 +11768,7 @@
     },
     {
      "network": "SA Power Networks",
-     "id": "sapn-p-20261021T220000Ardrossan1080",
+     "id": "sapn-p-20261021T220000Ardrossan1079",
      "location": "Ardrossan, Dowlingville, Tiddy Widdy Beach",
      "towns": [
       "Ardrossan",
@@ -11816,7 +11776,7 @@
       "Tiddy Widdy Beach"
      ],
      "kind": "planned",
-     "customers": 1080,
+     "customers": 1079,
      "start": "2026-10-21T11:30:00.000Z",
      "startIso": "2026-10-21T11:30:00.000Z",
      "restore": "2026-10-21T18:30:00.000Z",
@@ -12295,28 +12255,6 @@
     },
     {
      "network": "SA Power Networks",
-     "id": "sapn-161070443",
-     "location": "Biggs Flat, Echunga, Hahndorf, Mylor",
-     "towns": [
-      "Biggs Flat",
-      "Echunga",
-      "Hahndorf",
-      "Mylor"
-     ],
-     "status": "Our crews are working to restore power",
-     "cause": "Under investigation",
-     "kind": "unplanned",
-     "customers": 40,
-     "start": "2026-10-20T12:33:00.000Z",
-     "startIso": "2026-10-20T12:33:00.000Z",
-     "restore": "2026-10-20T18:00:00.000Z",
-     "restoreIso": "2026-10-20T18:00:00.000Z",
-     "lon": 138.78534,
-     "lat": -35.0617,
-     "via": "Power Outages Australia"
-    },
-    {
-     "network": "SA Power Networks",
      "id": "sapn-p-20261021T080000SalisburyEast39",
      "location": "Salisbury East",
      "towns": [
@@ -12759,14 +12697,14 @@
       "Malpas",
       "Schell Well"
      ],
-     "status": "Our crews are currently fault finding",
+     "status": "The first available crew will attend",
      "cause": "Under investigation",
      "kind": "unplanned",
      "customers": 11,
      "start": "2026-10-20T06:53:00.000Z",
      "startIso": "2026-10-20T06:53:00.000Z",
-     "restore": "2026-10-20T17:15:00.000Z",
-     "restoreIso": "2026-10-20T17:15:00.000Z",
+     "restore": "2026-10-20T21:15:00.000Z",
+     "restoreIso": "2026-10-20T21:15:00.000Z",
      "lon": 140.48037,
      "lat": -34.8491,
      "via": "Power Outages Australia"
@@ -12957,20 +12895,20 @@
   "wa": {
    "state": "WA",
    "name": "Western Australia",
-   "count": 170,
-   "customers": 13128,
+   "count": 177,
+   "customers": 13966,
    "unplannedCount": 2,
    "unplannedCustomers": 39,
-   "plannedCount": 168,
-   "plannedCustomers": 13089,
+   "plannedCount": 175,
+   "plannedCustomers": 13927,
    "networks": [
     {
      "name": "Western Power",
      "ok": true,
-     "count": 154,
+     "count": 161,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "staleDropped": 2,
      "sourceUrl": "https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
@@ -12996,7 +12934,7 @@
      "count": 16,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -13204,6 +13142,22 @@
      "restore": "28/10/2026 05:30 PM",
      "lon": 115.779620815323,
      "lat": -32.1075259886536,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-506652-V",
+     "location": "BASSENDEAN",
+     "towns": [
+      "BASSENDEAN"
+     ],
+     "kind": "planned",
+     "customers": 415,
+     "start": "30/10/2026 07:30 AM",
+     "restore": "30/10/2026 05:30 PM",
+     "lon": 115.949296100085,
+     "lat": -31.9194425122063,
      "upcoming": true,
      "kindReported": "unplanned"
     },
@@ -13497,6 +13451,39 @@
      "restore": "22/10/2026 04:30 PM",
      "lon": 115.953784114686,
      "lat": -32.0184960517093,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-202794-X",
+     "location": "GINGIN,GINGINUP",
+     "towns": [
+      "GINGIN",
+      "GINGINUP"
+     ],
+     "kind": "planned",
+     "customers": 167,
+     "start": "30/10/2026 07:30 AM",
+     "restore": "30/10/2026 03:30 PM",
+     "lon": 115.905750640387,
+     "lat": -31.3407945874924,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-507562-V",
+     "location": "LANGFORD",
+     "towns": [
+      "LANGFORD"
+     ],
+     "kind": "planned",
+     "customers": 164,
+     "start": "30/10/2026 10:00 AM",
+     "restore": "30/10/2026 02:30 PM",
+     "lon": 115.936917159163,
+     "lat": -32.0389461800758,
      "upcoming": true,
      "kindReported": "unplanned"
     },
@@ -14280,6 +14267,23 @@
     },
     {
      "network": "Western Power",
+     "id": "INCD-502882-V",
+     "location": "MAIDA VALE,KALAMUNDA",
+     "towns": [
+      "MAIDA VALE",
+      "KALAMUNDA"
+     ],
+     "kind": "planned",
+     "customers": 46,
+     "start": "30/10/2026 07:00 AM",
+     "restore": "30/10/2026 05:00 PM",
+     "lon": 116.026001994436,
+     "lat": -31.9587924584109,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
      "id": "INCD-2168681-U",
      "location": "SOUTH QUAIRADING,BULYEE,WAMENUSKING,BADJALING,DANGIN,QUAIRADING,ALDERSYDE",
      "towns": [
@@ -14668,6 +14672,22 @@
     },
     {
      "network": "Western Power",
+     "id": "INCD-509202-V",
+     "location": "BROADWATER",
+     "towns": [
+      "BROADWATER"
+     ],
+     "kind": "planned",
+     "customers": 22,
+     "start": "30/10/2026 08:00 AM",
+     "restore": "30/10/2026 02:00 PM",
+     "lon": 115.266147364333,
+     "lat": -33.6644271173714,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
      "id": "INCD-2168891-U",
      "location": "SOUTH KUKERIN,MERILUP,SOUTH LAKE GRACE",
      "towns": [
@@ -14828,6 +14848,22 @@
      "restore": "22/10/2026 03:30 PM",
      "lon": 117.098191570129,
      "lat": -33.8718774148542,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-82173-W",
+     "location": "GNANGARA",
+     "towns": [
+      "GNANGARA"
+     ],
+     "kind": "planned",
+     "customers": 15,
+     "start": "30/10/2026 07:30 AM",
+     "restore": "30/10/2026 03:30 PM",
+     "lon": 115.853272515861,
+     "lat": -31.7764777225509,
      "upcoming": true,
      "kindReported": "unplanned"
     },
@@ -15072,6 +15108,22 @@
      "restore": "28/10/2026 03:00 PM",
      "lon": 115.810401452887,
      "lat": -32.1603190388723,
+     "upcoming": true,
+     "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-501202-V",
+     "location": "BEDFORDALE",
+     "towns": [
+      "BEDFORDALE"
+     ],
+     "kind": "planned",
+     "customers": 9,
+     "start": "30/10/2026 08:00 AM",
+     "restore": "30/10/2026 04:00 PM",
+     "lon": 116.082747704958,
+     "lat": -32.1810838710317,
      "upcoming": true,
      "kindReported": "unplanned"
     },
@@ -15789,42 +15841,6 @@
     },
     {
      "network": "Horizon Power",
-     "id": "hz-2561",
-     "location": "Esperance",
-     "towns": [
-      "Esperance"
-     ],
-     "kind": "planned",
-     "customers": 1,
-     "start": "2026-10-22T01:00:00.000Z",
-     "startIso": "2026-10-22T01:00:00.000Z",
-     "restore": "2026-10-22T07:00:00.000Z",
-     "restoreIso": "2026-10-22T07:00:00.000Z",
-     "lon": 121.88,
-     "lat": -33.86,
-     "via": "Power Outages Australia",
-     "upcoming": true
-    },
-    {
-     "network": "Horizon Power",
-     "id": "hz-2565",
-     "location": "Leonora",
-     "towns": [
-      "Leonora"
-     ],
-     "kind": "planned",
-     "customers": 1,
-     "start": "2026-10-22T01:00:00.000Z",
-     "startIso": "2026-10-22T01:00:00.000Z",
-     "restore": "2026-10-22T07:00:00.000Z",
-     "restoreIso": "2026-10-22T07:00:00.000Z",
-     "lon": 121.32,
-     "lat": -28.88,
-     "via": "Power Outages Australia",
-     "upcoming": true
-    },
-    {
-     "network": "Horizon Power",
      "id": "hz-2568",
      "location": "Wyndham",
      "towns": [
@@ -15897,6 +15913,42 @@
     },
     {
      "network": "Horizon Power",
+     "id": "hz-2561",
+     "location": "Esperance",
+     "towns": [
+      "Esperance"
+     ],
+     "kind": "planned",
+     "customers": 1,
+     "start": "2026-10-22T01:00:00.000Z",
+     "startIso": "2026-10-22T01:00:00.000Z",
+     "restore": "2026-10-22T07:00:00.000Z",
+     "restoreIso": "2026-10-22T07:00:00.000Z",
+     "lon": 121.88,
+     "lat": -33.86,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Horizon Power",
+     "id": "hz-2565",
+     "location": "Leonora",
+     "towns": [
+      "Leonora"
+     ],
+     "kind": "planned",
+     "customers": 1,
+     "start": "2026-10-22T01:00:00.000Z",
+     "startIso": "2026-10-22T01:00:00.000Z",
+     "restore": "2026-10-22T07:00:00.000Z",
+     "restoreIso": "2026-10-22T07:00:00.000Z",
+     "lon": 121.32,
+     "lat": -28.88,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Horizon Power",
      "id": "hz-2560",
      "location": "Leonora",
      "towns": [
@@ -15937,54 +15989,24 @@
   "tas": {
    "state": "TAS",
    "name": "Tasmania",
-   "count": 1,
-   "customers": 91,
-   "unplannedCount": 1,
-   "unplannedCustomers": 91,
+   "count": 0,
+   "customers": 0,
+   "unplannedCount": 0,
+   "unplannedCustomers": 0,
    "plannedCount": 0,
    "plannedCustomers": 0,
    "networks": [
     {
      "name": "TasNetworks",
      "ok": true,
-     "count": 1,
+     "count": 0,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
-     "sourceUrl": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages",
-     "columns": [
-      "messageId",
-      "jobId",
-      "dispatchStatus",
-      "reason",
-      "affectedAreas",
-      "postcodes",
-      "affectedRegions",
-      "customersAffected",
-      "createdOn",
-      "modifiedOn",
-      "estimatedTimeOfRestoration",
-      "sortValue",
-      "outagePolygon_WKT",
-      "outageCentroid_WKT",
-      "canFollow"
-     ]
+     "capturedAt": 1792516970502,
+     "sourceUrl": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages"
     }
    ],
-   "outages": [
-    {
-     "network": "TasNetworks",
-     "id": "J2610210003",
-     "location": "Glenorchy",
-     "towns": [
-      "Glenorchy"
-     ],
-     "status": "Dispatch assigned",
-     "cause": "Vehicle hitting distribution assets",
-     "customers": 91,
-     "restore": "Wednesday 4:00 AM"
-    }
-   ]
+   "outages": []
   },
   "nt": {
    "state": "NT",
@@ -16001,7 +16023,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "error": "This operator blocks automated access to its outage page (bot challenge). Their own map is linked and still works in a browser.",
      "blocked": true,
      "attempts": [
@@ -16034,7 +16056,7 @@
      "count": 0,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1792510632130,
+     "capturedAt": 1792516970502,
      "sourceUrl": "https://www.evoenergy.com.au/api/sitecore/Outage/ExportOutages",
      "columns": [
       "Outage Id",
