@@ -1,23 +1,23 @@
 {
- "capturedAt": 1794084449859,
+ "capturedAt": 1794089143090,
  "states": {
   "nsw": {
    "state": "NSW",
    "name": "New South Wales",
-   "count": 248,
-   "customers": 12197,
-   "unplannedCount": 30,
-   "unplannedCustomers": 2975,
-   "plannedCount": 218,
-   "plannedCustomers": 9222,
+   "count": 277,
+   "customers": 19709,
+   "unplannedCount": 35,
+   "unplannedCustomers": 9903,
+   "plannedCount": 242,
+   "plannedCustomers": 9806,
    "networks": [
     {
      "name": "Ausgrid",
      "ok": true,
-     "count": 17,
+     "count": 19,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "staleDropped": 1,
      "sourceUrl": "https://www.ausgrid.com.au/outages-list",
      "columns": [
@@ -30,10 +30,10 @@
     {
      "name": "Endeavour Energy",
      "ok": true,
-     "count": 217,
+     "count": 218,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://data.endeavourenergy.com.au/api/explore/v2.1/catalog/datasets/outagecustomerlive/exports/geojson",
      "columns": [
       "street_name",
@@ -58,10 +58,10 @@
     {
      "name": "Essential Energy",
      "ok": true,
-     "count": 14,
+     "count": 40,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -84,6 +84,21 @@
     }
    ],
    "outages": [
+    {
+     "network": "Ausgrid",
+     "location": "North Turramurra, North Wahroonga, Pymble, St Ives, St Ives Chase, Turramurra, Wahroonga",
+     "towns": [
+      "North Turramurra",
+      "North Wahroonga",
+      "Pymble",
+      "St Ives",
+      "St Ives Chase",
+      "Turramurra",
+      "Wahroonga"
+     ],
+     "customers": 6757,
+     "start": "07/11/2026"
+    },
     {
      "network": "Ausgrid",
      "location": "Gymea, Gymea Bay",
@@ -253,13 +268,22 @@
      "start": "07/11/2026"
     },
     {
+     "network": "Ausgrid",
+     "location": "Silverwater",
+     "towns": [
+      "Silverwater"
+     ],
+     "customers": null,
+     "start": "07/11/2026"
+    },
+    {
      "network": "Endeavour Energy",
      "id": "SP 2133023888",
-     "location": "CLAYMORE, WOODBINE, EAGLE VALE",
+     "location": "EAGLE VALE, WOODBINE, CLAYMORE",
      "towns": [
-      "CLAYMORE",
+      "EAGLE VALE",
       "WOODBINE",
-      "EAGLE VALE"
+      "CLAYMORE"
      ],
      "cause": "Maintenance Work",
      "kind": "planned",
@@ -268,8 +292,8 @@
      "startIso": "2026-11-08T21:00:00.000Z",
      "restore": "2026-11-09 06:00",
      "restoreIso": "2026-11-09T06:00:00.000Z",
-     "lon": 150.81385707033843,
-     "lat": -34.04568536967572,
+     "lon": 150.81478479972796,
+     "lat": -34.04055149996979,
      "premises": 346,
      "upcoming": true
     },
@@ -325,8 +349,8 @@
      "startIso": "2026-11-08T23:00:00.000Z",
      "restore": "2026-11-09 03:00",
      "restoreIso": "2026-11-09T03:00:00.000Z",
-     "lon": 151.0197455895714,
-     "lat": -33.82606654962624,
+     "lon": 151.01952252963127,
+     "lat": -33.82713253971834,
      "premises": 239,
      "upcoming": true
     },
@@ -363,8 +387,8 @@
      "startIso": "2026-11-20T01:30:00.000Z",
      "restore": "2026-11-20 05:00",
      "restoreIso": "2026-11-20T05:00:00.000Z",
-     "lon": 150.84203617987268,
-     "lat": -34.54526679957405,
+     "lon": 150.83896386985822,
+     "lat": -34.549915079578504,
      "premises": 178,
      "upcoming": true
     },
@@ -421,8 +445,8 @@
      "startIso": "2026-11-15T20:30:00.000Z",
      "restore": "2026-11-16 03:30",
      "restoreIso": "2026-11-16T03:30:00.000Z",
-     "lon": 150.9267429395635,
-     "lat": -33.909224659948705,
+     "lon": 150.92486821050173,
+     "lat": -33.90935840033446,
      "premises": 156,
      "upcoming": true
     },
@@ -440,8 +464,8 @@
      "startIso": "2026-11-16T21:00:00.000Z",
      "restore": "2026-11-17 02:00",
      "restoreIso": "2026-11-17T02:00:00.000Z",
-     "lon": 150.70774300981984,
-     "lat": -33.578640609762765,
+     "lon": 150.710778429917,
+     "lat": -33.5803283296963,
      "premises": 147,
      "upcoming": true
     },
@@ -459,8 +483,8 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 03:30",
      "restoreIso": "2026-11-11T03:30:00.000Z",
-     "lon": 150.9530664001333,
-     "lat": -33.81424152023793,
+     "lon": 150.9577531598903,
+     "lat": -33.81559755008055,
      "premises": 145,
      "upcoming": true
     },
@@ -611,8 +635,8 @@
      "startIso": "2026-11-18T21:00:00.000Z",
      "restore": "2026-11-19 05:00",
      "restoreIso": "2026-11-19T05:00:00.000Z",
-     "lon": 150.8599817904615,
-     "lat": -34.01972953042243,
+     "lon": 150.8585019695483,
+     "lat": -34.020098659830964,
      "premises": 115,
      "upcoming": true
     },
@@ -668,8 +692,8 @@
      "startIso": "2026-11-09T21:30:00.000Z",
      "restore": "2026-11-10 04:00",
      "restoreIso": "2026-11-10T04:00:00.000Z",
-     "lon": 150.88614594031836,
-     "lat": -34.39536154958198,
+     "lon": 150.88623785960925,
+     "lat": -34.39553420979688,
      "premises": 101,
      "upcoming": true
     },
@@ -687,8 +711,8 @@
      "startIso": "2026-11-10T22:00:00.000Z",
      "restore": "2026-11-11 03:00",
      "restoreIso": "2026-11-11T03:00:00.000Z",
-     "lon": 150.87973545953037,
-     "lat": -33.756898810418676,
+     "lon": 150.8779977898446,
+     "lat": -33.75671746999593,
      "premises": 97,
      "upcoming": true
     },
@@ -706,8 +730,8 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 03:00",
      "restoreIso": "2026-11-11T03:00:00.000Z",
-     "lon": 150.71432746011345,
-     "lat": -33.70693281015864,
+     "lon": 150.71513525044,
+     "lat": -33.70867214974766,
      "premises": 96,
      "upcoming": true
     },
@@ -725,21 +749,21 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 05:00",
      "restoreIso": "2026-11-11T05:00:00.000Z",
-     "lon": 150.72274667043393,
-     "lat": -33.75318762988561,
+     "lon": 150.72106072967284,
+     "lat": -33.75269769030939,
      "premises": 96,
      "upcoming": true
     },
     {
      "network": "Endeavour Energy",
      "id": "SP 1115113053",
-     "location": "KANGAROO VALLEY, BUDGONG, MOOLLATTOO, WOLLONGONG, BEAUMONT",
+     "location": "KANGAROO VALLEY, BUDGONG, BEAUMONT, WOLLONGONG, MOOLLATTOO",
      "towns": [
       "KANGAROO VALLEY",
       "BUDGONG",
-      "MOOLLATTOO",
+      "BEAUMONT",
       "WOLLONGONG",
-      "BEAUMONT"
+      "MOOLLATTOO"
      ],
      "cause": "Maintenance Work",
      "kind": "planned",
@@ -767,8 +791,8 @@
      "startIso": "2026-11-19T21:00:00.000Z",
      "restore": "2026-11-20 02:00",
      "restoreIso": "2026-11-20T02:00:00.000Z",
-     "lon": 150.60138529033682,
-     "lat": -33.74062986043612,
+     "lon": 150.60308738973265,
+     "lat": -33.74055070992493,
      "premises": 95,
      "upcoming": true
     },
@@ -851,10 +875,10 @@
     {
      "network": "Endeavour Energy",
      "id": "SP 2146030002",
-     "location": "ALBION PARK, TONGARRA, CALDERWOOD, TULLIMBAR",
+     "location": "TONGARRA, ALBION PARK, CALDERWOOD, TULLIMBAR",
      "towns": [
-      "ALBION PARK",
       "TONGARRA",
+      "ALBION PARK",
       "CALDERWOOD",
       "TULLIMBAR"
      ],
@@ -865,8 +889,8 @@
      "startIso": "2026-11-16T21:00:00.000Z",
      "restore": "2026-11-17 05:30",
      "restoreIso": "2026-11-17T05:30:00.000Z",
-     "lon": 150.68510505003206,
-     "lat": -34.58088324988493,
+     "lon": 150.72371721982125,
+     "lat": -34.575472910316684,
      "premises": 77,
      "upcoming": true
     },
@@ -942,8 +966,8 @@
      "startIso": "2026-11-12T00:00:00.000Z",
      "restore": "2026-11-12 05:00",
      "restoreIso": "2026-11-12T05:00:00.000Z",
-     "lon": 150.57899260003137,
-     "lat": -33.7097525697086,
+     "lon": 150.57618650004724,
+     "lat": -33.70970936036538,
      "premises": 65,
      "upcoming": true
     },
@@ -981,8 +1005,8 @@
      "startIso": "2026-11-20T21:00:00.000Z",
      "restore": "2026-11-21 03:30",
      "restoreIso": "2026-11-21T03:30:00.000Z",
-     "lon": 150.37172780978122,
-     "lat": -33.70252176010293,
+     "lon": 150.37490686961445,
+     "lat": -33.70307877968509,
      "premises": 64,
      "upcoming": true
     },
@@ -1019,8 +1043,8 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 05:00",
      "restoreIso": "2026-11-11T05:00:00.000Z",
-     "lon": 150.81812899984075,
-     "lat": -34.09658707986844,
+     "lon": 150.81933221004238,
+     "lat": -34.096609570247594,
      "premises": 62,
      "upcoming": true
     },
@@ -1115,8 +1139,8 @@
      "startIso": "2026-11-18T21:00:00.000Z",
      "restore": "2026-11-19 04:00",
      "restoreIso": "2026-11-19T04:00:00.000Z",
-     "lon": 150.87317352042868,
-     "lat": -34.008491660388046,
+     "lon": 150.87464514965396,
+     "lat": -34.00800639037332,
      "premises": 60,
      "upcoming": true
     },
@@ -1192,8 +1216,8 @@
      "startIso": "2026-11-10T09:00:00.000Z",
      "restore": "2026-11-10 18:00",
      "restoreIso": "2026-11-10T18:00:00.000Z",
-     "lon": 150.89064909959944,
-     "lat": -34.42353910974421,
+     "lon": 150.89034949044193,
+     "lat": -34.42357303992291,
      "premises": 57,
      "upcoming": true
     },
@@ -1250,8 +1274,8 @@
      "startIso": "2026-11-12T09:00:00.000Z",
      "restore": "2026-11-12 19:00",
      "restoreIso": "2026-11-12T19:00:00.000Z",
-     "lon": 150.86452334016454,
-     "lat": -34.548295169705625,
+     "lon": 150.86148451998278,
+     "lat": -34.546766730076925,
      "premises": 54,
      "upcoming": true
     },
@@ -1327,8 +1351,8 @@
      "startIso": "2026-11-18T21:00:00.000Z",
      "restore": "2026-11-19 05:00",
      "restoreIso": "2026-11-19T05:00:00.000Z",
-     "lon": 150.80779894983357,
-     "lat": -33.727906639794725,
+     "lon": 150.80744453998057,
+     "lat": -33.727730980329085,
      "premises": 49,
      "upcoming": true
     },
@@ -1346,8 +1370,8 @@
      "startIso": "2026-11-10T09:00:00.000Z",
      "restore": "2026-11-10 18:00",
      "restoreIso": "2026-11-10T18:00:00.000Z",
-     "lon": 150.84419174005706,
-     "lat": -33.710698480170656,
+     "lon": 150.8432109895285,
+     "lat": -33.71023714017256,
      "premises": 49,
      "upcoming": true
     },
@@ -1365,8 +1389,8 @@
      "startIso": "2026-11-10T21:30:00.000Z",
      "restore": "2026-11-11 04:00",
      "restoreIso": "2026-11-11T04:00:00.000Z",
-     "lon": 150.77678275953602,
-     "lat": -34.72521197036417,
+     "lon": 150.76627658045103,
+     "lat": -34.714527410285065,
      "premises": 48,
      "upcoming": true
     },
@@ -1403,8 +1427,8 @@
      "startIso": "2026-11-18T21:00:00.000Z",
      "restore": "2026-11-19 04:00",
      "restoreIso": "2026-11-19T04:00:00.000Z",
-     "lon": 150.82493064960747,
-     "lat": -34.08200171997727,
+     "lon": 150.82489562997299,
+     "lat": -34.081908289853985,
      "premises": 46,
      "upcoming": true
     },
@@ -1441,8 +1465,8 @@
      "startIso": "2026-11-18T21:00:00.000Z",
      "restore": "2026-11-19 02:00",
      "restoreIso": "2026-11-19T02:00:00.000Z",
-     "lon": 150.53421432987562,
-     "lat": -34.086318469798236,
+     "lon": 150.5343809095725,
+     "lat": -34.0902683299745,
      "premises": 44,
      "upcoming": true
     },
@@ -1502,8 +1526,7 @@
      "restoreIso": "2026-11-08T03:00:00.000Z",
      "lon": 150.97275046957108,
      "lat": -33.80671209958661,
-     "premises": 42,
-     "upcoming": true
+     "premises": 42
     },
     {
      "network": "Endeavour Energy",
@@ -1538,8 +1561,8 @@
      "startIso": "2026-11-20T00:00:00.000Z",
      "restore": "2026-11-20 04:00",
      "restoreIso": "2026-11-20T04:00:00.000Z",
-     "lon": 150.62772721041335,
-     "lat": -33.77771496993649,
+     "lon": 150.62676801039632,
+     "lat": -33.7774404799997,
      "premises": 41,
      "upcoming": true
     },
@@ -1596,8 +1619,8 @@
      "startIso": "2026-11-14T09:00:00.000Z",
      "restore": "2026-11-14 17:00",
      "restoreIso": "2026-11-14T17:00:00.000Z",
-     "lon": 150.93076411982335,
-     "lat": -33.935670909826044,
+     "lon": 150.92922582048664,
+     "lat": -33.93585741964855,
      "premises": 40,
      "upcoming": true
     },
@@ -1635,8 +1658,8 @@
      "startIso": "2026-11-18T21:00:00.000Z",
      "restore": "2026-11-19 02:00",
      "restoreIso": "2026-11-19T02:00:00.000Z",
-     "lon": 150.9984869899216,
-     "lat": -33.599170409846415,
+     "lon": 150.98854688030372,
+     "lat": -33.59757332995271,
      "premises": 39,
      "upcoming": true
     },
@@ -1751,8 +1774,8 @@
      "startIso": "2026-11-09T22:00:00.000Z",
      "restore": "2026-11-10 03:00",
      "restoreIso": "2026-11-10T03:00:00.000Z",
-     "lon": 150.7753045902306,
-     "lat": -33.53235572977793,
+     "lon": 150.77548194026596,
+     "lat": -33.53349939970438,
      "premises": 37,
      "upcoming": true
     },
@@ -1848,8 +1871,8 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 05:00",
      "restoreIso": "2026-11-11T05:00:00.000Z",
-     "lon": 150.85083135019937,
-     "lat": -34.427379269951366,
+     "lon": 150.85295209027214,
+     "lat": -34.42702856005887,
      "premises": 33,
      "upcoming": true
     },
@@ -1905,8 +1928,8 @@
      "startIso": "2026-11-08T21:00:00.000Z",
      "restore": "2026-11-09 05:00",
      "restoreIso": "2026-11-09T05:00:00.000Z",
-     "lon": 150.57084885990477,
-     "lat": -34.215634829967684,
+     "lon": 150.5696575202289,
+     "lat": -34.21327070997366,
      "premises": 31,
      "upcoming": true
     },
@@ -2001,8 +2024,8 @@
      "startIso": "2026-11-10T00:00:00.000Z",
      "restore": "2026-11-10 04:00",
      "restoreIso": "2026-11-10T04:00:00.000Z",
-     "lon": 150.79960437967495,
-     "lat": -33.80818016036894,
+     "lon": 150.80038979002157,
+     "lat": -33.80921309980661,
      "premises": 30,
      "upcoming": true
     },
@@ -2059,8 +2082,8 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 02:00",
      "restoreIso": "2026-11-11T02:00:00.000Z",
-     "lon": 150.87414094036353,
-     "lat": -33.535692819616415,
+     "lon": 150.87581112987814,
+     "lat": -33.53415652034816,
      "premises": 29,
      "upcoming": true
     },
@@ -2145,13 +2168,13 @@
     {
      "network": "Endeavour Energy",
      "id": "SP 2133024681",
-     "location": "OLINDA, NULLO MOUNTAIN, RYLSTONE, KELGOOLA, DABEE",
+     "location": "OLINDA, NULLO MOUNTAIN, RYLSTONE, DABEE, KELGOOLA",
      "towns": [
       "OLINDA",
       "NULLO MOUNTAIN",
       "RYLSTONE",
-      "KELGOOLA",
-      "DABEE"
+      "DABEE",
+      "KELGOOLA"
      ],
      "cause": "Maintenance Work",
      "kind": "planned",
@@ -2179,8 +2202,8 @@
      "startIso": "2026-11-18T20:00:00.000Z",
      "restore": "2026-11-19 00:00",
      "restoreIso": "2026-11-19T00:00:00.000Z",
-     "lon": 150.90469711989567,
-     "lat": -33.88269471009001,
+     "lon": 150.90495199955834,
+     "lat": -33.883823339712166,
      "premises": 26,
      "upcoming": true
     },
@@ -2312,8 +2335,8 @@
      "startIso": "2026-11-10T21:30:00.000Z",
      "restore": "2026-11-11 03:30",
      "restoreIso": "2026-11-11T03:30:00.000Z",
-     "lon": 150.0660059803357,
-     "lat": -33.41693468973646,
+     "lon": 150.06634097020878,
+     "lat": -33.415962229649274,
      "premises": 22,
      "upcoming": true
     },
@@ -2331,8 +2354,8 @@
      "startIso": "2026-11-08T21:00:00.000Z",
      "restore": "2026-11-09 05:00",
      "restoreIso": "2026-11-09T05:00:00.000Z",
-     "lon": 150.95911682976813,
-     "lat": -33.65938967971091,
+     "lon": 150.96559175032073,
+     "lat": -33.66393511995761,
      "premises": 22,
      "upcoming": true
     },
@@ -2352,8 +2375,7 @@
      "restoreIso": "2026-11-08T06:00:00.000Z",
      "lon": 150.78476518962904,
      "lat": -33.6989148299848,
-     "premises": 22,
-     "upcoming": true
+     "premises": 22
     },
     {
      "network": "Endeavour Energy",
@@ -2426,8 +2448,8 @@
      "startIso": "2026-11-17T21:00:00.000Z",
      "restore": "2026-11-18 04:30",
      "restoreIso": "2026-11-18T04:30:00.000Z",
-     "lon": 150.49943847028703,
-     "lat": -34.599635179902876,
+     "lon": 150.5021302699189,
+     "lat": -34.60299649009331,
      "premises": 20,
      "upcoming": true
     },
@@ -2486,8 +2508,8 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 04:00",
      "restoreIso": "2026-11-11T04:00:00.000Z",
-     "lon": 150.71683259987987,
-     "lat": -33.59766178012529,
+     "lon": 150.72005383040985,
+     "lat": -33.601324679593866,
      "premises": 19,
      "upcoming": true
     },
@@ -2544,8 +2566,8 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 06:00",
      "restoreIso": "2026-11-11T06:00:00.000Z",
-     "lon": 150.7303116703789,
-     "lat": -34.23611658014986,
+     "lon": 150.73169890020174,
+     "lat": -34.23522072966823,
      "premises": 18,
      "upcoming": true
     },
@@ -2602,29 +2624,10 @@
      "startIso": "2026-11-08T21:00:00.000Z",
      "restore": "2026-11-09 03:00",
      "restoreIso": "2026-11-09T03:00:00.000Z",
-     "lon": 150.5548474195654,
-     "lat": -34.55402657975461,
+     "lon": 150.5566528003414,
+     "lat": -34.55954714041652,
      "premises": 17,
      "upcoming": true
-    },
-    {
-     "network": "Endeavour Energy",
-     "id": "INC 48025023",
-     "location": "AGNES BANKS, CASTLEREAGH",
-     "towns": [
-      "AGNES BANKS",
-      "CASTLEREAGH"
-     ],
-     "cause": "None",
-     "kind": "unplanned",
-     "customers": 17,
-     "start": "2026-11-07 14:47",
-     "startIso": "2026-11-07T14:47:00.000Z",
-     "restore": "2026-11-08 00:30",
-     "restoreIso": "2026-11-08T00:30:00.000Z",
-     "lon": 150.68055994041194,
-     "lat": -33.64017463020273,
-     "premises": 17
     },
     {
      "network": "Endeavour Energy",
@@ -2698,8 +2701,8 @@
      "startIso": "2026-11-09T21:30:00.000Z",
      "restore": "2026-11-10 05:00",
      "restoreIso": "2026-11-10T05:00:00.000Z",
-     "lon": 150.7059579104839,
-     "lat": -33.877545999673,
+     "lon": 150.7150944102621,
+     "lat": -33.87505615981363,
      "premises": 16,
      "upcoming": true
     },
@@ -2717,8 +2720,8 @@
      "startIso": "2026-11-18T21:00:00.000Z",
      "restore": "2026-11-19 04:00",
      "restoreIso": "2026-11-19T04:00:00.000Z",
-     "lon": 150.70936448036855,
-     "lat": -33.697111420168056,
+     "lon": 150.70942951048272,
+     "lat": -33.69689629002596,
      "premises": 15,
      "upcoming": true
     },
@@ -2776,8 +2779,8 @@
      "startIso": "2026-11-19T21:30:00.000Z",
      "restore": "2026-11-20 05:00",
      "restoreIso": "2026-11-20T05:00:00.000Z",
-     "lon": 150.62650248007643,
-     "lat": -34.83562659028646,
+     "lon": 150.6256167997817,
+     "lat": -34.843593330101974,
      "premises": 14,
      "upcoming": true
     },
@@ -2872,8 +2875,8 @@
      "startIso": "2026-11-12T10:00:00.000Z",
      "restore": "2026-11-12 18:00",
      "restoreIso": "2026-11-12T18:00:00.000Z",
-     "lon": 150.99861376046454,
-     "lat": -33.81605788963252,
+     "lon": 150.9990889702051,
+     "lat": -33.81639757033457,
      "premises": 13,
      "upcoming": true
     },
@@ -2910,8 +2913,8 @@
      "startIso": "2026-11-09T21:30:00.000Z",
      "restore": "2026-11-10 05:00",
      "restoreIso": "2026-11-10T05:00:00.000Z",
-     "lon": 150.7155261797786,
-     "lat": -34.8090647603987,
+     "lon": 150.7232608804732,
+     "lat": -34.811401600007684,
      "premises": 13,
      "upcoming": true
     },
@@ -3025,8 +3028,8 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 03:00",
      "restoreIso": "2026-11-11T03:00:00.000Z",
-     "lon": 150.6660522895041,
-     "lat": -33.83517570026304,
+     "lon": 150.66879460043762,
+     "lat": -33.83440404960284,
      "premises": 12,
      "upcoming": true
     },
@@ -3063,8 +3066,8 @@
      "startIso": "2026-11-11T10:00:00.000Z",
      "restore": "2026-11-11 18:00",
      "restoreIso": "2026-11-11T18:00:00.000Z",
-     "lon": 151.01775168954467,
-     "lat": -33.725032059683315,
+     "lon": 151.01669754020037,
+     "lat": -33.724329330143384,
      "premises": 11,
      "upcoming": true
     },
@@ -3120,8 +3123,8 @@
      "startIso": "2026-11-12T11:00:00.000Z",
      "restore": "2026-11-12 15:00",
      "restoreIso": "2026-11-12T15:00:00.000Z",
-     "lon": 150.94438877018115,
-     "lat": -33.84279872027058,
+     "lon": 150.94510882947887,
+     "lat": -33.842639990287815,
      "premises": 10,
      "upcoming": true
     },
@@ -3204,10 +3207,10 @@
     {
      "network": "Endeavour Energy",
      "id": "SP 2133024638",
-     "location": "LONGREACH, NOWRA, BAMARANG",
+     "location": "NOWRA, LONGREACH, BAMARANG",
      "towns": [
-      "LONGREACH",
       "NOWRA",
+      "LONGREACH",
       "BAMARANG"
      ],
      "cause": "Maintenance Work",
@@ -3217,8 +3220,8 @@
      "startIso": "2026-11-10T21:30:00.000Z",
      "restore": "2026-11-11 04:00",
      "restoreIso": "2026-11-11T04:00:00.000Z",
-     "lon": 150.52487248960142,
-     "lat": -34.88119817973809,
+     "lon": 150.51836320944605,
+     "lat": -34.88085784023747,
      "premises": 9,
      "upcoming": true
     },
@@ -3293,8 +3296,8 @@
      "startIso": "2026-11-08T22:00:00.000Z",
      "restore": "2026-11-09 03:00",
      "restoreIso": "2026-11-09T03:00:00.000Z",
-     "lon": 150.84148101972096,
-     "lat": -34.69556809998576,
+     "lon": 150.84239602974645,
+     "lat": -34.69635632039173,
      "premises": 8,
      "upcoming": true
     },
@@ -3312,8 +3315,8 @@
      "startIso": "2026-11-18T21:00:00.000Z",
      "restore": "2026-11-19 06:00",
      "restoreIso": "2026-11-19T06:00:00.000Z",
-     "lon": 150.68608435022296,
-     "lat": -33.643009519605464,
+     "lon": 150.6848618302573,
+     "lat": -33.644070330014614,
      "premises": 7,
      "upcoming": true
     },
@@ -3520,8 +3523,8 @@
      "startIso": "2026-11-11T21:00:00.000Z",
      "restore": "2026-11-12 06:00",
      "restoreIso": "2026-11-12T06:00:00.000Z",
-     "lon": 150.9164903295348,
-     "lat": -34.33400909990429,
+     "lon": 150.91656411007855,
+     "lat": -34.334020069868146,
      "premises": 5,
      "upcoming": true
     },
@@ -3539,8 +3542,8 @@
      "startIso": "2026-11-10T21:00:00.000Z",
      "restore": "2026-11-11 01:00",
      "restoreIso": "2026-11-11T01:00:00.000Z",
-     "lon": 150.83603202014055,
-     "lat": -33.68265106972944,
+     "lon": 150.83631128987068,
+     "lat": -33.68050994977219,
      "premises": 5,
      "upcoming": true
     },
@@ -3964,8 +3967,7 @@
      "restoreIso": "2026-11-08T04:00:00.000Z",
      "lon": 150.88210278030428,
      "lat": -34.4703542698613,
-     "premises": 2,
-     "upcoming": true
+     "premises": 2
     },
     {
      "network": "Endeavour Energy",
@@ -4275,21 +4277,54 @@
     },
     {
      "network": "Endeavour Energy",
-     "id": "SP 2133024537",
-     "location": "MINTO",
+     "id": "INC 48025043",
+     "location": "BLACKTOWN",
      "towns": [
-      "MINTO"
+      "BLACKTOWN"
      ],
-     "cause": "Maintenance Work",
-     "kind": "planned",
+     "cause": "None",
+     "kind": "unplanned",
      "customers": 1,
-     "start": "2026-11-07 23:00",
-     "startIso": "2026-11-07T23:00:00.000Z",
-     "restore": "2026-11-08 03:00",
-     "restoreIso": "2026-11-08T03:00:00.000Z",
-     "lon": 150.84020666030526,
-     "lat": -34.03834732009245,
-     "upcoming": true
+     "start": "2026-11-07 21:54",
+     "startIso": "2026-11-07T21:54:00.000Z",
+     "restore": "2026-11-08 02:30",
+     "restoreIso": "2026-11-08T02:30:00.000Z",
+     "lon": 150.8982940899641,
+     "lat": -33.77636264009164
+    },
+    {
+     "network": "Endeavour Energy",
+     "id": "INC 48025042",
+     "location": "DURAL",
+     "towns": [
+      "DURAL"
+     ],
+     "cause": "None",
+     "kind": "unplanned",
+     "customers": 1,
+     "start": "2026-11-07 21:48",
+     "startIso": "2026-11-07T21:48:00.000Z",
+     "restore": "2026-11-08 02:30",
+     "restoreIso": "2026-11-08T02:30:00.000Z",
+     "lon": 151.00866664042454,
+     "lat": -33.685998760199595
+    },
+    {
+     "network": "Endeavour Energy",
+     "id": "INC 48025040",
+     "location": "NORTH ST MARYS",
+     "towns": [
+      "NORTH ST MARYS"
+     ],
+     "cause": "None",
+     "kind": "unplanned",
+     "customers": 1,
+     "start": "2026-11-07 21:19",
+     "startIso": "2026-11-07T21:19:00.000Z",
+     "restore": "2026-11-08 02:00",
+     "restoreIso": "2026-11-08T02:00:00.000Z",
+     "lon": 150.78348899957606,
+     "lat": -33.752646160282616
     },
     {
      "network": "Endeavour Energy",
@@ -4306,8 +4341,24 @@
      "restore": "2026-11-08 06:00",
      "restoreIso": "2026-11-08T06:00:00.000Z",
      "lon": 150.7367431404611,
-     "lat": -33.95732878990722,
-     "upcoming": true
+     "lat": -33.95732878990722
+    },
+    {
+     "network": "Endeavour Energy",
+     "id": "INC 48025035",
+     "location": "NORTH ROCKS",
+     "towns": [
+      "NORTH ROCKS"
+     ],
+     "cause": "None",
+     "kind": "unplanned",
+     "customers": 1,
+     "start": "2026-11-07 20:51",
+     "startIso": "2026-11-07T20:51:00.000Z",
+     "restore": "2026-11-08 01:30",
+     "restoreIso": "2026-11-08T01:30:00.000Z",
+     "lon": 151.0163731401528,
+     "lat": -33.77495971010696
     },
     {
      "network": "Endeavour Energy",
@@ -4345,23 +4396,6 @@
     },
     {
      "network": "Endeavour Energy",
-     "id": "INC 48025025",
-     "location": "SOUTH WENTWORTHVILLE",
-     "towns": [
-      "SOUTH WENTWORTHVILLE"
-     ],
-     "cause": "None",
-     "kind": "unplanned",
-     "customers": 1,
-     "start": "2026-11-07 14:57",
-     "startIso": "2026-11-07T14:57:00.000Z",
-     "restore": "2026-11-07 19:30",
-     "restoreIso": "2026-11-07T19:30:00.000Z",
-     "lon": 150.9638608295862,
-     "lat": -33.81727967964058
-    },
-    {
-     "network": "Endeavour Energy",
      "id": "INC 48025013",
      "location": "NOWRA",
      "towns": [
@@ -4396,11 +4430,30 @@
     },
     {
      "network": "Essential Energy",
+     "id": "essential:INCD-303712-q",
+     "location": "Yamba",
+     "towns": [
+      "Yamba"
+     ],
+     "cause": "Essential Energy is investigating",
+     "kind": "unplanned",
+     "customers": 185,
+     "start": "2026-11-07T21:02:00.000Z",
+     "startIso": "2026-11-07T21:02:00.000Z",
+     "restore": "2026-11-08T01:00:00.000Z",
+     "restoreIso": "2026-11-08T01:00:00.000Z",
+     "lon": 153.36442,
+     "lat": -29.43784,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "Essential Energy",
      "id": "essential:INCD-137503-r",
      "location": "Gunnedah",
      "towns": [
       "Gunnedah"
      ],
+     "cause": "General network maintenance",
      "kind": "planned",
      "customers": 141,
      "start": "2026-11-07T21:00:00.000Z",
@@ -4409,8 +4462,7 @@
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 150.25715,
      "lat": -30.97569,
-     "via": "Power Outages Australia",
-     "upcoming": true
+     "via": "Power Outages Australia"
     },
     {
      "network": "Essential Energy",
@@ -4419,6 +4471,7 @@
      "towns": [
       "Crestwood"
      ],
+     "cause": "General network maintenance",
      "kind": "planned",
      "customers": 123,
      "start": "2026-11-07T21:30:00.000Z",
@@ -4427,8 +4480,7 @@
      "restoreIso": "2026-11-08T03:30:00.000Z",
      "lon": 149.21584,
      "lat": -35.34406,
-     "via": "Power Outages Australia",
-     "upcoming": true
+     "via": "Power Outages Australia"
     },
     {
      "network": "Essential Energy",
@@ -4437,16 +4489,16 @@
      "towns": [
       "West Wyalong"
      ],
+     "cause": "General network maintenance",
      "kind": "planned",
      "customers": 109,
      "start": "2026-11-07T22:00:00.000Z",
      "startIso": "2026-11-07T22:00:00.000Z",
      "restore": "2026-11-08T04:00:00.000Z",
      "restoreIso": "2026-11-08T04:00:00.000Z",
-     "lon": 147.20722,
-     "lat": -33.92422,
-     "via": "Power Outages Australia",
-     "upcoming": true
+     "lon": 147.20716,
+     "lat": -33.92426,
+     "via": "Power Outages Australia"
     },
     {
      "network": "Essential Energy",
@@ -4468,11 +4520,68 @@
     },
     {
      "network": "Essential Energy",
+     "id": "essential:INCD-137985-r",
+     "location": "East Tamworth",
+     "towns": [
+      "East Tamworth"
+     ],
+     "kind": "planned",
+     "customers": 87,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T02:00:00.000Z",
+     "restoreIso": "2026-11-09T02:00:00.000Z",
+     "lon": 150.93956,
+     "lat": -31.08862,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-137509-r",
+     "location": "Rushforth, South Grafton",
+     "towns": [
+      "Rushforth",
+      "South Grafton"
+     ],
+     "kind": "planned",
+     "customers": 82,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T03:00:00.000Z",
+     "restoreIso": "2026-11-09T03:00:00.000Z",
+     "lon": 152.92468,
+     "lat": -29.72089,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-137420-r",
+     "location": "Jacks Creek, Narrabri",
+     "towns": [
+      "Jacks Creek",
+      "Narrabri"
+     ],
+     "kind": "planned",
+     "customers": 74,
+     "start": "2026-11-08T21:30:00.000Z",
+     "startIso": "2026-11-08T21:30:00.000Z",
+     "restore": "2026-11-09T04:30:00.000Z",
+     "restoreIso": "2026-11-09T04:30:00.000Z",
+     "lon": 149.79472,
+     "lat": -30.40276,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
      "id": "essential:INCD-43978-w",
      "location": "Queanbeyan",
      "towns": [
       "Queanbeyan"
      ],
+     "cause": "General network maintenance",
      "kind": "planned",
      "customers": 53,
      "start": "2026-11-07T21:00:00.000Z",
@@ -4481,6 +4590,42 @@
      "restoreIso": "2026-11-08T04:00:00.000Z",
      "lon": 149.23344,
      "lat": -35.35305,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-43796-w",
+     "location": "Pullabooka, Wirrinya",
+     "towns": [
+      "Pullabooka",
+      "Wirrinya"
+     ],
+     "kind": "planned",
+     "customers": 47,
+     "start": "2026-11-08T21:30:00.000Z",
+     "startIso": "2026-11-08T21:30:00.000Z",
+     "restore": "2026-11-09T04:30:00.000Z",
+     "restoreIso": "2026-11-09T04:30:00.000Z",
+     "lon": 147.73601,
+     "lat": -33.64911,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-138505-r",
+     "location": "Bulahdelah",
+     "towns": [
+      "Bulahdelah"
+     ],
+     "kind": "planned",
+     "customers": 47,
+     "start": "2026-11-08T21:30:00.000Z",
+     "startIso": "2026-11-08T21:30:00.000Z",
+     "restore": "2026-11-09T02:30:00.000Z",
+     "restoreIso": "2026-11-09T02:30:00.000Z",
+     "lon": 152.20369,
+     "lat": -32.40181,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -4491,6 +4636,7 @@
      "towns": [
       "Wagga Wagga"
      ],
+     "cause": "General network maintenance",
      "kind": "planned",
      "customers": 45,
      "start": "2026-11-07T21:30:00.000Z",
@@ -4499,8 +4645,7 @@
      "restoreIso": "2026-11-08T04:30:00.000Z",
      "lon": 147.36892,
      "lat": -35.11502,
-     "via": "Power Outages Australia",
-     "upcoming": true
+     "via": "Power Outages Australia"
     },
     {
      "network": "Essential Energy",
@@ -4509,6 +4654,7 @@
      "towns": [
       "Cobar"
      ],
+     "cause": "General network maintenance",
      "kind": "planned",
      "customers": 39,
      "start": "2026-11-07T21:00:00.000Z",
@@ -4517,6 +4663,24 @@
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 145.83441,
      "lat": -31.49767,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-137939-r",
+     "location": "Cumbalum, Kinvara",
+     "towns": [
+      "Cumbalum",
+      "Kinvara"
+     ],
+     "kind": "planned",
+     "customers": 32,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T03:30:00.000Z",
+     "restoreIso": "2026-11-09T03:30:00.000Z",
+     "lon": 153.54285,
+     "lat": -28.80524,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -4527,6 +4691,7 @@
      "towns": [
       "South Grafton"
      ],
+     "cause": "General network maintenance",
      "kind": "planned",
      "customers": 28,
      "start": "2026-11-07T21:30:00.000Z",
@@ -4535,8 +4700,7 @@
      "restoreIso": "2026-11-08T03:00:00.000Z",
      "lon": 152.94548,
      "lat": -29.71434,
-     "via": "Power Outages Australia",
-     "upcoming": true
+     "via": "Power Outages Australia"
     },
     {
      "network": "Essential Energy",
@@ -4545,14 +4709,162 @@
      "towns": [
       "Junee"
      ],
+     "cause": "General network maintenance",
      "kind": "planned",
      "customers": 26,
      "start": "2026-11-07T22:00:00.000Z",
      "startIso": "2026-11-07T22:00:00.000Z",
      "restore": "2026-11-08T02:00:00.000Z",
      "restoreIso": "2026-11-08T02:00:00.000Z",
-     "lon": 147.57627,
-     "lat": -34.85531,
+     "lon": 147.57626,
+     "lat": -34.85532,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-137941-r",
+     "location": "Carroll, Rushes Creek, Somerton",
+     "towns": [
+      "Carroll",
+      "Rushes Creek",
+      "Somerton"
+     ],
+     "kind": "planned",
+     "customers": 25,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-08T22:30:00.000Z",
+     "restoreIso": "2026-11-08T22:30:00.000Z",
+     "lon": 150.52128,
+     "lat": -30.93876,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-43983-w",
+     "location": "Myall Park, Yenda",
+     "towns": [
+      "Myall Park",
+      "Yenda"
+     ],
+     "kind": "planned",
+     "customers": 23,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T04:30:00.000Z",
+     "restoreIso": "2026-11-09T04:30:00.000Z",
+     "lon": 146.18029,
+     "lat": -34.12958,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-43793-w",
+     "location": "Kanoona",
+     "towns": [
+      "Kanoona"
+     ],
+     "kind": "planned",
+     "customers": 23,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T04:00:00.000Z",
+     "restoreIso": "2026-11-09T04:00:00.000Z",
+     "lon": 149.77308,
+     "lat": -36.75385,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-44667-w",
+     "location": "Mathoura",
+     "towns": [
+      "Mathoura"
+     ],
+     "kind": "planned",
+     "customers": 18,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T01:30:00.000Z",
+     "restoreIso": "2026-11-09T01:30:00.000Z",
+     "lon": 144.89122,
+     "lat": -35.80606,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-43996-w",
+     "location": "Bywong",
+     "towns": [
+      "Bywong"
+     ],
+     "kind": "planned",
+     "customers": 16,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T04:00:00.000Z",
+     "restoreIso": "2026-11-09T04:00:00.000Z",
+     "lon": 149.30312,
+     "lat": -35.15119,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-43867-w",
+     "location": "Girral",
+     "towns": [
+      "Girral"
+     ],
+     "kind": "planned",
+     "customers": 14,
+     "start": "2026-11-08T21:30:00.000Z",
+     "startIso": "2026-11-08T21:30:00.000Z",
+     "restore": "2026-11-09T00:00:00.000Z",
+     "restoreIso": "2026-11-09T00:00:00.000Z",
+     "lon": 147.22829,
+     "lat": -33.63031,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-138738-r",
+     "location": "Walcha",
+     "towns": [
+      "Walcha"
+     ],
+     "kind": "planned",
+     "customers": 14,
+     "start": "2026-11-08T21:30:00.000Z",
+     "startIso": "2026-11-08T21:30:00.000Z",
+     "restore": "2026-11-09T01:30:00.000Z",
+     "restoreIso": "2026-11-09T01:30:00.000Z",
+     "lon": 151.51171,
+     "lat": -31.19927,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-44350-w",
+     "location": "Berremangra, Mcmahons Reef",
+     "towns": [
+      "Berremangra",
+      "Mcmahons Reef"
+     ],
+     "kind": "planned",
+     "customers": 12,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T01:00:00.000Z",
+     "restoreIso": "2026-11-09T01:00:00.000Z",
+     "lon": 148.42258,
+     "lat": -34.74648,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -4563,14 +4875,177 @@
      "towns": [
       "Ettamogah"
      ],
+     "cause": "General network maintenance",
      "kind": "planned",
      "customers": 12,
      "start": "2026-11-07T21:30:00.000Z",
      "startIso": "2026-11-07T21:30:00.000Z",
      "restore": "2026-11-08T05:00:00.000Z",
      "restoreIso": "2026-11-08T05:00:00.000Z",
-     "lon": 146.99406,
+     "lon": 146.99428,
      "lat": -35.99655,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-43795-w",
+     "location": "Cowra",
+     "towns": [
+      "Cowra"
+     ],
+     "kind": "planned",
+     "customers": 11,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T04:30:00.000Z",
+     "restoreIso": "2026-11-09T04:30:00.000Z",
+     "lon": 148.79235,
+     "lat": -33.86209,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-137840-r",
+     "location": "Barkers Vale",
+     "towns": [
+      "Barkers Vale"
+     ],
+     "kind": "planned",
+     "customers": 11,
+     "start": "2026-11-08T21:30:00.000Z",
+     "startIso": "2026-11-08T21:30:00.000Z",
+     "restore": "2026-11-09T02:30:00.000Z",
+     "restoreIso": "2026-11-09T02:30:00.000Z",
+     "lon": 153.11797,
+     "lat": -28.54661,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-43928-w",
+     "location": "Ariah Park, Tara",
+     "towns": [
+      "Ariah Park",
+      "Tara"
+     ],
+     "kind": "planned",
+     "customers": 8,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T02:00:00.000Z",
+     "restoreIso": "2026-11-09T02:00:00.000Z",
+     "lon": 147.13704,
+     "lat": -34.44607,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-44375-w",
+     "location": "Moombooldool",
+     "towns": [
+      "Moombooldool"
+     ],
+     "kind": "planned",
+     "customers": 8,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T01:00:00.000Z",
+     "restoreIso": "2026-11-09T01:00:00.000Z",
+     "lon": 146.67475,
+     "lat": -34.3009,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-73514-t",
+     "location": "Broken Hill",
+     "towns": [
+      "Broken Hill"
+     ],
+     "kind": "planned",
+     "customers": 8,
+     "start": "2026-11-08T21:30:00.000Z",
+     "startIso": "2026-11-08T21:30:00.000Z",
+     "restore": "2026-11-09T04:00:00.000Z",
+     "restoreIso": "2026-11-09T04:00:00.000Z",
+     "lon": 141.46175,
+     "lat": -31.95679,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-138435-r",
+     "location": "Collarenebri",
+     "towns": [
+      "Collarenebri"
+     ],
+     "kind": "planned",
+     "customers": 7,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T05:00:00.000Z",
+     "restoreIso": "2026-11-09T05:00:00.000Z",
+     "lon": 148.54729,
+     "lat": -29.57456,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-138417-r",
+     "location": "Round Mountain",
+     "towns": [
+      "Round Mountain"
+     ],
+     "kind": "planned",
+     "customers": 6,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T03:30:00.000Z",
+     "restoreIso": "2026-11-09T03:30:00.000Z",
+     "lon": 153.54966,
+     "lat": -28.3471,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-137421-r",
+     "location": "Tilbuster",
+     "towns": [
+      "Tilbuster"
+     ],
+     "kind": "planned",
+     "customers": 4,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T02:30:00.000Z",
+     "restoreIso": "2026-11-09T02:30:00.000Z",
+     "lon": 151.67642,
+     "lat": -30.423,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-137999-r",
+     "location": "Tygalgah",
+     "towns": [
+      "Tygalgah"
+     ],
+     "kind": "planned",
+     "customers": 4,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T02:00:00.000Z",
+     "restoreIso": "2026-11-09T02:00:00.000Z",
+     "lon": 153.41673,
+     "lat": -28.32029,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -4586,6 +5061,39 @@
      "lon": 151.66905,
      "lat": -31.0342,
      "via": "Power Outages Australia"
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-43953-w",
+     "location": "Outage essential:INCD-43953-w",
+     "kind": "planned",
+     "customers": 2,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T04:30:00.000Z",
+     "restoreIso": "2026-11-09T04:30:00.000Z",
+     "lon": 149.08743,
+     "lat": -36.99113,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Essential Energy",
+     "id": "essential:INCD-137510-r",
+     "location": "Quambone",
+     "towns": [
+      "Quambone"
+     ],
+     "kind": "planned",
+     "customers": 2,
+     "start": "2026-11-08T22:00:00.000Z",
+     "startIso": "2026-11-08T22:00:00.000Z",
+     "restore": "2026-11-09T04:00:00.000Z",
+     "restoreIso": "2026-11-09T04:00:00.000Z",
+     "lon": 147.83899,
+     "lat": -30.89149,
+     "via": "Power Outages Australia",
+     "upcoming": true
     },
     {
      "network": "Essential Energy",
@@ -4639,19 +5147,19 @@
    "state": "QLD",
    "name": "Queensland",
    "count": 400,
-   "customers": 18656,
-   "unplannedCount": 15,
-   "unplannedCustomers": 679,
-   "plannedCount": 385,
-   "plannedCustomers": 17977,
+   "customers": 18930,
+   "unplannedCount": 12,
+   "unplannedCustomers": 572,
+   "plannedCount": 388,
+   "plannedCustomers": 18358,
    "networks": [
     {
      "name": "Energex",
      "ok": true,
-     "count": 149,
+     "count": 165,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://services.arcgis.com/bfVzktoY0OhzQCDj/arcgis/rest/services/VwEnergexOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
       "OBJECTID",
@@ -4686,10 +5194,10 @@
     {
      "name": "Ergon Energy",
      "ok": true,
-     "count": 375,
+     "count": 400,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://services.arcgis.com/33eHbTVqo7gtiCE8/arcgis/rest/services/VwErgonOutages/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
       "OBJECTID",
@@ -5131,25 +5639,6 @@
     },
     {
      "network": "Energex",
-     "id": "INCD-993994-g",
-     "location": "NARANGBA",
-     "towns": [
-      "NARANGBA"
-     ],
-     "status": "In Progress",
-     "cause": "Under Investigation",
-     "kind": "unplanned",
-     "customers": 70,
-     "start": "1794078359860",
-     "startIso": "2026-11-07T19:05:59.860Z",
-     "restore": "1794087000000",
-     "restoreIso": "2026-11-07T21:30:00.000Z",
-     "lon": 152.989242095012,
-     "lat": -27.1991809696986,
-     "via": "ArcGIS Online"
-    },
-    {
-     "network": "Energex",
      "id": "INCD-986511-g",
      "location": "PEREGIAN BEACH",
      "towns": [
@@ -5329,6 +5818,29 @@
      "restoreIso": "2026-11-09T05:30:00.000Z",
      "lon": 153.198323421906,
      "lat": -27.0723565090434,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-990746-g",
+     "location": "BLANCHVIEW, DERRYMORE, HELIDON SPA, IREDALE",
+     "towns": [
+      "BLANCHVIEW",
+      "DERRYMORE",
+      "HELIDON SPA",
+      "IREDALE"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 52,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794546000000",
+     "restoreIso": "2026-11-13T05:00:00.000Z",
+     "lon": 152.048159974764,
+     "lat": -27.5956578148799,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -5868,17 +6380,57 @@
      "towns": [
       "LITTLE MOUNTAIN"
      ],
-     "status": "Awaiting",
+     "status": "In Progress",
      "cause": "Under Investigation",
      "kind": "unplanned",
      "customers": 31,
      "start": "1794075522717",
      "startIso": "2026-11-07T18:18:42.717Z",
-     "restore": "1794085200000",
-     "restoreIso": "2026-11-07T21:00:00.000Z",
+     "restore": "1794090600000",
+     "restoreIso": "2026-11-07T22:30:00.000Z",
      "lon": 153.08038692465,
      "lat": -26.7968236587351,
      "via": "ArcGIS Online"
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-985769-g",
+     "location": "BULIMBA",
+     "towns": [
+      "BULIMBA"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 30,
+     "start": "1794519000000",
+     "startIso": "2026-11-12T21:30:00.000Z",
+     "restore": "1794544200000",
+     "restoreIso": "2026-11-13T04:30:00.000Z",
+     "lon": 153.059907140081,
+     "lat": -27.4493931599471,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-993238-g",
+     "location": "DEEBING HEIGHTS",
+     "towns": [
+      "DEEBING HEIGHTS"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 29,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794549600000",
+     "restoreIso": "2026-11-13T06:00:00.000Z",
+     "lon": 152.762183333312,
+     "lat": -27.6824639790352,
+     "via": "ArcGIS Online",
+     "upcoming": true
     },
     {
      "network": "Energex",
@@ -5938,6 +6490,26 @@
      "restoreIso": "2026-11-10T05:30:00.000Z",
      "lon": 153.012295842405,
      "lat": -26.689096169581,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-982805-g",
+     "location": "REDBANK PLAINS",
+     "towns": [
+      "REDBANK PLAINS"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 26,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794542400000",
+     "restoreIso": "2026-11-13T04:00:00.000Z",
+     "lon": 152.86981629551,
+     "lat": -27.6265653060471,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -6200,6 +6772,47 @@
      "restoreIso": "2026-11-09T04:30:00.000Z",
      "lon": 153.204607055636,
      "lat": -27.7253542858361,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-991521-g",
+     "location": "CABOOLTURE",
+     "towns": [
+      "CABOOLTURE"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 20,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794547800000",
+     "restoreIso": "2026-11-13T05:30:00.000Z",
+     "lon": 152.909759353188,
+     "lat": -27.0406887195817,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-988769-g",
+     "location": "GUANABA, MAUDSLAND",
+     "towns": [
+      "GUANABA",
+      "MAUDSLAND"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 20,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794549600000",
+     "restoreIso": "2026-11-13T06:00:00.000Z",
+     "lon": 153.252829013015,
+     "lat": -27.9492239213875,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -6750,6 +7363,65 @@
      "restoreIso": "2026-11-08T05:30:00.000Z",
      "lon": 153.333192254457,
      "lat": -27.9448326092227,
+     "via": "ArcGIS Online"
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-991068-g",
+     "location": "NORTH MACLEAN",
+     "towns": [
+      "NORTH MACLEAN"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 9,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794549600000",
+     "restoreIso": "2026-11-13T06:00:00.000Z",
+     "lon": 153.012650611213,
+     "lat": -27.7730412197986,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-990630-g",
+     "location": "NORTH MACLEAN",
+     "towns": [
+      "NORTH MACLEAN"
+     ],
+     "status": "Cancelled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 9,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794549600000",
+     "restoreIso": "2026-11-13T06:00:00.000Z",
+     "lon": 153.012650611213,
+     "lat": -27.7730412197986,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-991471-g",
+     "location": "TOOWONG",
+     "towns": [
+      "TOOWONG"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 9,
+     "start": "1794519000000",
+     "startIso": "2026-11-12T21:30:00.000Z",
+     "restore": "1794546000000",
+     "restoreIso": "2026-11-13T05:00:00.000Z",
+     "lon": 152.992619537705,
+     "lat": -27.4891756779098,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -6831,6 +7503,46 @@
      "restoreIso": "2026-11-10T05:00:00.000Z",
      "lon": 153.135759042886,
      "lat": -27.6222043746348,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-988731-g",
+     "location": "GUANABA",
+     "towns": [
+      "GUANABA"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 8,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794549600000",
+     "restoreIso": "2026-11-13T06:00:00.000Z",
+     "lon": 153.260215418698,
+     "lat": -27.9573098628962,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Energex",
+     "id": "INCD-991073-g",
+     "location": "ASCOT",
+     "towns": [
+      "ASCOT"
+     ],
+     "status": "Scheduled",
+     "cause": "Planned Maintenance",
+     "kind": "planned",
+     "customers": 8,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794547800000",
+     "restoreIso": "2026-11-13T05:30:00.000Z",
+     "lon": 153.061617515327,
+     "lat": -27.4285498956526,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -7219,127 +7931,6 @@
      "upcoming": true
     },
     {
-     "network": "Energex",
-     "id": "INCD-986705-g",
-     "location": "GRANTHAM",
-     "towns": [
-      "GRANTHAM"
-     ],
-     "status": "Scheduled",
-     "cause": "Planned Maintenance",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794434400000",
-     "startIso": "2026-11-11T22:00:00.000Z",
-     "restore": "1794459600000",
-     "restoreIso": "2026-11-12T05:00:00.000Z",
-     "lon": 152.203769095945,
-     "lat": -27.5841087834355,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Energex",
-     "id": "INCD-985487-g",
-     "location": "GILBERTON, WOONGOOLBA",
-     "towns": [
-      "GILBERTON",
-      "WOONGOOLBA"
-     ],
-     "status": "Scheduled",
-     "cause": "Planned Maintenance",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794432600000",
-     "startIso": "2026-11-11T21:30:00.000Z",
-     "restore": "1794459600000",
-     "restoreIso": "2026-11-12T05:00:00.000Z",
-     "lon": 153.283777543712,
-     "lat": -27.7337947919481,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Energex",
-     "id": "INCD-989004-g",
-     "location": "SUNNYBANK HILLS",
-     "towns": [
-      "SUNNYBANK HILLS"
-     ],
-     "status": "Scheduled",
-     "cause": "Planned Maintenance",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794430800000",
-     "startIso": "2026-11-11T21:00:00.000Z",
-     "restore": "1794459600000",
-     "restoreIso": "2026-11-12T05:00:00.000Z",
-     "lon": 153.051451743119,
-     "lat": -27.5874016103814,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Energex",
-     "id": "INCD-987591-g",
-     "location": "NEW CHUM",
-     "towns": [
-      "NEW CHUM"
-     ],
-     "status": "Cancelled",
-     "cause": "Planned Maintenance",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794348000000",
-     "startIso": "2026-11-10T22:00:00.000Z",
-     "restore": "1795752000000",
-     "restoreIso": "2026-11-27T04:00:00.000Z",
-     "lon": 152.825286760246,
-     "lat": -27.6202179618304,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Energex",
-     "id": "INCD-987382-g",
-     "location": "NEW CHUM",
-     "towns": [
-      "NEW CHUM"
-     ],
-     "status": "Cancelled",
-     "cause": "Planned Maintenance",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794348000000",
-     "startIso": "2026-11-10T22:00:00.000Z",
-     "restore": "1795752000000",
-     "restoreIso": "2026-11-27T04:00:00.000Z",
-     "lon": 152.825286760246,
-     "lat": -27.6202179618304,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Energex",
-     "id": "INCD-986977-g",
-     "location": "RUNAWAY BAY",
-     "towns": [
-      "RUNAWAY BAY"
-     ],
-     "status": "Scheduled",
-     "cause": "Planned Maintenance",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794339000000",
-     "startIso": "2026-11-10T19:30:00.000Z",
-     "restore": "1794348000000",
-     "restoreIso": "2026-11-10T22:00:00.000Z",
-     "lon": 153.401254921906,
-     "lat": -27.9127093665553,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
      "network": "Ergon Energy",
      "id": "26SW11501",
      "location": "CUNNAMULLA, EULO, HUNGERFORD, THARGOMINDAH, WYANDRA, YOWAH",
@@ -7413,7 +8004,7 @@
      "status": "Work scheduled",
      "cause": "The loss of supply is to replace power poles and improve the electricity network",
      "kind": "planned",
-     "customers": 439,
+     "customers": 438,
      "start": "1794263400000",
      "startIso": "2026-11-09T22:30:00.000Z",
      "restore": "1794285000000",
@@ -7457,7 +8048,7 @@
      "status": "Work scheduled",
      "cause": "The loss of supply is to allow maintenance of the electricity network",
      "kind": "planned",
-     "customers": 405,
+     "customers": 406,
      "start": "1794286800000",
      "startIso": "2026-11-10T05:00:00.000Z",
      "restore": "1794288600000",
@@ -7501,7 +8092,7 @@
      "status": "Work scheduled",
      "cause": "The loss of supply is to replace power poles and improve the electricity network",
      "kind": "planned",
-     "customers": 298,
+     "customers": 299,
      "start": "1794092400000",
      "startIso": "2026-11-07T23:00:00.000Z",
      "restore": "1794103200000",
@@ -7521,7 +8112,7 @@
       "CAPELLA",
       "DINGO"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to allow maintenance of the electricity network",
      "kind": "planned",
      "customers": 285,
@@ -7654,7 +8245,7 @@
       "MONA PARK",
       "PARRAMATTA PARK"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to replace power poles and improve the electricity network",
      "kind": "planned",
      "customers": 176,
@@ -7758,26 +8349,6 @@
     },
     {
      "network": "Ergon Energy",
-     "id": "26MK6362",
-     "location": "SARINA",
-     "towns": [
-      "SARINA"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 138,
-     "start": "1794177000000",
-     "startIso": "2026-11-08T22:30:00.000Z",
-     "restore": "1794198600000",
-     "restoreIso": "2026-11-09T04:30:00.000Z",
-     "lon": 149.219785612304,
-     "lat": -21.4173118855252,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
      "id": "26NQ12798",
      "location": "MOUNT LOW",
      "towns": [
@@ -7819,6 +8390,26 @@
     },
     {
      "network": "Ergon Energy",
+     "id": "26MK6362",
+     "location": "SARINA",
+     "towns": [
+      "SARINA"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to replace power poles and improve the electricity network",
+     "kind": "planned",
+     "customers": 137,
+     "start": "1794177000000",
+     "startIso": "2026-11-08T22:30:00.000Z",
+     "restore": "1794198600000",
+     "restoreIso": "2026-11-09T04:30:00.000Z",
+     "lon": 149.219785612304,
+     "lat": -21.4173118855252,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
      "id": "26MK6690",
      "location": "ANDERGROVE",
      "towns": [
@@ -7854,6 +8445,27 @@
      "restoreIso": "2026-11-10T04:30:00.000Z",
      "lon": 150.754700326109,
      "lat": -23.1406943030685,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26FN10426",
+     "location": "COOKTOWN, MARTON",
+     "towns": [
+      "COOKTOWN",
+      "MARTON"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to replace power poles and improve the electricity network",
+     "kind": "planned",
+     "customers": 124,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794542400000",
+     "restoreIso": "2026-11-13T04:00:00.000Z",
+     "lon": 145.149893211511,
+     "lat": -15.4656975395543,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -7910,7 +8522,7 @@
       "TAKILBERAN",
       "WONBAH"
      ],
-     "status": "Work delayed - crews unable to continue",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is due to damage requiring emergency repairs. Fault finding is in progress.",
      "kind": "unplanned",
      "customers": 119,
@@ -8086,8 +8698,7 @@
      "restoreIso": "2026-11-08T04:00:00.000Z",
      "lon": 148.790664335097,
      "lat": -26.5659963174329,
-     "via": "ArcGIS Online",
-     "upcoming": true
+     "via": "ArcGIS Online"
     },
     {
      "network": "Ergon Energy",
@@ -8389,7 +9000,7 @@
       "GLADSTONE",
       "GLADSTONE CENTRAL"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to upgrade equipment to meet customer demand for electricity and to improve reliability of supply in the area",
      "kind": "planned",
      "customers": 87,
@@ -8582,7 +9193,7 @@
      "towns": [
       "TAROOM"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to replace power poles and improve the electricity network",
      "kind": "planned",
      "customers": 74,
@@ -8592,8 +9203,7 @@
      "restoreIso": "2026-11-08T04:00:00.000Z",
      "lon": 149.795578890294,
      "lat": -25.6440164641434,
-     "via": "ArcGIS Online",
-     "upcoming": true
+     "via": "ArcGIS Online"
     },
     {
      "network": "Ergon Energy",
@@ -8643,27 +9253,6 @@
     },
     {
      "network": "Ergon Energy",
-     "id": "26MK6628",
-     "location": "MORANBAH",
-     "towns": [
-      "MORANBAH"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to allow emergency maintenance of the electricity network",
-     "kind": "planned",
-     "customers": 71,
-     "start": "1794349800000",
-     "startIso": "2026-11-10T22:30:00.000Z",
-     "restore": "1794373200000",
-     "restoreIso": "2026-11-11T05:00:00.000Z",
-     "lon": 148.055293422012,
-     "lat": -22.004285981269,
-     "via": "ArcGIS Online",
-     "upcoming": true,
-     "kindReported": "unplanned"
-    },
-    {
-     "network": "Ergon Energy",
      "id": "26WB9581",
      "location": "BAN BAN SPRINGS, COALSTOUN LAKES, GAYNDAH, GINOONDAN",
      "towns": [
@@ -8706,6 +9295,27 @@
      "lat": -23.2465425747656,
      "via": "ArcGIS Online",
      "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26MK6628",
+     "location": "MORANBAH",
+     "towns": [
+      "MORANBAH"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to allow emergency maintenance of the electricity network",
+     "kind": "planned",
+     "customers": 70,
+     "start": "1794349800000",
+     "startIso": "2026-11-10T22:30:00.000Z",
+     "restore": "1794373200000",
+     "restoreIso": "2026-11-11T05:00:00.000Z",
+     "lon": 148.055293422012,
+     "lat": -22.004285981269,
+     "via": "ArcGIS Online",
+     "upcoming": true,
+     "kindReported": "unplanned"
     },
     {
      "network": "Ergon Energy",
@@ -9200,7 +9810,7 @@
       "DUNDOWRAN",
       "TAKURA"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to upgrade equipment to meet customer demand for electricity and to improve reliability of supply in the area",
      "kind": "planned",
      "customers": 48,
@@ -9630,25 +10240,6 @@
     },
     {
      "network": "Ergon Energy",
-     "id": "26SW14404",
-     "location": "BUNGABAN, ROCHE CREEK, WANDOAN",
-     "towns": [
-      "BUNGABAN",
-      "ROCHE CREEK",
-      "WANDOAN"
-     ],
-     "status": "Work delayed - crews unable to continue",
-     "cause": "The loss of supply is due to damage requiring emergency repairs.",
-     "kind": "unplanned",
-     "customers": 34,
-     "start": "1794036967000",
-     "startIso": "2026-11-07T07:36:07.000Z",
-     "lon": 149.996362521772,
-     "lat": -26.0212263153389,
-     "via": "ArcGIS Online"
-    },
-    {
-     "network": "Ergon Energy",
      "id": "26MK6541",
      "location": "SARINA",
      "towns": [
@@ -9838,12 +10429,14 @@
       "BUCCA",
       "BULLYARD"
      ],
-     "status": "Crews working on-site",
+     "status": "Outage reported",
      "cause": "The loss of supply is due to damage caused by storm activity.",
      "kind": "unplanned",
      "customers": 30,
      "start": "1794039962000",
      "startIso": "2026-11-07T08:26:02.000Z",
+     "restore": "1794110400000",
+     "restoreIso": "2026-11-08T04:00:00.000Z",
      "lon": 152.070965852675,
      "lat": -24.9147369837841,
      "via": "ArcGIS Online"
@@ -10037,6 +10630,26 @@
     },
     {
      "network": "Ergon Energy",
+     "id": "26NQ13193",
+     "location": "BOWEN",
+     "towns": [
+      "BOWEN"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to replace power poles and improve the electricity network",
+     "kind": "planned",
+     "customers": 26,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794546000000",
+     "restoreIso": "2026-11-13T05:00:00.000Z",
+     "lon": 148.166748139337,
+     "lat": -20.086488057602,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
      "id": "26NQ12792",
      "location": "JULAGO, STUART",
      "towns": [
@@ -10124,7 +10737,7 @@
      "towns": [
       "ROMA"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to replace power poles and improve the electricity network",
      "kind": "planned",
      "customers": 24,
@@ -10134,8 +10747,7 @@
      "restoreIso": "2026-11-08T04:00:00.000Z",
      "lon": 148.790979886219,
      "lat": -26.5700609359866,
-     "via": "ArcGIS Online",
-     "upcoming": true
+     "via": "ArcGIS Online"
     },
     {
      "network": "Ergon Energy",
@@ -10146,7 +10758,7 @@
       "DULULU",
       "WOWAN"
      ],
-     "status": "Work delayed - crews unable to continue",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is due to damage caused by storm activity.",
      "kind": "unplanned",
      "customers": 24,
@@ -10347,7 +10959,7 @@
      "towns": [
       "ST GEORGE"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to upgrade equipment to meet customer demand for electricity and to improve reliability of supply in the area",
      "kind": "planned",
      "customers": 20,
@@ -10357,6 +10969,26 @@
      "restoreIso": "2026-11-08T03:30:00.000Z",
      "lon": 148.579652840724,
      "lat": -28.0351847450907,
+     "via": "ArcGIS Online"
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26SW11969",
+     "location": "QUILPIE, WINDORAH",
+     "towns": [
+      "QUILPIE",
+      "WINDORAH"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to replace power poles and improve the electricity network",
+     "kind": "planned",
+     "customers": 19,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794537000000",
+     "restoreIso": "2026-11-13T02:30:00.000Z",
+     "lon": 142.818829805412,
+     "lat": -25.4282869747847,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -10411,7 +11043,7 @@
       "PAGET",
       "SOUTH MACKAY"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to replace power poles and improve the electricity network",
      "kind": "planned",
      "customers": 19,
@@ -10421,8 +11053,7 @@
      "restoreIso": "2026-11-08T03:00:00.000Z",
      "lon": 149.164674025439,
      "lat": -21.1682811220831,
-     "via": "ArcGIS Online",
-     "upcoming": true
+     "via": "ArcGIS Online"
     },
     {
      "network": "Ergon Energy",
@@ -10755,7 +11386,7 @@
       "TOOWOOMBA",
       "TOOWOOMBA CITY"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to replace power poles and improve the electricity network",
      "kind": "planned",
      "customers": 16,
@@ -10765,6 +11396,44 @@
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 151.953528013985,
      "lat": -27.5662272891633,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26SW14404",
+     "location": "BUNGABAN, WANDOAN",
+     "towns": [
+      "BUNGABAN",
+      "WANDOAN"
+     ],
+     "status": "Work delayed - crews unable to continue",
+     "cause": "The loss of supply is due to damage requiring emergency repairs.",
+     "kind": "unplanned",
+     "customers": 16,
+     "start": "1794036967000",
+     "startIso": "2026-11-07T07:36:07.000Z",
+     "lon": 150.071005085854,
+     "lat": -25.9439974411955,
+     "via": "ArcGIS Online"
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26SW12731",
+     "location": "RANGEVILLE",
+     "towns": [
+      "RANGEVILLE"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to allow maintenance of the electricity network",
+     "kind": "planned",
+     "customers": 15,
+     "start": "1794519000000",
+     "startIso": "2026-11-12T21:30:00.000Z",
+     "restore": "1794551400000",
+     "restoreIso": "2026-11-13T06:30:00.000Z",
+     "lon": 151.973581942934,
+     "lat": -27.5864038120812,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -10956,25 +11625,6 @@
      "lat": -23.8034992638967,
      "via": "ArcGIS Online",
      "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26CA13190",
-     "location": "MONTO",
-     "towns": [
-      "MONTO"
-     ],
-     "status": "Crews working on-site",
-     "cause": "The loss of supply is due to damage requiring emergency repairs.",
-     "kind": "unplanned",
-     "customers": 14,
-     "start": "1794037530000",
-     "startIso": "2026-11-07T07:45:30.000Z",
-     "restore": "1794088800000",
-     "restoreIso": "2026-11-07T22:00:00.000Z",
-     "lon": 151.085676685388,
-     "lat": -24.8666600413901,
-     "via": "ArcGIS Online"
     },
     {
      "network": "Ergon Energy",
@@ -11310,6 +11960,27 @@
     },
     {
      "network": "Ergon Energy",
+     "id": "26FN9671",
+     "location": "IRON RANGE, LOCKHART RIVER",
+     "towns": [
+      "IRON RANGE",
+      "LOCKHART RIVER"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to replace power poles and improve the electricity network",
+     "kind": "planned",
+     "customers": 10,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794542400000",
+     "restoreIso": "2026-11-13T04:00:00.000Z",
+     "lon": 143.286135155461,
+     "lat": -12.7631532859863,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
      "id": "26MK6559",
      "location": "HOMEBUSH",
      "towns": [
@@ -11407,6 +12078,46 @@
      "lon": 151.696673169146,
      "lat": -27.0651644179838,
      "via": "ArcGIS Online"
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26CA11872",
+     "location": "TANNUM SANDS",
+     "towns": [
+      "TANNUM SANDS"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to replace power poles and improve the electricity network",
+     "kind": "planned",
+     "customers": 9,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794546000000",
+     "restoreIso": "2026-11-13T05:00:00.000Z",
+     "lon": 151.365140835707,
+     "lat": -23.9454854994859,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26MK6611",
+     "location": "MACKAY",
+     "towns": [
+      "MACKAY"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to connect new customers to the electricity network",
+     "kind": "planned",
+     "customers": 9,
+     "start": "1794519000000",
+     "startIso": "2026-11-12T21:30:00.000Z",
+     "restore": "1794535200000",
+     "restoreIso": "2026-11-13T02:00:00.000Z",
+     "lon": 149.182586414313,
+     "lat": -21.1382519952124,
+     "via": "ArcGIS Online",
+     "upcoming": true
     },
     {
      "network": "Ergon Energy",
@@ -11550,6 +12261,26 @@
     },
     {
      "network": "Ergon Energy",
+     "id": "26WB10079",
+     "location": "BARGARA",
+     "towns": [
+      "BARGARA"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to connect new customers to the electricity network",
+     "kind": "planned",
+     "customers": 8,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794531600000",
+     "restoreIso": "2026-11-13T01:00:00.000Z",
+     "lon": 152.453739324138,
+     "lat": -24.8279142736781,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
      "id": "26FN10182",
      "location": "DAINTREE",
      "towns": [
@@ -11657,18 +12388,17 @@
      "towns": [
       "URANGAN"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to connect new customers to the electricity network",
      "kind": "planned",
      "customers": 8,
-     "start": "1794085200000",
-     "startIso": "2026-11-07T21:00:00.000Z",
+     "start": "1794085680000",
+     "startIso": "2026-11-07T21:08:00.000Z",
      "restore": "1794121200000",
      "restoreIso": "2026-11-08T07:00:00.000Z",
      "lon": 152.898819591117,
      "lat": -25.2925502194267,
-     "via": "ArcGIS Online",
-     "upcoming": true
+     "via": "ArcGIS Online"
     },
     {
      "network": "Ergon Energy",
@@ -11677,18 +12407,17 @@
      "towns": [
       "AITKENVALE"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to replace power poles and improve the electricity network",
      "kind": "planned",
      "customers": 8,
-     "start": "1794085200000",
-     "startIso": "2026-11-07T21:00:00.000Z",
+     "start": "1794085560000",
+     "startIso": "2026-11-07T21:06:00.000Z",
      "restore": "1794119400000",
      "restoreIso": "2026-11-08T06:30:00.000Z",
      "lon": 146.772802051184,
      "lat": -19.3036222812244,
-     "via": "ArcGIS Online",
-     "upcoming": true
+     "via": "ArcGIS Online"
     },
     {
      "network": "Ergon Energy",
@@ -11978,16 +12707,75 @@
      "towns": [
       "URANGAN"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to connect new customers to the electricity network",
      "kind": "planned",
      "customers": 7,
-     "start": "1794085200000",
-     "startIso": "2026-11-07T21:00:00.000Z",
+     "start": "1794085920000",
+     "startIso": "2026-11-07T21:12:00.000Z",
      "restore": "1794121200000",
      "restoreIso": "2026-11-08T07:00:00.000Z",
      "lon": 152.904383993805,
      "lat": -25.2920331198701,
+     "via": "ArcGIS Online"
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26SW12454",
+     "location": "TARA",
+     "towns": [
+      "TARA"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to replace power poles and improve the electricity network",
+     "kind": "planned",
+     "customers": 6,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794542400000",
+     "restoreIso": "2026-11-13T04:00:00.000Z",
+     "lon": 150.478465945254,
+     "lat": -27.0716191429415,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26MK6622",
+     "location": "SARINA",
+     "towns": [
+      "SARINA"
+     ],
+     "status": "On hold until further notice",
+     "cause": "The loss of supply is to allow maintenance of the electricity network",
+     "kind": "planned",
+     "customers": 6,
+     "start": "1794520800000",
+     "startIso": "2026-11-12T22:00:00.000Z",
+     "restore": "1794535200000",
+     "restoreIso": "2026-11-13T02:00:00.000Z",
+     "lon": 149.24153192499,
+     "lat": -21.4057547245557,
+     "via": "ArcGIS Online",
+     "upcoming": true
+    },
+    {
+     "network": "Ergon Energy",
+     "id": "26SW12732",
+     "location": "RANGEVILLE",
+     "towns": [
+      "RANGEVILLE"
+     ],
+     "status": "Work scheduled",
+     "cause": "The loss of supply is to allow maintenance of the electricity network",
+     "kind": "planned",
+     "customers": 6,
+     "start": "1794519000000",
+     "startIso": "2026-11-12T21:30:00.000Z",
+     "restore": "1795069800000",
+     "restoreIso": "2026-11-19T06:30:00.000Z",
+     "lon": 151.975891991203,
+     "lat": -27.5866639548367,
      "via": "ArcGIS Online",
      "upcoming": true
     },
@@ -12279,7 +13067,7 @@
      "towns": [
       "WARWICK"
      ],
-     "status": "Work scheduled",
+     "status": "Crews working on-site",
      "cause": "The loss of supply is to connect new customers to the electricity network",
      "kind": "planned",
      "customers": 6,
@@ -12289,8 +13077,7 @@
      "restoreIso": "2026-11-08T04:30:00.000Z",
      "lon": 152.024231907924,
      "lat": -28.2326591279556,
-     "via": "ArcGIS Online",
-     "upcoming": true
+     "via": "ArcGIS Online"
     },
     {
      "network": "Ergon Energy",
@@ -12306,6 +13093,8 @@
      "customers": 6,
      "start": "1794039962000",
      "startIso": "2026-11-07T08:26:02.000Z",
+     "restore": "1794117600000",
+     "restoreIso": "2026-11-08T06:00:00.000Z",
      "lon": 152.06735600262,
      "lat": -24.9295537743413,
      "via": "ArcGIS Online"
@@ -12671,305 +13460,26 @@
      "lat": -27.5357226080519,
      "via": "ArcGIS Online",
      "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26CA13172",
-     "location": "BARALABA",
-     "towns": [
-      "BARALABA"
-     ],
-     "status": "Work delayed - crews unable to continue",
-     "cause": "The loss of supply is due to damage caused by storm activity.",
-     "kind": "unplanned",
-     "customers": 5,
-     "start": "1794034945000",
-     "startIso": "2026-11-07T07:02:25.000Z",
-     "lon": 149.809157807732,
-     "lat": -24.1814015637691,
-     "via": "ArcGIS Online"
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26FN10524",
-     "location": "MIRRIWINNI",
-     "towns": [
-      "MIRRIWINNI"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to allow maintenance of the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794436200000",
-     "startIso": "2026-11-11T22:30:00.000Z",
-     "restore": "1794450600000",
-     "restoreIso": "2026-11-12T02:30:00.000Z",
-     "lon": 145.884691692437,
-     "lat": -17.3652577825545,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26FN10213",
-     "location": "BIBOOHRA",
-     "towns": [
-      "BIBOOHRA"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794436200000",
-     "startIso": "2026-11-11T22:30:00.000Z",
-     "restore": "1794456000000",
-     "restoreIso": "2026-11-12T04:00:00.000Z",
-     "lon": 145.401154000331,
-     "lat": -16.8975023531298,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26WB9197",
-     "location": "SUNSHINE ACRES",
-     "towns": [
-      "SUNSHINE ACRES"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to connect new customers to the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794436200000",
-     "startIso": "2026-11-11T22:30:00.000Z",
-     "restore": "1794457800000",
-     "restoreIso": "2026-11-12T04:30:00.000Z",
-     "lon": 152.788119271525,
-     "lat": -25.3460588164175,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26CA12151",
-     "location": "BILOELA",
-     "towns": [
-      "BILOELA"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794436200000",
-     "startIso": "2026-11-11T22:30:00.000Z",
-     "restore": "1794457800000",
-     "restoreIso": "2026-11-12T04:30:00.000Z",
-     "lon": 150.515684897911,
-     "lat": -24.3923271501899,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26WB8714",
-     "location": "BIDWILL",
-     "towns": [
-      "BIDWILL"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794436200000",
-     "startIso": "2026-11-11T22:30:00.000Z",
-     "restore": "1794445200000",
-     "restoreIso": "2026-11-12T01:00:00.000Z",
-     "lon": 152.689118304116,
-     "lat": -25.6451394227879,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26CA10863",
-     "location": "FRENCHVILLE",
-     "towns": [
-      "FRENCHVILLE"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to allow maintenance of the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794434400000",
-     "startIso": "2026-11-11T22:00:00.000Z",
-     "restore": "1794466800000",
-     "restoreIso": "2026-11-12T07:00:00.000Z",
-     "lon": 150.530970176544,
-     "lat": -23.3524269419117,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26NQ12714",
-     "location": "AITKENVALE",
-     "towns": [
-      "AITKENVALE"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794430800000",
-     "startIso": "2026-11-11T21:00:00.000Z",
-     "restore": "1794465000000",
-     "restoreIso": "2026-11-12T06:30:00.000Z",
-     "lon": 146.772099620959,
-     "lat": -19.3079260967019,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26SW13543",
-     "location": "BELL",
-     "towns": [
-      "BELL"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to allow maintenance of the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794349800000",
-     "startIso": "2026-11-10T22:30:00.000Z",
-     "restore": "1794367800000",
-     "restoreIso": "2026-11-11T03:30:00.000Z",
-     "lon": 151.451682451588,
-     "lat": -26.9369525404184,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26WB8522",
-     "location": "SCARNESS",
-     "towns": [
-      "SCARNESS"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794349800000",
-     "startIso": "2026-11-10T22:30:00.000Z",
-     "restore": "1794371400000",
-     "restoreIso": "2026-11-11T04:30:00.000Z",
-     "lon": 152.849823732485,
-     "lat": -25.2891724912196,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26NQ11879",
-     "location": "INGHAM",
-     "towns": [
-      "INGHAM"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to allow maintenance of the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794348000000",
-     "startIso": "2026-11-10T22:00:00.000Z",
-     "restore": "1794380400000",
-     "restoreIso": "2026-11-11T07:00:00.000Z",
-     "lon": 146.164491606082,
-     "lat": -18.6493936018111,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26NQ12687",
-     "location": "INGHAM",
-     "towns": [
-      "INGHAM"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794263400000",
-     "startIso": "2026-11-09T22:30:00.000Z",
-     "restore": "1794285000000",
-     "restoreIso": "2026-11-10T04:30:00.000Z",
-     "lon": 146.156777267964,
-     "lat": -18.6599897686343,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26FN9963",
-     "location": "EL ARISH, MAADI, SHELL POCKET",
-     "towns": [
-      "EL ARISH",
-      "MAADI",
-      "SHELL POCKET"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794263400000",
-     "startIso": "2026-11-09T22:30:00.000Z",
-     "restore": "1794285000000",
-     "restoreIso": "2026-11-10T04:30:00.000Z",
-     "lon": 145.990070208345,
-     "lat": -17.8169055307169,
-     "via": "ArcGIS Online",
-     "upcoming": true
-    },
-    {
-     "network": "Ergon Energy",
-     "id": "26NQ12930",
-     "location": "BOWEN",
-     "towns": [
-      "BOWEN"
-     ],
-     "status": "Work scheduled",
-     "cause": "The loss of supply is to replace power poles and improve the electricity network",
-     "kind": "planned",
-     "customers": 4,
-     "start": "1794261600000",
-     "startIso": "2026-11-09T22:00:00.000Z",
-     "restore": "1794286800000",
-     "restoreIso": "2026-11-10T05:00:00.000Z",
-     "lon": 148.210362064809,
-     "lat": -20.0693921973757,
-     "via": "ArcGIS Online",
-     "upcoming": true
     }
    ]
   },
   "vic": {
    "state": "VIC",
    "name": "Victoria",
-   "count": 51,
-   "customers": 3065,
-   "unplannedCount": 6,
-   "unplannedCustomers": 140,
-   "plannedCount": 45,
-   "plannedCustomers": 2925,
+   "count": 102,
+   "customers": 7032,
+   "unplannedCount": 8,
+   "unplannedCustomers": 179,
+   "plannedCount": 94,
+   "plannedCustomers": 6853,
    "networks": [
     {
      "name": "AusNet Services",
      "ok": true,
-     "count": 41,
+     "count": 76,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -12997,10 +13507,10 @@
     {
      "name": "Powercor",
      "ok": true,
-     "count": 3,
+     "count": 6,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "staleDropped": 1,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
      "columns": [
@@ -13020,10 +13530,10 @@
     {
      "name": "CitiPower",
      "ok": true,
-     "count": 3,
+     "count": 5,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://s3-ap-southeast-2.amazonaws.com/cppc-outage/outages.json",
      "columns": [
       "ORDER_ID",
@@ -13042,10 +13552,10 @@
     {
      "name": "United Energy",
      "ok": true,
-     "count": 3,
+     "count": 11,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -13069,10 +13579,10 @@
     {
      "name": "Jemena",
      "ok": true,
-     "count": 1,
+     "count": 4,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -13125,6 +13635,25 @@
     },
     {
      "network": "AusNet Services",
+     "id": "an-INCD-139065-W",
+     "location": "Ringwood, Heathmont",
+     "towns": [
+      "Ringwood",
+      "Heathmont"
+     ],
+     "kind": "planned",
+     "customers": 414,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.2346,
+     "lat": -37.83422,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
      "id": "an-INCD-221010-U",
      "location": "South Dudley, Wonthaggi, North Wonthaggi, Dalyston",
      "towns": [
@@ -13141,8 +13670,7 @@
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 145.58896,
      "lat": -38.59287,
-     "via": "Power Outages Australia",
-     "upcoming": true
+     "via": "Power Outages Australia"
     },
     {
      "network": "AusNet Services",
@@ -13152,6 +13680,8 @@
       "Drouin",
       "Longwarry"
      ],
+     "status": "In Progress",
+     "cause": "Planned maintenance",
      "kind": "planned",
      "customers": 273,
      "start": "2026-11-07T21:30:00.000Z",
@@ -13160,6 +13690,25 @@
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 145.835,
      "lat": -38.12433,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139019-W",
+     "location": "Kilmore East, Kilmore, Wandong",
+     "towns": [
+      "Kilmore East",
+      "Kilmore",
+      "Wandong"
+     ],
+     "kind": "planned",
+     "customers": 264,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T05:30:00.000Z",
+     "restoreIso": "2026-11-10T05:30:00.000Z",
+     "lon": 144.97474,
+     "lat": -37.28869,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13197,6 +13746,24 @@
      "restoreIso": "2026-11-08T04:30:00.000Z",
      "lon": 145.26707,
      "lat": -37.85998,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-221340-U",
+     "location": "Vermont, Ringwood",
+     "towns": [
+      "Vermont",
+      "Ringwood"
+     ],
+     "kind": "planned",
+     "customers": 175,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.21555,
+     "lat": -37.83264,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13220,11 +13787,29 @@
     },
     {
      "network": "AusNet Services",
+     "id": "an-INCD-139118-W",
+     "location": "Lalor",
+     "towns": [
+      "Lalor"
+     ],
+     "kind": "planned",
+     "customers": 137,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "lon": 145.02025,
+     "lat": -37.66513,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
      "id": "an-INCD-221274-U",
      "location": "Ringwood",
      "towns": [
       "Ringwood"
      ],
+     "status": "In Progress",
+     "cause": "Planned maintenance",
      "kind": "planned",
      "customers": 120,
      "start": "2026-11-07T21:00:00.000Z",
@@ -13233,6 +13818,63 @@
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 145.22138,
      "lat": -37.81404,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-107485-X",
+     "location": "Cockatoo",
+     "towns": [
+      "Cockatoo"
+     ],
+     "kind": "planned",
+     "customers": 104,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.48724,
+     "lat": -37.94017,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139131-W",
+     "location": "Greensborough",
+     "towns": [
+      "Greensborough"
+     ],
+     "kind": "planned",
+     "customers": 99,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.10675,
+     "lat": -37.71711,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-138889-W",
+     "location": "Bete Bolong, Newmerella, Simpsons Creek, Jarrahmond, Waygara",
+     "towns": [
+      "Bete Bolong",
+      "Newmerella",
+      "Simpsons Creek",
+      "Jarrahmond",
+      "Waygara"
+     ],
+     "kind": "planned",
+     "customers": 98,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 148.4246,
+     "lat": -37.73716,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13288,6 +13930,59 @@
      "restoreIso": "2026-11-08T05:30:00.000Z",
      "lon": 145.23112,
      "lat": -37.81225,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-221339-U",
+     "location": "Inverloch",
+     "towns": [
+      "Inverloch"
+     ],
+     "kind": "planned",
+     "customers": 84,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.72662,
+     "lat": -38.62933,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-221346-U",
+     "location": "Toolangi",
+     "towns": [
+      "Toolangi"
+     ],
+     "kind": "planned",
+     "customers": 68,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.49798,
+     "lat": -37.5504,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139176-W",
+     "location": "Foster",
+     "towns": [
+      "Foster"
+     ],
+     "kind": "planned",
+     "customers": 61,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 0,
+     "lat": 0,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13311,6 +14006,24 @@
     },
     {
      "network": "AusNet Services",
+     "id": "an-INCD-220092-U",
+     "location": "Benalla",
+     "towns": [
+      "Benalla"
+     ],
+     "kind": "planned",
+     "customers": 45,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 145.96977,
+     "lat": -36.55606,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
      "id": "an-INCD-139034-W",
      "location": "Boronia",
      "towns": [
@@ -13324,6 +14037,97 @@
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 145.29798,
      "lat": -37.84315,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-221721-U",
+     "location": "Research, Wattle Glen, Kangaroo Ground",
+     "towns": [
+      "Research",
+      "Wattle Glen",
+      "Kangaroo Ground"
+     ],
+     "kind": "planned",
+     "customers": 36,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T02:00:00.000Z",
+     "restoreIso": "2026-11-10T02:00:00.000Z",
+     "lon": 145.18327,
+     "lat": -37.66882,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-107486-X",
+     "location": "Olinda",
+     "towns": [
+      "Olinda"
+     ],
+     "kind": "planned",
+     "customers": 36,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.3686,
+     "lat": -37.8585,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-221347-U",
+     "location": "Cockatoo",
+     "towns": [
+      "Cockatoo"
+     ],
+     "kind": "planned",
+     "customers": 36,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.47947,
+     "lat": -37.93446,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-218908-U",
+     "location": "Cape Woolamai",
+     "towns": [
+      "Cape Woolamai"
+     ],
+     "kind": "planned",
+     "customers": 35,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.33667,
+     "lat": -38.53159,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139039-W",
+     "location": "Wonga Park",
+     "towns": [
+      "Wonga Park"
+     ],
+     "kind": "planned",
+     "customers": 34,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T03:00:00.000Z",
+     "restoreIso": "2026-11-10T03:00:00.000Z",
+     "lon": 145.27877,
+     "lat": -37.74183,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13343,6 +14147,41 @@
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 144.97232,
      "lat": -37.31791,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139113-W",
+     "location": "Wallan",
+     "towns": [
+      "Wallan"
+     ],
+     "kind": "planned",
+     "customers": 31,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 144.97985,
+     "lat": -37.4049,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-107484-X",
+     "location": "Beaconsfield Upper",
+     "towns": [
+      "Beaconsfield Upper"
+     ],
+     "kind": "planned",
+     "customers": 30,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.39107,
+     "lat": -37.9938,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13368,6 +14207,60 @@
     },
     {
      "network": "AusNet Services",
+     "id": "an-INCD-139132-W",
+     "location": "Wattle Glen",
+     "towns": [
+      "Wattle Glen"
+     ],
+     "kind": "planned",
+     "customers": 23,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T01:30:00.000Z",
+     "restoreIso": "2026-11-10T01:30:00.000Z",
+     "lon": 145.18758,
+     "lat": -37.67146,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-221404-U",
+     "location": "Warragul",
+     "towns": [
+      "Warragul"
+     ],
+     "kind": "planned",
+     "customers": 17,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 0,
+     "lat": 0,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139114-W",
+     "location": "Wollert",
+     "towns": [
+      "Wollert"
+     ],
+     "kind": "planned",
+     "customers": 16,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.01754,
+     "lat": -37.59226,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
      "id": "an-INCD-219902-U",
      "location": "Jeeralang Junction",
      "towns": [
@@ -13381,6 +14274,42 @@
      "restoreIso": "2026-11-09T02:00:00.000Z",
      "lon": 146.43759,
      "lat": -38.35212,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-107487-X",
+     "location": "Cora Lynn",
+     "towns": [
+      "Cora Lynn"
+     ],
+     "kind": "planned",
+     "customers": 13,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T02:00:00.000Z",
+     "restoreIso": "2026-11-10T02:00:00.000Z",
+     "lon": 0,
+     "lat": 0,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-138982-W",
+     "location": "Lucknow",
+     "towns": [
+      "Lucknow"
+     ],
+     "kind": "planned",
+     "customers": 13,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-09T22:30:00.000Z",
+     "restoreIso": "2026-11-09T22:30:00.000Z",
+     "lon": 147.63721,
+     "lat": -37.79633,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13457,6 +14386,24 @@
     },
     {
      "network": "AusNet Services",
+     "id": "an-INCD-107491-X",
+     "location": "Olinda",
+     "towns": [
+      "Olinda"
+     ],
+     "kind": "planned",
+     "customers": 6,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T01:00:00.000Z",
+     "restoreIso": "2026-11-10T01:00:00.000Z",
+     "lon": 145.38044,
+     "lat": -37.87276,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
      "id": "an-INCD-107479-X",
      "location": "Ferntree Gully",
      "towns": [
@@ -13470,6 +14417,24 @@
      "restoreIso": "2026-11-08T23:30:00.000Z",
      "lon": 145.29258,
      "lat": -37.88347,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139101-W",
+     "location": "Panton Hill",
+     "towns": [
+      "Panton Hill"
+     ],
+     "kind": "planned",
+     "customers": 5,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 145.22282,
+     "lat": -37.62453,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13566,6 +14531,42 @@
     },
     {
      "network": "AusNet Services",
+     "id": "an-INCD-221273-U",
+     "location": "Moe",
+     "towns": [
+      "Moe"
+     ],
+     "kind": "planned",
+     "customers": 3,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T03:00:00.000Z",
+     "restoreIso": "2026-11-10T03:00:00.000Z",
+     "lon": 146.23816,
+     "lat": -38.19839,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139045-W",
+     "location": "Barnawartha",
+     "towns": [
+      "Barnawartha"
+     ],
+     "kind": "planned",
+     "customers": 3,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T02:00:00.000Z",
+     "restoreIso": "2026-11-10T02:00:00.000Z",
+     "lon": 146.67798,
+     "lat": -36.09981,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
      "id": "an-INCD-107480-X",
      "location": "Beaconsfield Upper",
      "towns": [
@@ -13598,6 +14599,42 @@
      "restoreIso": "2026-11-09T00:00:00.000Z",
      "lon": 145.61114,
      "lat": -37.88395,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139106-W",
+     "location": "Eltham",
+     "towns": [
+      "Eltham"
+     ],
+     "kind": "planned",
+     "customers": 2,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T00:00:00.000Z",
+     "restoreIso": "2026-11-10T00:00:00.000Z",
+     "lon": 145.16269,
+     "lat": -37.7196,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-138871-W",
+     "location": "Nambrok",
+     "towns": [
+      "Nambrok"
+     ],
+     "kind": "planned",
+     "customers": 2,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 146.82888,
+     "lat": -38.09205,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13688,6 +14725,114 @@
      "restoreIso": "2026-11-09T01:30:00.000Z",
      "lon": 145.42971,
      "lat": -37.59345,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139069-W",
+     "location": "Bayswater North",
+     "towns": [
+      "Bayswater North"
+     ],
+     "kind": "planned",
+     "customers": 1,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T01:00:00.000Z",
+     "restoreIso": "2026-11-10T01:00:00.000Z",
+     "lon": 145.27663,
+     "lat": -37.82917,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-138867-W",
+     "location": "Mount Evelyn",
+     "towns": [
+      "Mount Evelyn"
+     ],
+     "kind": "planned",
+     "customers": 1,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T01:00:00.000Z",
+     "restoreIso": "2026-11-10T01:00:00.000Z",
+     "lon": 145.37849,
+     "lat": -37.79655,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139104-W",
+     "location": "Eltham",
+     "towns": [
+      "Eltham"
+     ],
+     "kind": "planned",
+     "customers": 1,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-09T23:30:00.000Z",
+     "restoreIso": "2026-11-09T23:30:00.000Z",
+     "lon": 145.15882,
+     "lat": -37.72246,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-138959-W",
+     "location": "Briagolong",
+     "towns": [
+      "Briagolong"
+     ],
+     "kind": "planned",
+     "customers": 1,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T00:30:00.000Z",
+     "restoreIso": "2026-11-10T00:30:00.000Z",
+     "lon": 147.07528,
+     "lat": -37.84433,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-107402-X",
+     "location": "Clyde",
+     "towns": [
+      "Clyde"
+     ],
+     "kind": "planned",
+     "customers": 1,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-09T23:30:00.000Z",
+     "restoreIso": "2026-11-09T23:30:00.000Z",
+     "lon": 145.32584,
+     "lat": -38.13327,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "AusNet Services",
+     "id": "an-INCD-139093-W",
+     "location": "Eltham",
+     "towns": [
+      "Eltham"
+     ],
+     "kind": "planned",
+     "customers": 1,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-09T23:00:00.000Z",
+     "restoreIso": "2026-11-09T23:00:00.000Z",
+     "lon": 145.15882,
+     "lat": -37.72246,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -13845,8 +14990,23 @@
      "startIso": "2026-11-07T22:00:00.000Z",
      "lon": 144.97953,
      "lat": -37.24803,
-     "via": "Power Outages Australia",
-     "upcoming": true
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "Powercor",
+     "id": "J-48054-m",
+     "location": "NEWCOMB",
+     "towns": [
+      "NEWCOMB"
+     ],
+     "status": "Partially Restored",
+     "cause": "Planned outage",
+     "kind": "planned",
+     "customers": 872,
+     "start": "08:30 08-11-2026",
+     "restore": "15:30 08-11-2026",
+     "lon": 144.392685805954,
+     "lat": -38.1703164363965
     },
     {
      "network": "Powercor",
@@ -13867,6 +15027,24 @@
     },
     {
      "network": "Powercor",
+     "id": "2410402-1",
+     "location": "ROMSEY, SPRINGFIELD (ROMSEY), LANCEFIELD",
+     "towns": [
+      "ROMSEY",
+      "SPRINGFIELD (ROMSEY)",
+      "LANCEFIELD"
+     ],
+     "status": "Crews Attending",
+     "cause": "Under investigation",
+     "customers": 38,
+     "start": "07:48 08-11-2026",
+     "restore": "10:00 08-11-2026",
+     "lon": 144.7718975042669,
+     "lat": -37.3486018824534,
+     "premises": 3
+    },
+    {
+     "network": "Powercor",
      "id": "J-68317-i",
      "location": "KNOWSLEY",
      "towns": [
@@ -13882,18 +15060,51 @@
     },
     {
      "network": "Powercor",
-     "id": "2410360-1",
-     "location": "MOUNT PLEASANT",
+     "id": "2410401-1",
+     "location": "CHAPPLE VALE",
      "towns": [
-      "MOUNT PLEASANT"
+      "CHAPPLE VALE"
+     ],
+     "status": "Crews Attending",
+     "cause": "Under investigation",
+     "customers": 1,
+     "start": "07:46 08-11-2026",
+     "restore": "11:00 08-11-2026",
+     "lon": 143.2820012778389,
+     "lat": -38.5592554695543
+    },
+    {
+     "network": "Powercor",
+     "id": "2410404-1",
+     "location": "BALLIANG",
+     "towns": [
+      "BALLIANG"
      ],
      "status": "Outage Reported",
      "cause": "Under investigation",
      "customers": 1,
-     "start": "00:24 08-11-2026",
-     "restore": "10:00 08-11-2026",
-     "lon": 143.8516070661349,
-     "lat": -37.58522486306
+     "start": "08:01 08-11-2026",
+     "restore": "12:00 08-11-2026",
+     "lon": 144.2809233407409,
+     "lat": -37.8547908495546
+    },
+    {
+     "network": "CitiPower",
+     "id": "J-47688-m",
+     "location": "BALWYN NORTH, BALWYN",
+     "towns": [
+      "BALWYN NORTH",
+      "BALWYN"
+     ],
+     "status": "Partially Restored",
+     "cause": "Planned outage",
+     "kind": "planned",
+     "customers": 43,
+     "start": "08:00 08-11-2026",
+     "restore": "15:00 08-11-2026",
+     "lon": 145.066446052448,
+     "lat": -37.8014620911142,
+     "premises": 2
     },
     {
      "network": "CitiPower",
@@ -13913,6 +15124,21 @@
     },
     {
      "network": "CitiPower",
+     "id": "2410372-1",
+     "location": "KENSINGTON",
+     "towns": [
+      "KENSINGTON"
+     ],
+     "status": "Crews Attending",
+     "cause": "Under investigation",
+     "customers": 1,
+     "start": "01:52 08-11-2026",
+     "restore": "13:00 08-11-2026",
+     "lon": 144.9244445601099,
+     "lat": -37.7897765328766
+    },
+    {
+     "network": "CitiPower",
      "id": "J-47790-m",
      "location": "BRUNSWICK",
      "towns": [
@@ -13925,8 +15151,7 @@
      "start": "08:00 08-11-2026",
      "restore": "15:00 16-11-2026",
      "lon": 144.96509216235,
-     "lat": -37.7695411377673,
-     "upcoming": true
+     "lat": -37.7695411377673
     },
     {
      "network": "CitiPower",
@@ -13935,13 +15160,89 @@
      "towns": [
       "MIDDLE PARK"
      ],
-     "status": "Outage Reported",
+     "status": "Crews Attending",
      "cause": "Under investigation",
      "customers": 1,
      "start": "07:18 08-11-2026",
      "restore": "12:00 08-11-2026",
      "lon": 144.9588252485219,
      "lat": -37.8530090423519
+    },
+    {
+     "network": "United Energy",
+     "id": "ue-171946",
+     "location": "Frankston",
+     "towns": [
+      "Frankston"
+     ],
+     "kind": "planned",
+     "customers": 276,
+     "restore": "2026-11-08T05:00:00.000Z",
+     "restoreIso": "2026-11-08T05:00:00.000Z",
+     "lon": 145.14039,
+     "lat": -38.15037,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "United Energy",
+     "id": "ue-172511",
+     "location": "Dandenong",
+     "towns": [
+      "Dandenong"
+     ],
+     "kind": "planned",
+     "customers": 248,
+     "restore": "2026-11-08T06:30:00.000Z",
+     "restoreIso": "2026-11-08T06:30:00.000Z",
+     "lon": 145.22367,
+     "lat": -37.99324,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "United Energy",
+     "id": "ue-173203",
+     "location": "Burwood",
+     "towns": [
+      "Burwood"
+     ],
+     "kind": "planned",
+     "customers": 211,
+     "restore": "2026-11-08T06:00:00.000Z",
+     "restoreIso": "2026-11-08T06:00:00.000Z",
+     "lon": 145.11321,
+     "lat": -37.85226,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "United Energy",
+     "id": "ue-172983",
+     "location": "Glen Waverley",
+     "towns": [
+      "Glen Waverley"
+     ],
+     "kind": "planned",
+     "customers": 53,
+     "restore": "2026-11-08T05:00:00.000Z",
+     "restoreIso": "2026-11-08T05:00:00.000Z",
+     "lon": 145.16091,
+     "lat": -37.87293,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "United Energy",
+     "id": "ue-172892",
+     "location": "Springvale, Mulgrave",
+     "towns": [
+      "Springvale",
+      "Mulgrave"
+     ],
+     "kind": "planned",
+     "customers": 51,
+     "restore": "2026-11-08T02:00:00.000Z",
+     "restoreIso": "2026-11-08T02:00:00.000Z",
+     "lon": 145.17154,
+     "lat": -37.93506,
+     "via": "Power Outages Australia"
     },
     {
      "network": "United Energy",
@@ -13956,6 +15257,66 @@
      "restoreIso": "2026-11-08T04:30:00.000Z",
      "lon": 145.10184,
      "lat": -38.24609,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "United Energy",
+     "id": "ue-172998",
+     "location": "Seaford",
+     "towns": [
+      "Seaford"
+     ],
+     "kind": "planned",
+     "customers": 33,
+     "restore": "2026-11-08T05:00:00.000Z",
+     "restoreIso": "2026-11-08T05:00:00.000Z",
+     "lon": 145.1446,
+     "lat": -38.10078,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "United Energy",
+     "id": "ue-172824",
+     "location": "Dandenong South",
+     "towns": [
+      "Dandenong South"
+     ],
+     "kind": "planned",
+     "customers": 20,
+     "restore": "2026-11-08T06:00:00.000Z",
+     "restoreIso": "2026-11-08T06:00:00.000Z",
+     "lon": 145.20352,
+     "lat": -38.02516,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "United Energy",
+     "id": "ue-172626",
+     "location": "Carnegie",
+     "towns": [
+      "Carnegie"
+     ],
+     "kind": "planned",
+     "customers": 10,
+     "restore": "2026-11-08T04:30:00.000Z",
+     "restoreIso": "2026-11-08T04:30:00.000Z",
+     "lon": 145.05588,
+     "lat": -37.89432,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "United Energy",
+     "id": "ue-173191",
+     "location": "Box Hill North",
+     "towns": [
+      "Box Hill North"
+     ],
+     "kind": "planned",
+     "customers": 8,
+     "restore": "2026-11-08T05:00:00.000Z",
+     "restoreIso": "2026-11-08T05:00:00.000Z",
+     "lon": 145.12277,
+     "lat": -37.80707,
      "via": "Power Outages Australia"
     },
     {
@@ -13976,20 +15337,41 @@
      "via": "Power Outages Australia"
     },
     {
-     "network": "United Energy",
-     "id": "ue-2058682",
-     "location": "Gardenvale",
+     "network": "Jemena",
+     "id": "jem-J.26.0150564",
+     "location": "Newport",
      "towns": [
-      "Gardenvale"
+      "Newport"
      ],
-     "status": "Fault",
-     "cause": "Under investigation",
-     "kind": "unplanned",
-     "customers": 1,
-     "restore": "2026-11-07T23:00:00.000Z",
-     "restoreIso": "2026-11-07T23:00:00.000Z",
-     "lon": 145.01042,
-     "lat": -37.89761,
+     "status": "Planned Outage Execution",
+     "cause": "Essential Maintenance",
+     "kind": "planned",
+     "customers": 119,
+     "start": "2026-11-07T21:54:00.000Z",
+     "startIso": "2026-11-07T21:54:00.000Z",
+     "restore": "2026-11-08T06:00:00.000Z",
+     "restoreIso": "2026-11-08T06:00:00.000Z",
+     "lon": 144.87209,
+     "lat": -37.84563,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "Jemena",
+     "id": "jem-J.26.0150637",
+     "location": "Footscray",
+     "towns": [
+      "Footscray"
+     ],
+     "status": "Planned Outage Execution",
+     "cause": "Essential Maintenance",
+     "kind": "planned",
+     "customers": 78,
+     "start": "2026-11-07T22:02:00.000Z",
+     "startIso": "2026-11-07T22:02:00.000Z",
+     "restore": "2026-11-08T06:45:00.000Z",
+     "restoreIso": "2026-11-08T06:45:00.000Z",
+     "lon": 144.88802,
+     "lat": -37.79629,
      "via": "Power Outages Australia"
     },
     {
@@ -14010,26 +15392,45 @@
      "lon": 144.9208,
      "lat": -37.76756,
      "via": "Power Outages Australia"
+    },
+    {
+     "network": "Jemena",
+     "id": "jem-J.26.0148953",
+     "location": "Preston",
+     "towns": [
+      "Preston"
+     ],
+     "status": "Planned Outage Execution",
+     "cause": "Essential Maintenance",
+     "kind": "planned",
+     "customers": 10,
+     "start": "2026-11-07T21:15:00.000Z",
+     "startIso": "2026-11-07T21:15:00.000Z",
+     "restore": "2026-11-08T06:30:00.000Z",
+     "restoreIso": "2026-11-08T06:30:00.000Z",
+     "lon": 145.02827,
+     "lat": -37.75409,
+     "via": "Power Outages Australia"
     }
    ]
   },
   "sa": {
    "state": "SA",
    "name": "South Australia",
-   "count": 41,
-   "customers": 5549,
+   "count": 68,
+   "customers": 7582,
    "unplannedCount": 1,
    "unplannedCustomers": 13,
-   "plannedCount": 40,
-   "plannedCustomers": 5536,
+   "plannedCount": 67,
+   "plannedCustomers": 7569,
    "networks": [
     {
      "name": "SA Power Networks",
      "ok": true,
-     "count": 41,
+     "count": 68,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -14046,11 +15447,11 @@
      "attempts": [
       {
        "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/OutageList",
-       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1417000790011669279-19151207726126027"
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 2213000050354032596-117696822908354914"
       },
       {
        "url": "https://outage.apps.sapowernetworks.com.au/OutageReport/api/outages",
-       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 1417000790011669279-33809222437770188"
+       "error": "HTTP 403 — Request unsuccessful. Incapsula incident ID: 2213000050354032596-158373448851456361"
       },
       {
        "url": "https://www.sapowernetworks.com.au/outages/",
@@ -14118,12 +15519,39 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000Beachport786",
+     "location": "Beachport, Bray, Clay Wells, Magarey, Nora Creina, Rendelsham, Southend, Thornlea",
+     "towns": [
+      "Beachport",
+      "Bray",
+      "Clay Wells",
+      "Magarey",
+      "Nora Creina",
+      "Rendelsham",
+      "Southend",
+      "Thornlea"
+     ],
+     "kind": "planned",
+     "customers": 786,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T06:30:00.000Z",
+     "restoreIso": "2026-11-10T06:30:00.000Z",
+     "lon": 140.08337,
+     "lat": -37.44183,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261108T083000RoyalPark358",
      "location": "Royal Park, West Lakes",
      "towns": [
       "Royal Park",
       "West Lakes"
      ],
+     "status": "Scheduled",
+     "cause": "Installing new electricity equipment",
      "kind": "planned",
      "customers": 358,
      "start": "2026-11-07T22:00:00.000Z",
@@ -14132,8 +15560,7 @@
      "restoreIso": "2026-11-08T05:30:00.000Z",
      "lon": 138.50513,
      "lat": -34.87331,
-     "via": "Power Outages Australia",
-     "upcoming": true
+     "via": "Power Outages Australia"
     },
     {
      "network": "SA Power Networks",
@@ -14163,6 +15590,48 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000Coobowie178",
+     "location": "Coobowie, Wool Bay",
+     "towns": [
+      "Coobowie",
+      "Wool Bay"
+     ],
+     "kind": "planned",
+     "customers": 178,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 137.75583,
+     "lat": -34.99023,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000Caloote163",
+     "location": "Caloote, Caloote, Mannum, Palmer, Rockleigh, Tepko",
+     "towns": [
+      "Caloote",
+      "Caloote",
+      "Mannum",
+      "Palmer",
+      "Rockleigh",
+      "Tepko"
+     ],
+     "kind": "planned",
+     "customers": 163,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 139.20799,
+     "lat": -34.92237,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261109T080000ElizabethPark134",
      "location": "Elizabeth Park",
      "towns": [
@@ -14181,11 +15650,31 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000ElizabethPark128",
+     "location": "Elizabeth Park",
+     "towns": [
+      "Elizabeth Park"
+     ],
+     "kind": "planned",
+     "customers": 128,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 138.68948,
+     "lat": -34.70916,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261108T083000SalisburyEast122",
      "location": "Salisbury East",
      "towns": [
       "Salisbury East"
      ],
+     "status": "Scheduled",
+     "cause": "Maintaining and upgrading the electricity network",
      "kind": "planned",
      "customers": 122,
      "start": "2026-11-07T22:00:00.000Z",
@@ -14194,8 +15683,26 @@
      "restoreIso": "2026-11-08T04:30:00.000Z",
      "lon": 138.66612,
      "lat": -34.77835,
-     "via": "Power Outages Australia",
-     "upcoming": true
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-184655",
+     "location": "Paradise",
+     "towns": [
+      "Paradise"
+     ],
+     "status": "Work is in progress",
+     "cause": "Maintaining and upgrading the electricity network",
+     "kind": "planned",
+     "customers": 89,
+     "start": "2026-11-07T21:41:00.000Z",
+     "startIso": "2026-11-07T21:41:00.000Z",
+     "restore": "2026-11-08T04:30:00.000Z",
+     "restoreIso": "2026-11-08T04:30:00.000Z",
+     "lon": 138.6718,
+     "lat": -34.87112,
+     "via": "Power Outages Australia"
     },
     {
      "network": "SA Power Networks",
@@ -14204,6 +15711,8 @@
      "towns": [
       "Paradise"
      ],
+     "status": "Scheduled",
+     "cause": "Maintaining and upgrading the electricity network",
      "kind": "planned",
      "customers": 89,
      "start": "2026-11-07T21:30:00.000Z",
@@ -14212,8 +15721,44 @@
      "restoreIso": "2026-11-08T04:30:00.000Z",
      "lon": 138.6718,
      "lat": -34.87112,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000BanksiaPark87",
+     "location": "Banksia Park",
+     "towns": [
+      "Banksia Park"
+     ],
+     "kind": "planned",
+     "customers": 87,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 138.72012,
+     "lat": -34.81229,
      "via": "Power Outages Australia",
      "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-182258",
+     "location": "Murray Bridge East",
+     "towns": [
+      "Murray Bridge East"
+     ],
+     "status": "Work is in progress",
+     "cause": "Maintaining and upgrading the electricity network",
+     "kind": "planned",
+     "customers": 72,
+     "start": "2026-11-07T21:50:00.000Z",
+     "startIso": "2026-11-07T21:50:00.000Z",
+     "restore": "2026-11-08T05:00:00.000Z",
+     "restoreIso": "2026-11-08T05:00:00.000Z",
+     "lon": 139.29072,
+     "lat": -35.11244,
+     "via": "Power Outages Australia"
     },
     {
      "network": "SA Power Networks",
@@ -14222,6 +15767,8 @@
      "towns": [
       "Murray Bridge East"
      ],
+     "status": "Scheduled",
+     "cause": "Maintaining and upgrading the electricity network",
      "kind": "planned",
      "customers": 72,
      "start": "2026-11-07T21:30:00.000Z",
@@ -14230,6 +15777,23 @@
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 139.29088,
      "lat": -35.11261,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000ElizabethDowns70",
+     "location": "Elizabeth Downs",
+     "towns": [
+      "Elizabeth Downs"
+     ],
+     "kind": "planned",
+     "customers": 70,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 138.6983,
+     "lat": -34.70527,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -14309,6 +15873,43 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000SheidowPark56",
+     "location": "Sheidow Park",
+     "towns": [
+      "Sheidow Park"
+     ],
+     "kind": "planned",
+     "customers": 56,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 138.53309,
+     "lat": -35.06941,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000Parilla55",
+     "location": "Parilla, Pinnaroo",
+     "towns": [
+      "Parilla",
+      "Pinnaroo"
+     ],
+     "kind": "planned",
+     "customers": 55,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 140.8419,
+     "lat": -35.34312,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261109T083000Bowden49",
      "location": "Bowden",
      "towns": [
@@ -14327,6 +15928,24 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000OldReynella47",
+     "location": "Old Reynella",
+     "towns": [
+      "Old Reynella"
+     ],
+     "kind": "planned",
+     "customers": 47,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 138.53868,
+     "lat": -35.10165,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261109T080000Prospect41",
      "location": "Prospect",
      "towns": [
@@ -14340,6 +15959,69 @@
      "restoreIso": "2026-11-09T04:30:00.000Z",
      "lon": 138.5829,
      "lat": -34.87558,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000Beltana40",
+     "location": "Beltana, Beltana Station, Moolooloo, Nilpena, Puttapa, Warraweena",
+     "towns": [
+      "Beltana",
+      "Beltana Station",
+      "Moolooloo",
+      "Nilpena",
+      "Puttapa",
+      "Warraweena"
+     ],
+     "kind": "planned",
+     "customers": 40,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T06:00:00.000Z",
+     "restoreIso": "2026-11-10T06:00:00.000Z",
+     "lon": 138.33754,
+     "lat": -30.90876,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000NorthHaven40",
+     "location": "North Haven",
+     "towns": [
+      "North Haven"
+     ],
+     "kind": "planned",
+     "customers": 40,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 138.49228,
+     "lat": -34.77926,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000Ceduna39",
+     "location": "Ceduna, Charra, Nadia, Penong, Uworra",
+     "towns": [
+      "Ceduna",
+      "Charra",
+      "Nadia",
+      "Penong",
+      "Uworra"
+     ],
+     "kind": "planned",
+     "customers": 39,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 133.4567,
+     "lat": -32.05431,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -14404,6 +16086,45 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000Paralowie33",
+     "location": "Paralowie",
+     "towns": [
+      "Paralowie"
+     ],
+     "kind": "planned",
+     "customers": 33,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 138.59904,
+     "lat": -34.75375,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000Alma30",
+     "location": "Alma, Hamley Bridge, Stockport, Tarlee",
+     "towns": [
+      "Alma",
+      "Hamley Bridge",
+      "Stockport",
+      "Tarlee"
+     ],
+     "kind": "planned",
+     "customers": 30,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 138.69028,
+     "lat": -34.28646,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261109T080000Kingscote29",
      "location": "Kingscote",
      "towns": [
@@ -14458,6 +16179,24 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T073000LindenPark22",
+     "location": "Linden Park",
+     "towns": [
+      "Linden Park"
+     ],
+     "kind": "planned",
+     "customers": 22,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:30:00.000Z",
+     "restoreIso": "2026-11-10T05:30:00.000Z",
+     "lon": 138.65062,
+     "lat": -34.94769,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261109T083000MountPleasant19",
      "location": "Mount Pleasant, Springton",
      "towns": [
@@ -14472,6 +16211,25 @@
      "restoreIso": "2026-11-09T04:30:00.000Z",
      "lon": 139.06269,
      "lat": -34.73579,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000Verran18",
+     "location": "Verran, Wharminda",
+     "towns": [
+      "Verran",
+      "Wharminda"
+     ],
+     "kind": "planned",
+     "customers": 18,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 136.24477,
+     "lat": -33.96086,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -14515,6 +16273,24 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000SalisburyDowns17",
+     "location": "Salisbury Downs",
+     "towns": [
+      "Salisbury Downs"
+     ],
+     "kind": "planned",
+     "customers": 17,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 138.61905,
+     "lat": -34.76622,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261109T083000Tunkalilla17",
      "location": "Tunkalilla, Waitpinga, Waitpinga",
      "towns": [
@@ -14530,6 +16306,24 @@
      "restoreIso": "2026-11-09T04:30:00.000Z",
      "lon": 138.38268,
      "lat": -35.61375,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000PortVictoria15",
+     "location": "Port Victoria",
+     "towns": [
+      "Port Victoria"
+     ],
+     "kind": "planned",
+     "customers": 15,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 137.48275,
+     "lat": -34.50713,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -14583,6 +16377,24 @@
      "restoreIso": "2026-11-09T04:30:00.000Z",
      "lon": 135.86095,
      "lat": -34.72592,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T073000Kingswood11",
+     "location": "Kingswood",
+     "towns": [
+      "Kingswood"
+     ],
+     "kind": "planned",
+     "customers": 11,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T01:00:00.000Z",
+     "restoreIso": "2026-11-10T01:00:00.000Z",
+     "lon": 138.61687,
+     "lat": -34.96627,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -14660,6 +16472,24 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000Prospect9",
+     "location": "Prospect",
+     "towns": [
+      "Prospect"
+     ],
+     "kind": "planned",
+     "customers": 9,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T05:30:00.000Z",
+     "restoreIso": "2026-11-10T05:30:00.000Z",
+     "lon": 138.59377,
+     "lat": -34.88132,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261109T100000Hackham9",
      "location": "Hackham",
      "towns": [
@@ -14732,6 +16562,24 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T083000Adelaide7",
+     "location": "Adelaide",
+     "towns": [
+      "Adelaide"
+     ],
+     "kind": "planned",
+     "customers": 7,
+     "start": "2026-11-09T22:00:00.000Z",
+     "startIso": "2026-11-09T22:00:00.000Z",
+     "restore": "2026-11-10T02:30:00.000Z",
+     "restoreIso": "2026-11-10T02:30:00.000Z",
+     "lon": 138.59102,
+     "lat": -34.93595,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261109T113000Kingswood7",
      "location": "Kingswood",
      "towns": [
@@ -14768,6 +16616,24 @@
     },
     {
      "network": "SA Power Networks",
+     "id": "sapn-p-20261110T073000BedfordPark6",
+     "location": "Bedford Park",
+     "towns": [
+      "Bedford Park"
+     ],
+     "kind": "planned",
+     "customers": 6,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T01:00:00.000Z",
+     "restoreIso": "2026-11-10T01:00:00.000Z",
+     "lon": 138.57571,
+     "lat": -35.01407,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
      "id": "sapn-p-20261109T080000Rosewater6",
      "location": "Rosewater",
      "towns": [
@@ -14781,6 +16647,60 @@
      "restoreIso": "2026-11-09T02:30:00.000Z",
      "lon": 138.5208,
      "lat": -34.85254,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000Stansbury5",
+     "location": "Stansbury",
+     "towns": [
+      "Stansbury"
+     ],
+     "kind": "planned",
+     "customers": 5,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T01:30:00.000Z",
+     "restoreIso": "2026-11-10T01:30:00.000Z",
+     "lon": 137.79832,
+     "lat": -34.91015,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000Adelaide5",
+     "location": "Adelaide",
+     "towns": [
+      "Adelaide"
+     ],
+     "kind": "planned",
+     "customers": 5,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T01:30:00.000Z",
+     "restoreIso": "2026-11-10T01:30:00.000Z",
+     "lon": 138.60559,
+     "lat": -34.93354,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "SA Power Networks",
+     "id": "sapn-p-20261110T080000Hawthorndene5",
+     "location": "Hawthorndene",
+     "towns": [
+      "Hawthorndene"
+     ],
+     "kind": "planned",
+     "customers": 5,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T02:00:00.000Z",
+     "restoreIso": "2026-11-10T02:00:00.000Z",
+     "lon": 138.64108,
+     "lat": -35.01929,
      "via": "Power Outages Australia",
      "upcoming": true
     },
@@ -14861,20 +16781,20 @@
   "wa": {
    "state": "WA",
    "name": "Western Australia",
-   "count": 103,
-   "customers": 9436,
-   "unplannedCount": 2,
-   "unplannedCustomers": 52,
+   "count": 104,
+   "customers": 9499,
+   "unplannedCount": 3,
+   "unplannedCustomers": 115,
    "plannedCount": 101,
    "plannedCustomers": 9384,
    "networks": [
     {
      "name": "Western Power",
      "ok": true,
-     "count": 99,
+     "count": 100,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "staleDropped": 2,
      "sourceUrl": "https://services2.arcgis.com/tBLxde4cxSlNUxsM/ArcGIS/rest/services/WP_Outage_Prod/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&resultRecordCount=400&f=geojson",
      "columns": [
@@ -14900,7 +16820,7 @@
      "count": 4,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -15601,6 +17521,22 @@
      "lat": -33.8629411357732,
      "upcoming": true,
      "kindReported": "unplanned"
+    },
+    {
+     "network": "Western Power",
+     "id": "INCD-2181681-U",
+     "location": "DWELLINGUP,INGLEHOPE,HOLYOAKE",
+     "towns": [
+      "DWELLINGUP",
+      "INGLEHOPE",
+      "HOLYOAKE"
+     ],
+     "kind": "unplanned",
+     "customers": 63,
+     "start": "08/11/2026 04:48 AM",
+     "restore": "08/11/2026 10:30 AM",
+     "lon": 116.078286027165,
+     "lat": -32.7091837509119
     },
     {
      "network": "Western Power",
@@ -16663,24 +18599,94 @@
   "tas": {
    "state": "TAS",
    "name": "Tasmania",
-   "count": 0,
-   "customers": 0,
+   "count": 4,
+   "customers": 161,
    "unplannedCount": 0,
    "unplannedCustomers": 0,
-   "plannedCount": 0,
-   "plannedCustomers": 0,
+   "plannedCount": 4,
+   "plannedCustomers": 161,
    "networks": [
     {
      "name": "TasNetworks",
      "ok": true,
-     "count": 0,
+     "count": 4,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
-     "sourceUrl": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages"
+     "capturedAt": 1794089143090,
+     "sourceUrl": "https://www.tasnetworks.com.au/api/odata/GetPowerOutages",
+     "columns": [
+      "messageId",
+      "jobId",
+      "dispatchStatus",
+      "reason",
+      "affectedAreas",
+      "postcodes",
+      "affectedRegions",
+      "customersAffected",
+      "createdOn",
+      "modifiedOn",
+      "estimatedTimeOfRestoration",
+      "sortValue",
+      "outagePolygon_WKT",
+      "outageCentroid_WKT",
+      "canFollow"
+     ]
     }
    ],
-   "outages": []
+   "outages": [
+    {
+     "network": "TasNetworks",
+     "id": "J2611080007",
+     "location": "Glenorchy",
+     "towns": [
+      "Glenorchy"
+     ],
+     "status": "Dispatch assigned",
+     "cause": "Planned maintenance work",
+     "kind": "planned",
+     "customers": 115,
+     "restore": "Sunday 2:30 PM"
+    },
+    {
+     "network": "TasNetworks",
+     "id": "J2611080006",
+     "location": "Glenorchy",
+     "towns": [
+      "Glenorchy"
+     ],
+     "status": "Dispatch assigned",
+     "cause": "Planned maintenance work",
+     "kind": "planned",
+     "customers": 21,
+     "restore": "Sunday 2:30 PM"
+    },
+    {
+     "network": "TasNetworks",
+     "id": "J2611080004",
+     "location": "Mowbray",
+     "towns": [
+      "Mowbray"
+     ],
+     "status": "Dispatch assigned",
+     "cause": "Planned maintenance work",
+     "kind": "planned",
+     "customers": 18,
+     "restore": "Sunday 4:00 PM"
+    },
+    {
+     "network": "TasNetworks",
+     "id": "J2611080005",
+     "location": "Mowbray",
+     "towns": [
+      "Mowbray"
+     ],
+     "status": "Dispatch assigned",
+     "cause": "Planned maintenance work",
+     "kind": "planned",
+     "customers": 7,
+     "restore": "Sunday 4:00 PM"
+    }
+   ]
   },
   "nt": {
    "state": "NT",
@@ -16697,7 +18703,7 @@
      "ok": false,
      "count": 0,
      "source": "none",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "error": "This operator blocks automated access to its outage page (bot challenge). Their own map is linked and still works in a browser.",
      "blocked": true,
      "attempts": [
@@ -16717,20 +18723,20 @@
   "act": {
    "state": "ACT",
    "name": "Australian Capital Territory",
-   "count": 4,
-   "customers": 145,
+   "count": 11,
+   "customers": 528,
    "unplannedCount": 0,
    "unplannedCustomers": 0,
-   "plannedCount": 4,
-   "plannedCustomers": 145,
+   "plannedCount": 11,
+   "plannedCustomers": 528,
    "networks": [
     {
      "name": "Evoenergy",
      "ok": true,
-     "count": 4,
+     "count": 11,
      "source": "feed",
      "origin": "feed",
-     "capturedAt": 1794084449859,
+     "capturedAt": 1794089143090,
      "sourceUrl": "https://poa-outages-api.sk-9b3.workers.dev/outages",
      "columns": [
       "id",
@@ -16763,25 +18769,43 @@
    "outages": [
     {
      "network": "Evoenergy",
-     "id": "evo-SP150019787",
-     "location": "Fyshwick",
+     "id": "evo-SP150019668",
+     "location": "Waramanga",
      "towns": [
-      "Fyshwick"
+      "Waramanga"
      ],
      "kind": "planned",
-     "customers": 69,
-     "start": "2026-11-07T21:00:00.000Z",
-     "startIso": "2026-11-07T21:00:00.000Z",
-     "restore": "2026-11-08T01:00:00.000Z",
-     "restoreIso": "2026-11-08T01:00:00.000Z",
-     "lon": 149.17855,
-     "lat": -35.32192,
+     "customers": 233,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 149.06279,
+     "lat": -35.35036,
      "via": "Power Outages Australia",
      "upcoming": true
     },
     {
      "network": "Evoenergy",
-     "id": "evo-SP151025022",
+     "id": "evo-SP151025030",
+     "location": "Narrabundah",
+     "towns": [
+      "Narrabundah"
+     ],
+     "kind": "planned",
+     "customers": 89,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T04:45:00.000Z",
+     "restoreIso": "2026-11-10T04:45:00.000Z",
+     "lon": 149.15594,
+     "lat": -35.33538,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Evoenergy",
+     "id": "evo-SP150019787",
      "location": "Fyshwick",
      "towns": [
       "Fyshwick"
@@ -16789,14 +18813,32 @@
      "status": "Active",
      "cause": "Evoenergy is carrying out essential maintenance on its network in this area",
      "kind": "planned",
-     "customers": 37,
-     "start": "2026-11-07T19:08:00.000Z",
-     "startIso": "2026-11-07T19:08:00.000Z",
-     "restore": "2026-11-07T22:30:00.000Z",
-     "restoreIso": "2026-11-07T22:30:00.000Z",
-     "lon": 149.17335,
-     "lat": -35.32813,
+     "customers": 55,
+     "start": "2026-11-07T21:55:00.000Z",
+     "startIso": "2026-11-07T21:55:00.000Z",
+     "restore": "2026-11-08T01:00:00.000Z",
+     "restoreIso": "2026-11-08T01:00:00.000Z",
+     "lon": 149.17855,
+     "lat": -35.32192,
      "via": "Power Outages Australia"
+    },
+    {
+     "network": "Evoenergy",
+     "id": "evo-SP151024952",
+     "location": "Fraser",
+     "towns": [
+      "Fraser"
+     ],
+     "kind": "planned",
+     "customers": 41,
+     "start": "2026-11-09T21:30:00.000Z",
+     "startIso": "2026-11-09T21:30:00.000Z",
+     "restore": "2026-11-10T04:30:00.000Z",
+     "restoreIso": "2026-11-10T04:30:00.000Z",
+     "lon": 149.03805,
+     "lat": -35.1885,
+     "via": "Power Outages Australia",
+     "upcoming": true
     },
     {
      "network": "Evoenergy",
@@ -16818,19 +18860,110 @@
     },
     {
      "network": "Evoenergy",
+     "id": "evo-SP150019951",
+     "location": "Watson",
+     "towns": [
+      "Watson"
+     ],
+     "kind": "planned",
+     "customers": 33,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 149.16168,
+     "lat": -35.24018,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Evoenergy",
+     "id": "evo-SP150019409",
+     "location": "Wanniassa",
+     "towns": [
+      "Wanniassa"
+     ],
+     "kind": "planned",
+     "customers": 13,
+     "start": "2026-11-09T21:15:00.000Z",
+     "startIso": "2026-11-09T21:15:00.000Z",
+     "restore": "2026-11-10T00:45:00.000Z",
+     "restoreIso": "2026-11-10T00:45:00.000Z",
+     "lon": 149.07928,
+     "lat": -35.39917,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Evoenergy",
+     "id": "evo-SP151024496",
+     "location": "Kaleen",
+     "towns": [
+      "Kaleen"
+     ],
+     "kind": "planned",
+     "customers": 13,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 149.10964,
+     "lat": -35.22848,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Evoenergy",
+     "id": "evo-SP150019893",
+     "location": "Symonston",
+     "towns": [
+      "Symonston"
+     ],
+     "kind": "planned",
+     "customers": 9,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 149.14369,
+     "lat": -35.34901,
+     "via": "Power Outages Australia",
+     "upcoming": true
+    },
+    {
+     "network": "Evoenergy",
      "id": "evo-SP151025029",
      "location": "Hume",
      "towns": [
       "Hume"
      ],
+     "status": "Active",
+     "cause": "Evoenergy is carrying out essential maintenance on its network in this area",
      "kind": "planned",
      "customers": 4,
-     "start": "2026-11-07T21:00:00.000Z",
-     "startIso": "2026-11-07T21:00:00.000Z",
+     "start": "2026-11-07T21:29:00.000Z",
+     "startIso": "2026-11-07T21:29:00.000Z",
      "restore": "2026-11-08T05:00:00.000Z",
      "restoreIso": "2026-11-08T05:00:00.000Z",
      "lon": 149.15205,
      "lat": -35.39574,
+     "via": "Power Outages Australia"
+    },
+    {
+     "network": "Evoenergy",
+     "id": "evo-SP150019747",
+     "location": "Greenway",
+     "towns": [
+      "Greenway"
+     ],
+     "kind": "planned",
+     "customers": 3,
+     "start": "2026-11-09T21:00:00.000Z",
+     "startIso": "2026-11-09T21:00:00.000Z",
+     "restore": "2026-11-10T05:00:00.000Z",
+     "restoreIso": "2026-11-10T05:00:00.000Z",
+     "lon": 149.07428,
+     "lat": -35.4214,
      "via": "Power Outages Australia",
      "upcoming": true
     }
