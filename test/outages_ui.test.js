@@ -603,6 +603,63 @@ const check = (n, c, x) => {
     await p.close();
   }
 
+  console.log('\n== river heights, organised by flooding ==');
+  {
+    /* The fixture is three real BOM tables and two real flood warnings
+       (test/fixtures/rivers-snapshot.json); 'major' raises one gauge so
+       the ordering is exercised. */
+    const p = await open('rivers=major');
+    await p.waitForTimeout(600);
+    check('the section is in the page nav', await p.$('#sectionNav a[href="#section-rivers"]') !== null);
+    const warns = await p.$$eval('#riverWarnings .river-warn', es => es.map(e => ({ t: e.innerText, href: (e.querySelector('h4 a') || {}).href })));
+    check('current flood warnings come first, one card each', warns.length === 2, warns.map(w => w.t.slice(0, 60)));
+    check('each links to BOM\'s own page for the warning',
+      warns.every(w => /^https:\/\/www\.bom\.gov\.au\/products\/ID[NQ]\d{5}\.shtml$/.test(w.href)), warns.map(w => w.href));
+    check('and quotes BOM\'s situation', warns.some(w => /MINOR FLOODING OCCURRING AT TUMMAVILLE/.test(w.t)));
+    const heads = await p.$$eval('#riverList .river-level-head', es => es.map(e => e.innerText));
+    check('gauges are grouped worst level first', heads.length === 2 && /Major/.test(heads[0]) && /Minor/.test(heads[1]), heads);
+    const sum = await p.$eval('#riverSummary', e => e.innerText);
+    check('the summary counts them', /1\s*gauge at major flood/.test(sum) && /1\s*gauge at minor flood/.test(sum), sum);
+    check('and says how old the capture is', /Captured from BOM \d+ min ago/.test(sum), sum);
+    const row = await p.$eval('#riverList .river-gauge', e => e.innerText);
+    check('a gauge shows its height, trend and the age of its reading',
+      /\d+\.\d\d m/.test(row) && /(rising|falling|steady)/.test(row) && /ago/.test(row), row);
+    check('with a link to BOM\'s graph for it',
+      await p.$eval('#riverList .river-gauge a', a => /^https:\/\/www\.bom\.gov\.au\/fwo\/IDQ\d{5}\/IDQ\d{5}\.\d+\.plt\.shtml$/.test(a.href)));
+    check('the data is attributed to BOM', /Bureau of Meteorology/.test(await p.$eval('#riverFoot', e => e.innerText)));
+
+    /* Search reaches every gauge, in flood or not. */
+    await p.fill('#riverFilter', 'Tweed');
+    await p.waitForTimeout(400);
+    const hits = await p.$$eval('#riverList .river-gauge', es => es.map(e => e.innerText));
+    check('a search finds gauges below flood level too',
+      hits.length > 2 && hits.every(h => /Tweed/i.test(h)) && hits.some(h => /below flood level/i.test(h)), hits.slice(0, 3));
+    check('and counts them', /\d+ gauges match/.test(await p.$eval('#riverFilterCount', e => e.innerText)));
+    await p.fill('#riverFilter', 'Condamine');
+    await p.waitForTimeout(400);
+    const first = await p.$eval('#riverList .river-gauge', e => e.innerText);
+    check('flooding gauges lead a search', /major/i.test(first), first);
+    check('no page errors', p._errs.length === 0, p._errs);
+    await p.close();
+  }
+  {
+    const p = await open('rivers=quiet');
+    await p.waitForTimeout(600);
+    check('a quiet day says no gauge is in flood',
+      /No BOM river gauge is above flood level/.test(await p.$eval('#riverList', e => e.innerText)));
+    check('and shows no warning cards', (await p.$$('#riverWarnings .river-warn')).length === 0);
+    await p.close();
+  }
+  {
+    const p = await open('rivers=off');
+    await p.waitForTimeout(600);
+    check('a missing file says so rather than showing an empty list',
+      /could not be loaded/.test(await p.$eval('#riverSummary', e => e.innerText)));
+    check('and points to BOM directly', /bom\.gov\.au\/australia\/flood/.test(await p.$eval('#riverList', e => e.innerHTML)));
+    check('without breaking the page', p._errs.length === 0, p._errs);
+    await p.close();
+  }
+
   await b.close();
   console.log('\n----------------------------------------');
   console.log('passed: ' + pass + '   failed: ' + fail);

@@ -258,6 +258,33 @@ const server = http.createServer((req, res) => {
       ]
     });
   }
+  /* BOM river heights: the snapshot capture-rivers.mjs writes, built from
+     real BOM files (test/fixtures/rivers-snapshot.json) and shifted so its
+     readings are as recent now as they were when captured.
+       rivers=quiet  nothing in flood, no warnings
+       rivers=major  one gauge raised to major, to check the ordering
+       rivers=off    the file is missing */
+  if (u.pathname === '/data/rivers.json') {
+    const sc = u.searchParams.get('rivers');
+    if (sc === 'off') return send(404, 'not found', 'text/plain');
+    const snap = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'rivers-snapshot.json'), 'utf8'));
+    const shift = Date.now() - snap.capturedAt - 10 * 60000;
+    const move = (t) => (typeof t === 'number' ? t + shift : t);
+    snap.capturedAt += shift;
+    snap.warnings.forEach((w) => { w.issued = move(w.issued); w.expires = move(w.expires); });
+    snap.products.forEach((pr) => { pr.issued = move(pr.issued); });
+    snap.groups.forEach((g) => g.stations.forEach((st) => { st.time = move(st.time); }));
+    if (sc === 'quiet') {
+      snap.warnings = [];
+      snap.groups.forEach((g) => g.stations.forEach((st) => { delete st.level; }));
+      snap.counts.minor = snap.counts.moderate = snap.counts.major = 0;
+    }
+    if (sc === 'major') {
+      const st = snap.groups.flatMap((g) => g.stations).find((x) => /Yarramalong/.test(x.name));
+      st.level = 'major'; snap.counts.minor--; snap.counts.major++;
+    }
+    return send(200, snap);
+  }
   if (u.pathname === '/api/news') return send(200, { build: 'test', articles: [], feeds: [], warming: true });
   if (u.pathname.startsWith('/api/incidents')) return send(200, { states: [], builtAt: Date.now() });
   if (u.pathname === '/api/gdelt') return send(200, { articles: [] });

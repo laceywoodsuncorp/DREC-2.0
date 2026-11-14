@@ -213,7 +213,9 @@ export function buildRiversSnapshot(files, now) {
     if (w && !(w.expires && w.expires < now)) warnings.push(w);
   }
   const rank = (l) => (l ? FLOOD_LEVELS.indexOf(l) + 1 : 0);
-  warnings.sort((a, b) => rank(b.level) - rank(a.level) || (b.issued || 0) - (a.issued || 0));
+  /* Active warnings worst first; a final warning -- the flood is over --
+     after them all, whatever severity it still carries. */
+  warnings.sort((a, b) => (a.final ? 1 : 0) - (b.final ? 1 : 0) || rank(b.level) - rank(a.level) || (b.issued || 0) - (a.issued || 0));
   const counts = { major: 0, moderate: 0, minor: 0, rising: 0, stations: gauges };
   groups.forEach((g) => g.stations.forEach((s) => { if (s.level) counts[s.level]++; if (s.tendency === 'rising') counts.rising++; }));
   return { capturedAt: now, source: 'Bureau of Meteorology, anonymous FTP (ftp.bom.gov.au/anon/gen/fwo)',

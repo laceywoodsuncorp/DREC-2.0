@@ -7,7 +7,9 @@
 # constraint. See scripts/capture-outages.mjs.
 #
 # No browser, so it is quick: measured at 22 seconds end to end, which
-# GitHub bills as one minute. The browser scrape (scrape-outages.yml) takes
+# GitHub bills as one minute. With BOM river heights added (14 Nov 2026)
+# it measured 45 seconds -- still one billed minute, so the budget below
+# is unchanged. If it ever passes 60, every run bills two. The browser scrape (scrape-outages.yml) takes
 # about nine and is now only needed for AusNet's list and for the published
 # totals of the operators that block theirs. This keeps the rows current.
 #

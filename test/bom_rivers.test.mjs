@@ -100,6 +100,10 @@ console.log('\n== the snapshot ==');
     [s.counts, flooding.length]);
   ck('each group carries its state and catchment once', s.groups.every((g) => g.state && g.catchment && g.stations.every((x) => !('catchment' in x))));
   ck('both warnings are current', s.warnings.length === 2, s.warnings.map((w) => w.id));
+  const withFinal = Object.assign({}, files, { 'IDQ20845.xml': fx('IDQ20827.xml')
+    .replace(/IDQ20827/g, 'IDQ20845').replace(/Minor Flood Warning for/, 'Final Flood Warning for') });
+  const order = buildRiversSnapshot(withFinal, issued + 3600e3).warnings.map((w) => w.id);
+  ck('a final warning sorts after the active ones, even with a severity', order[order.length - 1] === 'IDQ20845', order);
   const later = buildRiversSnapshot(files, Date.parse('2030-01-01'));
   ck('an expired warning is dropped', later.warnings.length === 0, later.warnings.map((w) => w.id));
   ck('the source is named', /Bureau of Meteorology/.test(s.source));

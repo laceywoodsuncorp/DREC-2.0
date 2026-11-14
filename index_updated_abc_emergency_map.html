@@ -352,6 +352,50 @@
     .outage-summary,.outage-networks,.outage-foot,.outage-heading{padding-left:16px;padding-right:16px}
   }
   .crowd-badge{font-size:.64rem;font-weight:700;color:#a06000;background:#fff3d6;padding:3px 8px;border-radius:999px}
+  /* ---- river heights ---- */
+  .tile-rivers{margin-top:24px}
+  .river-summary{padding:12px 24px;display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;
+    font-size:.82rem;color:#4a5a5a;border-bottom:1px solid #eef1ee}
+  .river-summary b{font-size:1.15rem;color:var(--heritage-green);margin-right:4px}
+  .river-summary .warn{color:#8a5200}
+  .river-summary .lvl-major b{color:#a3241b}
+  .river-summary .lvl-moderate b{color:#b5621a}
+  .river-summary .lvl-minor b{color:#8a6d00}
+  .river-warnings{padding:4px 24px 0}
+  .river-warn{margin:10px 0;padding:11px 13px;border-radius:9px;border:1px solid #e6dcc4;background:#fffaf0;font-size:.82rem;line-height:1.5}
+  .river-warn h4{font-size:.88rem;color:var(--heritage-green);margin:0 0 3px}
+  .river-warn h4 a{color:inherit}
+  .river-warn .meta{font-size:.72rem;color:#6a7a7a}
+  .river-warn details{margin-top:5px}
+  .river-warn summary{cursor:pointer;font-size:.75rem;font-weight:600;color:var(--neutral-green)}
+  .river-warn p{margin:5px 0 0;white-space:pre-line}
+  .lvl{display:inline-block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+    padding:2px 7px;border-radius:999px;margin-right:6px;vertical-align:1px;color:#fff;background:#7b8a8f}
+  .lvl.major{background:#a3241b}.lvl.moderate{background:#c46a1c}.lvl.minor{background:#c9a100}
+  .lvl.final{background:#6a7d8c}.lvl.watch{background:#2f6f95}.lvl.below{background:#e3e8e5;color:#4a5a5a}
+  .river-search{padding:12px 24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .river-search input{flex:1;min-width:220px;max-width:420px;padding:8px 12px;border-radius:999px;
+    border:1px solid rgba(0,67,70,.2);font:inherit;font-size:.85rem}
+  .river-search input:focus{outline:2px solid var(--neutral-green);outline-offset:1px}
+  .river-search-count{font-size:.75rem;color:#7b8a8f}
+  .river-list{padding:6px 24px 4px;max-height:640px;overflow-y:auto}
+  .river-level-head{font-size:.8rem;font-weight:700;color:var(--heritage-green);margin:14px 0 4px;
+    padding-bottom:4px;border-bottom:1px solid #eef1ee}
+  .river-catch{font-size:.72rem;font-weight:600;color:#6a7a7a;margin:8px 0 2px}
+  .river-gauge{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid #f4f6f4;font-size:.82rem}
+  .river-gauge .nm{flex:1;min-width:180px;color:#243}
+  .river-gauge .ht{font-weight:700;color:var(--heritage-green);min-width:64px;text-align:right}
+  .river-gauge .td{min-width:62px;font-size:.75rem}
+  .river-gauge .td.rising{color:#a3241b}.river-gauge .td.falling{color:#2c7a4b}.river-gauge .td.steady{color:#6a7a7a}
+  .river-gauge .age{font-size:.72rem;color:#7b8a8f;min-width:90px}
+  .river-gauge .age.old{color:#8a5200}
+  .river-gauge a{font-size:.72rem;color:var(--neutral-green);font-weight:600}
+  .river-none{margin:12px 0;padding:11px 13px;border-radius:9px;background:#f2f7f4;border:1px solid #cfe2d6;color:#2c4636;font-size:.82rem}
+  .river-foot{padding:10px 24px 18px;font-size:.72rem;color:#7b8a8f;line-height:1.5}
+  @media(max-width:640px){
+    .river-summary,.river-warnings,.river-search,.river-list,.river-foot{padding-left:16px;padding-right:16px}
+    .river-gauge .nm{min-width:100%}
+  }
   .mobile-map-block{padding:4px 24px 22px}
   .mobile-map-block h3{font-size:.92rem;color:var(--heritage-green);margin:4px 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .mobile-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -437,6 +481,7 @@
 <div class="section-nav" id="sectionNav">
   <a href="#section-news">📡 News</a>
   <a href="#section-outages">⚡📶 Outages</a>
+  <a href="#section-rivers">🌊 Rivers</a>
   <a href="#section-firemap">🛰️ Fire Map</a>
   <a href="#section-incidents">🚒 Incidents</a>
   <a href="#section-census">🏘️ Town Explorer</a>
@@ -596,6 +641,22 @@
   </div>
 </section>
 
+<!-- ===== RIVER HEIGHTS & FLOODING ===== -->
+<section class="tile tile-rivers" id="section-rivers">
+  <div class="tile-head">
+    <h2>🌊 River Heights &amp; Flooding</h2>
+    <div class="src">Every <b>Bureau of Meteorology</b> river gauge, organised by flood level: current flood warnings first, then each gauge BOM classes as in flood, worst first. Search to find any river, creek or town.</div>
+  </div>
+  <div class="river-summary" id="riverSummary"><span>Loading BOM river heights…</span></div>
+  <div class="river-warnings" id="riverWarnings"></div>
+  <div class="river-search">
+    <input type="search" id="riverFilter" placeholder="Find a river, creek or town — e.g. Condamine" autocomplete="off">
+    <span class="river-search-count" id="riverFilterCount"></span>
+  </div>
+  <div class="river-list" id="riverList"></div>
+  <div class="river-foot" id="riverFoot"></div>
+</section>
+
 <div class="layout">
 
     <!-- ===== SATELLITE FIRE MAP ===== -->
@@ -651,7 +712,7 @@
 </main>
 
 <footer>
-  <p><strong>About this dashboard:</strong> News headlines come live from each outlet’s own RSS feed — national and wire services (ABC, SBS, Nine, 7NEWS, news.com.au, The Australian, Guardian Australia, AAP, The New Daily, The Conversation), the capital-city mastheads (Sydney Morning Herald, The Age, Brisbane Times, WAtoday, The West Australian), regional and rural papers (Canberra Times, Newcastle Herald, Illawarra Mercury, The Examiner, The Advocate, The Border Mail, The Courier, Bendigo Advertiser, Northern Daily Leader, Daily Advertiser, Central Western Daily, The Land), insuranceNEWS.com.au for trade coverage, and Al Jazeera for world news — fetched server-side, merged and de-duplicated. The feed shows the last 24 hours, or the most recent available if it has been quieter than that; each headline carries its own age. Some mastheads (notably The Australian) are subscriber-only, so following those links may hit a paywall. The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State emergency incident data is live for all eight states and territories, each from its own official agency feed (NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES, ACT ESA), proxied server-side with no API key; if a feed is temporarily unreachable that state says so and links through to its official current-incidents page rather than showing older data. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. Styling uses the Suncorp brand colour palette.</p>
+  <p><strong>About this dashboard:</strong> News headlines come live from each outlet’s own RSS feed — national and wire services (ABC, SBS, Nine, 7NEWS, news.com.au, The Australian, Guardian Australia, AAP, The New Daily, The Conversation), the capital-city mastheads (Sydney Morning Herald, The Age, Brisbane Times, WAtoday, The West Australian), regional and rural papers (Canberra Times, Newcastle Herald, Illawarra Mercury, The Examiner, The Advocate, The Border Mail, The Courier, Bendigo Advertiser, Northern Daily Leader, Daily Advertiser, Central Western Daily, The Land), insuranceNEWS.com.au for trade coverage, and Al Jazeera for world news — fetched server-side, merged and de-duplicated. The feed shows the last 24 hours, or the most recent available if it has been quieter than that; each headline carries its own age. Some mastheads (notably The Australian) are subscriber-only, so following those links may hit a paywall. The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State emergency incident data is live for all eight states and territories, each from its own official agency feed (NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES, ACT ESA), proxied server-side with no API key; if a feed is temporarily unreachable that state says so and links through to its official current-incidents page rather than showing older data. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. River heights and flood warnings come from the <strong>Bureau of Meteorology</strong>’s data service, captured about every half hour: every BOM river gauge with its latest reading and BOM’s own flood classification, organised by flood level. Styling uses the Suncorp brand colour palette.</p>
 </footer>
 
 <script>
@@ -3400,6 +3461,162 @@ window.addEventListener('resize',()=>map.invalidateSize());
    Outage.Report is confirmed working instead, and Telstra/Optus are shown
    side by side with hardcoded iframe src attributes -- no tab-switching
    needed since both render simultaneously. */
+
+/* ============ RIVER HEIGHTS & FLOODING ============
+   BOM's river gauges and flood warnings, from data/rivers.json -- written
+   by scripts/capture-rivers.mjs from BOM's anonymous FTP service about
+   every half hour (a Worker cannot speak FTP, so the capture runs in
+   Actions and this is a static file).
+
+   Organised by flooding: current flood warnings first, then every gauge
+   BOM classes as in flood, worst level first, by state and catchment.
+   A gauge's reading carries its own age, because BOM's tables keep a
+   gauge's last reading even when it stopped reporting hours ago -- and a
+   major flood reading from this morning is not the same claim as one from
+   ten minutes ago. Everything is BOM's, and says so. */
+(function(){
+  const summaryEl=document.getElementById('riverSummary');
+  const warnEl=document.getElementById('riverWarnings');
+  const listEl=document.getElementById('riverList');
+  const footEl=document.getElementById('riverFoot');
+  const filterEl=document.getElementById('riverFilter');
+  const countEl=document.getElementById('riverFilterCount');
+  if(!summaryEl||!listEl)return;
+
+  const LEVELS=['major','moderate','minor'];
+  const LEVEL_NAME={major:'Major flooding',moderate:'Moderate flooding',minor:'Minor flooding'};
+  /* A reading older than this is flagged: most automatic gauges report
+     every 15 minutes to an hour, so six hours means it has stopped. */
+  const OLD_READING_MS=6*3600e3;
+  let snap=null,gauges=[];
+
+  const ago=(ms)=>{
+    if(!ms)return '';
+    const m=Math.max(0,Math.round((Date.now()-ms)/60000));
+    if(m<60)return m+' min ago';
+    const h=Math.round(m/60);
+    return h<48?h+' h ago':Math.round(h/24)+' days ago';
+  };
+  const arrow={rising:'▲ rising',falling:'▼ falling',steady:'▬ steady'};
+  const bomUrl=(plot)=>plot?'https://www.bom.gov.au/fwo/'+plot:'';
+
+  function gaugeRow(g,showLevel){
+    const old=g.time&&Date.now()-g.time>OLD_READING_MS;
+    return '<div class="river-gauge">'+
+      (showLevel?'<span class="lvl '+(g.level||'below')+'">'+escapeHtml(g.level||g.classText||'below flood level')+'</span>':'')+
+      '<span class="nm">'+escapeHtml(g.name)+(showLevel?' <span style="color:#7b8a8f;font-size:.72rem">· '+escapeHtml(g.catchment)+', '+g.state+'</span>':'')+'</span>'+
+      '<span class="ht">'+(g.height==null?'—':g.height.toFixed(2)+' m')+'</span>'+
+      '<span class="td '+(g.tendency||'')+'">'+(arrow[g.tendency]||'')+'</span>'+
+      '<span class="age'+(old?' old':'')+'">'+(g.time?(old?'⚠ reading ':'')+ago(g.time):'no recent reading')+'</span>'+
+      (g.plot?'<a href="'+escapeHtml(bomUrl(g.plot))+'" target="_blank" rel="noopener">BOM graph ↗</a>':'')+
+      '</div>';
+  }
+
+  function renderSummary(){
+    const c=snap.counts||{};
+    const bits=[];
+    LEVELS.forEach(l=>{ if(c[l])bits.push('<span class="lvl-'+l+'"><b>'+c[l]+'</b> gauge'+(c[l]===1?'':'s')+' at '+l+' flood</span>'); });
+    const active=(snap.warnings||[]).filter(w=>!w.final).length;
+    bits.push('<span><b>'+active+'</b> flood warning'+(active===1?'':'s')+' current</span>');
+    if(!c.major&&!c.moderate&&!c.minor)bits.unshift('<span><b>0</b> gauges in flood</span>');
+    bits.push('<span>'+(c.stations||gauges.length).toLocaleString()+' gauges monitored'+(c.rising?' · '+c.rising+' rising':'')+'</span>');
+    const age=Date.now()-(snap.capturedAt||0);
+    /* Captures run about every half hour by day; two hours means several
+       have been missed. */
+    bits.push('<span'+(age>2*3600e3?' class="warn"':'')+'>Captured from BOM '+ago(snap.capturedAt)+'</span>');
+    summaryEl.innerHTML=bits.join('');
+  }
+
+  function renderWarnings(){
+    const ws=snap.warnings||[];
+    if(!ws.length){warnEl.innerHTML='';return;}
+    warnEl.innerHTML=ws.map(w=>{
+      const badge=w.final?'final':w.watch?'watch':(w.level||'watch');
+      const label=w.final?'Final':w.watch?'Flood watch':(w.level||'Flood warning');
+      const first=(w.situation||'').split('\n').map(x=>x.trim()).filter(Boolean);
+      return '<div class="river-warn"><h4><span class="lvl '+badge+'">'+escapeHtml(label)+'</span>'+
+        '<a href="'+escapeHtml(w.url)+'" target="_blank" rel="noopener">'+escapeHtml(w.title)+' ↗</a></h4>'+
+        '<div class="meta">'+(w.state?w.state+' · ':'')+'issued '+ago(w.issued)+
+        ((w.areas||[]).length?' · '+escapeHtml(w.areas.slice(0,4).join('; ')):'')+'</div>'+
+        (first.length?'<p>'+escapeHtml(first[0])+'</p>':'')+
+        (first.length>1||w.nextIssue?'<details><summary>More from BOM</summary><p>'+escapeHtml(first.slice(1).join('\n'))+
+          (w.nextIssue?'\n'+escapeHtml(w.nextIssue):'')+'</p></details>':'')+
+        '</div>';
+    }).join('');
+  }
+
+  function renderFlooding(){
+    const flooding=gauges.filter(g=>g.level);
+    if(!flooding.length){
+      listEl.innerHTML='<div class="river-none">No BOM river gauge is above flood level right now. '+
+        'Search above to check any river, creek or town.</div>';
+      return;
+    }
+    let html='';
+    LEVELS.forEach(l=>{
+      const at=flooding.filter(g=>g.level===l);
+      if(!at.length)return;
+      html+='<div class="river-level-head"><span class="lvl '+l+'">'+l+'</span>'+LEVEL_NAME[l]+' — '+at.length+' gauge'+(at.length===1?'':'s')+'</div>';
+      let last='';
+      at.forEach(g=>{
+        const key=g.state+'|'+g.catchment;
+        if(key!==last){html+='<div class="river-catch">'+g.state+' · '+escapeHtml(g.catchment)+'</div>';last=key;}
+        html+=gaugeRow(g,false);
+      });
+    });
+    listEl.innerHTML=html;
+  }
+
+  /* Search covers every gauge, in flood or not: "is the Condamine up?" is
+     answered by its gauges whatever their level. */
+  function renderSearch(q){
+    const k=q.toLowerCase();
+    const hits=gauges.filter(g=>g.name.toLowerCase().includes(k)||String(g.catchment).toLowerCase().includes(k));
+    hits.sort((a,b)=>(LEVELS.indexOf(a.level)+1||9)-(LEVELS.indexOf(b.level)+1||9));
+    countEl.textContent=hits.length+' gauge'+(hits.length===1?'':'s')+' match “'+q+'”';
+    listEl.innerHTML=hits.length
+      ?hits.slice(0,80).map(g=>gaugeRow(g,true)).join('')+(hits.length>80?'<div class="river-catch">… '+(hits.length-80)+' more — narrow the search</div>':'')
+      :'<div class="river-none">No BOM gauge matches “'+escapeHtml(q)+'”. Gauges are named by river and place, e.g. “Condamine River at Warwick”.</div>';
+  }
+
+  function renderFoot(){
+    const missing=(snap.products||[]).filter(p=>!p.ok);
+    footEl.innerHTML=(missing.length?'⚠️ BOM tables not read in this capture: '+
+        missing.map(p=>escapeHtml(p.state+' '+p.region)).join(', ')+'. Gauges there may be missing from this list.<br>':'')+
+      'River heights and flood warnings © Commonwealth of Australia, <b>Bureau of Meteorology</b>, from BOM’s data service. '+
+      'Flood classes are BOM’s; heights are each gauge’s latest reading, with its age. For anything operational, confirm on '+
+      '<a href="https://www.bom.gov.au/australia/flood/" target="_blank" rel="noopener">BOM’s flood warning pages ↗</a>.';
+  }
+
+  function render(){
+    if(!snap)return;
+    renderSummary();
+    renderWarnings();
+    const q=(filterEl&&filterEl.value||'').trim();
+    if(q.length>=2)renderSearch(q);else{countEl.textContent='';renderFlooding();}
+    renderFoot();
+  }
+
+  async function load(){
+    try{
+      const r=await fetch('/data/rivers.json',{cache:'no-cache'});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      snap=await r.json();
+      gauges=[];
+      (snap.groups||[]).forEach(g=>(g.stations||[]).forEach(s=>gauges.push(Object.assign({state:g.state,catchment:g.catchment},s))));
+      render();
+    }catch(e){
+      if(!snap){
+        summaryEl.innerHTML='<span class="warn">BOM river heights could not be loaded ('+escapeHtml(e.message)+').</span>';
+        listEl.innerHTML='<div class="river-none">Check <a href="https://www.bom.gov.au/australia/flood/" target="_blank" rel="noopener">BOM’s flood warning pages ↗</a> directly.</div>';
+      }
+    }
+  }
+  let t=null;
+  if(filterEl)filterEl.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(render,200);});
+  load();
+  setInterval(load,10*60*1000);
+})();
 </script>
 
 </body>
