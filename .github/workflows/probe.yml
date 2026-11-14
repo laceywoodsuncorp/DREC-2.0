@@ -1,0 +1,47 @@
+# Runs one probe on demand and keeps its findings.
+#
+# Diagnose runs every probe and takes ten minutes or more; a new question
+# usually needs one. The probe is chosen from a fixed list -- a choice
+# input, so nothing typed into the form reaches a shell.
+name: Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      probe:
+        description: 'Which probe to run'
+        required: true
+        type: choice
+        options:
+          - bom-rivers
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-${{ inputs.probe }}
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # What BOM publishes for machines about river heights and flooding,
+      # and its terms for using it.
+      - name: BOM river heights and flood products
+        if: ${{ inputs.probe == 'bom-rivers' }}
+        run: node scripts/probe-bom-rivers.mjs
+
+      - name: Keep the findings
+        if: always()
+        run: |
+          set -e
+          files=$(ls data/bom-terms.txt data/bom-fwo-list.txt data/bom-river-probe.json data/bom-samples/*.txt 2>/dev/null || true)
+          [ -n "$files" ] || { echo "nothing to keep"; exit 0; }
+          BRANCH="${{ github.ref_name }}" scripts/commit-data.sh "Record probe findings" $files
