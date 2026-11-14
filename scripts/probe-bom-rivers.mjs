@@ -5,33 +5,21 @@
    organises them by where flooding is occurring. Before anything is built
    this finds out:
 
-     1. BOM's own terms -- copyright/licence, disclaimer, the anonymous FTP
-        and data feed catalogues, robots.txt -- kept as text, because the
-        dashboard would republish the data and the terms decide how.
-     2. What the anonymous FTP flood directory (/anon/gen/fwo/) holds: the
+     1. What the anonymous FTP flood directory (/anon/gen/fwo/) holds: the
         full file list, and the products that look like river height
         tables or flood warnings, by state.
-     3. A sample of each candidate, so a parser is written against what the
+     2. A copy of each candidate, so a parser is written against what the
         files really contain.
 
-   The FTP directory is BOM's published route for automated access; the
-   web pages are read once each, for their terms, and nothing else is
-   taken from them.
+   The FTP directory is BOM's published route for automated access.
 
    Run: node scripts/probe-bom-rivers.mjs
-     writes data/bom-terms.txt, data/bom-fwo-list.txt, data/bom-river-probe.json,
-     data/bom-samples/<file>.txt */
+     writes data/bom-fwo-list.txt, data/bom-product-titles.tsv,
+     data/bom-river-probe.json, data/bom-samples/<file>.txt */
 import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 const UA = 'Mozilla/5.0 (compatible; NewsRadar/1.0; +https://drec-oncall-updates-site.lacey-wood.workers.dev)';
-const PAGES = [
-  'https://www.bom.gov.au/other/copyright.shtml',
-  'https://www.bom.gov.au/other/disclaimer.shtml',
-  'https://www.bom.gov.au/catalogue/anon-ftp.shtml',
-  'https://www.bom.gov.au/catalogue/data-feeds.shtml',
-  'https://www.bom.gov.au/robots.txt'
-];
 const FTP = 'ftp://ftp.bom.gov.au/anon/gen/fwo/';
 const report = { at: new Date().toISOString(), pages: {}, ftp: {}, samples: {} };
 
@@ -49,20 +37,12 @@ const curl = (args, max = 30) => {
   } catch (e) { return { error: String(e.stderr || e.message).slice(0, 300) }; }
 };
 
-let terms = '';
-for (const url of PAGES) {
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'text/html,text/plain' }, redirect: 'follow' });
-    const body = await res.text();
-    const t = /robots\.txt$/.test(url) ? body : text((/<main[\s\S]*?<\/main>/i.exec(body) || /<body[\s\S]*<\/body>/i.exec(body) || [body])[0]);
-    report.pages[url] = { status: res.status, finalUrl: res.url, chars: t.length };
-    terms += '\n\n==================== ' + url + ' (HTTP ' + res.status + ')\n' + t.slice(0, 30000);
-    console.log(url + '  ' + res.status + '  ' + t.length + ' chars');
-  } catch (e) { report.pages[url] = { error: e.message }; console.log(url + '  ' + e.message); }
-  await new Promise((r) => setTimeout(r, 1500));
-}
+/* BOM's website is not read. Asked once (14 Nov 2026), it answered every
+   page with a block notice saying automated users should stop and use the
+   anonymous FTP channel, subject to its copyright notice; that notice is
+   kept in data/bom-terms.txt. The dashboard's owner confirmed Suncorp holds
+   a BOM data agreement covering this use. */
 mkdirSync('data', { recursive: true });
-writeFileSync('data/bom-terms.txt', terms.trim() + '\n');
 
 const listing = curl(['--list-only', FTP], 60);
 if (typeof listing !== 'string') {
@@ -84,59 +64,47 @@ if (typeof listing !== 'string') {
   report.ftp = { files: files.length, byPrefix, leads: leads.length, leadSample: leads.slice(0, 400) };
   console.log('ftp ' + files.length + ' files, ' + leads.length + ' hydrology leads');
 
-  /* A sample of each product family: the distinct ID stems (IDQ60005,
-     IDN36500 ...), first file of each, capped. */
-  rmSync('data/bom-samples', { recursive: true, force: true });
-  mkdirSync('data/bom-samples', { recursive: true });
-  const stems = new Map();
-  for (const f of leads) {
-    const stem = (/^(ID[A-Z]\d{5})/.exec(f) || [f])[0];
-    if (!stems.has(stem)) stems.set(stem, f);
-  }
-  /* River height tables are the priority: within each state, the 6xxxx
-     family first. */
-  const pick = [...stems.values()].sort((a, b) => (/6\d{4}/.test(b) - /6\d{4}/.test(a)) || a.localeCompare(b)).slice(0, 60);
-  for (const f of pick) {
-    const body = curl([FTP + f], 30);
-    if (typeof body !== 'string') { report.samples[f] = body; continue; }
-    const isHtml = /<html|<table/i.test(body);
-    const sample = isHtml ? text(body) : body;
-    report.samples[f] = { bytes: body.length, kind: /<\?xml/.test(body) ? 'xml' : isHtml ? 'html' : 'text',
-      title: ((/<title[^>]*>([^<]{0,160})/i.exec(body) || /<(?:headline|title|productTitle)[^>]*>([^<]{0,160})/i.exec(body) || [])[1] || '').trim(),
-      head: sample.slice(0, 400) };
-    writeFileSync('data/bom-samples/' + f.replace(/[^\w.-]/g, '_') + '.txt', sample.slice(0, 12000));
-    console.log('  ' + f.padEnd(24) + String(body.length).padStart(8) + 'B  ' + report.samples[f].kind + '  ' + report.samples[f].title);
-  }
 }
-/* The title of every hydrology/warning product (series 2, 3 and 6),
-   from its first kilobyte only -- a ranged read, batched so one FTP
-   connection serves fifty files. That finds each state's "Latest River
-   Heights" tables and its flood warnings without downloading them all. */
+
+/* The title of every hydrology/warning product (series 2, 3 and 6), read
+   from the whole file -- they are 10-50 KB, and a ranged FTP read stalled
+   BOM's server for twelve minutes. Fifty files to a connection, each batch
+   time-limited. Every "Latest River Heights" table is kept in full, with
+   a few flood warnings per state, so the parser is written against them. */
 if (typeof listing === 'string') {
+  const { readFileSync } = await import('node:fs');
   const files = listing.split(/\r?\n/).map((s) => s.trim())
     .filter((f) => /^ID[NVQSWTDZ][236]\d{4}(\.amoc)?\.(html|txt|xml)$/.test(f));
-  const tmp = 'data/.bom-heads';
+  const tmp = 'data/.bom-files';
   rmSync(tmp, { recursive: true, force: true });
   mkdirSync(tmp, { recursive: true });
   for (let i = 0; i < files.length; i += 50) {
-    const args = ['-r', '0-1200'];
+    const args = ['--connect-timeout', '20'];
     for (const f of files.slice(i, i + 50)) args.push(FTP + f, '-o', tmp + '/' + f);
-    curl(args, 120);
+    const r = curl(args, 150);
+    console.log('  batch ' + (i / 50 + 1) + '/' + Math.ceil(files.length / 50) + (typeof r === 'string' ? '' : '  ' + r.error));
   }
+  rmSync('data/bom-samples', { recursive: true, force: true });
+  mkdirSync('data/bom-samples', { recursive: true });
   const rows = [];
+  const keptWarnings = {};
   for (const f of files) {
-    let head = '';
-    try { head = (await import('node:fs')).readFileSync(tmp + '/' + f, 'utf8'); } catch (e) { rows.push(f + '\t(not read)'); continue; }
-    let title = '';
+    let body = '';
+    try { body = readFileSync(tmp + '/' + f, 'utf8'); } catch (e) { rows.push(f + '\t(not read)'); continue; }
+    let title;
     if (/\.xml$/.test(f)) {
-      title = ((/<title>([^<]+)/i.exec(head) || /<text type="(?:warning_)?title">([^<]+)/i.exec(head) ||
-        /<product-type>([^<]+)/i.exec(head) || /<service>([^<]+)/i.exec(head) || [])[1] || '').trim();
-      if (!title) title = (/<(\w+)[\s>]/.exec(head.replace(/<\?xml[^>]*>/, '')) || [])[1] || '';
-      title = 'xml: ' + title;
+      title = 'xml: ' + ((/<title>([^<]+)/i.exec(body) || /<text type="(?:warning_)?title">([^<]+)/i.exec(body) ||
+        /<product-type>([^<]+)/i.exec(body) || /<service>([^<]+)/i.exec(body) || [])[1] || '').trim();
     } else {
-      title = text(head).replace(/^ID[A-Z]\d{5}\s*/, '').split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 2).join(' / ');
+      title = text(body.slice(0, 4000)).replace(/^ID[A-Z]\d{5}\s*/, '').split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 2).join(' / ');
     }
-    rows.push(f + '\t' + title.slice(0, 160));
+    rows.push(f + '\t' + String(body.length) + '\t' + title.slice(0, 160));
+    const state = f[2];
+    const isHeights = /river height/i.test(title);
+    const isWarning = /flood (warning|watch)|flood/i.test(title) && !isHeights;
+    if (isHeights || (isWarning && (keptWarnings[state] = (keptWarnings[state] || 0) + 1) <= 3)) {
+      writeFileSync('data/bom-samples/' + f + '.txt', body.slice(0, 200000));
+    }
   }
   rmSync(tmp, { recursive: true, force: true });
   writeFileSync('data/bom-product-titles.tsv', rows.join('\n') + '\n');
@@ -146,4 +114,4 @@ if (typeof listing === 'string') {
 }
 
 writeFileSync('data/bom-river-probe.json', JSON.stringify(report, null, 1) + '\n');
-console.log('\nwrote data/bom-terms.txt, data/bom-fwo-list.txt, data/bom-river-probe.json, data/bom-samples/');
+console.log('\nwrote data/bom-fwo-list.txt, data/bom-product-titles.tsv, data/bom-river-probe.json, data/bom-samples/');
