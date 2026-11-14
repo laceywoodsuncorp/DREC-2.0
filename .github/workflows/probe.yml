@@ -42,6 +42,6 @@ jobs:
         if: always()
         run: |
           set -e
-          files=$(ls data/bom-terms.txt data/bom-fwo-list.txt data/bom-river-probe.json data/bom-samples/*.txt 2>/dev/null || true)
+          files=$(ls data/bom-terms.txt data/bom-fwo-list.txt data/bom-river-probe.json data/bom-product-titles.tsv data/bom-samples/*.txt 2>/dev/null || true)
           [ -n "$files" ] || { echo "nothing to keep"; exit 0; }
           BRANCH="${{ github.ref_name }}" scripts/commit-data.sh "Record probe findings" $files

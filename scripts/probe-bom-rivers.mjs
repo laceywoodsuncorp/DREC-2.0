@@ -108,5 +108,42 @@ if (typeof listing !== 'string') {
     console.log('  ' + f.padEnd(24) + String(body.length).padStart(8) + 'B  ' + report.samples[f].kind + '  ' + report.samples[f].title);
   }
 }
+/* The title of every hydrology/warning product (series 2, 3 and 6),
+   from its first kilobyte only -- a ranged read, batched so one FTP
+   connection serves fifty files. That finds each state's "Latest River
+   Heights" tables and its flood warnings without downloading them all. */
+if (typeof listing === 'string') {
+  const files = listing.split(/\r?\n/).map((s) => s.trim())
+    .filter((f) => /^ID[NVQSWTDZ][236]\d{4}(\.amoc)?\.(html|txt|xml)$/.test(f));
+  const tmp = 'data/.bom-heads';
+  rmSync(tmp, { recursive: true, force: true });
+  mkdirSync(tmp, { recursive: true });
+  for (let i = 0; i < files.length; i += 50) {
+    const args = ['-r', '0-1200'];
+    for (const f of files.slice(i, i + 50)) args.push(FTP + f, '-o', tmp + '/' + f);
+    curl(args, 120);
+  }
+  const rows = [];
+  for (const f of files) {
+    let head = '';
+    try { head = (await import('node:fs')).readFileSync(tmp + '/' + f, 'utf8'); } catch (e) { rows.push(f + '\t(not read)'); continue; }
+    let title = '';
+    if (/\.xml$/.test(f)) {
+      title = ((/<title>([^<]+)/i.exec(head) || /<text type="(?:warning_)?title">([^<]+)/i.exec(head) ||
+        /<product-type>([^<]+)/i.exec(head) || /<service>([^<]+)/i.exec(head) || [])[1] || '').trim();
+      if (!title) title = (/<(\w+)[\s>]/.exec(head.replace(/<\?xml[^>]*>/, '')) || [])[1] || '';
+      title = 'xml: ' + title;
+    } else {
+      title = text(head).replace(/^ID[A-Z]\d{5}\s*/, '').split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 2).join(' / ');
+    }
+    rows.push(f + '\t' + title.slice(0, 160));
+  }
+  rmSync(tmp, { recursive: true, force: true });
+  writeFileSync('data/bom-product-titles.tsv', rows.join('\n') + '\n');
+  report.titles = rows.length;
+  console.log('titles for ' + rows.length + ' products; river heights:');
+  for (const r of rows.filter((x) => /river height/i.test(x))) console.log('  ' + r);
+}
+
 writeFileSync('data/bom-river-probe.json', JSON.stringify(report, null, 1) + '\n');
 console.log('\nwrote data/bom-terms.txt, data/bom-fwo-list.txt, data/bom-river-probe.json, data/bom-samples/');
