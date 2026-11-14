@@ -96,7 +96,7 @@ jobs:
       || github.event.schedule == '23 */6 * * *'
       || vars.CAPTURE_DRIVER != 'worker'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 9
     steps:
       - uses: actions/checkout@v4
       # The safety net only. If something captured in the last 25 minutes,
@@ -117,8 +117,18 @@ jobs:
       - name: Capture every state through the Worker's own code
         if: steps.fresh.outputs.skip != '1'
         run: node scripts/capture-outages.mjs
+      # BOM river heights and flood warnings, over BOM's anonymous FTP --
+      # which a Worker cannot speak, so it is captured here on the same
+      # schedule. Its own step, and allowed to fail: a BOM outage must not
+      # cost the electricity snapshot its commit.
+      - name: Capture BOM river heights and flood warnings
+        if: steps.fresh.outputs.skip != '1'
+        continue-on-error: true
+        timeout-minutes: 4
+        run: node scripts/capture-rivers.mjs
       - name: Commit the snapshot
         if: steps.fresh.outputs.skip != '1'
         run: |
           BRANCH="${{ github.ref_name }}" \
-            scripts/commit-data.sh "Capture outage snapshot" data/outages.json
+            scripts/commit-data.sh "Capture outage snapshot" data/outages.json \
+              $(ls data/rivers.json 2>/dev/null)
