@@ -633,22 +633,33 @@ const check = (n, c, x) => {
       await p.$eval('#riverList .river-gauge a', a => /^https:\/\/www\.bom\.gov\.au\/fwo\/IDQ\d{5}\/IDQ\d{5}\.\d+\.plt\.shtml$/.test(a.href)));
     check('the data is attributed to BOM', /Bureau of Meteorology/.test(await p.$eval('#riverFoot', e => e.innerText)));
 
-    /* The map: placed by station number from BOM's site files. In the
-       fixture Tummaville (041499) is in them and Yarramalong (541040), a
-       council ALERT gauge, is not. */
+    /* The map. In the fixture Tummaville (041499) is in BOM's site files,
+       so it is placed exactly; Yarramalong (541040), a council ALERT gauge,
+       is in none, so it is placed approximately -- between its neighbours
+       in BOM's table -- and has to look and read as approximate. Reported
+       from the dashboard: gauges in flood missing from the map. */
     const mapNote = await p.$eval('#riverMapNote', e => e.innerText);
-    check('the map says how many gauges in flood it can show', /1 of 2 gauges in flood are on the map/.test(mapNote), mapNote);
-    check('and names the one BOM publishes no location for', /no location for: Condamine River at Yarramalong/.test(mapNote), mapNote);
+    check('every gauge in flood is on the map', /2 of 2 gauges in flood are on the map/.test(mapNote), mapNote);
+    check('and the note says one of them is approximate, and why',
+      /1 approximately/.test(mapNote) && /BOM publishes no coordinates/.test(mapNote), mapNote);
+    const dashed = await p.$$eval('#riverMap .leaflet-overlay-pane path.river-approx', ps => ps.map(x => x.getAttribute('stroke-dasharray')));
+    check('the approximate one is drawn with a dashed ring, not as an exact dot', dashed.length === 1 && !!dashed[0], dashed);
     const flooded = await p.$$eval('#riverMap .leaflet-overlay-pane path', ps => ps.filter(x => /#c9a100/i.test(x.getAttribute('fill'))).length);
     check('the placed gauge in flood is drawn in its level\'s colour', flooded === 1, flooded);
     const tumRow = await p.$$eval('#riverList .river-gauge', es => es.map(e => e.innerText).find(t => /Tummaville/.test(t)));
     check('a gauge read since BOM\'s table says when BOM assessed its class', /class as of \d/.test(tumRow || ''), tumRow);
     const yarra = await p.$$eval('#riverList .river-gauge', es => es.map(e => e.innerText).find(t => /Yarramalong/.test(t)));
-    check('in the list, the unplaced one is marked "not on map"', /not on map/.test(yarra || ''), yarra);
+    check('in the list, its map button carries the ≈', /Map ≈/.test(yarra || '') && !/not on map/.test(yarra || ''), yarra);
+    await p.$$eval('#riverList .river-gauge', es => { const r = es.find(e => /Yarramalong/.test(e.innerText)); r.querySelector('.loc').click(); });
+    await p.waitForTimeout(500);
+    const apop = await p.$eval('#riverMap .leaflet-popup-content', e => e.innerText).catch(() => '');
+    check('and its popup says the position is approximate, and how it was placed',
+      /Approximate position/.test(apop) && /between the neighbouring gauges/.test(apop), apop);
     await p.$$eval('#riverList .river-gauge', es => { const r = es.find(e => /Tummaville/.test(e.innerText)); r.querySelector('.loc').click(); });
     await p.waitForTimeout(500);
     const pop = await p.$eval('#riverMap .leaflet-popup-content', e => e.innerText).catch(() => '');
     check('"📍 Map" on a row opens that gauge on the map', /Condamine River at Tummaville/.test(pop) && /minor/i.test(pop), pop);
+    check('an exactly-placed gauge makes no claim of being approximate', !/Approximate/.test(pop) && !/≈/.test(tumRow || ''), pop);
 
     /* Reported from the live page: the map drawn before its box had a size
        stayed at the widest zoom (Leaflet's zoom-out button disabled) instead
@@ -679,6 +690,15 @@ const check = (n, c, x) => {
     check('a search finds gauges below flood level too',
       hits.length > 2 && hits.every(h => /Tweed/i.test(h)) && hits.some(h => /below flood level/i.test(h)), hits.slice(0, 3));
     check('and counts them', /\d+ gauges match/.test(await p.$eval('#riverFilterCount', e => e.innerText)));
+    /* A gauge that cannot be placed even approximately is still said to be
+       missing, by name. Crabbes Creek's gauges are named for roads. */
+    await p.fill('#riverFilter', 'Crabbes');
+    await p.waitForTimeout(400);
+    const missing = await p.$eval('#riverMapNote', e => e.innerText);
+    check('a gauge that cannot be placed at all is named as not on the map',
+      /Not on the map/.test(missing) && /Crabbes Creek at/.test(missing), missing);
+    await p.fill('#riverFilter', 'Tweed');
+    await p.waitForTimeout(400);
     check('and the map shows the matches instead',
       /\d+ of \d+ matching gauges are on the map/.test(await p.$eval('#riverMapNote', e => e.innerText)), await p.$eval('#riverMapNote', e => e.innerText));
     await p.fill('#riverFilter', 'Condamine');

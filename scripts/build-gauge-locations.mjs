@@ -26,7 +26,9 @@ import { execFileSync } from 'node:child_process';
 
 const UA = 'Mozilla/5.0 (compatible; NewsRadar/1.0; +https://drec-oncall-updates-site.lacey-wood.workers.dev)';
 const IDM = 'ftp://ftp.bom.gov.au/anon/home/adfd/spatial/IDM00019.dbf';
+const IDM18 = 'ftp://ftp.bom.gov.au/anon/home/adfd/spatial/IDM00018.dbf';
 const ALF = 'ftp://ftp.bom.gov.au/anon2/home/ncc/metadata/sitelists/alf_All.txt';
+const STATIONS = 'ftp://ftp.bom.gov.au/anon2/home/ncc/metadata/sitelists/stations.zip';
 const OUT = 'data/river-gauge-locations.json';
 const TMP = 'data/.IDM00019.dbf';
 
@@ -64,6 +66,17 @@ export function readAlf(text) {
   return out;
 }
 
+/* BOM's current station list (stations.txt): station number first, then a
+   latitude and longitude further along the line. */
+export function readStations(text) {
+  const out = new Map();
+  for (const line of text.split(/\r?\n/)) {
+    const m = /^[\s"]*(\d{5,6})\b.*?(-\d{1,2}\.\d{2,})[\s,"]+(\d{3}\.\d{2,})/.exec(line);
+    if (m) out.set(m[1].padStart(6, '0'), [Number(m[2]), Number(m[3])]);
+  }
+  return out;
+}
+
 const stationId = (plot) => ((/\.(\d{5,7})\.plt/.exec(plot || '') || [])[1] || '').padStart(6, '0');
 const round = (x) => Math.round(x * 1e4) / 1e4;
 const inAustralia = (lat, lon) => lat < -9 && lat > -45 && lon > 110 && lon < 160;
@@ -78,6 +91,18 @@ if (import.meta.url === 'file://' + process.argv[1]) {
     if (/^\d{4,7}$/.test(id) && inAustralia(lat, lon)) { sites[id.padStart(6, '0')] = [round(lat), round(lon)]; fromIdm++; }
   }
   rmSync(TMP, { force: true });
+  /* IDM00018, BOM's flood forecast locations: the same shape, and a few
+     gauges IDM00019 lacks. */
+  let fromIdm18 = 0;
+  try {
+    get(IDM18, TMP);
+    for (const r of readDbf(readFileSync(TMP))) {
+      const id = String(r.ALT_REF || '').replace(/\.0+$/, '').padStart(6, '0');
+      const lat = Number(r.LAT), lon = Number(r.LON);
+      if (/^\d{6}$/.test(id) && id !== '000000' && !sites[id] && inAustralia(lat, lon)) { sites[id] = [round(lat), round(lon)]; fromIdm18++; }
+    }
+  } catch (e) { console.log('IDM00018 not read: ' + String(e.message).slice(0, 120)); }
+  rmSync(TMP, { force: true });
 
   /* The older list fills in only gauges that are in the current tables. */
   const current = new Set();
@@ -88,12 +113,24 @@ if (import.meta.url === 'file://' + process.argv[1]) {
   for (const [id, [lat, lon]] of readAlf(get(ALF))) {
     if (!sites[id] && current.has(id) && inAustralia(lat, lon)) { sites[id] = [round(lat), round(lon)]; fromAlf++; }
   }
+  /* BOM's current station list, for the handful the 2012 one lacks. */
+  let fromStations = 0;
+  try {
+    get(STATIONS, 'data/.stations.zip');
+    const text = execFileSync('unzip', ['-p', 'data/.stations.zip'], { encoding: 'latin1', maxBuffer: 64 * 1024 * 1024 });
+    for (const [id, [lat, lon]] of readStations(text)) {
+      if (!sites[id] && current.has(id) && inAustralia(lat, lon)) { sites[id] = [round(lat), round(lon)]; fromStations++; }
+    }
+  } catch (e) { console.log('stations.zip not read: ' + String(e.message).slice(0, 120)); }
+  rmSync('data/.stations.zip', { force: true });
   const placed = [...current].filter((id) => sites[id]).length;
   writeFileSync(OUT, JSON.stringify({ builtAt: Date.now(),
     sources: ['BOM IDM00019 river height observation sites (ftp.bom.gov.au/anon/home/adfd/spatial)',
       'BOM station list alf_All.txt (ftp.bom.gov.au/anon2/home/ncc/metadata/sitelists)'],
-    counts: { fromIdm00019: fromIdm, fromStationList: fromAlf, currentGauges: current.size, currentPlaced: placed },
+    counts: { fromIdm00019: fromIdm, fromIdm00018: fromIdm18, fromStationList: fromAlf, fromCurrentStations: fromStations,
+      currentGauges: current.size, currentPlaced: placed },
     sites }) + '\n');
-  console.log('IDM00019 sites: ' + fromIdm + '; from the station list: ' + fromAlf +
+  console.log('IDM00019 sites: ' + fromIdm + '; IDM00018: ' + fromIdm18 + '; from the 2012 station list: ' + fromAlf +
+    '; from the current station list: ' + fromStations +
     '; current gauges placed: ' + placed + '/' + current.size + '; wrote ' + OUT);
 }

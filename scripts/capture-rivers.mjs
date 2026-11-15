@@ -15,6 +15,7 @@
 import { writeFileSync, readFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { RIVER_HEIGHT_PRODUCTS, buildRiversSnapshot, parseLatestReadings } from './lib/bom-rivers.mjs';
+import { placeApproximately } from './lib/gauge-approx.mjs';
 
 const UA = 'Mozilla/5.0 (compatible; NewsRadar/1.0; +https://drec-oncall-updates-site.lacey-wood.workers.dev)';
 const FTP = 'ftp://ftp.bom.gov.au/anon/gen/fwo/';
@@ -69,11 +70,21 @@ for (const f of Object.values(newestObs)) {
   delete files[f];
 }
 const snap = buildRiversSnapshot(files, Date.now(), locations, latest);
+/* Gauges no published file locates are placed approximately -- from the
+   town in their name or between their neighbours -- and marked as such.
+   See scripts/lib/gauge-approx.mjs for the rules and measured accuracy. */
+const exact = snap.groups.reduce((n, g) => n + g.stations.filter((x) => x.at).length, 0);
+let approx = { town: 0, neighbour: 0, none: snap.counts.stations - exact };
+try {
+  approx = placeApproximately(snap.groups, JSON.parse(readFileSync('data/gazetteer.json', 'utf8')).items);
+} catch (e) { console.log('approximate placement skipped: ' + String(e.message).slice(0, 120)); }
+snap.counts.placed = { exact, town: approx.town, neighbour: approx.neighbour, none: approx.none };
 const read = snap.products.filter((p) => p.ok).length;
 console.log('river height tables read: ' + read + '/' + snap.products.length +
   '; gauges ' + snap.counts.stations + '; flooding: major ' + snap.counts.major + ', moderate ' +
   snap.counts.moderate + ', minor ' + snap.counts.minor + '; warnings ' + snap.warnings.length +
-  '; placed on the map ' + snap.groups.reduce((n, g) => n + g.stations.filter((x) => x.at).length, 0) +
+  '; on the map: ' + exact + ' exact, ' + approx.town + ' from their town, ' + approx.neighbour +
+  ' between neighbours, ' + approx.none + ' not placed' +
   '; newer than their table ' + snap.counts.newerThanTable + ' (from ' + Object.keys(newestObs).length + ' observation files)');
 for (const p of snap.products.filter((x) => !x.ok)) console.log('  missing ' + p.id + ' (' + p.state + ' ' + p.region + '): ' + p.error);
 if (!read) { console.log('nothing read -- keeping the previous ' + OUT); process.exit(0); }

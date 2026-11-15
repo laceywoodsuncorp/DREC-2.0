@@ -3543,8 +3543,8 @@ window.addEventListener('resize',()=>map.invalidateSize());
         (g.time?(old?'⚠ reading ':'')+ago(g.time):'no recent reading')+'</span>'+
       (g.level&&g.classAt?'<span class="classat" title="The height is the gauge\u2019s newer reading; the flood class is BOM\u2019s, from its table at '+
         clock(g.classAt)+'.">class as of '+clock(g.classAt)+'</span>':'')+
-      (g.at?'<button type="button" class="loc" data-gauge="'+g.idx+'" title="Show on the map">📍 Map</button>'
-        :(g.level?'<span class="unplaced" title="BOM publishes no location for this gauge">not on map</span>':''))+
+      (g.at?'<button type="button" class="loc" data-gauge="'+g.idx+'" title="'+(g.approx?'Show on the map — approximate position: '+APPROX_WHY[g.approx]:'Show on the map')+'">📍 Map'+(g.approx?' ≈':'')+'</button>'
+        :(g.level?'<span class="unplaced" title="BOM publishes no location for this gauge, and it could not be placed approximately either">not on map</span>':''))+
       (g.plot?'<a href="'+escapeHtml(bomUrl(g.plot))+'" target="_blank" rel="noopener">BOM graph ↗</a>':'')+
       '</div>';
   }
@@ -3557,6 +3557,16 @@ window.addEventListener('resize',()=>map.invalidateSize());
      by level; every other placed gauge is a faint dot, so the map shows
      where BOM is watching as well as where it is flooding. */
   const LEVEL_COLOUR={major:'#a3241b',moderate:'#c46a1c',minor:'#c9a100'};
+  /* BOM publishes coordinates for about half its river gauges. The rest --
+     council and agency gauges, which include many that flood -- are placed
+     approximately by the capture (scripts/lib/gauge-approx.mjs) and drawn
+     with a dashed ring, so an approximate dot is never read as exact. The
+     distances are measured, not hoped: gauges with known positions were
+     hidden and placed the same way. */
+  const APPROX_WHY={
+    t:'placed at the town in its name, usually within about 10 km',
+    n:'placed between the neighbouring gauges in BOM\u2019s table, usually within about 15 km but sometimes 50'
+  };
   let rMap=null,rBase=null,rTop=null,rCanvas=null,lastBounds=null,readerMoved=false,lastKey='';
   const markers={};
   function ensureRiverMap(){
@@ -3605,6 +3615,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       (g.time?' · '+ago(g.time):'')+
       (g.level&&g.classAt?'<br>Flood class from BOM\u2019s table at '+clock(g.classAt)+'; height is the newer reading':'')+
       (g.time&&Date.now()-g.time>OLD_READING_MS?'<br>⚠ Not reported for '+ago(g.time).replace(' ago','')+' — the gauge may have stopped':'')+
+      (g.approx?'<br><b>≈ Approximate position</b> — BOM publishes no coordinates for this gauge; '+APPROX_WHY[g.approx]+'.':'')+
       '<br>'+escapeHtml(where(g))+
       (g.plot?'<br><a href="'+escapeHtml(bomUrl(g.plot))+'" target="_blank" rel="noopener">BOM graph ↗</a>':'')+'</div></div>';
   }
@@ -3625,8 +3636,10 @@ window.addEventListener('resize',()=>map.invalidateSize());
     const placed=top.filter(g=>g.at);
     placed.forEach(g=>{
       const c=LEVEL_COLOUR[g.level];
-      markers[g.idx]=L.circleMarker(g.at,{radius:g.level==='major'?10:g.level==='moderate'?8:c?7:5,
-        color:'#fff',weight:2,fillColor:c||'#2f6f95',fillOpacity:.9}).bindPopup(()=>popupHtml(g)).addTo(rTop);
+      const col=c||'#2f6f95';
+      markers[g.idx]=L.circleMarker(g.at,Object.assign({radius:g.level==='major'?10:g.level==='moderate'?8:c?7:5,fillColor:col},
+        g.approx?{color:col,weight:2,dashArray:'4 3',fillOpacity:.3,className:'river-approx'}
+          :{color:'#fff',weight:2,fillOpacity:.9})).bindPopup(()=>popupHtml(g)).addTo(rTop);
     });
     lastBounds=placed.length?L.latLngBounds(placed.map(g=>g.at)).pad(0.3):null;
     /* A new search or a different set of flooding gauges is a new question,
@@ -3638,8 +3651,11 @@ window.addEventListener('resize',()=>map.invalidateSize());
     if(noteEl){
       const unplaced=top.filter(g=>!g.at);
       const what=focus?'matching gauges':'gauges in flood';
-      noteEl.innerHTML=(top.length?'<b>'+placed.length+' of '+top.length+'</b> '+what+' are on the map.':'')+
-        (unplaced.length?' Not on the map — BOM publishes no location for: '+
+      const approx=placed.filter(g=>g.approx);
+      noteEl.innerHTML=(top.length?'<b>'+placed.length+' of '+top.length+'</b> '+what+' are on the map'+
+          (approx.length?', <b>'+approx.length+' approximately</b> (dashed ring ≈): BOM publishes no coordinates for '+
+            (approx.length===1?'it, so it is':'them, so they are')+' placed from the town in the gauge\u2019s name or between neighbouring gauges':'')+'.':'')+
+        (unplaced.length?' Not on the map — no location published and none could be estimated: '+
           escapeHtml(unplaced.slice(0,8).map(g=>g.name).join('; '))+(unplaced.length>8?'; …':'')+'.':'')+
         (focus?'':'<span class="key" style="background:'+LEVEL_COLOUR.major+'"></span>Major'+
           '<span class="key" style="background:'+LEVEL_COLOUR.moderate+'"></span>Moderate'+
