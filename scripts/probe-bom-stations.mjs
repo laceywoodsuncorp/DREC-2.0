@@ -21,8 +21,6 @@ import { writeFileSync, readFileSync, readdirSync, mkdirSync, rmSync, statSync }
 import { execFileSync } from 'node:child_process';
 
 const UA = 'Mozilla/5.0 (compatible; NewsRadar/1.0; +https://drec-oncall-updates-site.lacey-wood.workers.dev)';
-const FWO = 'ftp://ftp.bom.gov.au/anon/gen/fwo/';
-const SITELISTS = 'ftp://ftp.bom.gov.au/anon/home/ncc/metadata/sitelists/';
 const TMP = 'data/.bom-stations';
 /* Station numbers from graph links in data/rivers.json, with names to
    recognise them by. */
@@ -38,76 +36,80 @@ const report = { at: new Date().toISOString(), files: {}, sitelists: null, hits:
 rmSync(TMP, { recursive: true, force: true });
 mkdirSync(TMP, { recursive: true });
 
-const listing = curl(['--list-only', FWO], 60);
-if (typeof listing !== 'string') { console.log('listing failed', listing.error); process.exit(0); }
-const names = listing.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+/* First pass (15 Nov 2026), kept here as its finding: the flood directory
+   has no coordinates. Its .hcs files are the gauges' raw readings keyed by
+   the same station numbers (IndexNo, SensorType, SiteId, time, value...),
+   its .tgz bundles are weather observations and forecast pages, and
+   /anon/home/ncc/metadata/sitelists/ answers "permission denied".
 
-/* Newest file of each .hcs stem, every .tgz, and the series-6 XML that is
-   not the weather observations. Queensland and NSW only for the .hcs --
-   the known gauges are there -- to keep the download small. */
-const newest = {};
-for (const n of names.filter((x) => /^ID[QN]659\d\d.*\.hcs$/.test(x))) {
-  const stem = n.slice(0, 8);
-  if (!newest[stem] || n > newest[stem]) newest[stem] = n;
-}
-const want = [...Object.values(newest), ...names.filter((x) => /\.tgz$/.test(x) && /^ID[QN]/.test(x)),
-  ...names.filter((x) => /^ID[NQ]6\d{4}\.xml$/.test(x) && !/60920/.test(x))];
-const args = ['--parallel', '--parallel-max', '3'];
-for (const f of want) args.push(FWO + f, '-o', TMP + '/' + f);
-curl(args, 300);
-
+   Second pass: BOM's station list at its other published path, and public
+   ArcGIS layers of flood gauges. */
 const texts = {};
-for (const f of want) {
-  const p = TMP + '/' + f;
-  let size = 0;
-  try { size = statSync(p).size; } catch (e) { report.files[f] = { error: 'not downloaded' }; continue; }
-  const entry = { bytes: size };
-  if (/\.tgz$/.test(f)) {
+const SITELISTS2 = 'ftp://ftp.bom.gov.au/anon2/home/ncc/metadata/sitelists/';
+const sl = curl(['--list-only', SITELISTS2], 60);
+report.sitelists = typeof sl === 'string' ? { files: sl.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) } : sl;
+console.log('anon2 sitelists: ' + JSON.stringify(report.sitelists).slice(0, 300));
+if (typeof sl === 'string') {
+  for (const f of report.sitelists.files.filter((x) => /\.(zip|txt|csv)$/i.test(x)).slice(0, 4)) {
+    const out = TMP + '/' + f;
+    curl([SITELISTS2 + f, '-o', out], 180);
     try {
-      const list = execFileSync('tar', ['-tzf', p], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).split('\n').filter(Boolean);
-      entry.members = list.length; entry.sample = list.slice(0, 15);
-      const dir = TMP + '/' + f + '.d';
-      mkdirSync(dir, { recursive: true });
-      execFileSync('tar', ['-xzf', p, '-C', dir]);
-      /* Text members only, a few, so the search below can read them. */
-      for (const m of list.filter((x) => /\.(txt|csv|xml|json|kml|dat)$/i.test(x)).slice(0, 20)) {
-        try { texts[f + ':' + m] = readFileSync(dir + '/' + m, 'utf8'); } catch (e) { /* skip */ }
+      if (/\.zip$/i.test(f)) {
+        const dir = out + '.d';
+        mkdirSync(dir, { recursive: true });
+        execFileSync('unzip', ['-o', '-q', out, '-d', dir]);
+        for (const m of readdirSync(dir)) {
+          const t = readFileSync(dir + '/' + m, 'latin1');
+          texts['anon2:' + f + ':' + m] = t;
+          report.files['anon2:' + f + ':' + m] = { bytes: t.length, head: t.slice(0, 1500) };
+          console.log('  ' + f + ':' + m + ' ' + t.length + 'B');
+        }
+      } else {
+        const t = readFileSync(out, 'latin1');
+        texts['anon2:' + f] = t;
+        report.files['anon2:' + f] = { bytes: t.length, head: t.slice(0, 1500) };
+        console.log('  ' + f + ' ' + t.length + 'B');
       }
-    } catch (e) { entry.error = 'tar: ' + String(e.message).slice(0, 120); }
-  } else {
-    const t = readFileSync(p, 'utf8');
-    texts[f] = t;
-    entry.head = t.slice(0, 1500);
+    } catch (e) { report.files['anon2:' + f] = { error: String(e.message).slice(0, 160) }; }
   }
-  report.files[f] = entry;
-  console.log(f.padEnd(34) + String(size).padStart(10) + 'B' + (entry.members ? '  ' + entry.members + ' members' : ''));
 }
 
-/* BOM's site lists: listed, and the small ones read. */
-const sl = curl(['--list-only', SITELISTS], 60);
-if (typeof sl === 'string') {
-  const files = sl.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-  report.sitelists = { files };
-  console.log('sitelists: ' + files.join(', '));
-  for (const f of files.filter((x) => /\.(txt|csv)$/i.test(x)).slice(0, 6)) {
-    const t = curl([SITELISTS + f], 120);
-    if (typeof t === 'string') { texts['sitelists:' + f] = t; report.files['sitelists:' + f] = { bytes: t.length, head: t.slice(0, 1500) }; }
+/* Public ArcGIS layers of flood or river gauges. The search API is
+   anonymous; what is recorded is each candidate's title, owner, URL and
+   the fields of its first layer, so a match on BOM station numbers can be
+   judged before anything is built on it. */
+report.arcgis = [];
+const Q = '(title:"flood gauge" OR title:"flood gauges" OR title:"river gauge" OR title:"river height" OR title:"flood warning" OR title:"stream gauge") AND type:"Feature Service"';
+try {
+  const res = await fetch('https://www.arcgis.com/sharing/rest/search?f=json&num=60&q=' + encodeURIComponent(Q), { headers: { 'User-Agent': UA } });
+  const j = await res.json();
+  for (const it of (j.results || [])) {
+    const row = { title: it.title, owner: it.owner, url: it.url, id: it.id, modified: it.modified && new Date(it.modified).toISOString() };
+    if (it.url) {
+      try {
+        const r0 = await fetch(it.url.replace(/\/?$/, '') + '/0?f=json', { headers: { 'User-Agent': UA } });
+        const l0 = await r0.json();
+        row.fields = (l0.fields || []).map((x) => x.name).slice(0, 40);
+        row.geometryType = l0.geometryType;
+        /* Does any station-ish field hold a known BOM number? */
+        const idField = (l0.fields || []).map((x) => x.name).find((n) => /station|site|gauge|bom|awrc|id/i.test(n) && !/objectid|fid/i.test(n));
+        if (idField) {
+          const where = encodeURIComponent(idField + " IN ('540568','041499','558018','058167','540143')");
+          const r1 = await fetch(it.url.replace(/\/?$/, '') + '/0/query?f=json&outFields=*&returnGeometry=true&outSR=4326&where=' + where, { headers: { 'User-Agent': UA } });
+          const q1 = await r1.json();
+          row.idField = idField;
+          row.matches = (q1.features || []).length;
+          row.sample = (q1.features || []).slice(0, 2);
+          row.queryError = q1.error && q1.error.message;
+        }
+        const rc = await fetch(it.url.replace(/\/?$/, '') + '/0/query?f=json&where=1%3D1&returnCountOnly=true', { headers: { 'User-Agent': UA } });
+        row.count = (await rc.json()).count;
+      } catch (e) { row.error = String(e.message).slice(0, 120); }
+    }
+    report.arcgis.push(row);
+    console.log('arcgis: ' + (row.matches ? 'MATCH ' + row.matches + ' ' : '') + row.title + ' | ' + row.owner + ' | ' + row.count + ' features | ' + (row.idField || '') + ' | ' + row.url);
   }
-  for (const f of files.filter((x) => /\.zip$/i.test(x)).slice(0, 2)) {
-    const out = TMP + '/' + f;
-    curl([SITELISTS + f, '-o', out], 180);
-    try {
-      const dir = out + '.d';
-      mkdirSync(dir, { recursive: true });
-      execFileSync('unzip', ['-o', '-q', out, '-d', dir]);
-      for (const m of readdirSync(dir)) {
-        const t = readFileSync(dir + '/' + m, 'utf8');
-        texts['sitelists:' + f + ':' + m] = t;
-        report.files['sitelists:' + f + ':' + m] = { bytes: t.length, head: t.slice(0, 1500) };
-      }
-    } catch (e) { report.files['sitelists:' + f] = { error: String(e.message).slice(0, 160) }; }
-  }
-} else report.sitelists = sl;
+} catch (e) { report.arcgis = { error: e.message }; }
 
 /* Where do the known station numbers appear, and with what around them? */
 for (const [src, t] of Object.entries(texts)) {
