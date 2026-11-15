@@ -354,6 +354,10 @@
   .crowd-badge{font-size:.64rem;font-weight:700;color:#a06000;background:#fff3d6;padding:3px 8px;border-radius:999px}
   /* ---- river heights ---- */
   .tile-rivers{margin-top:24px}
+  .river-refresh{padding:10px 24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .river-refresh:has(#riverRefresh[hidden]):has(#riverRefreshNote[hidden]){display:none}
+  .river-refresh-note{font-size:.75rem;color:#4a5a5a}
+  .river-refresh-note.bad{color:#8a2f14}
   .river-summary{padding:12px 24px;display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;
     font-size:.82rem;color:#4a5a5a;border-bottom:1px solid #eef1ee}
   .river-summary b{font-size:1.15rem;color:var(--heritage-green);margin-right:4px}
@@ -646,6 +650,10 @@
   <div class="tile-head">
     <h2>🌊 River Heights &amp; Flooding</h2>
     <div class="src">Every <b>Bureau of Meteorology</b> river gauge, organised by flood level: current flood warnings first, then each gauge BOM classes as in flood, worst first. Search to find any river, creek or town.</div>
+  </div>
+  <div class="river-refresh">
+    <button type="button" class="scrape-btn" id="riverRefresh" hidden>🔄 Refresh from BOM</button>
+    <span class="river-refresh-note" id="riverRefreshNote" hidden></span>
   </div>
   <div class="river-summary" id="riverSummary"><span>Loading BOM river heights…</span></div>
   <div class="river-warnings" id="riverWarnings"></div>
@@ -1387,7 +1395,7 @@
      hand, and a mismatch has repeatedly been mistaken for a code fault -- so
      the page checks and says so rather than silently running against an old
      Worker. */
-  const EXPECTED_WORKER_BUILD='2026-10-19-poafeed';
+  const EXPECTED_WORKER_BUILD='2026-11-15-refresh';
   /* Which of the two is behind, rather than assuming.
   
      Both the page and the Worker carry a build stamp and the page warns when
@@ -3624,7 +3632,73 @@ window.addEventListener('resize',()=>map.invalidateSize());
   }
   let t=null;
   if(filterEl)filterEl.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(render,200);});
+
+  /* Refresh on demand. The page cannot start a capture itself -- that
+     needs a GitHub token, which must never reach a browser -- so it asks
+     the Worker (/api/capture), which holds the token and allows one run
+     per few minutes. The capture is the same one the schedule runs
+     (electricity and rivers together), about a minute, then a few more
+     for the site to redeploy with the new file; the page watches for it
+     and redraws when it lands. The button only shows where the Worker has
+     a token to do this with. */
+  const refreshBtn=document.getElementById('riverRefresh');
+  const refreshNote=document.getElementById('riverRefreshNote');
+  const say=(text,bad)=>{
+    if(!refreshNote)return;
+    if(!text){refreshNote.hidden=true;return;}
+    refreshNote.textContent=text;refreshNote.classList.toggle('bad',!!bad);refreshNote.hidden=false;
+  };
+  const mins=(s)=>Math.max(1,Math.ceil(s/60))+' min';
+  function showButton(st){
+    if(!refreshBtn)return;
+    if(!st||!st.configured){refreshBtn.hidden=true;return;}
+    refreshBtn.hidden=false;
+    const wait=st.cooldownSeconds||0;
+    refreshBtn.disabled=wait>0;
+    refreshBtn.textContent=wait>0?'🔄 Refreshed recently':'🔄 Refresh from BOM';
+    refreshBtn.title=wait>0?'A capture was started recently. Available again in '+mins(wait)+'.'
+      :'Captures the latest BOM river heights and flood warnings now, instead of waiting for the next scheduled capture.';
+  }
+  async function checkButton(){
+    try{const r=await fetch('/api/capture',{cache:'no-store'});showButton(await r.json());}
+    catch(e){if(refreshBtn)refreshBtn.hidden=true;}
+  }
+  let watching=null;
+  function watchForCapture(since){
+    clearInterval(watching);
+    const started=Date.now();
+    watching=setInterval(async()=>{
+      await load();
+      if(snap&&snap.capturedAt>since){
+        clearInterval(watching);
+        say('Updated with BOM readings captured '+ago(snap.capturedAt)+'.');
+        checkButton();
+      }else if(Date.now()-started>12*60e3){
+        clearInterval(watching);
+        say('The capture was started but its data has not appeared yet. It may still be deploying; this section reloads itself every 10 minutes.',true);
+        checkButton();
+      }
+    },30e3);
+  }
+  if(refreshBtn)refreshBtn.addEventListener('click',async()=>{
+    refreshBtn.disabled=true;
+    say('Starting a capture…');
+    try{
+      const r=await fetch('/api/capture',{method:'POST'});
+      const b=await r.json().catch(()=>({}));
+      if(r.ok&&b.ok){
+        say('Capturing the latest from BOM — new readings should appear here in about 3–5 minutes.');
+        refreshBtn.textContent='🔄 Refreshing…';
+        watchForCapture(snap?snap.capturedAt:0);
+      }else{
+        say(b.error||('The refresh could not be started (HTTP '+r.status+').'),true);
+        checkButton();
+      }
+    }catch(e){say('The refresh could not be started: '+e.message,true);checkButton();}
+  });
+
   load();
+  checkButton();
   setInterval(load,10*60*1000);
 })();
 </script>

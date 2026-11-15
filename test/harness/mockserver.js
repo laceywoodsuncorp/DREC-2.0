@@ -151,6 +151,16 @@ const server = http.createServer((req, res) => {
     if (mode === 'fail') return send(502, { ok: false, error: 'GitHub refused the request (HTTP 404).' });
     return send(202, { ok: true, started: true });
   }
+  /* The capture refresh button: capture=off (no token), cooldown, fail. */
+  if (u.pathname === '/api/capture') {
+    const mode = u.searchParams.get('capture') || 'ready';
+    if (mode === 'off') return send(200, { configured: false, cooldownSeconds: 0 });
+    if (req.method !== 'POST') {
+      return send(200, { configured: true, cooldownSeconds: mode === 'cooldown' ? 240 : 0, cooldownTotalSeconds: 300 });
+    }
+    if (mode === 'fail') return send(502, { ok: false, error: 'GitHub refused the request (HTTP 404).' });
+    return send(202, { ok: true, started: true });
+  }
   if (u.pathname === '/api/outages') {
     if (sc === 'down') return send(502, 'gateway', 'text/plain');
     const nsw = statePayload(sc);

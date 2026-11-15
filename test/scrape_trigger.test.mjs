@@ -87,6 +87,61 @@ console.log('\n== GitHub refusing is reported, not swallowed ==');
   check('with the likely cause named',/token|workflow/i.test(b.error),b.error);
 }
 
+/* The capture refresh: the same guarantees, pointed at capture-outages.yml,
+   which writes both the electricity snapshot and BOM river heights. */
+const cpost=(env)=>worker.fetch(new Request('https://x.test/api/capture',{method:'POST'}),env,{waitUntil:()=>{}});
+const cget=(env)=>worker.fetch(new Request('https://x.test/api/capture'),env,{waitUntil:()=>{}});
+/* The block above left GitHub answering 404; back to accepting. */
+globalThis.fetch=async(u,init)=>{calls.push({url:String(u),init});return new Response(null,{status:204});};
+
+console.log('\n== capture refresh: nothing without a token ==');
+{
+  store.clear();calls=[];
+  const r=await cpost({ASSETS}); const b=await r.json();
+  check('refuses with 503',r.status===503&&b.configured===false,[r.status,b]);
+  check('names the secret an operator needs',/GITHUB_DISPATCH_TOKEN/.test(b.error),b.error);
+  check('and never called GitHub',calls.length===0,calls.length);
+  check('status says the button should stay hidden',(await (await cget({ASSETS})).json()).configured===false);
+}
+
+console.log('\n== capture refresh: POST dispatches the capture ==');
+{
+  store.clear();calls=[];
+  const r=await cpost({ASSETS,GITHUB_DISPATCH_TOKEN:'dispatch-secret'}); const b=await r.json();
+  check('accepted',r.status===202&&b.ok===true,[r.status,b]);
+  check('dispatches capture-outages.yml on this repository',
+    /repos\/laceywoodsuncorp\/DREC-2\.0\/actions\/workflows\/capture-outages\.yml\/dispatches$/.test(calls[0].url),calls[0].url);
+  check('on the dashboard\'s branch',JSON.parse(calls[0].init.body).ref==='claude/news-feed-loading-yx55qa',calls[0].init.body);
+  check('with no inputs a caller could shape',JSON.stringify(JSON.parse(calls[0].init.body).inputs)==='{}',calls[0].init.body);
+  check('the token goes only in the header',calls[0].init.headers.Authorization==='Bearer dispatch-secret'
+    &&!JSON.stringify(b).includes('dispatch-secret'),b);
+}
+
+console.log('\n== capture refresh: GET starts nothing, and the cooldown holds ==');
+{
+  store.clear();calls=[];
+  const env={ASSETS,GITHUB_DISPATCH_TOKEN:'t'};
+  await cget(env);
+  check('no dispatch from a GET',calls.length===0,calls.length);
+  await cpost(env);
+  const again=await cpost(env); const b=await again.json();
+  check('a second POST inside the cooldown is refused',again.status===429&&b.cooldownSeconds>0,[again.status,b]);
+  check('and only one run started',calls.length===1,calls.length);
+  const st=await (await cget(env)).json();
+  check('status reports the wait',st.configured===true&&st.cooldownSeconds>0,st);
+  /* Separate from the scraper's cooldown: one button does not lock the other. */
+  calls=[];
+  const sr=await post({ASSETS,SCRAPE_TOKEN:'t'});
+  check('the scraper button is not blocked by it',sr.status===202,sr.status);
+}
+
+console.log('\n== capture refresh: either dispatch token will do ==');
+{
+  store.clear();calls=[];
+  const r=await cpost({ASSETS,SCRAPE_TOKEN:'scrape-secret'});
+  check('SCRAPE_TOKEN alone is enough',r.status===202&&calls[0].init.headers.Authorization==='Bearer scrape-secret',r.status);
+}
+
 console.log('\n----------------------------------------');
 console.log('passed: '+pass+'   failed: '+fail);
 process.exit(fail?1:0);

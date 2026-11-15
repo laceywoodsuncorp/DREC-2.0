@@ -647,6 +647,41 @@ const check = (n, c, x) => {
     check('no page errors', p._errs.length === 0, p._errs);
     await p.close();
   }
+  console.log('\n== refreshing river heights on demand ==');
+  {
+    const p = await open('rivers=major&capture=ready');
+    await p.waitForTimeout(600);
+    check('with a dispatch token, the refresh button shows', await p.$eval('#riverRefresh', b => !b.hidden && !b.disabled));
+    await p.click('#riverRefresh');
+    await p.waitForTimeout(500);
+    const note = await p.$eval('#riverRefreshNote', e => e.innerText);
+    check('a click starts a capture and says how long it takes', /3.5 minutes/.test(note), note);
+    check('and the button cannot be pressed again meanwhile', await p.$eval('#riverRefresh', b => b.disabled));
+    await p.close();
+  }
+  {
+    const p = await open('rivers=major&capture=off');
+    await p.waitForTimeout(600);
+    check('without a token there is no button to press', await p.$eval('#riverRefresh', b => b.hidden));
+    await p.close();
+  }
+  {
+    const p = await open('rivers=major&capture=cooldown');
+    await p.waitForTimeout(600);
+    check('inside the cooldown the button is shown but disabled, with the wait',
+      await p.$eval('#riverRefresh', b => !b.hidden && b.disabled && /4 min/.test(b.title)));
+    await p.close();
+  }
+  {
+    const p = await open('rivers=major&capture=fail');
+    await p.waitForTimeout(600);
+    await p.click('#riverRefresh');
+    await p.waitForTimeout(500);
+    const note = await p.$eval('#riverRefreshNote', e => ({ t: e.innerText, bad: e.classList.contains('bad') }));
+    check('a refused refresh says why', note.bad && /HTTP 404/.test(note.t), note);
+    check('without breaking the page', p._errs.length === 0, p._errs);
+    await p.close();
+  }
   {
     const p = await open('rivers=quiet');
     await p.waitForTimeout(600);

@@ -465,7 +465,7 @@ const NEWS_FEEDS = [
    versa) has repeatedly looked like a code bug from the outside -- the page
    can now say which it is instead. Bump this whenever the news pipeline
    changes in a way the page depends on. */
-const WORKER_BUILD = '2026-10-19-poafeed';
+const WORKER_BUILD = '2026-11-15-refresh';
 
 /* Deliberately much wider than the 24h the page prefers to display. The page
    falls back to older headlines when nothing recent is available rather than
@@ -4559,58 +4559,34 @@ function scrapeConfig(env) {
   };
 }
 
-async function scrapeCooldownLeft() {
-  const marker = await readSharedCache(SCRAPE_MARKER_URL);
+async function cooldownLeft(markerUrl, totalS) {
+  const marker = await readSharedCache(markerUrl);
   if (!marker) return 0;
-  const left = Math.round(SCRAPE_COOLDOWN_S - marker.ageSeconds);
+  const left = Math.round(totalS - marker.ageSeconds);
   return left > 0 ? left : 0;
 }
+const scrapeCooldownLeft = () => cooldownLeft(SCRAPE_MARKER_URL, SCRAPE_COOLDOWN_S);
 
-/* GET -- what the button should render as, without starting anything. */
-async function handleScrapeStatus(env) {
-  const { token } = scrapeConfig(env);
-  const cooldown = await scrapeCooldownLeft();
-  return new Response(JSON.stringify({
-    configured: !!token,
-    cooldownSeconds: cooldown,
-    cooldownTotalSeconds: SCRAPE_COOLDOWN_S
-  }), { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
-}
+const pageReply = (status, body) => new Response(JSON.stringify(body), {
+  status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+});
 
-/* POST -- asks GitHub to run the workflow. */
-async function handleScrapeRun(request, env) {
-  const { token, repo, ref } = scrapeConfig(env);
-  const reply = (status, body) => new Response(JSON.stringify(body), {
-    status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
-  });
-
-  if (!token) {
-    return reply(503, { ok: false, configured: false,
-      error: 'The refresh button is not configured on this deployment. An operator needs to set the SCRAPE_TOKEN secret.' });
-  }
-
-  const cooldown = await scrapeCooldownLeft();
+/* Starting a workflow from a button on the page: one path for every such
+   button, so each gets the same guarantees -- the token stays in the
+   Worker and never in a response, nothing starts without a configured
+   token, and a cooldown claimed BEFORE dispatching (two clicks arriving
+   together would otherwise both get through) caps runs at one per window. */
+async function dispatchFromPage(spec) {
+  const { token, repo, ref, workflow, inputs, markerUrl, cooldownS, unconfigured, started } = spec;
+  if (!token) return pageReply(503, { ok: false, configured: false, error: unconfigured });
+  const cooldown = await cooldownLeft(markerUrl, cooldownS);
   if (cooldown > 0) {
-    return reply(429, { ok: false, cooldownSeconds: cooldown,
+    return pageReply(429, { ok: false, cooldownSeconds: cooldown,
       error: 'A capture was started recently. Try again in ' + Math.ceil(cooldown / 60) + ' minute(s).' });
   }
+  await writeSharedCache(markerUrl, String(Date.now()), 'text/plain');
 
-  let only = '';
-  try {
-    const body = await request.json();
-    /* Only ever a list of state codes we know, so nothing a caller sends
-       reaches the workflow as-is. */
-    if (body && typeof body.only === 'string') {
-      only = body.only.split(',').map((x) => x.trim().toLowerCase())
-        .filter((x) => OUTAGE_STATES.indexOf(x) !== -1).join(',');
-    }
-  } catch (e) { /* no body is fine -- it means every state */ }
-
-  /* Claim the cooldown before dispatching, not after: two clicks arriving
-     together would otherwise both get through. */
-  await writeSharedCache(SCRAPE_MARKER_URL, String(Date.now()), 'text/plain');
-
-  const url = 'https://api.github.com/repos/' + repo + '/actions/workflows/' + SCRAPE_WORKFLOW + '/dispatches';
+  const url = 'https://api.github.com/repos/' + repo + '/actions/workflows/' + workflow + '/dispatches';
   let res;
   try {
     res = await fetch(url, {
@@ -4622,25 +4598,72 @@ async function handleScrapeRun(request, env) {
         'User-Agent': 'NewsRadar-Dashboard',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ ref, inputs: only ? { only } : {} })
+      body: JSON.stringify({ ref, inputs: inputs || {} })
     });
   } catch (err) {
-    return reply(502, { ok: false, error: 'Could not reach GitHub: ' + err.message });
+    return pageReply(502, { ok: false, error: 'Could not reach GitHub: ' + err.message });
   }
-
-  if (res.status === 204) {
-    return reply(202, { ok: true, started: true, only: only || 'all states',
-      note: 'The capture takes a few minutes, then a few more to deploy.' });
-  }
+  if (res.status === 204) return pageReply(202, Object.assign({ ok: true, started: true }, started));
 
   /* GitHub's own reason, trimmed -- a 404 here almost always means the token
      cannot see the repo or the workflow is not on that branch, and saying so
      saves a long hunt. The token is never echoed. */
   const detail = (await res.text().catch(() => '')).slice(0, 300);
-  return reply(502, { ok: false,
+  return pageReply(502, { ok: false,
     error: 'GitHub refused the request (HTTP ' + res.status + ').'
       + (res.status === 404 ? ' The token may not have access to this repository, or the workflow may not exist on branch ' + ref + '.' : ''),
     detail });
+}
+
+/* GET -- what the button should render as, without starting anything. */
+async function handleScrapeStatus(env) {
+  const { token } = scrapeConfig(env);
+  const cooldown = await scrapeCooldownLeft();
+  return pageReply(200, { configured: !!token, cooldownSeconds: cooldown, cooldownTotalSeconds: SCRAPE_COOLDOWN_S });
+}
+
+/* POST -- asks GitHub to run the scraper. */
+async function handleScrapeRun(request, env) {
+  const { token, repo, ref } = scrapeConfig(env);
+  let only = '';
+  try {
+    const body = await request.json();
+    /* Only ever a list of state codes we know, so nothing a caller sends
+       reaches the workflow as-is. */
+    if (body && typeof body.only === 'string') {
+      only = body.only.split(',').map((x) => x.trim().toLowerCase())
+        .filter((x) => OUTAGE_STATES.indexOf(x) !== -1).join(',');
+    }
+  } catch (e) { /* no body is fine -- it means every state */ }
+  return dispatchFromPage({ token, repo, ref, workflow: SCRAPE_WORKFLOW, inputs: only ? { only } : {},
+    markerUrl: SCRAPE_MARKER_URL, cooldownS: SCRAPE_COOLDOWN_S,
+    unconfigured: 'The refresh button is not configured on this deployment. An operator needs to set the SCRAPE_TOKEN secret.',
+    started: { only: only || 'all states', note: 'The capture takes a few minutes, then a few more to deploy.' } });
+}
+
+/* The capture -- electricity outages and BOM river heights, both written
+   by capture-outages.yml -- run on demand from the page's refresh button.
+   No browser, so it is quick (45 seconds measured) and cheap: one billed
+   Actions minute. The cooldown is shorter than the scraper's for that
+   reason. Either dispatch token will do -- GITHUB_DISPATCH_TOKEN, which the
+   scheduled dispatcher uses, or SCRAPE_TOKEN; both are Worker secrets for
+   this repository's Actions and nothing else. */
+const CAPTURE_REFRESH_COOLDOWN_S = 5 * 60;
+const CAPTURE_REFRESH_MARKER_URL = 'https://newsradar-internal-cache.example/capture-refresh-last-run';
+function captureRefreshToken(env) {
+  return (env && (env.GITHUB_DISPATCH_TOKEN || env.SCRAPE_TOKEN)) || '';
+}
+async function handleCaptureRefresh(request, env) {
+  if (!request || request.method !== 'POST') {
+    return pageReply(200, { configured: !!captureRefreshToken(env),
+      cooldownSeconds: await cooldownLeft(CAPTURE_REFRESH_MARKER_URL, CAPTURE_REFRESH_COOLDOWN_S),
+      cooldownTotalSeconds: CAPTURE_REFRESH_COOLDOWN_S });
+  }
+  return dispatchFromPage({ token: captureRefreshToken(env), repo: CAPTURE_DISPATCH.repo, ref: CAPTURE_DISPATCH.ref,
+    workflow: CAPTURE_DISPATCH.workflow, inputs: {},
+    markerUrl: CAPTURE_REFRESH_MARKER_URL, cooldownS: CAPTURE_REFRESH_COOLDOWN_S,
+    unconfigured: 'The refresh button is not configured on this deployment. An operator needs to set the GITHUB_DISPATCH_TOKEN secret.',
+    started: { note: 'BOM river heights and electricity outages are being captured: about a minute, then a few more to deploy.' } });
 }
 
 /* The /api routes, split out so every one of them can be stamped with the
@@ -4651,6 +4674,7 @@ async function handleApi(url, env, ctx, request) {
       ? handleScrapeRun(request, env)
       : handleScrapeStatus(env);
   }
+  if (url.pathname === '/api/capture') return handleCaptureRefresh(request, env);
   /* What the cron has actually been doing in this datacentre. See
      recordCronFiring -- every other way of asking this measures the asker. */
   if (url.pathname === '/api/crons') {
