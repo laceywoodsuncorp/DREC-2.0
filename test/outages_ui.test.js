@@ -616,6 +616,11 @@ const check = (n, c, x) => {
     check('each links to BOM\'s own page for the warning',
       warns.every(w => /^https:\/\/www\.bom\.gov\.au\/products\/ID[NQ]\d{5}\.shtml$/.test(w.href)), warns.map(w => w.href));
     check('and quotes BOM\'s situation', warns.some(w => /MINOR FLOODING OCCURRING AT TUMMAVILLE/.test(w.t)));
+    /* BOM's catchment names are basin names a reader cannot place ("Upper
+       Condamine", "Lower Brisbane"), so the region its table covers leads. */
+    const catches = await p.$$eval('#riverList .river-catch', es => es.map(e => e.innerText));
+    check('each catchment heading names the region it is in',
+      catches.length > 0 && catches.every(c => /^QLD · Darling Downs \(Condamine-Balonne, Maranoa\) › Upper Condamine$/.test(c)), catches);
     const heads = await p.$$eval('#riverList .river-level-head', es => es.map(e => e.innerText));
     check('gauges are grouped worst level first', heads.length === 2 && /Major/.test(heads[0]) && /Minor/.test(heads[1]), heads);
     const sum = await p.$eval('#riverSummary', e => e.innerText);

@@ -3499,12 +3499,20 @@ window.addEventListener('resize',()=>map.invalidateSize());
   };
   const arrow={rising:'▲ rising',falling:'▼ falling',steady:'▬ steady'};
   const bomUrl=(plot)=>plot?'https://www.bom.gov.au/fwo/'+plot:'';
+  /* Where a gauge is, in words a reader can place. BOM's catchment names
+     are basin names -- "Lower Brisbane" is the Lockyer Valley as much as the
+     city, "Weir" is a river near Goondiwindi -- so the region its BOM table
+     covers comes first: "QLD · SE QLD (Brisbane, Lockyer, Pine,
+     Caboolture) › Lower Brisbane". The gauge's own name is not used to place it: the word after
+     "at" is as often a street, property or dam as a town, and matching it
+     against town names put gauges hundreds of kilometres out. */
+  const where=(g)=>g.state+(g.region&&g.region!==g.catchment?' · '+g.region:'')+' › '+g.catchment;
 
   function gaugeRow(g,showLevel){
     const old=g.time&&Date.now()-g.time>OLD_READING_MS;
     return '<div class="river-gauge">'+
       (showLevel?'<span class="lvl '+(g.level||'below')+'">'+escapeHtml(g.level||g.classText||'below flood level')+'</span>':'')+
-      '<span class="nm">'+escapeHtml(g.name)+(showLevel?' <span style="color:#7b8a8f;font-size:.72rem">· '+escapeHtml(g.catchment)+', '+g.state+'</span>':'')+'</span>'+
+      '<span class="nm">'+escapeHtml(g.name)+(showLevel?' <span style="color:#7b8a8f;font-size:.72rem">· '+escapeHtml(where(g))+'</span>':'')+'</span>'+
       '<span class="ht">'+(g.height==null?'—':g.height.toFixed(2)+' m')+'</span>'+
       '<span class="td '+(g.tendency||'')+'">'+(arrow[g.tendency]||'')+'</span>'+
       '<span class="age'+(old?' old':'')+'">'+(g.time?(old?'⚠ reading ':'')+ago(g.time):'no recent reading')+'</span>'+
@@ -3560,7 +3568,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       let last='';
       at.forEach(g=>{
         const key=g.state+'|'+g.catchment;
-        if(key!==last){html+='<div class="river-catch">'+g.state+' · '+escapeHtml(g.catchment)+'</div>';last=key;}
+        if(key!==last){html+='<div class="river-catch">'+escapeHtml(where(g))+'</div>';last=key;}
         html+=gaugeRow(g,false);
       });
     });
@@ -3603,7 +3611,9 @@ window.addEventListener('resize',()=>map.invalidateSize());
       if(!r.ok)throw new Error('HTTP '+r.status);
       snap=await r.json();
       gauges=[];
-      (snap.groups||[]).forEach(g=>(g.stations||[]).forEach(s=>gauges.push(Object.assign({state:g.state,catchment:g.catchment},s))));
+      const regionOf={};
+      (snap.products||[]).forEach(p=>{regionOf[p.id]=p.region;});
+      (snap.groups||[]).forEach(g=>(g.stations||[]).forEach(s=>gauges.push(Object.assign({state:g.state,catchment:g.catchment,region:regionOf[g.product]},s))));
       render();
     }catch(e){
       if(!snap){

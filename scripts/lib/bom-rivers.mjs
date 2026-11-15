@@ -16,22 +16,27 @@
 
    Pure functions only: fetching is the capture script's job. */
 
-/* The fifty river height tables, found by scripts/probe-bom-rivers.mjs
+/* The 47 river height tables, found by scripts/probe-bom-rivers.mjs
    (data/bom-product-titles.tsv, 14 Nov 2026). Listed rather than
    discovered each time: series 6 holds hundreds of rainfall and weather
    products too, and telling them apart means downloading them. A table
-   that stops appearing is reported, not silently dropped. */
+   that stops appearing is reported, not silently dropped.
+
+   The third column is the region the table covers, as the page shows it
+   beside BOM's catchment name -- "Lower Brisbane" alone does not tell a
+   reader the gauge is in the Lockyer Valley. Written from each table's
+   BOM title, in names a reader can place. */
 export const RIVER_HEIGHT_PRODUCTS = [
   ['IDN60140', 'NSW', 'Northern Rivers'], ['IDN60141', 'NSW', 'Mid North Coast'],
   ['IDN60143', 'NSW', 'Central Coast'], ['IDN60144', 'NSW', 'South Coast'],
   ['IDN60145', 'NSW', 'North West'], ['IDN60146', 'NSW', 'Central West'],
   ['IDN60147', 'NSW', 'South West'], ['IDN60148', 'NSW', 'Far West'],
-  ['IDQ60285', 'QLD', 'Gold Coast, Logan-Albert'], ['IDQ60286', 'QLD', 'Brisbane, Pine, Caboolture'],
-  ['IDQ60287', 'QLD', 'Sunshine Coast, Mary'], ['IDQ60288', 'QLD', 'Burnett, Kolan'],
-  ['IDQ60289', 'QLD', 'Boyne, Calliope, Fitzroy'], ['IDQ60290', 'QLD', 'Pioneer to Burdekin'],
-  ['IDQ60291', 'QLD', 'Herbert to Daintree'], ['IDQ60292', 'QLD', 'Border Rivers, Weir, Moonie'],
-  ['IDQ60293', 'QLD', 'Condamine-Balonne, Maranoa'], ['IDQ60294', 'QLD', 'Warrego, Paroo, Bulloo'],
-  ['IDQ60295', 'QLD', 'Channel Country'], ['IDQ60296', 'QLD', 'Gulf and Cape'],
+  ['IDQ60285', 'QLD', 'Gold Coast & Logan-Albert'], ['IDQ60286', 'QLD', 'SE QLD (Brisbane, Lockyer, Pine, Caboolture)'],
+  ['IDQ60287', 'QLD', 'Sunshine Coast & Mary'], ['IDQ60288', 'QLD', 'Wide Bay & Burnett'],
+  ['IDQ60289', 'QLD', 'Central QLD (Fitzroy, Boyne, Calliope)'], ['IDQ60290', 'QLD', 'Mackay to Townsville (Pioneer to Ross)'],
+  ['IDQ60291', 'QLD', 'Far North QLD (Herbert to Daintree)'], ['IDQ60292', 'QLD', 'Southern Downs & Border Rivers'],
+  ['IDQ60293', 'QLD', 'Darling Downs (Condamine-Balonne, Maranoa)'], ['IDQ60294', 'QLD', 'South West QLD (Warrego, Paroo, Bulloo)'],
+  ['IDQ60295', 'QLD', 'Channel Country (Thomson to Georgina)'], ['IDQ60296', 'QLD', 'Gulf Country & Cape York'],
   ['IDV60078', 'VIC', 'East Gippsland'], ['IDV60079', 'VIC', 'West and South Gippsland'],
   ['IDV60147', 'VIC', 'South West'], ['IDV60148', 'VIC', 'Wimmera, Mallee'],
   ['IDV60149', 'VIC', 'Campaspe, Loddon, Avoca'], ['IDV60150', 'VIC', 'Goulburn, Broken'],
