@@ -11,7 +11,7 @@
    Run: node test/bom_rivers.test.mjs */
 import { readFileSync } from 'node:fs';
 import { parseIssued, stationTime, floodLevel, parseRiverHeights, parseFloodWarning,
-  buildRiversSnapshot, RIVER_HEIGHT_PRODUCTS } from '../scripts/lib/bom-rivers.mjs';
+  buildRiversSnapshot, parseLatestReadings, RIVER_HEIGHT_PRODUCTS } from '../scripts/lib/bom-rivers.mjs';
 import { readDbf, readAlf } from '../scripts/build-gauge-locations.mjs';
 
 const fx = (f) => readFileSync(new URL('./fixtures/bom/' + f, import.meta.url), 'utf8');
@@ -121,6 +121,37 @@ console.log('\n== placing gauges on the map, by station number only ==');
   ck('and only that one', all.filter((x) => x.at).length === 1, all.filter((x) => x.at).map((x) => x.name));
   const none = buildRiversSnapshot(files, Date.now()).groups.flatMap((g) => g.stations);
   ck('with no locations file, nothing is placed and nothing breaks', none.length === all.length && !none.some((x) => x.at));
+}
+
+console.log('\n== newer readings from BOM\'s 15-minute observation files ==');
+{
+  /* Lines as BOM writes them (IDQ65910_<time>.hcs, 15 Nov 2026). */
+  const hcs = [
+    '# HEADER: Data Fields: IndexNo, SensorType, SensorDataType, SiteIdType, SiteId, ObservationTimestamp, RealValue, Unit, SensorParam1, SensorParam2, Quality, Comment',
+    '233,"WL",1,"SR","041498","2026-11-15T04:00:01Z",5.181,"metres","LGH",,1,""',
+    '234,"WL",1,"SR","041499","2026-11-14T10:00:00Z",9.999,"metres","LGH",,1,""',
+    '235,"WL",1,"SR","041499","2026-11-14T11:20:00Z",5.12,"metres","LGH",,1,""',
+    '236,"RN",6,"SR","041499","2026-11-14T11:30:00Z",4,"mm","",900,3,""'
+  ].join('\n');
+  const latest = parseLatestReadings(hcs);
+  ck('the newest water level per station is kept', latest.get('041499') && latest.get('041499').height === 5.12, latest.get('041499'));
+  ck('rainfall rows are not water levels', latest.get('041499').ms === Date.parse('2026-11-14T11:20:00Z'));
+
+  const files = { 'IDQ60293.html': fx('IDQ60293.html') };
+  const s = buildRiversSnapshot(files, Date.parse('2026-11-14T11:30:00Z'), {}, latest);
+  const all = s.groups.flatMap((g) => g.stations);
+  const tum = all.find((x) => /Tummaville/.test(x.name));
+  ck('a gauge that reported since its table shows the newer reading', tum.height === 5.12 && tum.time === Date.parse('2026-11-14T11:20:00Z'), tum);
+  ck('with the trend from the table\'s reading to it', tum.tendency === 'falling', tum.tendency);
+  ck('its flood class stays BOM\'s, marked with when BOM assessed it', tum.level === 'minor' && tum.classAt === s.products.find((p) => p.id === 'IDQ60293').issued, tum);
+  ck('and it is counted', s.counts.newerThanTable === 1, s.counts.newerThanTable);
+  ck('the datum used for the check is not written out', !all.some((x) => 'datum' in x));
+
+  const older = buildRiversSnapshot(files, Date.now(), {}, new Map([['041499', { ms: Date.parse('2026-11-01T00:00:00Z'), height: 1, datum: 'LGH' }]]));
+  ck('an older reading never replaces the table\'s', older.groups.flatMap((g) => g.stations).find((x) => /Tummaville/.test(x.name)).height !== 1);
+  const otherDatum = buildRiversSnapshot(files, Date.parse('2026-11-14T11:30:00Z'), {},
+    new Map([['041499', { ms: Date.parse('2026-11-14T11:20:00Z'), height: 400.2, datum: 'AHD' }]]));
+  ck('nor one on a different datum', otherDatum.groups.flatMap((g) => g.stations).find((x) => /Tummaville/.test(x.name)).height !== 400.2);
 }
 
 console.log('\n== reading BOM\'s site files ==');

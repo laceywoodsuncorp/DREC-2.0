@@ -641,6 +641,8 @@ const check = (n, c, x) => {
     check('and names the one BOM publishes no location for', /no location for: Condamine River at Yarramalong/.test(mapNote), mapNote);
     const flooded = await p.$$eval('#riverMap .leaflet-overlay-pane path', ps => ps.filter(x => /#c9a100/i.test(x.getAttribute('fill'))).length);
     check('the placed gauge in flood is drawn in its level\'s colour', flooded === 1, flooded);
+    const tumRow = await p.$$eval('#riverList .river-gauge', es => es.map(e => e.innerText).find(t => /Tummaville/.test(t)));
+    check('a gauge read since BOM\'s table says when BOM assessed its class', /class as of \d/.test(tumRow || ''), tumRow);
     const yarra = await p.$$eval('#riverList .river-gauge', es => es.map(e => e.innerText).find(t => /Yarramalong/.test(t)));
     check('in the list, the unplaced one is marked "not on map"', /not on map/.test(yarra || ''), yarra);
     await p.$$eval('#riverList .river-gauge', es => { const r = es.find(e => /Tummaville/.test(e.innerText)); r.querySelector('.loc').click(); });

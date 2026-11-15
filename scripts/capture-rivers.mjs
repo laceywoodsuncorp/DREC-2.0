@@ -14,7 +14,7 @@
    Run: node scripts/capture-rivers.mjs */
 import { writeFileSync, readFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { RIVER_HEIGHT_PRODUCTS, buildRiversSnapshot } from './lib/bom-rivers.mjs';
+import { RIVER_HEIGHT_PRODUCTS, buildRiversSnapshot, parseLatestReadings } from './lib/bom-rivers.mjs';
 
 const UA = 'Mozilla/5.0 (compatible; NewsRadar/1.0; +https://drec-oncall-updates-site.lacey-wood.workers.dev)';
 const FTP = 'ftp://ftp.bom.gov.au/anon/gen/fwo/';
@@ -29,8 +29,15 @@ try { listing = curl(['--list-only', FTP], 60).split(/\r?\n/).map((s) => s.trim(
 catch (e) { console.log('FTP listing failed: ' + String(e.stderr || e.message).slice(0, 200)); process.exit(0); }
 const present = new Set(listing);
 
+/* The newest 15-minute observation file per state (IDx65910_<time>.hcs):
+   the gauges' readings since the hourly tables were issued. */
+const newestObs = {};
+for (const f of listing.filter((x) => /^ID[NVQSWTD]65910_\d{14}\.hcs$/.test(x))) {
+  if (!newestObs[f[2]] || f > newestObs[f[2]]) newestObs[f[2]] = f;
+}
 const wanted = RIVER_HEIGHT_PRODUCTS.map(([id]) => id + '.html').filter((f) => present.has(f))
-  .concat(listing.filter((f) => /^ID[NVQSWTD][23]\d{4}\.xml$/.test(f)));
+  .concat(listing.filter((f) => /^ID[NVQSWTD][23]\d{4}\.xml$/.test(f)))
+  .concat(Object.values(newestObs));
 rmSync(TMP, { recursive: true, force: true });
 mkdirSync(TMP, { recursive: true });
 /* Three connections at once. One after another, ninety files would risk
@@ -55,12 +62,19 @@ rmSync(TMP, { recursive: true, force: true });
 let locations = {};
 try { locations = JSON.parse(readFileSync('data/river-gauge-locations.json', 'utf8')).sites || {}; }
 catch (e) { console.log('no gauge locations file -- gauges will not be placed on the map'); }
-const snap = buildRiversSnapshot(files, Date.now(), locations);
+const latest = new Map();
+for (const f of Object.values(newestObs)) {
+  if (!files[f]) continue;
+  for (const [id, r] of parseLatestReadings(files[f])) latest.set(id, r);
+  delete files[f];
+}
+const snap = buildRiversSnapshot(files, Date.now(), locations, latest);
 const read = snap.products.filter((p) => p.ok).length;
 console.log('river height tables read: ' + read + '/' + snap.products.length +
   '; gauges ' + snap.counts.stations + '; flooding: major ' + snap.counts.major + ', moderate ' +
   snap.counts.moderate + ', minor ' + snap.counts.minor + '; warnings ' + snap.warnings.length +
-  '; placed on the map ' + snap.groups.reduce((n, g) => n + g.stations.filter((x) => x.at).length, 0));
+  '; placed on the map ' + snap.groups.reduce((n, g) => n + g.stations.filter((x) => x.at).length, 0) +
+  '; newer than their table ' + snap.counts.newerThanTable + ' (from ' + Object.keys(newestObs).length + ' observation files)');
 for (const p of snap.products.filter((x) => !x.ok)) console.log('  missing ' + p.id + ' (' + p.state + ' ' + p.region + '): ' + p.error);
 if (!read) { console.log('nothing read -- keeping the previous ' + OUT); process.exit(0); }
 mkdirSync('data', { recursive: true });

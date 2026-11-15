@@ -292,6 +292,9 @@ const server = http.createServer((req, res) => {
     if (sc === 'major') {
       const st = snap.groups.flatMap((g) => g.stations).find((x) => /Yarramalong/.test(x.name));
       st.level = 'major'; snap.counts.minor--; snap.counts.major++;
+      /* Tummaville reported since its table: newer height, BOM's class. */
+      const tum = snap.groups.flatMap((g) => g.stations).find((x) => /Tummaville/.test(x.name));
+      tum.classAt = tum.time - 20 * 60000;
     }
     return send(200, snap);
   }

@@ -385,6 +385,7 @@
   .river-pop .meta{font-size:.75rem;color:#4a5a5a;line-height:1.5}
   .river-gauge .loc{border:none;background:none;cursor:pointer;font:inherit;font-size:.72rem;color:var(--neutral-green);font-weight:600;padding:0}
   .river-gauge .unplaced{font-size:.7rem;color:#8a7a5a}
+  .river-gauge .classat{font-size:.68rem;color:#7b8a8f;font-style:italic}
   @media(max-width:700px){ .river-map{height:360px} }
   .river-search{padding:12px 24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .river-search input{flex:1;min-width:220px;max-width:420px;padding:8px 12px;border-radius:999px;
@@ -3519,6 +3520,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     return h<48?h+' h ago':Math.round(h/24)+' days ago';
   };
   const arrow={rising:'▲ rising',falling:'▼ falling',steady:'▬ steady'};
+  const clock=(ms)=>new Date(ms).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
   const bomUrl=(plot)=>plot?'https://www.bom.gov.au/fwo/'+plot:'';
   /* Where a gauge is, in words a reader can place. BOM's catchment names
      are basin names -- "Lower Brisbane" is the Lockyer Valley as much as the
@@ -3536,7 +3538,11 @@ window.addEventListener('resize',()=>map.invalidateSize());
       '<span class="nm">'+escapeHtml(g.name)+(showLevel?' <span style="color:#7b8a8f;font-size:.72rem">· '+escapeHtml(where(g))+'</span>':'')+'</span>'+
       '<span class="ht">'+(g.height==null?'—':g.height.toFixed(2)+' m')+'</span>'+
       '<span class="td '+(g.tendency||'')+'">'+(arrow[g.tendency]||'')+'</span>'+
-      '<span class="age'+(old?' old':'')+'">'+(g.time?(old?'⚠ reading ':'')+ago(g.time):'no recent reading')+'</span>'+
+      '<span class="age'+(old?' old':'')+'"'+(old?' title="This gauge has not reported for '+ago(g.time).replace(' ago','')+
+        (g.level?'. BOM still classes it on this last reading; the gauge may have stopped reporting.':'.')+'"':'')+'>'+
+        (g.time?(old?'⚠ reading ':'')+ago(g.time):'no recent reading')+'</span>'+
+      (g.level&&g.classAt?'<span class="classat" title="The height is the gauge\u2019s newer reading; the flood class is BOM\u2019s, from its table at '+
+        clock(g.classAt)+'.">class as of '+clock(g.classAt)+'</span>':'')+
       (g.at?'<button type="button" class="loc" data-gauge="'+g.idx+'" title="Show on the map">📍 Map</button>'
         :(g.level?'<span class="unplaced" title="BOM publishes no location for this gauge">not on map</span>':''))+
       (g.plot?'<a href="'+escapeHtml(bomUrl(g.plot))+'" target="_blank" rel="noopener">BOM graph ↗</a>':'')+
@@ -3596,7 +3602,10 @@ window.addEventListener('resize',()=>map.invalidateSize());
       '<span class="lvl '+(g.level||'below')+'">'+escapeHtml(g.level||g.classText||'below flood level')+'</span>'+
       '<div class="meta">'+(g.height==null?'No height':'<b>'+g.height.toFixed(2)+' m</b>')+
       (g.tendency?' · '+escapeHtml(arrow[g.tendency]||g.tendency):'')+
-      (g.time?' · '+ago(g.time):'')+'<br>'+escapeHtml(where(g))+
+      (g.time?' · '+ago(g.time):'')+
+      (g.level&&g.classAt?'<br>Flood class from BOM\u2019s table at '+clock(g.classAt)+'; height is the newer reading':'')+
+      (g.time&&Date.now()-g.time>OLD_READING_MS?'<br>⚠ Not reported for '+ago(g.time).replace(' ago','')+' — the gauge may have stopped':'')+
+      '<br>'+escapeHtml(where(g))+
       (g.plot?'<br><a href="'+escapeHtml(bomUrl(g.plot))+'" target="_blank" rel="noopener">BOM graph ↗</a>':'')+'</div></div>';
   }
   function renderMap(focus){

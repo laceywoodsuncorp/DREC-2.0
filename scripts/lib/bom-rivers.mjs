@@ -146,6 +146,9 @@ export function parseRiverHeights(html) {
          level does not; other wording ("No Classification") is kept. */
       classText: level || !classText || /below flood level/i.test(classText) ? undefined : classText,
       crossing: level ? t[C.crossing] || undefined : undefined,
+      /* Kept only to check a newer reading is on the same datum; removed
+         before the snapshot is written. */
+      datum: t[C.datum] || undefined,
       plot: link ? link[1].replace(/^\/fwo\//, '') : undefined
     });
   }
@@ -187,14 +190,39 @@ export function parseFloodWarning(xml, file) {
   };
 }
 
+/* The gauges' own latest readings, from BOM's 15-minute observation files
+   (IDx65910_<time>.hcs: "IndexNo, SensorType, SensorDataType, SiteIdType,
+   SiteId, ObservationTimestamp, RealValue, Unit, SensorParam1 ..."). The
+   river tables are issued about hourly; these are what the gauges sent
+   since. Water level rows only; the newest per station. */
+export function parseLatestReadings(text) {
+  const out = new Map();
+  for (const line of String(text || '').split(/\r?\n/)) {
+    const m = /^\d+,"WL",\d+,"\w*","(\d+)","([^"]+)",(-?[\d.]+),"metres","(\w*)"/.exec(line);
+    if (!m) continue;
+    const ms = Date.parse(m[2]);
+    if (!isFinite(ms)) continue;
+    const id = m[1].padStart(6, '0');
+    const prev = out.get(id);
+    if (!prev || ms > prev.ms) out.set(id, { ms, height: Number(m[3]), datum: m[4] || undefined });
+  }
+  return out;
+}
+
 /* Everything the page needs, from one capture's files. `files` maps an FTP
    file name to its text; a product absent from it is reported missing. */
 /* `locations` is data/river-gauge-locations.json's `sites`: station number
    -> [lat, lon], from BOM's own site files (scripts/build-gauge-locations.mjs).
    A gauge is placed only by its station number; one not in those files has
    no `at`, and the page lists it as not on the map rather than guessing. */
-export function buildRiversSnapshot(files, now, locations) {
+/* `latest`, from parseLatestReadings: where a gauge has reported since its
+   table was issued, its height and time are the newer reading. Its flood
+   class stays BOM's, from the table, and `classAt` says when BOM assessed
+   it -- the class is BOM's call and is not recomputed here. */
+export function buildRiversSnapshot(files, now, locations, latest) {
   const sites = locations || {};
+  const newest = latest || new Map();
+  let newer = 0;
   const stationId = (plot) => ((/\.(\d{5,7})\.plt/.exec(plot || '') || [])[1] || '').padStart(6, '0');
   const products = [];
   /* Gauges grouped by catchment, so state and catchment are written once
@@ -210,9 +238,24 @@ export function buildRiversSnapshot(files, now, locations) {
     let g = null;
     for (const st of r.stations) {
       if (!g || g.catchment !== st.catchment) groups.push(g = { state, product: id, catchment: st.catchment, stations: [] });
-      const { catchment, ...rest } = st;
-      const at = sites[stationId(st.plot)];
+      const { catchment, datum, ...rest } = st;
+      const sid = stationId(st.plot);
+      const at = sites[sid];
       if (at) rest.at = at;
+      const obs = newest.get(sid);
+      /* Newer by more than a minute, and on the same datum -- a reading on
+         AHD is not comparable with one on the gauge's local datum. */
+      if (obs && obs.ms > (st.time || 0) + 60000 && (!datum || !obs.datum || datum === obs.datum) && obs.ms <= now + 3600e3) {
+        /* The trend from the table's reading to this one. */
+        if (rest.height != null) {
+          const d = obs.height - rest.height;
+          rest.tendency = Math.abs(d) < 0.01 ? 'steady' : d > 0 ? 'rising' : 'falling';
+        }
+        rest.height = obs.height;
+        rest.time = obs.ms;
+        rest.classAt = r.issued || undefined;
+        newer++;
+      }
       g.stations.push(rest);
       gauges++;
     }
@@ -229,7 +272,7 @@ export function buildRiversSnapshot(files, now, locations) {
   /* Active warnings worst first; a final warning -- the flood is over --
      after them all, whatever severity it still carries. */
   warnings.sort((a, b) => (a.final ? 1 : 0) - (b.final ? 1 : 0) || rank(b.level) - rank(a.level) || (b.issued || 0) - (a.issued || 0));
-  const counts = { major: 0, moderate: 0, minor: 0, rising: 0, stations: gauges };
+  const counts = { major: 0, moderate: 0, minor: 0, rising: 0, stations: gauges, newerThanTable: newer };
   groups.forEach((g) => g.stations.forEach((s) => { if (s.level) counts[s.level]++; if (s.tendency === 'rising') counts.rising++; }));
   return { capturedAt: now, source: 'Bureau of Meteorology, anonymous FTP (ftp.bom.gov.au/anon/gen/fwo)',
     counts, warnings, products, groups };
