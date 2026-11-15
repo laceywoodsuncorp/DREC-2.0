@@ -1,0 +1,29 @@
+# Rebuilds data/river-gauge-locations.json -- where each BOM river gauge
+# is, by station number, from BOM's own site files on its FTP service.
+# See scripts/build-gauge-locations.mjs. Site lists change rarely, so
+# monthly, and on demand when a gauge appears that the map cannot place.
+name: Gauge locations
+
+on:
+  schedule:
+    - cron: '41 3 2 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build gauge locations from BOM's site files
+        run: node scripts/build-gauge-locations.mjs
+      - name: Commit
+        run: |
+          BRANCH="${{ github.ref_name }}" \
+            scripts/commit-data.sh "Rebuild river gauge locations" data/river-gauge-locations.json

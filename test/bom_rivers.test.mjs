@@ -12,6 +12,7 @@
 import { readFileSync } from 'node:fs';
 import { parseIssued, stationTime, floodLevel, parseRiverHeights, parseFloodWarning,
   buildRiversSnapshot, RIVER_HEIGHT_PRODUCTS } from '../scripts/lib/bom-rivers.mjs';
+import { readDbf, readAlf } from '../scripts/build-gauge-locations.mjs';
 
 const fx = (f) => readFileSync(new URL('./fixtures/bom/' + f, import.meta.url), 'utf8');
 let pass = 0, fail = 0;
@@ -107,6 +108,45 @@ console.log('\n== the snapshot ==');
   const later = buildRiversSnapshot(files, Date.parse('2030-01-01'));
   ck('an expired warning is dropped', later.warnings.length === 0, later.warnings.map((w) => w.id));
   ck('the source is named', /Bureau of Meteorology/.test(s.source));
+}
+
+console.log('\n== placing gauges on the map, by station number only ==');
+{
+  const files = { 'IDQ60293.html': fx('IDQ60293.html') };
+  /* Tummaville's graph link carries station 041499. */
+  const placed = buildRiversSnapshot(files, Date.now(), { '041499': [-27.8717, 151.5103] });
+  const all = placed.groups.flatMap((g) => g.stations);
+  const tum = all.find((x) => /Tummaville/.test(x.name));
+  ck('a gauge whose station number is in BOM\'s site files is placed', tum && tum.at && tum.at[0] === -27.8717, tum && tum.at);
+  ck('and only that one', all.filter((x) => x.at).length === 1, all.filter((x) => x.at).map((x) => x.name));
+  const none = buildRiversSnapshot(files, Date.now()).groups.flatMap((g) => g.stations);
+  ck('with no locations file, nothing is placed and nothing breaks', none.length === all.length && !none.some((x) => x.at));
+}
+
+console.log('\n== reading BOM\'s site files ==');
+{
+  /* A two-field dBASE table built in place: header, descriptors, records. */
+  const fieldsDef = [['ALT_REF', 18], ['LAT', 16], ['LON', 16]];
+  const rlen = 1 + fieldsDef.reduce((n, f) => n + f[1], 0);
+  const hlen = 32 + 32 * fieldsDef.length + 1;
+  const rows = [['540568.00000000000', '-27.81100000000', '152.18200000000'], ['041499', '-27.8717', '151.5103']];
+  const buf = Buffer.alloc(hlen + rlen * rows.length + 1, 0x20);
+  buf.fill(0, 0, hlen);
+  buf[0] = 3; buf.writeUInt32LE(rows.length, 4); buf.writeUInt16LE(hlen, 8); buf.writeUInt16LE(rlen, 10);
+  fieldsDef.forEach(([name, len], i) => { buf.write(name, 32 + i * 32, 'latin1'); buf[32 + i * 32 + 11] = 0x43; buf[32 + i * 32 + 16] = len; });
+  buf[hlen - 1] = 0x0d;
+  rows.forEach((r, i) => {
+    let o = hlen + i * rlen; buf[o++] = 0x20;
+    r.forEach((v, j) => { buf.write(v.padEnd(fieldsDef[j][1]), o, 'latin1'); o += fieldsDef[j][1]; });
+  });
+  const parsed = readDbf(buf);
+  ck('a dBASE table is read', parsed.length === 2 && parsed[0].ALT_REF === '540568.00000000000' && parsed[1].LAT === '-27.8717', parsed);
+  const alf = readAlf([
+    'Bureau of Meteorology station metadata listing',
+    '   Site STA  Dist  Site name                                 Start     End      Lat      Long',
+    ' 041499 QLD 41    TUMMAVILLE (CONDAMINE RIVER)                1990    ..   -27.8717  151.5103 .....               381.0'
+  ].join('\n'));
+  ck('BOM\'s fixed-width station list is read', alf.get('041499') && alf.get('041499')[1] === 151.5103, [...alf]);
 }
 
 console.log('\n----------------------------------------');

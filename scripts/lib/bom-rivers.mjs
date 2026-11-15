@@ -189,7 +189,13 @@ export function parseFloodWarning(xml, file) {
 
 /* Everything the page needs, from one capture's files. `files` maps an FTP
    file name to its text; a product absent from it is reported missing. */
-export function buildRiversSnapshot(files, now) {
+/* `locations` is data/river-gauge-locations.json's `sites`: station number
+   -> [lat, lon], from BOM's own site files (scripts/build-gauge-locations.mjs).
+   A gauge is placed only by its station number; one not in those files has
+   no `at`, and the page lists it as not on the map rather than guessing. */
+export function buildRiversSnapshot(files, now, locations) {
+  const sites = locations || {};
+  const stationId = (plot) => ((/\.(\d{5,7})\.plt/.exec(plot || '') || [])[1] || '').padStart(6, '0');
   const products = [];
   /* Gauges grouped by catchment, so state and catchment are written once
      per group rather than on each of ~3,600 rows. */
@@ -205,6 +211,8 @@ export function buildRiversSnapshot(files, now) {
     for (const st of r.stations) {
       if (!g || g.catchment !== st.catchment) groups.push(g = { state, product: id, catchment: st.catchment, stations: [] });
       const { catchment, ...rest } = st;
+      const at = sites[stationId(st.plot)];
+      if (at) rest.at = at;
       g.stations.push(rest);
       gauges++;
     }

@@ -49,11 +49,18 @@ for (const f of wanted) {
 }
 rmSync(TMP, { recursive: true, force: true });
 
-const snap = buildRiversSnapshot(files, Date.now());
+/* Where each gauge is, from BOM's site files (built monthly by
+   scripts/build-gauge-locations.mjs). Without it the list still works; the
+   map just has nothing to plot. */
+let locations = {};
+try { locations = JSON.parse(readFileSync('data/river-gauge-locations.json', 'utf8')).sites || {}; }
+catch (e) { console.log('no gauge locations file -- gauges will not be placed on the map'); }
+const snap = buildRiversSnapshot(files, Date.now(), locations);
 const read = snap.products.filter((p) => p.ok).length;
 console.log('river height tables read: ' + read + '/' + snap.products.length +
   '; gauges ' + snap.counts.stations + '; flooding: major ' + snap.counts.major + ', moderate ' +
-  snap.counts.moderate + ', minor ' + snap.counts.minor + '; warnings ' + snap.warnings.length);
+  snap.counts.moderate + ', minor ' + snap.counts.minor + '; warnings ' + snap.warnings.length +
+  '; placed on the map ' + snap.groups.reduce((n, g) => n + g.stations.filter((x) => x.at).length, 0));
 for (const p of snap.products.filter((x) => !x.ok)) console.log('  missing ' + p.id + ' (' + p.state + ' ' + p.region + '): ' + p.error);
 if (!read) { console.log('nothing read -- keeping the previous ' + OUT); process.exit(0); }
 mkdirSync('data', { recursive: true });
