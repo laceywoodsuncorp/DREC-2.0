@@ -65,6 +65,51 @@ try {
     modified: it.modified && new Date(it.modified).toISOString(), access: it.access, licenseInfo: it.licenseInfo,
     accessInformation: it.accessInformation, description: it.description, snippet: it.snippet, tags: it.tags };
 } catch (e) { report.item = { error: e.message }; }
+/* C. The same layer as a BOM product: its description names it IDM00019,
+   and BOM publishes IDM spatial products on its FTP service. If a copy is
+   there, it is BOM's own and possibly newer than the 2022 layer. */
+const SPATIAL = 'ftp://ftp.bom.gov.au/anon/home/adfd/spatial/';
+const C = new Map();
+try {
+  const list = execFileSync('curl', ['-sS', '--max-time', '60', '-A', UA, '--list-only', SPATIAL], { encoding: 'utf8' })
+    .split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+  report.spatialFiles = list.filter((f) => /IDM000(1|2)/.test(f));
+  const f19 = list.find((f) => /^IDM00019.*\.zip$/i.test(f));
+  if (f19) {
+    execFileSync('curl', ['-sS', '--max-time', '120', '-A', UA, SPATIAL + f19, '-o', 'data/.idm00019.zip']);
+    execFileSync('rm', ['-rf', 'data/.idm00019']);
+    execFileSync('unzip', ['-o', '-q', 'data/.idm00019.zip', '-d', 'data/.idm00019']);
+    const members = execFileSync('find', ['data/.idm00019', '-type', 'f'], { encoding: 'utf8' }).split('\n').filter(Boolean);
+    report.idm00019 = { file: f19, members };
+    const dbf = members.find((m) => /\.dbf$/i.test(m));
+    if (dbf) {
+      /* A minimal dBASE reader: header, field descriptors, fixed records. */
+      const b = readFileSync(dbf);
+      const n = b.readUInt32LE(4), hlen = b.readUInt16LE(8), rlen = b.readUInt16LE(10);
+      const fields = [];
+      for (let o = 32; b[o] !== 0x0d && o < hlen; o += 32) {
+        fields.push({ name: b.toString('latin1', o, o + 11).replace(/\0.*$/, ''), len: b[o + 16] });
+      }
+      report.idm00019.fields = fields.map((f) => f.name);
+      report.idm00019.rows = n;
+      for (let i = 0; i < n; i++) {
+        let o = hlen + i * rlen + 1;
+        const row = {};
+        for (const f of fields) { row[f.name] = b.toString('latin1', o, o + f.len).trim(); o += f.len; }
+        if (i < 3) (report.idm00019.sample = report.idm00019.sample || []).push(row);
+        const id = String(row.ALT_REF || row.STN_NUM || row.BOM_ID || '').replace(/\.0+$/, '');
+        const lat = Number(row.LAT || row.LATITUDE), lon = Number(row.LON || row.LONGITUDE);
+        if (id && isFinite(lat) && isFinite(lon)) C.set(id.padStart(6, '0'), { lat, lon, name: row.PT_NAME });
+      }
+    }
+  }
+} catch (e) { report.idm00019 = { error: String(e.message).slice(0, 200) }; }
+report.idm00019Placed = C.size;
+
+/* B by number: the layer's ALT_REF is a BOM station number. */
+const byRef = new Map();
+for (const f of feats) if (f.ALT_REF) byRef.set(String(f.ALT_REF).padStart(6, '0'), { lat: Number(f.LAT), lon: Number(f.LON), name: f.PT_NAME });
+
 const norm = (s) => String(s || '').toUpperCase().replace(/\bCK\b/g, 'CREEK').replace(/\bR\b/g, 'RIVER').replace(/[^A-Z0-9]+/g, ' ').trim();
 const byName = new Map();
 for (const f of feats) {
@@ -76,6 +121,8 @@ for (const f of feats) {
 
 const km = (a, b) => Math.hypot((a.lat - b.lat) * 111, (a.lon - b.lon) * 111 * Math.cos(a.lat * Math.PI / 180));
 let A = 0, B = 0, either = 0, both = 0, floodA = 0, floodB = 0, floodEither = 0, flooding = 0;
+let R = 0, Cn = 0, any = 0, floodR = 0, floodC = 0, floodAny = 0;
+const unplacedAny = [], refDisagree = [];
 const disagree = [], unplacedFlooding = [], ambiguousB = [];
 for (const g of gauges) {
   const a = g.id && byId.get(g.id.padStart(6, '0'));
@@ -87,7 +134,17 @@ for (const g of gauges) {
   if (b) B++;
   if (a || b) either++;
   if (a && b) { both++; const d = km(a, b); if (d > 5) disagree.push({ name: g.name, id: g.id, km: Math.round(d), alf: a, layer: b }); }
+  const id6 = g.id && g.id.padStart(6, '0');
+  const r = id6 && byRef.get(id6);
+  const c = id6 && C.get(id6);
+  if (r) R++;
+  if (c) Cn++;
+  if (r || c || a) any++;
+  if (r && a && km(r, a) > 5) refDisagree.push(g.name + ' ' + Math.round(km(r, a)) + 'km');
   if (g.level) {
+    if (r) floodR++;
+    if (c) floodC++;
+    if (r || c || a) floodAny++; else unplacedAny.push(g.name + ' (' + g.id + ')');
     flooding++;
     if (a) floodA++;
     if (b) floodB++;
@@ -97,7 +154,11 @@ for (const g of gauges) {
 Object.assign(report, { placedByStationList: A, placedByLayerName: B, placedByEither: either, placedByBoth: both,
   disagreeOver5km: disagree.length, disagreeSample: disagree.slice(0, 25), ambiguousNames: ambiguousB.length,
   flooding, floodingPlacedByList: floodA, floodingPlacedByLayer: floodB, floodingPlacedByEither: floodEither,
-  floodingUnplaced: unplacedFlooding });
+  floodingUnplaced: unplacedFlooding,
+  placedByLayerRef: R, placedByIdm00019: Cn, placedByAnyNumber: any, refVsListDisagreeOver5km: refDisagree.length,
+  refDisagreeSample: refDisagree.slice(0, 15),
+  floodingPlacedByLayerRef: floodR, floodingPlacedByIdm00019: floodC, floodingPlacedByAnyNumber: floodAny,
+  floodingUnplacedByNumber: unplacedAny });
 console.log(JSON.stringify(Object.fromEntries(Object.entries(report).filter(([k]) => !/sample|item|Unplaced/i.test(k))), null, 1));
 console.log('item:', JSON.stringify(report.item).slice(0, 1500));
 console.log('flooding unplaced:', unplacedFlooding.join('; '));
