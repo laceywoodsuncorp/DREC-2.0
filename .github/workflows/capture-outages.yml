@@ -123,14 +123,25 @@ jobs:
       # which a Worker cannot speak, so it is captured here on the same
       # schedule. Its own step, and allowed to fail: a BOM outage must not
       # cost the electricity snapshot its commit.
-      - name: Capture BOM river heights and flood warnings
+      # Flooded-road reports from the state road authorities run at the same
+      # time as the river capture rather than after it: the job is billed by
+      # the minute, rounded up, and has little room left under one.
+      # QLDTraffic needs a key; without the secret, Queensland is recorded as
+      # not connected and the rest still run.
+      - name: Capture BOM river heights, flood warnings and flooded roads
         if: steps.fresh.outputs.skip != '1'
         continue-on-error: true
         timeout-minutes: 4
-        run: node scripts/capture-rivers.mjs
+        env:
+          QLDTRAFFIC_API_KEY: ${{ secrets.QLDTRAFFIC_API_KEY }}
+        run: |
+          node scripts/capture-roads.mjs > roads.log 2>&1 &
+          node scripts/capture-rivers.mjs || echo "river capture failed"
+          wait || echo "road capture failed"
+          cat roads.log
       - name: Commit the snapshot
         if: steps.fresh.outputs.skip != '1'
         run: |
           BRANCH="${{ github.ref_name }}" \
             scripts/commit-data.sh "Capture outage snapshot" data/outages.json \
-              $(ls data/rivers.json 2>/dev/null)
+              $(ls data/rivers.json data/road-flooding.json 2>/dev/null)
