@@ -377,6 +377,15 @@
     padding:2px 7px;border-radius:999px;margin-right:6px;vertical-align:1px;color:#fff;background:#7b8a8f}
   .lvl.major{background:#a3241b}.lvl.moderate{background:#c46a1c}.lvl.minor{background:#c9a100}
   .lvl.final{background:#6a7d8c}.lvl.watch{background:#2f6f95}.lvl.below{background:#e3e8e5;color:#4a5a5a}
+  .river-mapwrap{padding:12px 24px 0}
+  .river-map{height:460px;width:100%;background:#eef2f2;border-radius:12px;border:1px solid #e3e8e5}
+  .river-mapnote{font-size:.72rem;color:#6a7a7a;margin-top:6px;line-height:1.5}
+  .river-mapnote .key{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 3px 0 8px;vertical-align:0}
+  .river-pop h4{font-size:.85rem;margin:0 0 3px;color:var(--heritage-green)}
+  .river-pop .meta{font-size:.75rem;color:#4a5a5a;line-height:1.5}
+  .river-gauge .loc{border:none;background:none;cursor:pointer;font:inherit;font-size:.72rem;color:var(--neutral-green);font-weight:600;padding:0}
+  .river-gauge .unplaced{font-size:.7rem;color:#8a7a5a}
+  @media(max-width:700px){ .river-map{height:360px} }
   .river-search{padding:12px 24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .river-search input{flex:1;min-width:220px;max-width:420px;padding:8px 12px;border-radius:999px;
     border:1px solid rgba(0,67,70,.2);font:inherit;font-size:.85rem}
@@ -397,7 +406,7 @@
   .river-none{margin:12px 0;padding:11px 13px;border-radius:9px;background:#f2f7f4;border:1px solid #cfe2d6;color:#2c4636;font-size:.82rem}
   .river-foot{padding:10px 24px 18px;font-size:.72rem;color:#7b8a8f;line-height:1.5}
   @media(max-width:640px){
-    .river-summary,.river-warnings,.river-search,.river-list,.river-foot{padding-left:16px;padding-right:16px}
+    .river-summary,.river-warnings,.river-mapwrap,.river-search,.river-list,.river-foot{padding-left:16px;padding-right:16px}
     .river-gauge .nm{min-width:100%}
   }
   .mobile-map-block{padding:4px 24px 22px}
@@ -657,6 +666,10 @@
   </div>
   <div class="river-summary" id="riverSummary"><span>Loading BOM river heights…</span></div>
   <div class="river-warnings" id="riverWarnings"></div>
+  <div class="river-mapwrap">
+    <div class="river-map" id="riverMap"></div>
+    <div class="river-mapnote" id="riverMapNote"></div>
+  </div>
   <div class="river-search">
     <input type="search" id="riverFilter" placeholder="Find a river, creek or town — e.g. Condamine" autocomplete="off">
     <span class="river-search-count" id="riverFilterCount"></span>
@@ -3524,9 +3537,93 @@ window.addEventListener('resize',()=>map.invalidateSize());
       '<span class="ht">'+(g.height==null?'—':g.height.toFixed(2)+' m')+'</span>'+
       '<span class="td '+(g.tendency||'')+'">'+(arrow[g.tendency]||'')+'</span>'+
       '<span class="age'+(old?' old':'')+'">'+(g.time?(old?'⚠ reading ':'')+ago(g.time):'no recent reading')+'</span>'+
+      (g.at?'<button type="button" class="loc" data-gauge="'+g.idx+'" title="Show on the map">📍 Map</button>'
+        :(g.level?'<span class="unplaced" title="BOM publishes no location for this gauge">not on map</span>':''))+
       (g.plot?'<a href="'+escapeHtml(bomUrl(g.plot))+'" target="_blank" rel="noopener">BOM graph ↗</a>':'')+
       '</div>';
   }
+
+  /* ---- the map ----
+     Placed only by station number, from BOM's own site files
+     (data/river-gauge-locations.json): a gauge's name is as often a street
+     or property as a town, so a gauge BOM publishes no location for is
+     named under the map, not guessed onto it. Gauges in flood are coloured
+     by level; every other placed gauge is a faint dot, so the map shows
+     where BOM is watching as well as where it is flooding. */
+  const LEVEL_COLOUR={major:'#a3241b',moderate:'#c46a1c',minor:'#c9a100'};
+  let rMap=null,rBase=null,rTop=null,rCanvas=null;
+  const markers={};
+  function ensureRiverMap(){
+    if(rMap)return rMap;
+    const el=document.getElementById('riverMap');
+    if(!el||!window.L)return null;
+    rMap=L.map(el,{minZoom:3,maxZoom:13,scrollWheelZoom:false});
+    rMap.setView([-25.6,134.3],4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:13}).addTo(rMap);
+    /* Scroll-zoom only once the reader has engaged with the map, so
+       scrolling the page past it does not zoom it instead. */
+    el.addEventListener('click',()=>rMap.scrollWheelZoom.enable());
+    el.addEventListener('mouseleave',()=>rMap.scrollWheelZoom.disable());
+    rCanvas=L.canvas({padding:.5});
+    rBase=L.layerGroup().addTo(rMap);
+    rTop=L.layerGroup().addTo(rMap);
+    return rMap;
+  }
+  function popupHtml(g){
+    return '<div class="river-pop"><h4>'+escapeHtml(g.name)+'</h4>'+
+      '<span class="lvl '+(g.level||'below')+'">'+escapeHtml(g.level||g.classText||'below flood level')+'</span>'+
+      '<div class="meta">'+(g.height==null?'No height':'<b>'+g.height.toFixed(2)+' m</b>')+
+      (g.tendency?' · '+escapeHtml(arrow[g.tendency]||g.tendency):'')+
+      (g.time?' · '+ago(g.time):'')+'<br>'+escapeHtml(where(g))+
+      (g.plot?'<br><a href="'+escapeHtml(bomUrl(g.plot))+'" target="_blank" rel="noopener">BOM graph ↗</a>':'')+'</div></div>';
+  }
+  function renderMap(focus){
+    const m=ensureRiverMap();
+    const noteEl=document.getElementById('riverMapNote');
+    if(!m)return;
+    rBase.clearLayers();rTop.clearLayers();
+    for(const k in markers)delete markers[k];
+    /* With a search, the map shows its matches; otherwise, the flooding. */
+    const top=focus||gauges.filter(g=>g.level);
+    const topSet=new Set(top);
+    gauges.forEach(g=>{
+      if(!g.at||topSet.has(g))return;
+      markers[g.idx]=L.circleMarker(g.at,{renderer:rCanvas,radius:2.5,stroke:false,fillColor:'#6a7d8c',fillOpacity:.35})
+        .bindPopup(()=>popupHtml(g)).addTo(rBase);
+    });
+    const placed=top.filter(g=>g.at);
+    placed.forEach(g=>{
+      const c=LEVEL_COLOUR[g.level];
+      markers[g.idx]=L.circleMarker(g.at,{radius:g.level==='major'?10:g.level==='moderate'?8:c?7:5,
+        color:'#fff',weight:2,fillColor:c||'#2f6f95',fillOpacity:.9}).bindPopup(()=>popupHtml(g)).addTo(rTop);
+    });
+    if(placed.length){
+      m.fitBounds(L.latLngBounds(placed.map(g=>g.at)).pad(0.3),{maxZoom:9});
+    }else m.setView([-25.6,134.3],4);
+    if(noteEl){
+      const unplaced=top.filter(g=>!g.at);
+      const what=focus?'matching gauges':'gauges in flood';
+      noteEl.innerHTML=(top.length?'<b>'+placed.length+' of '+top.length+'</b> '+what+' are on the map.':'')+
+        (unplaced.length?' Not on the map — BOM publishes no location for: '+
+          escapeHtml(unplaced.slice(0,8).map(g=>g.name).join('; '))+(unplaced.length>8?'; …':'')+'.':'')+
+        (focus?'':'<span class="key" style="background:'+LEVEL_COLOUR.major+'"></span>Major'+
+          '<span class="key" style="background:'+LEVEL_COLOUR.moderate+'"></span>Moderate'+
+          '<span class="key" style="background:'+LEVEL_COLOUR.minor+'"></span>Minor')+
+        '<span class="key" style="background:#6a7d8c;opacity:.5"></span>Other BOM gauges';
+    }
+  }
+  /* "📍 Map" in a list row: to the gauge, with its popup open. */
+  listEl.addEventListener('click',ev=>{
+    const b=ev.target.closest&&ev.target.closest('.loc');
+    if(!b||!rMap)return;
+    const g=gauges[Number(b.dataset.gauge)];
+    if(!g||!g.at)return;
+    rMap.setView(g.at,Math.max(rMap.getZoom(),10));
+    const mk=markers[g.idx];
+    if(mk)mk.openPopup();
+    const el=document.getElementById('riverMap');
+    if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'center'});
+  });
 
   function renderSummary(){
     const c=snap.counts||{};
@@ -3593,6 +3690,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     listEl.innerHTML=hits.length
       ?hits.slice(0,80).map(g=>gaugeRow(g,true)).join('')+(hits.length>80?'<div class="river-catch">… '+(hits.length-80)+' more — narrow the search</div>':'')
       :'<div class="river-none">No BOM gauge matches “'+escapeHtml(q)+'”. Gauges are named by river and place, e.g. “Condamine River at Warwick”.</div>';
+    return hits;
   }
 
   function renderFoot(){
@@ -3609,7 +3707,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
     renderSummary();
     renderWarnings();
     const q=(filterEl&&filterEl.value||'').trim();
-    if(q.length>=2)renderSearch(q);else{countEl.textContent='';renderFlooding();}
+    if(q.length>=2)renderMap(renderSearch(q));else{countEl.textContent='';renderFlooding();renderMap();}
     renderFoot();
   }
 
@@ -3621,7 +3719,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       gauges=[];
       const regionOf={};
       (snap.products||[]).forEach(p=>{regionOf[p.id]=p.region;});
-      (snap.groups||[]).forEach(g=>(g.stations||[]).forEach(s=>gauges.push(Object.assign({state:g.state,catchment:g.catchment,region:regionOf[g.product]},s))));
+      (snap.groups||[]).forEach(g=>(g.stations||[]).forEach(s=>gauges.push(Object.assign({state:g.state,catchment:g.catchment,region:regionOf[g.product],idx:gauges.length},s))));
       render();
     }catch(e){
       if(!snap){

@@ -633,6 +633,21 @@ const check = (n, c, x) => {
       await p.$eval('#riverList .river-gauge a', a => /^https:\/\/www\.bom\.gov\.au\/fwo\/IDQ\d{5}\/IDQ\d{5}\.\d+\.plt\.shtml$/.test(a.href)));
     check('the data is attributed to BOM', /Bureau of Meteorology/.test(await p.$eval('#riverFoot', e => e.innerText)));
 
+    /* The map: placed by station number from BOM's site files. In the
+       fixture Tummaville (041499) is in them and Yarramalong (541040), a
+       council ALERT gauge, is not. */
+    const mapNote = await p.$eval('#riverMapNote', e => e.innerText);
+    check('the map says how many gauges in flood it can show', /1 of 2 gauges in flood are on the map/.test(mapNote), mapNote);
+    check('and names the one BOM publishes no location for', /no location for: Condamine River at Yarramalong/.test(mapNote), mapNote);
+    const flooded = await p.$$eval('#riverMap .leaflet-overlay-pane path', ps => ps.filter(x => /#c9a100/i.test(x.getAttribute('fill'))).length);
+    check('the placed gauge in flood is drawn in its level\'s colour', flooded === 1, flooded);
+    const yarra = await p.$$eval('#riverList .river-gauge', es => es.map(e => e.innerText).find(t => /Yarramalong/.test(t)));
+    check('in the list, the unplaced one is marked "not on map"', /not on map/.test(yarra || ''), yarra);
+    await p.$$eval('#riverList .river-gauge', es => { const r = es.find(e => /Tummaville/.test(e.innerText)); r.querySelector('.loc').click(); });
+    await p.waitForTimeout(500);
+    const pop = await p.$eval('#riverMap .leaflet-popup-content', e => e.innerText).catch(() => '');
+    check('"📍 Map" on a row opens that gauge on the map', /Condamine River at Tummaville/.test(pop) && /minor/i.test(pop), pop);
+
     /* Search reaches every gauge, in flood or not. */
     await p.fill('#riverFilter', 'Tweed');
     await p.waitForTimeout(400);
@@ -640,6 +655,8 @@ const check = (n, c, x) => {
     check('a search finds gauges below flood level too',
       hits.length > 2 && hits.every(h => /Tweed/i.test(h)) && hits.some(h => /below flood level/i.test(h)), hits.slice(0, 3));
     check('and counts them', /\d+ gauges match/.test(await p.$eval('#riverFilterCount', e => e.innerText)));
+    check('and the map shows the matches instead',
+      /\d+ of \d+ matching gauges are on the map/.test(await p.$eval('#riverMapNote', e => e.innerText)), await p.$eval('#riverMapNote', e => e.innerText));
     await p.fill('#riverFilter', 'Condamine');
     await p.waitForTimeout(400);
     const first = await p.$eval('#riverList .river-gauge', e => e.innerText);
