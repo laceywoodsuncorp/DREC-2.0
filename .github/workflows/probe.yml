@@ -16,6 +16,7 @@ on:
           - bom-rivers
           - bom-stations
           - gauge-coords
+          - gauge-sources
 
 permissions:
   contents: write
@@ -51,10 +52,16 @@ jobs:
         if: ${{ inputs.probe == 'gauge-coords' }}
         run: node scripts/probe-gauge-coords.mjs
 
+      # Which published source knows where the gauges the map cannot place
+      # are, measured by station number.
+      - name: Sources for the unplaced river gauges
+        if: ${{ inputs.probe == 'gauge-sources' }}
+        run: node scripts/probe-gauge-sources.mjs
+
       - name: Keep the findings
         if: always()
         run: |
           set -e
-          files=$(ls data/bom-terms.txt data/bom-fwo-list.txt data/bom-river-probe.json data/bom-product-titles.tsv data/bom-stations-probe.json data/gauge-coords-probe.json data/bom-samples/*.txt 2>/dev/null || true)
+          files=$(ls data/bom-terms.txt data/bom-fwo-list.txt data/bom-river-probe.json data/bom-product-titles.tsv data/bom-stations-probe.json data/gauge-coords-probe.json data/gauge-sources-probe.json data/bom-samples/*.txt 2>/dev/null || true)
           [ -n "$files" ] || { echo "nothing to keep"; exit 0; }
           BRANCH="${{ github.ref_name }}" scripts/commit-data.sh "Record probe findings" $files
