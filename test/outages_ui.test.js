@@ -648,6 +648,28 @@ const check = (n, c, x) => {
     const pop = await p.$eval('#riverMap .leaflet-popup-content', e => e.innerText).catch(() => '');
     check('"📍 Map" on a row opens that gauge on the map', /Condamine River at Tummaville/.test(pop) && /minor/i.test(pop), pop);
 
+    /* Reported from the live page: the map drawn before its box had a size
+       stayed at the widest zoom (Leaflet's zoom-out button disabled) instead
+       of fitting the gauges in flood. Reproduced by drawing into a
+       zero-height box, then giving it its height back. */
+    await p.evaluate(() => { document.getElementById('riverMap').style.height = '0px'; });
+    await p.fill('#riverFilter', 'Condamine');
+    await p.waitForTimeout(300);
+    await p.fill('#riverFilter', '');
+    await p.waitForTimeout(300);
+    await p.evaluate(() => { document.getElementById('riverMap').style.height = ''; });
+    await p.waitForTimeout(600);
+    check('a map drawn before its box had a size still fits the gauges once it does',
+      await p.$eval('#riverMap .leaflet-control-zoom-out', b => !b.classList.contains('leaflet-disabled')));
+    const inBox = await p.$eval('#riverMap', el => {
+      const box = el.getBoundingClientRect();
+      const dot = [...el.querySelectorAll('.leaflet-overlay-pane path')].find(x => /#c9a100/i.test(x.getAttribute('fill')));
+      if (!dot) return false;
+      const r = dot.getBoundingClientRect();
+      return r.left > box.left && r.right < box.right && r.top > box.top && r.bottom < box.bottom;
+    });
+    check('and the gauge in flood is inside the visible map', inBox);
+
     /* Search reaches every gauge, in flood or not. */
     await p.fill('#riverFilter', 'Tweed');
     await p.waitForTimeout(400);

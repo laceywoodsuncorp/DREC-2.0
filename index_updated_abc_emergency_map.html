@@ -3551,7 +3551,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
      by level; every other placed gauge is a faint dot, so the map shows
      where BOM is watching as well as where it is flooding. */
   const LEVEL_COLOUR={major:'#a3241b',moderate:'#c46a1c',minor:'#c9a100'};
-  let rMap=null,rBase=null,rTop=null,rCanvas=null;
+  let rMap=null,rBase=null,rTop=null,rCanvas=null,lastBounds=null,readerMoved=false,lastKey='';
   const markers={};
   function ensureRiverMap(){
     if(rMap)return rMap;
@@ -3564,10 +3564,32 @@ window.addEventListener('resize',()=>map.invalidateSize());
        scrolling the page past it does not zoom it instead. */
     el.addEventListener('click',()=>rMap.scrollWheelZoom.enable());
     el.addEventListener('mouseleave',()=>rMap.scrollWheelZoom.disable());
+    /* Leaflet measures the box once, when it draws. Measured before the
+       page has finished laying out -- reported from the live page: the map
+       sat at its widest zoom, Australia and New Zealand, instead of on the
+       three gauges in flood -- a zero-sized box gives the minimum zoom and
+       it never looks again. So it re-measures whenever the box changes size,
+       and re-fits to the gauges unless the reader has moved the map. */
+    ['mousedown','touchstart','wheel','keydown'].forEach(t=>el.addEventListener(t,()=>{readerMoved=true;},{passive:true}));
+    if(window.ResizeObserver){
+      new ResizeObserver(()=>{
+        if(!rMap)return;
+        rMap.invalidateSize();
+        if(!readerMoved)fitTo(lastBounds);
+      }).observe(el);
+    }
+    window.addEventListener('load',()=>{ if(rMap){rMap.invalidateSize();if(!readerMoved)fitTo(lastBounds);} });
     rCanvas=L.canvas({padding:.5});
     rBase=L.layerGroup().addTo(rMap);
     rTop=L.layerGroup().addTo(rMap);
     return rMap;
+  }
+  function fitTo(bounds){
+    if(!rMap)return;
+    const el=document.getElementById('riverMap');
+    /* Nothing to fit into yet; the size observer will call again. */
+    if(!el||!el.clientWidth||!el.clientHeight)return;
+    if(bounds)rMap.fitBounds(bounds,{maxZoom:9});else rMap.setView([-25.6,134.3],4);
   }
   function popupHtml(g){
     return '<div class="river-pop"><h4>'+escapeHtml(g.name)+'</h4>'+
@@ -3597,9 +3619,13 @@ window.addEventListener('resize',()=>map.invalidateSize());
       markers[g.idx]=L.circleMarker(g.at,{radius:g.level==='major'?10:g.level==='moderate'?8:c?7:5,
         color:'#fff',weight:2,fillColor:c||'#2f6f95',fillOpacity:.9}).bindPopup(()=>popupHtml(g)).addTo(rTop);
     });
-    if(placed.length){
-      m.fitBounds(L.latLngBounds(placed.map(g=>g.at)).pad(0.3),{maxZoom:9});
-    }else m.setView([-25.6,134.3],4);
+    lastBounds=placed.length?L.latLngBounds(placed.map(g=>g.at)).pad(0.3):null;
+    /* A new search or a different set of flooding gauges is a new question,
+       so the map answers it even if the reader had moved it. The same set
+       again -- the ten-minute reload -- leaves a moved map where it is. */
+    const key=(focus?'q:':'f:')+top.map(g=>g.idx).join(',');
+    if(key!==lastKey){lastKey=key;readerMoved=false;}
+    if(!readerMoved)fitTo(lastBounds);
     if(noteEl){
       const unplaced=top.filter(g=>!g.at);
       const what=focus?'matching gauges':'gauges in flood';
