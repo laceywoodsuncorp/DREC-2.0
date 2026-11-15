@@ -90,13 +90,18 @@ export function parseNsw(json) {
        "Road closed"); read as words, whatever the field is called. */
     const lanes = (p.roads || []).flatMap((x) => (Array.isArray(x.impactedLanes) ? x.impactedLanes : []))
       .flatMap((l) => Object.entries(l || {}).filter(([k, v]) => typeof v === 'string' && !/direction|roadtype/i.test(k)).map(([, v]) => v)).join(' ');
+    /* What the report says in words comes first: a road its text calls
+       "open to 4WD vehicles only" is restricted even where the lanes detail
+       reads "closed" (first live capture, Hewart Downs Road). The lanes
+       detail decides only when the words state no effect. */
+    const said = severityFrom(p.headline, p.otherAdvice, p.subCategoryA === 'null' ? '' : p.subCategoryA, p.subCategoryB);
     out.push({
       id: 'nsw-' + (f.id ?? p.id ?? out.length), state: 'NSW',
       road: text(r.mainStreet) || 'Road not named', where: where || undefined, region: text(r.region) || undefined,
       /* The advice lines ("Avoid the area") are standing safety advice, not
          a statement that the road is shut; only the report's own text is
          read for severity. */
-      severity: severityFrom(p.headline, p.otherAdvice, p.subCategoryA === 'null' ? '' : p.subCategoryA, p.subCategoryB, lanes),
+      severity: said !== 'caution' ? said : severityFrom(lanes),
       kind: 'Flooding', detail: clip(detail.join(' — '), 420) || undefined,
       reportedAt: isFinite(p.created) ? p.created : undefined,
       updatedAt: isFinite(p.lastUpdated) ? p.lastUpdated : undefined,
@@ -166,7 +171,8 @@ export function parseNt(json) {
       road: text(o.roadName) || 'Road not named', where: text(o.locationComment) || undefined,
       severity: severityFrom(o.restrictionType),
       kind: clip(text(o.obstructionType), 60) || 'Flooding',
-      detail: clip([o.restrictionType, o.comment].map(text).filter(Boolean).join(' — '), 420) || undefined,
+      /* The feed writes "-" for no comment. */
+      detail: clip([o.restrictionType, o.comment].map(text).filter((x) => x && !/^[-–.\s]*$/.test(x)).join(' — '), 420) || undefined,
       reportedAt: localTime(o.dateFrom || o.dateActive, 9.5), updatedAt: localTime(o.dateLastUpdated, 9.5)
     });
   }

@@ -354,6 +354,34 @@
   .crowd-badge{font-size:.64rem;font-weight:700;color:#a06000;background:#fff3d6;padding:3px 8px;border-radius:999px}
   /* ---- river heights ---- */
   .tile-rivers{margin-top:24px}
+  /* ---- flooded roads tab ---- */
+  .flood-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:12px 24px 0}
+  .flood-tabs .n{margin-left:6px;font-weight:700;opacity:.8}
+  .road-coverage{padding:8px 24px 0;font-size:.74rem;color:#5a6a6a;line-height:1.55}
+  .road-coverage .gap{color:#8a5200}
+  .road-coverage a{color:inherit;font-weight:600}
+  .road-states{display:flex;flex-wrap:wrap;gap:6px}
+  .road-state{border:1px solid rgba(0,67,70,.2);background:var(--true-white);color:var(--heritage-green);font:inherit;
+    font-size:.74rem;font-weight:600;padding:5px 11px;border-radius:999px;cursor:pointer}
+  .road-state[aria-pressed="true"]{background:var(--heritage-green);color:var(--true-white);border-color:var(--heritage-green)}
+  .road-row{padding:9px 0;border-bottom:1px solid #f4f6f4;font-size:.82rem;display:grid;grid-template-columns:1fr auto;gap:2px 16px}
+  .road-row .rd{font-weight:700;color:var(--heritage-green)}
+  .road-row .wh{color:#4a5a5a}
+  .road-row .st{display:inline-block;font-size:.66rem;font-weight:700;padding:1px 6px;border-radius:4px;background:#eef2f2;color:#4a5a5a;margin-right:6px;vertical-align:1px}
+  .road-row .dt{grid-column:1;font-size:.76rem;color:#5a6a6a;line-height:1.45}
+  .road-row .tm{grid-row:1 / span 2;grid-column:2;text-align:right;font-size:.74rem;color:#4a5a5a;white-space:nowrap;line-height:1.5}
+  .road-row .tm b{color:var(--heritage-green)}
+  .road-row .tm .up{color:#7b8a8f}
+  .road-row .tm a{color:var(--neutral-green);font-weight:600}
+  .lvl.closed{background:#a3241b}.lvl.restricted{background:#c46a1c}.lvl.caution{background:#c9a100}
+  .river-summary .lvl-closed b{color:#a3241b}
+  .river-summary .lvl-restricted b{color:#b5621a}
+  .river-summary .lvl-caution b{color:#8a6d00}
+  @media(max-width:640px){
+    .flood-tabs,.road-coverage{padding-left:16px;padding-right:16px}
+    .road-row{grid-template-columns:1fr}
+    .road-row .tm{grid-row:auto;grid-column:1;text-align:left;white-space:normal}
+  }
   .river-refresh{padding:10px 24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .river-refresh:has(#riverRefresh[hidden]):has(#riverRefreshNote[hidden]){display:none}
   .river-refresh-note{font-size:.75rem;color:#4a5a5a}
@@ -659,12 +687,19 @@
 <section class="tile tile-rivers" id="section-rivers">
   <div class="tile-head">
     <h2>🌊 River Heights &amp; Flooding</h2>
-    <div class="src">Every <b>Bureau of Meteorology</b> river gauge, organised by flood level: current flood warnings first, then each gauge BOM classes as in flood, worst first. Search to find any river, creek or town.</div>
+    <div class="src">Every <b>Bureau of Meteorology</b> river gauge, organised by flood level: current flood warnings first, then each gauge BOM classes as in flood, worst first. <b>Flooded roads</b> lists the roads each state’s road authority reports as flooded, closed roads first, with the time since each report.</div>
   </div>
   <div class="river-refresh">
-    <button type="button" class="scrape-btn" id="riverRefresh" hidden>🔄 Refresh from BOM</button>
+    <button type="button" class="scrape-btn" id="riverRefresh" hidden>🔄 Refresh flood data</button>
     <span class="river-refresh-note" id="riverRefreshNote" hidden></span>
   </div>
+  <!-- Two views of the same flooding: what the rivers are doing (BOM), and
+       which roads the road authorities report as flooded. -->
+  <div class="flood-tabs" id="floodTabs" role="tablist" aria-label="Flooding views">
+    <button type="button" role="tab" class="outage-tab" id="ftab-rivers" data-flood-tab="rivers" aria-selected="true" aria-controls="floodPaneRivers" tabindex="0">🌊 River gauges</button>
+    <button type="button" role="tab" class="outage-tab" id="ftab-roads" data-flood-tab="roads" aria-selected="false" aria-controls="floodPaneRoads" tabindex="-1">🚧 Flooded roads<span class="n" id="roadTabCount"></span></button>
+  </div>
+  <div id="floodPaneRivers" role="tabpanel" aria-labelledby="ftab-rivers">
   <div class="river-summary" id="riverSummary"><span>Loading BOM river heights…</span></div>
   <div class="river-warnings" id="riverWarnings"></div>
   <div class="river-mapwrap">
@@ -677,6 +712,18 @@
   </div>
   <div class="river-list" id="riverList"></div>
   <div class="river-foot" id="riverFoot"></div>
+  </div>
+  <div id="floodPaneRoads" role="tabpanel" aria-labelledby="ftab-roads" hidden>
+    <div class="river-summary" id="roadSummary"><span>Loading flooded-road reports…</span></div>
+    <div class="road-coverage" id="roadCoverage"></div>
+    <div class="river-search">
+      <div class="road-states" id="roadStates" role="group" aria-label="Filter by state"></div>
+      <input type="search" id="roadFilter" placeholder="Find a road or place — e.g. Sandover" autocomplete="off">
+      <span class="river-search-count" id="roadFilterCount"></span>
+    </div>
+    <div class="river-list" id="roadList"></div>
+    <div class="river-foot" id="roadFoot"></div>
+  </div>
 </section>
 
 <div class="layout">
@@ -734,7 +781,7 @@
 </main>
 
 <footer>
-  <p><strong>About this dashboard:</strong> News headlines come live from each outlet’s own RSS feed — national and wire services (ABC, SBS, Nine, 7NEWS, news.com.au, The Australian, Guardian Australia, AAP, The New Daily, The Conversation), the capital-city mastheads (Sydney Morning Herald, The Age, Brisbane Times, WAtoday, The West Australian), regional and rural papers (Canberra Times, Newcastle Herald, Illawarra Mercury, The Examiner, The Advocate, The Border Mail, The Courier, Bendigo Advertiser, Northern Daily Leader, Daily Advertiser, Central Western Daily, The Land), insuranceNEWS.com.au for trade coverage, and Al Jazeera for world news — fetched server-side, merged and de-duplicated. The feed shows the last 24 hours, or the most recent available if it has been quieter than that; each headline carries its own age. Some mastheads (notably The Australian) are subscriber-only, so following those links may hit a paywall. The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State emergency incident data is live for all eight states and territories, each from its own official agency feed (NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES, ACT ESA), proxied server-side with no API key; if a feed is temporarily unreachable that state says so and links through to its official current-incidents page rather than showing older data. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. River heights and flood warnings come from the <strong>Bureau of Meteorology</strong>’s data service, captured about every half hour: every BOM river gauge with its latest reading and BOM’s own flood classification, organised by flood level. Styling uses the Suncorp brand colour palette.</p>
+  <p><strong>About this dashboard:</strong> News headlines come live from each outlet’s own RSS feed — national and wire services (ABC, SBS, Nine, 7NEWS, news.com.au, The Australian, Guardian Australia, AAP, The New Daily, The Conversation), the capital-city mastheads (Sydney Morning Herald, The Age, Brisbane Times, WAtoday, The West Australian), regional and rural papers (Canberra Times, Newcastle Herald, Illawarra Mercury, The Examiner, The Advocate, The Border Mail, The Courier, Bendigo Advertiser, Northern Daily Leader, Daily Advertiser, Central Western Daily, The Land), insuranceNEWS.com.au for trade coverage, and Al Jazeera for world news — fetched server-side, merged and de-duplicated. The feed shows the last 24 hours, or the most recent available if it has been quieter than that; each headline carries its own age. Some mastheads (notably The Australian) are subscriber-only, so following those links may hit a paywall. The map uses NASA FIRMS for active-fire detections (free MAP_KEY required), plotted on an OpenStreetMap street basemap so town and road names stay visible; colour and opacity scale by time since detection. State emergency incident data is live for all eight states and territories, each from its own official agency feed (NSW RFS, QFES, VicEmergency, Emergency WA, SA CFS, Tasmania Fire Service, NT PFES, ACT ESA), proxied server-side with no API key; if a feed is temporarily unreachable that state says so and links through to its official current-incidents page rather than showing older data. The town explorer is <strong>powered by CensusAtlas</strong> (censusatlas.au), an independent visualisation of the 2011/2016/2021 ABS Census used under CC BY 4.0 — embedded and deep-linked here; the quick-snapshot figures are a small local sample (extendable via CSV import) for at-a-glance use. River heights and flood warnings come from the <strong>Bureau of Meteorology</strong>’s data service, captured about every half hour: every BOM river gauge with its latest reading and BOM’s own flood classification, organised by flood level. Flooded-road reports come from the state road authorities that publish them openly — Transport for NSW (Live Traffic NSW), SA Department for Infrastructure and Transport (Traffic SA), Main Roads Western Australia and the Northern Territory Government (Road Report NT) — listed by each authority’s stated severity, with the time since each report; Queensland and Victoria need API keys and are not connected yet. Styling uses the Suncorp brand colour palette.</p>
 </footer>
 
 <script>
@@ -3804,9 +3851,9 @@ window.addEventListener('resize',()=>map.invalidateSize());
     refreshBtn.hidden=false;
     const wait=st.cooldownSeconds||0;
     refreshBtn.disabled=wait>0;
-    refreshBtn.textContent=wait>0?'🔄 Refreshed recently':'🔄 Refresh from BOM';
+    refreshBtn.textContent=wait>0?'🔄 Refreshed recently':'🔄 Refresh flood data';
     refreshBtn.title=wait>0?'A capture was started recently. Available again in '+mins(wait)+'.'
-      :'Captures the latest BOM river heights and flood warnings now, instead of waiting for the next scheduled capture.';
+      :'Captures the latest BOM river heights, flood warnings and flooded-road reports now, instead of waiting for the next scheduled capture.';
   }
   async function checkButton(){
     try{const r=await fetch('/api/capture',{cache:'no-store'});showButton(await r.json());}
@@ -3821,6 +3868,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       if(snap&&snap.capturedAt>since){
         clearInterval(watching);
         say('Updated with BOM readings captured '+ago(snap.capturedAt)+'.');
+        document.dispatchEvent(new Event('flooddata'));
         checkButton();
       }else if(Date.now()-started>12*60e3){
         clearInterval(watching);
@@ -3836,7 +3884,7 @@ window.addEventListener('resize',()=>map.invalidateSize());
       const r=await fetch('/api/capture',{method:'POST'});
       const b=await r.json().catch(()=>({}));
       if(r.ok&&b.ok){
-        say('Capturing the latest from BOM — new readings should appear here in about 3–5 minutes.');
+        say('Capturing the latest from BOM and the road authorities — new data should appear here in about 3–5 minutes.');
         refreshBtn.textContent='🔄 Refreshing…';
         watchForCapture(snap?snap.capturedAt:0);
       }else{
@@ -3848,6 +3896,187 @@ window.addEventListener('resize',()=>map.invalidateSize());
 
   load();
   checkButton();
+  setInterval(load,10*60*1000);
+})();
+
+/* ============ FLOODED ROADS ============
+   The second tab of the flooding section: roads the state road
+   authorities report as flooded, from data/road-flooding.json -- written
+   by scripts/capture-roads.mjs alongside the river capture.
+
+   Organised by severity, which is the authority's stated effect on the
+   road and nothing more: closed, then restricted (4WD only, lanes closed),
+   then caution (flooding reported; open with caution or no closure
+   stated). Within a level the newest report is first, and every row says
+   how long ago it was reported -- some of these closures are years old,
+   and a road shut since the last wet season is a different fact from one
+   shut this morning.
+
+   Which states are covered is said in the tab itself. Queensland and
+   Victoria publish theirs only through API keys, and Tasmania and the ACT
+   publish none that was found; an empty list for a state that is not
+   covered must never read as "no flooded roads there". */
+(function(){
+  const tabsEl=document.getElementById('floodTabs');
+  const paneRivers=document.getElementById('floodPaneRivers');
+  const paneRoads=document.getElementById('floodPaneRoads');
+  const summaryEl=document.getElementById('roadSummary');
+  const coverEl=document.getElementById('roadCoverage');
+  const statesEl=document.getElementById('roadStates');
+  const filterEl=document.getElementById('roadFilter');
+  const countEl=document.getElementById('roadFilterCount');
+  const listEl=document.getElementById('roadList');
+  const footEl=document.getElementById('roadFoot');
+  const tabCountEl=document.getElementById('roadTabCount');
+  if(!tabsEl||!paneRoads||!listEl)return;
+
+  const LEVELS=['closed','restricted','caution'];
+  const LEVEL_NAME={closed:'Road closed',restricted:'Restricted access',caution:'Flooding reported — caution'};
+  const LEVEL_NOTE={closed:'closed or impassable',restricted:'4WD or high clearance only, lanes closed, or open with conditions',
+    caution:'open with caution, or no closure stated'};
+  let snap=null,state='ALL';
+
+  /* Long spans, because these go back years. */
+  const since=(ms)=>{
+    if(!ms)return '';
+    const m=Math.max(0,Math.round((Date.now()-ms)/60000));
+    if(m<60)return m+' min ago';
+    const h=Math.round(m/60);if(h<48)return h+' h ago';
+    const d=Math.round(h/24);if(d<60)return d+' days ago';
+    const mo=Math.round(d/30.4);if(mo<24)return mo+' months ago';
+    return Math.round(d/365)+' years ago';
+  };
+  const day=(ms)=>new Date(ms).toLocaleDateString([],{day:'numeric',month:'short',year:'numeric'});
+
+  /* ---- the two tabs ---- */
+  function selectFloodTab(id,focus){
+    const roads=id==='roads';
+    tabsEl.querySelectorAll('[role=tab]').forEach(b=>{
+      const on=b.dataset.floodTab===id;
+      b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;
+      if(on&&focus)b.focus();
+    });
+    paneRivers.hidden=roads;paneRoads.hidden=!roads;
+  }
+  tabsEl.addEventListener('click',ev=>{const b=ev.target.closest('[data-flood-tab]');if(b)selectFloodTab(b.dataset.floodTab);});
+  tabsEl.addEventListener('keydown',ev=>{
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(ev.key))return;
+    const cur=tabsEl.querySelector('[aria-selected="true"]');
+    ev.preventDefault();
+    selectFloodTab(cur&&cur.dataset.floodTab==='rivers'&&ev.key!=='Home'||ev.key==='End'?'roads':'rivers',true);
+  });
+
+  function shown(){
+    const q=(filterEl&&filterEl.value||'').trim().toLowerCase();
+    return (snap.reports||[]).filter(r=>(state==='ALL'||r.state===state)&&
+      (!q||[r.road,r.where,r.region,r.detail].some(x=>x&&x.toLowerCase().includes(q))));
+  }
+
+  function renderSummary(){
+    const c=snap.counts||{};
+    const bits=[];
+    LEVELS.forEach(l=>{ if(c[l])bits.push('<span class="lvl-'+l+'"><b>'+c[l]+'</b> '+(l==='closed'?'road'+(c[l]===1?'':'s')+' closed'
+      :l==='restricted'?'restricted':'flooded, open with caution')+'</span>'); });
+    if(!c.total)bits.push('<span><b>0</b> flooded roads reported</span>');
+    const failed=(snap.sources||[]).filter(x=>!x.ok&&!x.needsKey);
+    if(failed.length)bits.push('<span class="warn">⚠️ '+failed.map(x=>escapeHtml(x.name)).join(', ')+' could not be read</span>');
+    const age=Date.now()-(snap.capturedAt||0);
+    bits.push('<span'+(age>2*3600e3?' class="warn"':'')+'>Captured '+since(snap.capturedAt)+'</span>');
+    summaryEl.innerHTML=bits.join('');
+    if(tabCountEl)tabCountEl.textContent=c.total?String(c.total):'';
+  }
+
+  /* Said every time, not only when something is wrong: which states this
+     list covers, and which it does not and why. */
+  function renderCoverage(){
+    const ok=(snap.sources||[]).filter(x=>x.ok);
+    const need=(snap.sources||[]).filter(x=>x.needsKey);
+    const failed=(snap.sources||[]).filter(x=>!x.ok&&!x.needsKey);
+    const link=(x,text)=>'<a href="'+escapeHtml(x.site)+'" target="_blank" rel="noopener">'+escapeHtml(text)+' ↗</a>';
+    const parts=[];
+    if(ok.length)parts.push('<b>Covers:</b> '+ok.map(x=>x.state+' ('+escapeHtml(x.name)+')').join(', ')+'.');
+    const gaps=need.map(x=>x.state+' — '+escapeHtml(x.name)+' needs an API key that is not set up yet; check '+link(x,x.name))
+      .concat(failed.map(x=>x.state+' — '+escapeHtml(x.name)+' could not be read at this capture; check '+link(x,x.name)))
+      .concat((snap.gaps||[]).map(g=>g.state+' — '+escapeHtml(g.why)+'; check '+link(g,'its road authority')));
+    if(gaps.length)parts.push('<span class="gap"><b>Not covered</b> — no flooded roads will be listed for these even if there are some:</span> '+gaps.join(' · ')+'.');
+    coverEl.innerHTML=parts.join('<br>');
+  }
+
+  function renderStates(){
+    const by={};
+    (snap.reports||[]).forEach(r=>{by[r.state]=(by[r.state]||0)+1;});
+    const list=[['ALL','All',(snap.reports||[]).length]].concat((snap.sources||[]).filter(x=>x.ok).map(x=>[x.state,x.state,by[x.state]||0]));
+    statesEl.innerHTML=list.map(([id,label,n])=>
+      '<button type="button" class="road-state" data-state="'+id+'" aria-pressed="'+(state===id)+'">'+label+' <span style="opacity:.7">'+n+'</span></button>').join('');
+  }
+
+  function row(r){
+    return '<div class="road-row">'+
+      '<div><span class="st">'+r.state+'</span><span class="rd">'+escapeHtml(r.road)+'</span>'+
+        (r.where?' <span class="wh">· '+escapeHtml(r.where)+'</span>':'')+'</div>'+
+      '<div class="tm"><b title="'+(r.reportedAt?escapeHtml(day(r.reportedAt)):'')+'">'+(r.reportedAt?'Reported '+since(r.reportedAt):'Report time not given')+'</b>'+
+        /* Only when it says something the report time does not. */
+        (r.updatedAt&&r.updatedAt-(r.reportedAt||0)>60e3&&since(r.updatedAt)!==since(r.reportedAt)?'<br><span class="up">updated '+since(r.updatedAt)+'</span>':'')+
+        '<br><a href="'+escapeHtml(r.url||'#')+'" target="_blank" rel="noopener">'+escapeHtml(r.source||'Source')+' ↗</a></div>'+
+      '<div class="dt">'+(r.kind&&!/^flooding$/i.test(r.kind)?escapeHtml(r.kind)+(r.detail?' — ':''):'')+escapeHtml(r.detail||'')+
+        (r.region?(r.detail||(r.kind&&!/^flooding$/i.test(r.kind))?' · ':'')+escapeHtml(r.region):'')+'</div>'+
+      '</div>';
+  }
+
+  function renderList(){
+    const rows=shown();
+    const q=(filterEl&&filterEl.value||'').trim();
+    countEl.textContent=(q||state!=='ALL')?rows.length+' of '+(snap.reports||[]).length+' reports':'';
+    if(!rows.length){
+      listEl.innerHTML='<div class="river-none">'+((snap.reports||[]).length
+        ?'No flooded-road report matches'+(q?' “'+escapeHtml(q)+'”':'')+(state!=='ALL'?' in '+state:'')+'.'
+        :'No flooded roads are reported by the road authorities this list covers. See above for the states it does not cover.')+'</div>';
+      return;
+    }
+    let html='';
+    LEVELS.forEach(l=>{
+      const at=rows.filter(r=>r.severity===l);
+      if(!at.length)return;
+      html+='<div class="river-level-head"><span class="lvl '+l+'">'+(l==='caution'?'caution':l)+'</span>'+LEVEL_NAME[l]+' — '+at.length+
+        ' road'+(at.length===1?'':'s')+' <span style="font-weight:400;color:#6a7a7a">('+LEVEL_NOTE[l]+'; newest report first)</span></div>'+
+        at.map(row).join('');
+    });
+    listEl.innerHTML=html;
+  }
+
+  function renderFoot(){
+    const owners=(snap.sources||[]).filter(x=>x.ok).map(x=>escapeHtml(x.owner)+' ('+escapeHtml(x.name)+')');
+    footEl.innerHTML='Road reports © their publishers'+(owners.length?': '+owners.join('; '):'')+
+      ', used under Creative Commons Attribution licences where stated. Severity is each authority’s own stated effect on the road; '+
+      'a report that states no closure is listed as caution. Conditions change quickly — confirm with the road authority before travelling.';
+  }
+
+  function render(){
+    if(!snap)return;
+    renderSummary();renderCoverage();renderStates();renderList();renderFoot();
+  }
+  async function load(){
+    try{
+      const r=await fetch('/data/road-flooding.json',{cache:'no-cache'});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      snap=await r.json();
+      render();
+    }catch(e){
+      if(!snap){
+        summaryEl.innerHTML='<span class="warn">Flooded-road reports could not be loaded ('+escapeHtml(e.message)+').</span>';
+        listEl.innerHTML='<div class="river-none">Check each state’s road authority directly.</div>';
+      }
+    }
+  }
+  statesEl.addEventListener('click',ev=>{
+    const b=ev.target.closest('[data-state]');if(!b)return;
+    state=b.dataset.state;renderStates();renderList();
+  });
+  let t=null;
+  if(filterEl)filterEl.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(()=>{if(snap)renderList();},200);});
+  /* The refresh button captures rivers and roads together. */
+  document.addEventListener('flooddata',load);
+  load();
   setInterval(load,10*60*1000);
 })();
 </script>

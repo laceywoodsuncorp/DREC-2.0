@@ -268,6 +268,29 @@ const server = http.createServer((req, res) => {
       ]
     });
   }
+  /* Flooded roads: the snapshot capture-roads.mjs writes, built from real
+     road-authority records (test/fixtures/road-snapshot.json).
+       roads=none    every source answered, nothing flooded
+       roads=failed  Live Traffic NSW could not be read
+       roads=off     the file is missing
+     The WA report is re-dated to three hours ago, updated twenty minutes
+     ago, so the "time since report" on screen can be checked. */
+  if (u.pathname === '/data/road-flooding.json') {
+    const sc = u.searchParams.get('roads');
+    if (sc === 'off') return send(404, 'not found', 'text/plain');
+    const snap = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'road-snapshot.json'), 'utf8'));
+    snap.capturedAt = Date.now() - 10 * 60000;
+    const wa = snap.reports.find((r) => r.state === 'WA');
+    if (wa) { wa.reportedAt = Date.now() - 3 * 3600e3; wa.updatedAt = Date.now() - 20 * 60000; }
+    if (sc === 'none') { snap.reports = []; snap.counts = { closed: 0, restricted: 0, caution: 0, total: 0 }; snap.sources.forEach((x) => { if (x.ok) x.count = 0; }); }
+    if (sc === 'failed') {
+      snap.reports = snap.reports.filter((r) => r.state !== 'NSW');
+      const n = snap.sources.find((x) => x.state === 'NSW'); n.ok = false; n.error = 'HTTP 503'; delete n.count;
+      snap.counts = { closed: 0, restricted: 0, caution: 0, total: snap.reports.length };
+      snap.reports.forEach((r) => { snap.counts[r.severity]++; });
+    }
+    return send(200, snap);
+  }
   /* BOM river heights: the snapshot capture-rivers.mjs writes, built from
      real BOM files (test/fixtures/rivers-snapshot.json) and shifted so its
      readings are as recent now as they were when captured.

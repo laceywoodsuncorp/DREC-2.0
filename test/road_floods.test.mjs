@@ -58,6 +58,10 @@ console.log('\n== NSW: Live Traffic NSW flood hazards ==');
   const closed = parseNsw({ features: [{ id: 1, geometry: { type: 'Point', coordinates: [150, -33] }, properties: { mainCategory: 'FLOODING', ended: false,
     created: 1, roads: [{ mainStreet: 'Test Rd', suburb: 'Somewhere', impactedLanes: [{ affectedDirection: 'Both directions', extent: 'Closed', description: 'Road closed' }] }] } }] });
   ck('the lanes detail saying the road is closed makes it closed', closed[0].severity === 'closed', closed[0]);
+  const fourWd = parseNsw({ features: [{ id: 2, properties: { mainCategory: 'FLOODING', ended: false,
+    otherAdvice: '<p>Due to recent rainfall, this road is open to 4WD vehicles only.</p>',
+    roads: [{ mainStreet: 'Hewart Downs Road', impactedLanes: [{ extent: 'Closed', description: 'Road closed' }] }] } }] });
+  ck('but the report\'s own words win: "open to 4WD only" is restricted', fourWd[0].severity === 'restricted', fourWd[0].severity);
   ck('and its point is kept, lat first', closed[0].at[0] === -33 && closed[0].at[1] === 150, closed[0].at);
   ck('an ended hazard is not current', parseNsw({ features: [{ properties: { mainCategory: 'FLOODING', ended: true, roads: [] } }] }).length === 0);
   ck('a non-flood hazard is not flooding', parseNsw({ features: [{ properties: { mainCategory: 'CRASH', otherAdvice: 'Oxley Highway flood recovery', roads: [] } }] }).length === 0);
@@ -93,6 +97,8 @@ console.log('\n== NT: Road Report NT obstructions ==');
   ck('only the obstruction that says flooding is a report', r.length === 1 && r[0].road === 'Daly River Road', r.map((x) => x.road));
   ck('roadworks at a floodplain are not flooding', !r.some((x) => /Arnhem/.test(x.road)));
   ck('"Road Closed" is closed', r[0].severity === 'closed');
+  ck('a "-" comment is not shown as detail', parseNt({ response: [{ status: 'CURRENT', obstructionType: 'Flooding', restrictionType: 'Impassable',
+    comment: '-', roadName: 'Kintore Road' }] })[0].detail === 'Impassable');
   ck('reported in Darwin time', new Date(r[0].reportedAt).toISOString() === '2026-11-14T06:50:00.000Z', r[0].reportedAt);
 }
 

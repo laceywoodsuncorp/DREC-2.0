@@ -708,6 +708,80 @@ const check = (n, c, x) => {
     check('no page errors', p._errs.length === 0, p._errs);
     await p.close();
   }
+  console.log('\n== flooded roads, by severity, with the time since each report ==');
+  {
+    /* The fixture is real road-authority records: three Live Traffic NSW
+       flood hazards, three Traffic SA closures, one Main Roads WA incident
+       and a Road Report NT closure (test/fixtures/road-snapshot.json).
+       QLDTraffic has no key, as on the live site today. */
+    const p = await open('rivers=major');
+    await p.waitForTimeout(600);
+    check('the flooding section has a second tab, with its count',
+      /Flooded roads\s*8/.test(await p.$eval('#ftab-roads', e => e.innerText)), await p.$eval('#ftab-roads', e => e.innerText));
+    check('rivers are the tab shown first', !(await p.$eval('#floodPaneRivers', e => e.hidden)) && await p.$eval('#floodPaneRoads', e => e.hidden));
+    await p.click('#ftab-roads');
+    await p.waitForTimeout(200);
+    check('opening it shows roads and hides the river view',
+      await p.$eval('#floodPaneRivers', e => e.hidden) && !(await p.$eval('#floodPaneRoads', e => e.hidden)));
+    const heads = await p.$$eval('#roadList .river-level-head', es => es.map(e => e.innerText));
+    check('reports are grouped by severity, closed first', heads.length === 2 && /Road closed — 5 roads/.test(heads[0]) && /caution — 3 roads/i.test(heads[1]), heads);
+    const sum = await p.$eval('#roadSummary', e => e.innerText);
+    check('the summary counts each level', /5\s*roads closed/.test(sum) && /3\s*flooded, open with caution/.test(sum), sum);
+    check('and says how old the capture is', /Captured 10 min ago/.test(sum), sum);
+    const rows = await p.$$eval('#roadList .road-row', es => es.map(e => e.innerText.replace(/\s+/g, ' ')));
+    check('every report says how long ago it was reported', rows.length === 8 && rows.every(r => /Reported \d+ (min|h|days|months|years) ago/.test(r)), rows.find(r => !/Reported/.test(r)));
+    const wa = rows.find(r => /Great Northern Hwy/.test(r));
+    check('a report from three hours ago says so, with its later update', /Reported 3 h ago/.test(wa || '') && /updated 20 min ago/.test(wa || ''), wa);
+    check('with the authority\'s own words and a link to it', /Water Over Road/.test(wa || '') && /Main Roads WA ↗/.test(wa || ''), wa);
+    /* Within a level, newest report first. */
+    const closedAges = await p.$$eval('#roadList .road-row .tm b', es => es.slice(0, 5).map(e => e.getAttribute('title')));
+    const stamps = closedAges.map(t => Date.parse(t));
+    check('within a level the newest report is first', stamps.every((v, i) => i === 0 || v <= stamps[i - 1]), closedAges);
+    const cover = await p.$eval('#roadCoverage', e => e.innerText);
+    check('the tab says which states it covers', /Covers: NSW \(Live Traffic NSW\), SA \(Traffic SA\), WA \(Main Roads WA\), NT \(Road Report NT\)/.test(cover), cover);
+    check('and which it does not, and why', /Not covered/.test(cover) && /QLD — QLDTraffic needs an API key/.test(cover) && /VIC/.test(cover) && /TAS/.test(cover), cover);
+    check('each source is attributed', /Transport for NSW/.test(await p.$eval('#roadFoot', e => e.innerText)));
+
+    await p.click('#roadStates [data-state="SA"]');
+    await p.waitForTimeout(150);
+    const sa = await p.$$eval('#roadList .road-row', es => es.map(e => e.innerText));
+    check('a state filter shows that state\'s roads only', sa.length === 3 && sa.every(r => /^SA/.test(r.trim())), sa.map(r => r.slice(0, 30)));
+    check('and counts them', /3 of 8 reports/.test(await p.$eval('#roadFilterCount', e => e.innerText)));
+    await p.click('#roadStates [data-state="ALL"]');
+    await p.fill('#roadFilter', 'yancannia');
+    await p.waitForTimeout(400);
+    const hit = await p.$$eval('#roadList .road-row', es => es.map(e => e.innerText));
+    check('a search finds a road by name', hit.length === 1 && /Yancannia Road/.test(hit[0]), hit);
+    check('no page errors', p._errs.length === 0, p._errs);
+    await p.close();
+  }
+  {
+    const p = await open('rivers=major&roads=none');
+    await p.waitForTimeout(600);
+    await p.click('#ftab-roads');
+    const t = await p.$eval('#roadList', e => e.innerText);
+    check('with nothing flooded it says so, for the states it covers', /No flooded roads are reported by the road authorities this list covers/.test(t), t);
+    check('and still names the states it does not cover', /Not covered/.test(await p.$eval('#roadCoverage', e => e.innerText)));
+    await p.close();
+  }
+  {
+    const p = await open('rivers=major&roads=failed');
+    await p.waitForTimeout(600);
+    await p.click('#ftab-roads');
+    check('a feed that could not be read is flagged in the summary', /Live Traffic NSW could not be read/.test(await p.$eval('#roadSummary', e => e.innerText)));
+    check('and listed as not covered, not as no flooded roads',
+      /NSW — Live Traffic NSW could not be read at this capture/.test(await p.$eval('#roadCoverage', e => e.innerText)));
+    await p.close();
+  }
+  {
+    const p = await open('rivers=major&roads=off');
+    await p.waitForTimeout(600);
+    await p.click('#ftab-roads');
+    check('a missing file says so rather than showing an empty list', /could not be loaded/.test(await p.$eval('#roadSummary', e => e.innerText)));
+    check('and the river tab still works', p._errs.length === 0 && /gauge/.test(await p.$eval('#riverSummary', e => e.innerText)), p._errs);
+    await p.close();
+  }
+
   console.log('\n== refreshing river heights on demand ==');
   {
     const p = await open('rivers=major&capture=ready');

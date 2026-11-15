@@ -57,6 +57,11 @@ if (Array.isArray(nt)) {
   nt.forEach((o) => { const k = String(o.obstructionType).slice(0, 40) + ' / ' + o.restrictionType; c[k] = (c[k] || 0) + 1; });
   console.log('NT types: ' + Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 25).map(([k, n]) => k + ' x' + n).join('; '));
 }
+/* Likewise how Live Traffic NSW describes the lanes affected. */
+const nswF = results.NSW && results.NSW.json && results.NSW.json.features;
+if (Array.isArray(nswF)) {
+  console.log('NSW lanes: ' + JSON.stringify(nswF.slice(0, 3).map((f) => ((f.properties || {}).roads || []).map((r) => r.impactedLanes))).slice(0, 900));
+}
 console.log('flooded roads: ' + snap.counts.closed + ' closed, ' + snap.counts.restricted + ' restricted, ' + snap.counts.caution + ' caution');
 if (!snap.sources.some((s) => s.ok)) { console.log('no source could be read -- keeping the previous ' + OUT); process.exit(0); }
 mkdirSync('data', { recursive: true });
